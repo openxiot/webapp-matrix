@@ -1,0 +1,87 @@
+<nz-layout class="app-layout">
+  <!-- Sidebar -->
+  <nz-sider
+    class="menu-sidebar"
+    nzCollapsible
+    nzWidth="220px"
+    [nzCollapsedWidth]="64"
+    nzBreakpoint="md"
+    [nzTheme]="menuTheme"
+    [(nzCollapsed)]="isCollapsed"
+    [nzTrigger]="null"
+  >
+    <div class="sidebar-logo">
+      <a routerLink="/projects" class="logo-link">
+        <span class="logo-mark">W</span>
+        <h1 *ngIf="!isCollapsed">微矩阵</h1>
+      </a>
+    </div>
+    <ul nz-menu nzMode="inline" [nzTheme]="menuTheme" [nzInlineCollapsed]="isCollapsed" class="sidebar-menu">
+      <li nz-menu-item nzMatchRouter>
+        <a routerLink="/projects">
+          <span nz-icon nzType="apartment"></span>
+          <span>项目</span>
+        </a>
+      </li>
+      <li nz-menu-item nzMatchRouter>
+        <a routerLink="/devices">
+          <span nz-icon nzType="appstore"></span>
+          <span>设备</span>
+        </a>
+      </li>
+      <li nz-menu-item nzMatchRouter>
+        <a routerLink="/products">
+          <span nz-icon nzType="inbox"></span>
+          <span>产品</span>
+        </a>
+      </li>
+      <li nz-menu-item nzMatchRouter>
+        <a routerLink="/profile">
+          <span nz-icon nzType="user"></span>
+          <span>我</span>
+        </a>
+      </li>
+    </ul>
+  </nz-sider>
+
+  <!-- Right area -->
+  <nz-layout>
+    <!-- Header bar -->
+    <nz-header>
+      <div class="app-header">
+        <div class="header-left">
+          <span class="header-trigger" (click)="isCollapsed = !isCollapsed">
+            <nz-icon class="trigger" [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'"></nz-icon>
+          </span>
+          <span class="header-org" *ngIf="token.currentOrgName">
+            <span nz-icon nzType="team"></span>
+            {{ token.currentOrgName }}
+          </span>
+          <span class="header-separator" *ngIf="token.currentOrgName && token.currentRootSpaceName">/</span>
+          <span class="header-project" *ngIf="token.currentRootSpaceName">
+            <span nz-icon nzType="apartment"></span>
+            {{ token.currentRootSpaceName }}
+          </span>
+        </div>
+        <div class="header-right">
+          <nz-switch
+            [ngModel]="themeService.theme() === 'dark'"
+            (ngModelChange)="themeService.toggle()"
+            nzCheckedChildren="🌙"
+            nzUnCheckedChildren="☀️"
+          >
+          </nz-switch>
+          <span class="header-user" (click)="goToProfile()">
+            <span nz-icon nzType="user"></span>
+            {{ token.username || '用户' }}
+          </span>
+        </div>
+      </div>
+    </nz-header>
+
+    <!-- Content -->
+    <nz-content class="app-content">
+      <router-outlet></router-outlet>
+    </nz-content>
+  </nz-layout>
+</nz-layout>

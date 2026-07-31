@@ -12,6 +12,7 @@ import {
   EnvironmentOutline, FolderOutline, CloseOutline,
   SearchOutline, MenuOutline, HomeOutline, DownOutline,
   UpOutline, ReloadOutline, QrcodeOutline,
+  MenuFoldOutline, MenuUnfoldOutline,
 } from '@ant-design/icons-angular/icons';
 
 const icons = [
@@ -25,6 +26,7 @@ const icons = [
   EnvironmentOutline, FolderOutline, CloseOutline,
   SearchOutline, MenuOutline, HomeOutline, DownOutline,
   UpOutline, ReloadOutline, QrcodeOutline,
+  MenuFoldOutline, MenuUnfoldOutline,
 ];
 
 export function provideNzIcons(): Provider {
