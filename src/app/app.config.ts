@@ -1,21 +1,22 @@
-import { ApplicationConfig, provideZoneChangeDetection, importProvidersFrom } from '@angular/core';
+import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { en_US, provideNzI18n } from 'ng-zorro-antd/i18n';
-import { NZ_ICONS } from 'ng-zorro-antd/icon';
-import { provideNzIcons } from './icons.provider';
 
 import { routes } from './app.routes';
-import { authInterceptor } from './interceptors/auth.interceptor';
+import { icons } from './icons-provider';
+import { provideNzIcons } from 'ng-zorro-antd/icon';
+import { zh_CN, provideNzI18n } from 'ng-zorro-antd/i18n';
+import { registerLocaleData } from '@angular/common';
+import zh from '@angular/common/locales/zh';
+import { provideNzDateFnsAdapter } from 'ng-zorro-antd/core/time';
+
+registerLocaleData(zh);
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor])),
-    importProvidersFrom(BrowserAnimationsModule),
-    provideNzI18n(en_US),
-    provideNzIcons(),
+    provideNzIcons(icons),
+    provideNzI18n(zh_CN),
+    provideNzDateFnsAdapter(),
   ],
 };
