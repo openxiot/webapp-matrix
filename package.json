@@ -1,6 +1,6 @@
 {
   "name": "webapp-wematrix",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -17,6 +17,7 @@
     "@angular/forms": "^22.1.0",
     "@angular/platform-browser": "^22.1.0",
     "@angular/router": "^22.1.0",
+    "@openxiot/xiot-core-spec-ts": "^0.0.27",
     "ng-zorro-antd": "^22.0.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"

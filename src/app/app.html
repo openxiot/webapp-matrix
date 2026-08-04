@@ -14,25 +14,21 @@
       </a>
     </div>
     <ul nz-menu nzTheme="dark" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
-      <li nz-submenu nzOpen nzTitle="Dashboard" nzIcon="dashboard">
-        <ul>
-          <li nz-menu-item nzMatchRouter>
-            <a routerLink="/welcome">Welcome</a>
-          </li>
-          <li nz-menu-item nzMatchRouter>
-            <a>Monitor</a>
-          </li>
-          <li nz-menu-item nzMatchRouter>
-            <a>Workplace</a>
-          </li>
-        </ul>
+      <li nz-menu-item routerLink="/project" nzMatchRouter>
+        <nz-icon nzType="project" nzTheme="outline" />
+        <span>项目</span>
       </li>
-      <li nz-submenu nzOpen nzTitle="Form" nzIcon="form">
-        <ul>
-          <li nz-menu-item nzMatchRouter>
-            <a>Basic Form</a>
-          </li>
-        </ul>
+      <li nz-menu-item routerLink="/device" nzMatchRouter>
+        <nz-icon nzType="bulb" nzTheme="outline" />
+        <span>设备</span>
+      </li>
+      <li nz-menu-item routerLink="/product" nzMatchRouter>
+        <nz-icon nzType="table" nzTheme="outline" />
+        <span>产品</span>
+      </li>
+      <li nz-menu-item routerLink="/settings" nzMatchRouter>
+        <nz-icon nzType="user" nzTheme="outline" />
+        <span>我</span>
       </li>
     </ul>
   </nz-sider>
@@ -49,5 +45,9 @@
         <router-outlet></router-outlet>
       </div>
     </nz-content>
+    <nz-footer>
+      2026
+      ({{ version }})
+    </nz-footer>
   </nz-layout>
 </nz-layout>
