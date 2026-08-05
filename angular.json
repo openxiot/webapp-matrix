@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "webapp-wematrix": {
+    "webapp-matrix": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -34,7 +34,8 @@
                 "output": "/assets/"
               }
             ],
-            "styles": ["./node_modules/ng-zorro-antd/ng-zorro-antd.min.css", "src/styles.less"]
+            "styles": ["./node_modules/ng-zorro-antd/ng-zorro-antd.min.css", "src/styles.less"],
+            "allowedCommonJsDependencies": ["html5-qrcode", "@openxiot/xiot-core-spec-ts"]
           },
           "configurations": {
             "production": {
@@ -56,6 +57,17 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "staging": {
+              "optimization": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.staging.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -64,10 +76,13 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "webapp-wematrix:build:production"
+              "buildTarget": "webapp-matrix:build:production"
             },
             "development": {
-              "buildTarget": "webapp-wematrix:build:development"
+              "buildTarget": "webapp-matrix:build:development"
+            },
+            "staging": {
+              "buildTarget": "webapp-matrix:build:staging"
             }
           },
           "defaultConfiguration": "development"

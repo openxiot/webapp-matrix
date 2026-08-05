@@ -1,1 +1,47 @@
-<p>device</p>
+<div class="device-page">
+  @if (!account.currentRootSpaceId()) {
+    <nz-empty nzNotFoundImage="simple" [nzNotFoundContent]="'请先在「我」的页面选择项目'" />
+    <div class="empty-action">
+      <button nz-button nzType="primary" routerLink="/project-picker">
+        <nz-icon nzType="home" nzTheme="outline" />
+        去选择项目
+      </button>
+    </div>
+  } @else {
+    <div class="device-header">
+      <span class="device-title">设备</span>
+      <span class="device-count">共 {{ project.devices().length }} 个设备</span>
+    </div>
+
+    <nz-spin [nzSpinning]="project.loading()">
+      <nz-list [nzDataSource]="project.devices()" [nzRenderItem]="item">
+        <ng-template #item let-device>
+          <nz-list-item class="device-item" (click)="onDeviceClick(device)">
+            <span class="online-dot" [class.online]="device.online" nz-tooltip [nzTooltipTitle]="device.online ? '在线' : '离线'"></span>
+            @if (project.deviceIcon(device)) {
+              <img class="device-icon" [src]="project.deviceIcon(device)" alt="" />
+            } @else {
+              <nz-icon class="device-icon" nzType="bulb" nzTheme="outline" />
+            }
+            <span class="device-body">
+              <span class="device-name">{{ deviceName(device) }}</span>
+              <span class="device-space">{{ project.spaceName(device.space?.spaceId || '') }}</span>
+            </span>
+            <button
+              class="detail-btn"
+              nz-tooltip
+              [nzTooltipTitle]="'设备详情'"
+              (click)="$event.stopPropagation(); onDeviceDetail(device)"
+            >
+              <nz-icon nzType="right" nzTheme="outline" />
+            </button>
+          </nz-list-item>
+        </ng-template>
+      </nz-list>
+
+      @if (!project.loading() && project.devices().length === 0) {
+        <nz-empty nzNotFoundImage="simple" nzNotFoundContent="暂无设备" />
+      }
+    </nz-spin>
+  }
+</div>

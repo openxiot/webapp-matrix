@@ -1,0 +1,18 @@
+<div class="page">
+  <div class="page-header">
+    <button nz-button nzType="text" (click)="routerBack()">
+      <nz-icon nzType="left" nzTheme="outline" />
+      返回
+    </button>
+    <span class="page-title">关于</span>
+  </div>
+
+  <nz-card [nzBordered]="false" class="about-card">
+    <div class="about-logo">
+      <nz-icon nzType="appstore" nzTheme="outline" />
+    </div>
+    <div class="about-name">微矩阵</div>
+    <div class="about-desc">物联网设备管理与监控平台</div>
+    <div class="about-version">v{{ version }}</div>
+  </nz-card>
+</div>

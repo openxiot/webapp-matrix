@@ -1,1 +1,100 @@
-/* You can add global styles to this file, and also import other style files */
+/* 深色模式：通过 ThemeService 切换 body.dark-theme，对应用自有的表面做覆盖 */
+body.dark-theme {
+  background: #141414;
+  color: rgba(255, 255, 255, 0.85);
+
+  .app-header {
+    background: #1f1f1f;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+
+    .header-right .org-name {
+      color: rgba(255, 255, 255, 0.85);
+    }
+  }
+
+  .inner-content,
+  .page,
+  .device-page,
+  .product-page,
+  .settings-page,
+  .project-page {
+    background: #141414;
+  }
+
+  nz-card,
+  nz-list,
+  .ant-card,
+  .ant-list,
+  .context-bar,
+  .profile-header,
+  .settings-list {
+    background: #1f1f1f;
+  }
+
+  .page-title,
+  .product-title,
+  .device-title,
+  .context-value,
+  .profile-name,
+  .account-name,
+  .about-name,
+  .about-desc {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .device-count,
+  .product-count,
+  .context-label,
+  .profile-platform,
+  .device-space,
+  .project-id,
+  .org-id,
+  .org-members,
+  .member-id,
+  .space-name .space-tag,
+  .about-version {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .space-row,
+  .device-row,
+  .root-device-row,
+  .switch-row,
+  .product-item,
+  .device-item {
+    border-color: rgba(255, 255, 255, 0.08);
+
+    &:hover {
+      background: rgba(24, 144, 255, 0.12);
+    }
+  }
+
+  .space-name,
+  .device-name,
+  .product-name,
+  .member-name,
+  .switch-name,
+  .org-name,
+  .project-name,
+  .device-name-bar,
+  .status-card .device-name {
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  .icon-btn,
+  .expand-btn,
+  .detail-btn,
+  .chevron,
+  .space-icon,
+  .device-icon {
+    color: rgba(255, 255, 255, 0.45);
+
+    &:hover {
+      color: #1890ff;
+    }
+  }
+
+  nz-modal-container .ant-modal-content {
+    background: #1f1f1f;
+  }
+}

@@ -1,5 +1,6 @@
 export const environment = {
   production: false,
-  server: 'http://localhost:8080',
-  account: 'http://localhost:8081',
+  server: 'https://site.openxiot.cn',
+  account: 'https://account.openxiot.cn',
+  product: 'https://product.openxiot.cn',
 };

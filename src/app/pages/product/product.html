@@ -1,1 +1,41 @@
-<p>product</p>
+<div class="product-page">
+  <div class="product-header">
+    <span class="product-title">产品</span>
+    <span class="product-count">共 {{ products.length }} 个产品</span>
+  </div>
+
+  <nz-spin [nzSpinning]="loading">
+    <nz-list [nzDataSource]="products" [nzRenderItem]="item" [nzItemLayout]="'horizontal'">
+      <ng-template #item let-product>
+        <nz-list-item class="product-item" (click)="openDetail(product)">
+          <nz-list-item-meta [nzTitle]="title" [nzDescription]="description" [nzAvatar]="avatar">
+            <ng-template #avatar>
+              @if (product.icon) {
+                <img class="product-icon" [src]="product.icon" alt="" />
+              } @else {
+                <span class="product-icon fallback">
+                  <nz-icon nzType="appstore" nzTheme="outline" />
+                </span>
+              }
+            </ng-template>
+            <ng-template #title>
+              <span class="product-name">{{ displayName(product) }}</span>
+              <nz-tag class="lifecycle-tag" [nzColor]="lifecycleColor(product.lifecycle)">
+                {{ lifecycleLabel(product.lifecycle) }}
+              </nz-tag>
+            </ng-template>
+            <ng-template #description>
+              <span class="product-model">{{ product.model }}</span>
+              <span class="product-protocol">{{ product.protocol }}</span>
+            </ng-template>
+          </nz-list-item-meta>
+          <nz-icon nzType="right" nzTheme="outline" class="chevron" nz-tooltip [nzTooltipTitle]="'查看详情'" />
+        </nz-list-item>
+      </ng-template>
+    </nz-list>
+
+    @if (!loading && products.length === 0) {
+      <nz-empty nzNotFoundImage="simple" nzNotFoundContent="暂无产品" />
+    }
+  </nz-spin>
+</div>

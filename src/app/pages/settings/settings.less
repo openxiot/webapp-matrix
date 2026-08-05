@@ -1,0 +1,61 @@
+.settings-page {
+  padding: 8px;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 16px;
+  margin-bottom: 12px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(24, 144, 255, 0.04);
+  }
+
+  .profile-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+
+    .profile-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: rgba(0, 0, 0, 0.88);
+    }
+
+    .profile-platform {
+      font-size: 13px;
+      color: rgba(0, 0, 0, 0.45);
+    }
+  }
+
+  .chevron {
+    margin-left: auto;
+    color: rgba(0, 0, 0, 0.25);
+  }
+}
+
+.settings-list {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+
+  .row-icon {
+    font-size: 20px;
+    color: #1890ff;
+  }
+
+  .chevron {
+    color: rgba(0, 0, 0, 0.25);
+  }
+
+  .disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}

@@ -1,0 +1,79 @@
+<div class="page">
+  <div class="page-header">
+    <button nz-button nzType="text" (click)="routerBack()">
+      <nz-icon nzType="left" nzTheme="outline" />
+      返回
+    </button>
+    <span class="page-title">{{ device() ? project.deviceName(device()!) : '设备详情' }}</span>
+  </div>
+
+  @if (device(); as device) {
+    <nz-card [nzBordered]="false" class="status-card">
+      <div class="status-row">
+        @if (project.deviceIcon(device)) {
+          <img class="device-icon" [src]="project.deviceIcon(device)" alt="" />
+        } @else {
+          <nz-icon class="device-icon" nzType="bulb" nzTheme="outline" />
+        }
+        <div class="status-info">
+          <div class="device-name">{{ project.deviceName(device) }}</div>
+          <div class="online-row">
+            <span class="online-dot" [class.online]="device.online"></span>
+            <span class="online-text">{{ device.online ? '在线' : '离线' }}</span>
+          </div>
+        </div>
+      </div>
+    </nz-card>
+
+    <nz-card [nzBordered]="false" class="info-card">
+      <nz-descriptions nzSize="small" [nzColumn]="1">
+        <nz-descriptions-item nzTitle="设备 ID">
+          {{ device.did }}
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="设备类型">
+          {{ typeName() }}
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="通信协议">
+          {{ device.protocol || '-' }}
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="所属空间">
+          {{ spaceName() }}
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="最后上线时间">
+          {{ formatTime(device.lastOnline) }}
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="最后下线时间">
+          {{ formatTime(device.lastOffline) }}
+        </nz-descriptions-item>
+      </nz-descriptions>
+    </nz-card>
+
+    <div class="move-action">
+      <button nz-button nzBlock (click)="openMove()">
+        <nz-icon nzType="swap" nzTheme="outline" />
+        移动设备
+      </button>
+    </div>
+  } @else {
+    <nz-spin [nzSpinning]="project.loading()">
+      <nz-empty nzNotFoundImage="simple" nzNotFoundContent="未找到该设备" />
+    </nz-spin>
+  }
+</div>
+
+<!-- 移动设备 -->
+<nz-modal
+  [(nzVisible)]="moveVisible"
+  nzTitle="移动设备"
+  [nzOkText]="'移动'"
+  [nzCancelText]="'取消'"
+  (nzOnOk)="submitMove()"
+>
+  <nz-radio-group [(ngModel)]="moveTargetId" class="move-group">
+    @for (space of moveSpaces; track space.id) {
+      <label class="move-item" nz-radio [nzValue]="space.id" [style.padding-left.px]="spaceIndent(space)">
+        {{ space.name }}
+      </label>
+    }
+  </nz-radio-group>
+</nz-modal>

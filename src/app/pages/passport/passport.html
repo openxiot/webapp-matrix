@@ -1,0 +1,48 @@
+<nz-layout class="login-background">
+  <nz-header class="login-header">
+    <span>
+      <img src="assets/favicon.ico" alt="logo" />
+      <h3>矩阵</h3>
+    </span>
+  </nz-header>
+
+  <nz-content>
+    <div class="centered-card">
+      <nz-card [nzBordered]="false">
+        <div class="login-title">登录</div>
+
+        <nz-divider></nz-divider>
+
+        <nz-spin [nzSpinning]="loading">
+          <div class="login-btn-container">
+            @if (config) {
+              <button nz-button nzType="primary" class="login-button" (click)="open(config)">
+                <span nz-icon [nzType]="iconOf(config.platformId)" nzTheme="outline"></span>
+                {{ config.platformName }} 登录
+              </button>
+            }
+          </div>
+
+          <nz-divider style="font-size: 12px; color: gray" nzText="或使用以下方式登录"></nz-divider>
+
+          <div class="login-btn-others">
+            @for (item of list; track item.platformId) {
+              @if (item.platformId !== config?.platformId) {
+                <button
+                  nz-button
+                  nzSize="large"
+                  nzShape="circle"
+                  nz-tooltip
+                  [nzTooltipTitle]="item.platformName"
+                  (click)="open(item)"
+                >
+                  <span nz-icon [nzType]="iconOf(item.platformId)" nzTheme="outline"></span>
+                </button>
+              }
+            }
+          </div>
+        </nz-spin>
+      </nz-card>
+    </div>
+  </nz-content>
+</nz-layout>

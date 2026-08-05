@@ -7,7 +7,6 @@ import {Organization, OrganizationMember} from '../typedef/define/developer/Orga
 import {OrganizationCodec, OrganizationMemberCodec} from '../typedef/codec/developer/OrganizationCodec';
 import { Oauth2Configuration } from '../typedef/define/oauth/Oauth2Configuration';
 import { Oauth2ConfigurationCodec } from '../typedef/codec/oauth/Oauth2ConfigurationCodec';
-import { ProductBasic, ProductBasicCodec } from '@openxiot/xiot-core-spec-ts';
 
 @Injectable({providedIn: 'root'})
 export class MatrixService {
@@ -56,6 +55,20 @@ export class MatrixService {
       .pipe(map(() => undefined));
   }
 
+  updateOrganizationMember(organizationId: string, member: OrganizationMember) {
+    console.log(`updateOrganizationMember: ${organizationId} => ${member}`);
+    return this.http
+      .put(`${this.account}/organization/member/${organizationId}`, OrganizationMemberCodec.encode(member))
+      .pipe(map(() => undefined));
+  }
+
+  removeOrganizationMember(organizationId: string, memberId: string) {
+    console.log(`removeOrganizationMember: ${organizationId} => ${memberId}`);
+    return this.http
+      .delete(`${this.account}/organization/member/${organizationId}`, { params: { memberId } })
+      .pipe(map(() => undefined));
+  }
+
   getOrganization(organizationId: string): Observable<Organization> {
     console.log(`getOrganization: ${organizationId}`);
     return this.http
@@ -73,19 +86,5 @@ export class MatrixService {
     return this.http
       .get<OxResponse>(`${this.account}/organization/all`)
       .pipe(map(response => OrganizationCodec.decodeArray(response.data)));
-  }
-
-  /**------------------------------------------------------------------------------------------------
-   * 产品
-   *------------------------------------------------------------------------------------------------*/
-
-  /**
-   * 读取公开产品列表
-   */
-  private getPublicProducts(): Observable<ProductBasic[]> {
-    console.log('getPublicProducts');
-    return this.http
-      .get<OxResponse>(`${this.server}/v1/product/basic/public`)
-      .pipe(map(response => ProductBasicCodec.decodeArray(response.data)));
   }
 }
