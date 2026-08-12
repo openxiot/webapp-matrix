@@ -13,7 +13,7 @@ import pkg from '../../../package.json';
   styleUrl: './layout.less',
 })
 export class Layout implements OnInit {
-  isCollapsed = false;
+  isCollapsed = true;
   version: string = pkg.version;
 
   constructor(public account: AccountService) {}

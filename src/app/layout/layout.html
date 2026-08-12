@@ -1,7 +1,6 @@
 <nz-layout class="app-layout">
   <nz-sider
     class="menu-sidebar"
-    nzCollapsible
     nzWidth="256px"
     nzBreakpoint="md"
     [(nzCollapsed)]="isCollapsed"
@@ -14,19 +13,19 @@
       </a>
     </div>
     <ul nz-menu nzTheme="dark" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
-      <li nz-menu-item routerLink="/project" nzMatchRouter>
+      <li nz-menu-item routerLink="/project" [nzMatchRouter]="true">
         <nz-icon nzType="project" nzTheme="outline" />
         <span>项目</span>
       </li>
-      <li nz-menu-item routerLink="/device" nzMatchRouter>
+      <li nz-menu-item routerLink="/device" [nzMatchRouter]="true">
         <nz-icon nzType="bulb" nzTheme="outline" />
         <span>设备</span>
       </li>
-      <li nz-menu-item routerLink="/product" nzMatchRouter>
+      <li nz-menu-item routerLink="/product" [nzMatchRouter]="true">
         <nz-icon nzType="table" nzTheme="outline" />
         <span>产品</span>
       </li>
-      <li nz-menu-item routerLink="/settings" nzMatchRouter>
+      <li nz-menu-item routerLink="/settings" [nzMatchRouter]="true">
         <nz-icon nzType="user" nzTheme="outline" />
         <span>我</span>
       </li>
