@@ -13,7 +13,7 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { AccountService } from '../../service/account.service';
-import { SiteService } from '../../service/site.service';
+import { MatrixService } from '../../service/matrix.service';
 import { SpaceEntity } from '../../typedef/define/space/SpaceEntity';
 
 @Component({
@@ -45,7 +45,7 @@ export class ProjectPicker implements OnInit {
 
   constructor(
     public account: AccountService,
-    private site: SiteService,
+    private site: MatrixService,
     private msg: NzMessageService,
     private router: Router,
   ) {}

@@ -7,16 +7,18 @@ import { UserCodec } from '../typedef/codec/user/UserCodec';
 
 @Injectable({ providedIn: 'root' })
 export class AccountService {
-
-  public loading: boolean = false;
+  public loading = signal(false);
   public organizations: Organization[] = [];
-  public login: boolean = false;
-  public user: User = new User();
-  public organization!: Organization;
+
+  public login = signal(false);
+  public user = signal<User>(new User());
+  public organization = signal<Organization>(new Organization());
 
   /** 当前项目（根空间）上下文，持久化到 localStorage */
   public currentRootSpaceId = signal<string | null>(localStorage.getItem('current_root_space_id'));
-  public currentRootSpaceName = signal<string | null>(localStorage.getItem('current_root_space_name'));
+  public currentRootSpaceName = signal<string | null>(
+    localStorage.getItem('current_root_space_name'),
+  );
 
   constructor(
     private main: UserService,
@@ -24,19 +26,19 @@ export class AccountService {
   ) {
     const a = localStorage.getItem('developer') || null;
     if (a !== null) {
-      this.user = UserCodec.decode(JSON.parse(a));
-      this.login = true;
+      this.user.set(UserCodec.decode(JSON.parse(a)));
+      this.login.set(true);
     }
 
     console.info('AccountService Constructed: ', this.user);
-    console.info('user.avatar: ' + this.user.avatar);
+    console.info('user.avatar: ' + this.user().avatar);
   }
 
   setOrganization(organization: Organization) {
     if (this.isOrganizationChanged(organization)) {
       localStorage.setItem('organizationId', organization.id);
 
-      this.organization = organization;
+      this.organization.set(organization);
       // 切换组织后清空当前项目（对齐 Android TokenManager 行为）
       this.clearCurrentRootSpace();
     }
@@ -58,34 +60,34 @@ export class AccountService {
 
   private isOrganizationChanged(organization: Organization): boolean {
     if (this.organization) {
-      return this.organization.id !== organization.id;
+      return this.organization().id !== organization.id;
     } else {
       return true;
     }
   }
 
-  setDeveloper(developer: User) {
-    console.log('setDeveloper: ', developer);
-    localStorage.setItem('developer', UserCodec.encode(developer));
-    this.user = developer;
-    this.login = true;
+  setUser(user: User) {
+    console.log('setUser: ', user);
+    localStorage.setItem('setUser', UserCodec.encode(user));
+    this.user.set(user);
+    this.login.set(true);
   }
 
   clear() {
     console.log('clear');
     localStorage.clear();
-    this.login = false;
+    this.login.set(false);
     this.currentRootSpaceId.set(null);
     this.currentRootSpaceName.set(null);
   }
 
   public loadOrganizations() {
-    if (this.login) {
+    if (this.login()) {
       this.main.getOrganizations().subscribe({
         next: (data) => {
           this.organizations = data;
           this.selectCurrentOrganization();
-          this.loading = false;
+          this.loading.set(false);
         },
         error: (error) => {
           this.msg.warning(error);

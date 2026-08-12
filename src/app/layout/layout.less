@@ -76,6 +76,27 @@ nz-header {
   box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
 }
 
+.header-right {
+  float: right;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  padding-right: 24px;
+
+  .org-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(0, 0, 0, 0.85);
+    cursor: pointer;
+    font-size: 14px;
+
+    &:hover {
+      color: #1890ff;
+    }
+  }
+}
+
 nz-content {
   //margin: 24px;
 }

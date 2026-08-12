@@ -82,7 +82,7 @@ export class OrgDetail implements OnInit {
 
   /** 当前用户标识：优先 user.uid，兜底按名称匹配 */
   currentUserId(): string {
-    return this.account.user.id || '';
+    return this.account.user().id || '';
   }
 
   isCurrentUser(member: OrganizationMember): boolean {

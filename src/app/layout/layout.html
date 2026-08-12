@@ -37,12 +37,98 @@
         <span class="header-trigger" (click)="isCollapsed = !isCollapsed">
           <nz-icon class="trigger" [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'" />
         </span>
-        <span class="header-right">
-          <span class="org-name" routerLink="/org-picker" tabindex="0">
-            <nz-icon nzType="bank" nzTheme="outline" />
-            <span>{{ account.organization?.name || '选择组织' }}</span>
-          </span>
+
+        <span style="float: right">
+          <ul nz-menu nzTheme="light" nzMode="horizontal">
+<!--            <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/welcome">-->
+<!--              <span nz-icon nzType="home" nzTheme="outline"></span>-->
+<!--              {{ '首页' }}-->
+<!--            </li>-->
+
+<!--            <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/product">-->
+<!--              <span nz-icon nzType="bulb" nzTheme="outline"></span>-->
+<!--              {{ '产品' }}-->
+<!--            </li>-->
+
+<!--            <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/template">-->
+<!--              <span nz-icon nzType="fire" nzTheme="outline"></span>-->
+<!--              {{ '模板' }}-->
+<!--            </li>-->
+
+<!--            <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/spec">-->
+<!--              <span nz-icon nzType="gold" nzTheme="outline"></span>-->
+<!--              {{ '规范' }}-->
+<!--            </li>-->
+
+<!--            <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/namespace">-->
+<!--              <span nz-icon nzType="appstore" nzTheme="outline"></span>-->
+<!--              {{ '名字空间' }}-->
+<!--            </li>-->
+
+            <li nz-menu-item [nzMatchRouter]="true" (click)="changeLanguage()" style="float: right" >
+              <span nz-icon nzType="global" nzTheme="outline"></span>
+            </li>
+
+            <li nz-menu-item [nzMatchRouter]="true" routerLink="/passport" style="float: right">
+              @if (account.login()) {
+                <span nz-icon nzType="logout" nzTheme="outline"></span>
+                <span>{{ '退出' | translate }}</span>
+              } @else {
+                <span nz-icon nzType="login" nzTheme="outline"></span>
+                <span>{{ '登录' | translate }}</span>
+              }
+            </li>
+
+            @if (account.login()) {
+              <li nz-menu-item [nzMatchRouter]="true" routerLink="/account" style="float: right" >
+                <nz-space>
+                  <div *nzSpaceItem>
+<!--                    @switch (account.user().platform) {-->
+<!--                      @case ('wechat') {-->
+<!--                        <span nz-icon nzType="wechat" nzTheme="outline"></span>-->
+<!--                      }-->
+<!--                      @case ('github') {-->
+<!--                        <span nz-icon nzType="github" nzTheme="outline"></span>-->
+<!--                      }-->
+<!--                      @case ('facebook') {-->
+<!--                        <span nz-icon nzType="facebook" nzTheme="outline"></span>-->
+<!--                      }-->
+<!--                      @case ('google') {-->
+<!--                        <span nz-icon nzType="google" nzTheme="outline"></span>-->
+<!--                      }-->
+<!--                      @default {-->
+<!--                        <span nz-icon nzType="question" nzTheme="outline"></span>-->
+<!--                      }-->
+<!--                    }-->
+                    <nz-avatar nzIcon="user" nzSrc="{{account.user().avatar}}"></nz-avatar>
+                  </div>
+                  <div *nzSpaceItem>
+                    {{ account.user().name}}
+                  </div>
+                </nz-space>
+              </li>
+            }
+
+            @if (account.login()) {
+              @if (account.organization().id) {
+                <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/organization" style="float: right">
+                  {{ account.organization().name }} ({{ account.organization().id }})
+                </li>
+              } @else {
+                <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/organization/create" style="float: right">
+                  <span nz-icon nzType="plus-circle" nzTheme="outline"></span>
+                  <span>{{ '创建组织' }}</span>
+                </li>
+              }
+            }
+          </ul>
         </span>
+<!--        <span class="header-right">-->
+<!--          <span class="org-name" routerLink="/org-picker" tabindex="0">-->
+<!--            <nz-icon nzType="bank" nzTheme="outline" />-->
+<!--            <span>{{ account.organization?.name || '选择组织' }}</span>-->
+<!--          </span>-->
+<!--        </span>-->
       </div>
     </nz-header>
     <nz-content>

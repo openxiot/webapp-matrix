@@ -128,7 +128,7 @@ export class OrgPicker implements OnInit {
     this.service.removeOrganization(org.id).subscribe({
       next: () => {
         this.msg.success('删除成功');
-        if (this.account.organization?.id === org.id) {
+        if (this.account.organization().id === org.id) {
           this.account.clearCurrentRootSpace();
         }
         this.load();

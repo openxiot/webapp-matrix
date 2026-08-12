@@ -15,6 +15,8 @@ import zh from '@angular/common/locales/zh';
 import { provideNzDateFnsAdapter } from 'ng-zorro-antd/core/time';
 import { OxHttpInterceptor } from './service/interceptors/OxHttpInterceptor';
 import { JwtInterceptor } from './service/interceptors/JwtInterceptor';
+import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
+import { provideTranslateService } from '@ngx-translate/core';
 
 registerLocaleData(zh);
 
@@ -27,5 +29,13 @@ export const appConfig: ApplicationConfig = {
     provideNzI18n(zh_CN),
     provideNzDateFnsAdapter(),
     provideHttpClient(withInterceptors([OxHttpInterceptor, JwtInterceptor])),
+    provideTranslateService({
+      lang: 'en',
+      fallbackLang: 'en',
+      loader: provideTranslateHttpLoader({
+        prefix: 'i18n/',
+        suffix: '.json',
+      }),
+    }),
   ],
 };

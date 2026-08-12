@@ -16,7 +16,7 @@
       <ng-template #orgItem let-org>
         <nz-list-item
           class="org-item"
-          [class.selected]="account.organization?.id === org.id"
+          [class.selected]="account.organization().id === org.id"
           (click)="select(org)"
         >
           <nz-list-item-meta
@@ -29,7 +29,7 @@
             </ng-template>
             <ng-template #title>
               <span class="org-name">{{ org.name }}</span>
-              @if (account.organization?.id === org.id) {
+              @if (account.organization().id === org.id) {
                 <nz-tag class="current-tag" nzColor="blue">当前</nz-tag>
               }
             </ng-template>

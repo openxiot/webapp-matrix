@@ -31,22 +31,20 @@ export const routes: Routes = [
       },
       {
         path: 'settings',
-        loadChildren: () => import('./pages/settings/settings.routes').then((m) => m.SETTINGS_ROUTES),
+        loadChildren: () =>
+          import('./pages/settings/settings.routes').then((m) => m.SETTINGS_ROUTES),
       },
       {
         path: 'org-picker',
-        loadComponent: () =>
-          import('./pages/organization/org-picker').then((m) => m.OrgPicker),
+        loadComponent: () => import('./pages/organization/org-picker').then((m) => m.OrgPicker),
       },
       {
         path: 'org/:orgId',
-        loadComponent: () =>
-          import('./pages/organization/org-detail').then((m) => m.OrgDetail),
+        loadComponent: () => import('./pages/organization/org-detail').then((m) => m.OrgDetail),
       },
       {
         path: 'project-picker',
-        loadComponent: () =>
-          import('./pages/project/project-picker').then((m) => m.ProjectPicker),
+        loadComponent: () => import('./pages/project/project-picker').then((m) => m.ProjectPicker),
       },
       {
         path: 'space/:rootId',
@@ -54,8 +52,7 @@ export const routes: Routes = [
       },
       {
         path: 'device/:did',
-        loadComponent: () =>
-          import('./pages/device/device-detail').then((m) => m.DeviceDetail),
+        loadComponent: () => import('./pages/device/device-detail').then((m) => m.DeviceDetail),
       },
       {
         path: 'device-operation/:did',
@@ -64,13 +61,17 @@ export const routes: Routes = [
       },
       {
         path: 'product/:productId',
-        loadComponent: () =>
-          import('./pages/product/product-detail').then((m) => m.ProductDetail),
+        loadComponent: () => import('./pages/product/product-detail').then((m) => m.ProductDetail),
       },
       {
         path: 'account',
-        loadComponent: () => import('./pages/settings/account').then((m) => m.Account),
+        data: { breadcrumb: '账号' },
+        loadChildren: () => import('./pages/account/account.routes').then((m) => m.ACCOUNT_ROUTES),
       },
+      // {
+      //   path: 'account',
+      //   loadComponent: () => import('./pages/settings/account').then((m) => m.Account),
+      // },
       {
         path: 'about',
         loadComponent: () => import('./pages/settings/about').then((m) => m.About),

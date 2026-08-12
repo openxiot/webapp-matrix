@@ -2,10 +2,10 @@ import { Component, input, output } from '@angular/core';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
-import { ProjectService } from '../../service/project.service';
-import { SpaceEntity } from '../../typedef/define/space/SpaceEntity';
-import { DeviceEntity } from '../../typedef/define/device/DeviceEntity';
-import { SpaceUtils } from '../../typedef/utils/SpaceUtils';
+import { ProjectService } from '../../../service/project.service';
+import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
+import { DeviceEntity } from '../../../typedef/define/device/DeviceEntity';
+import { SpaceUtils } from '../../../typedef/utils/SpaceUtils';
 
 @Component({
   selector: 'app-space-tree-node',

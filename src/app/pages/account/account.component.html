@@ -1,0 +1,23 @@
+<nz-page-header [nzTitle]="pageTitle" [nzGhost]="false">
+  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+</nz-page-header>
+
+<ng-template #pageTitle>
+  {{ '账号' | translate }}
+</ng-template>
+
+<div style="padding: 20px 20px">
+  <nz-card style="width:300px;" [nzCover]="coverTemplate" [nzHoverable]="true">
+    <nz-card-meta
+      [nzTitle]="account.user().name"
+      [nzDescription]="account.user().email"
+      [nzAvatar]="avatarTemplate"
+    ></nz-card-meta>
+  </nz-card>
+  <ng-template #avatarTemplate>
+    <nz-avatar nzSrc="github.svg"></nz-avatar>
+  </ng-template>
+  <ng-template #coverTemplate>
+    <img alt="cover" src="{{ account.user().avatar}}"/>
+  </ng-template>
+</div>

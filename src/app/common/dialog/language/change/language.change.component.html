@@ -1,0 +1,41 @@
+<nz-row [nzGutter]="[8, 8]">
+  @for (lang of displayedLanguages; track lang.code) {
+    <nz-col [nzSpan]="4" (click)="changeLanguage(lang.code)">
+      <nz-card [nzHoverable]="true" nzSize="small">
+        <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
+      </nz-card>
+    </nz-col>
+
+    <ng-template #title>
+        <span>
+          <span>{{ lang.name }}</span>
+
+          @if (i18n.getCurrentLang() === lang.bcp47) {
+            <span style="float: right">
+              <span nz-icon nzType="check" nzTheme="outline"></span>
+            </span>
+          }
+        </span>
+    </ng-template>
+
+    <ng-template #desc>
+      {{ lang.bcp47 }}
+    </ng-template>
+  }
+
+  @if (!showAllLanguages && i18n.languages.length > 12) {
+    <nz-col [nzSpan]="4" (click)="showMore()">
+      <nz-card [nzHoverable]="true" nzSize="small">
+        <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
+      </nz-card>
+
+      <ng-template #title>
+        {{ '更多语言' | translate }}
+      </ng-template>
+
+      <ng-template #desc>
+        {{ '点击展开全部' | translate }}
+      </ng-template>
+    </nz-col>
+  }
+</nz-row>

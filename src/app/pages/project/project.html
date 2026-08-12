@@ -3,8 +3,8 @@
     <div class="context-item">
       <nz-icon nzType="bank" nzTheme="outline" />
       <span class="context-label">组织</span>
-      @if (account.organization) {
-        <span class="context-value">{{ account.organization.name }}</span>
+      @if (account.organization()) {
+        <span class="context-value">{{ account.organization().name }}</span>
         <a routerLink="/org-picker" class="context-link">切换</a>
       } @else {
         <span class="context-value context-muted">未选择</span>
@@ -24,7 +24,7 @@
     </div>
   </div>
 
-  @if (!account.organization) {
+  @if (account.organization().id.length > 0) {
     <nz-empty nzNotFoundImage="simple" [nzNotFoundContent]="'请先选择当前组织'" />
     <div class="empty-action">
       <button nz-button nzType="primary" routerLink="/org-picker">
@@ -32,7 +32,7 @@
         去选择组织
       </button>
     </div>
-  } @else if (!account.currentRootSpaceId()) {
+  } @else if (! account.currentRootSpaceId()) {
     <nz-empty nzNotFoundImage="simple" [nzNotFoundContent]="'请先选择当前项目'" />
     <div class="empty-action">
       <button nz-button nzType="primary" routerLink="/project-picker">

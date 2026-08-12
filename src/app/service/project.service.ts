@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AccountService } from './account.service';
 import { ProductService } from './product.service';
-import { SiteService } from './site.service';
+import { MatrixService } from './matrix.service';
 import { SpaceEntity } from '../typedef/define/space/SpaceEntity';
 import { DeviceEntity } from '../typedef/define/device/DeviceEntity';
 import { DeviceRegistration } from '../typedef/define/device/DeviceRegistration';
@@ -53,7 +53,7 @@ export class ProjectService {
   error = signal<string | null>(null);
 
   constructor(
-    private site: SiteService,
+    private site: MatrixService,
     private product: ProductService,
     private account: AccountService,
     private msg: NzMessageService,
@@ -118,7 +118,7 @@ export class ProjectService {
   }
 
   private resolveProductNames(devices: DeviceEntity[]) {
-    const orgId = this.account.organization?.id;
+    const orgId = this.account.organization().id;
 
     // 宽泛兜底：拉取组织可见的全部产品建立 model -> 名称/图标 映射
     if (orgId) {

@@ -45,7 +45,7 @@ export class Callback implements OnInit {
     developer.token = token;
     developer.platform = platform;
 
-    this.account.setDeveloper(developer);
+    this.account.setUser(developer);
 
     const redirect = this.route.snapshot.queryParams['redirect'];
     const target = redirect && redirect.startsWith('/') ? redirect : '/project';

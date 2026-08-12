@@ -13,7 +13,7 @@ import { DeviceRegistration } from '../typedef/define/device/DeviceRegistration'
 import { MoveDeviceRequest } from '../typedef/define/device/MoveDeviceRequest';
 
 @Injectable({ providedIn: 'root' })
-export class SiteService {
+export class MatrixService {
   private server: string = environment.server;
 
   constructor(private http: HttpClient) {}

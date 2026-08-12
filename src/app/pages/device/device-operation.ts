@@ -12,7 +12,7 @@ import { DeviceInstance, DeviceInstanceCodec } from '@openxiot/xiot-core-spec-ts
 import { AccountService } from '../../service/account.service';
 import { ProductService } from '../../service/product.service';
 import { ProjectService } from '../../service/project.service';
-import { SiteService } from '../../service/site.service';
+import { MatrixService } from '../../service/matrix.service';
 import { UrnUtils } from '../../typedef/utils/UrnUtils';
 
 interface SwitchItem {
@@ -50,7 +50,7 @@ export class DeviceOperation implements OnInit {
     private router: Router,
     private msg: NzMessageService,
     private product: ProductService,
-    private site: SiteService,
+    private site: MatrixService,
     private project: ProjectService,
     public account: AccountService,
   ) {}
