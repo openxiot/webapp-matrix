@@ -4,7 +4,7 @@ import {
   provideZonelessChangeDetection,
 } from '@angular/core';
 import { provideRouter, withHashLocation } from '@angular/router';
-import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
 import { icons } from './icons-provider';
@@ -26,9 +26,6 @@ export const appConfig: ApplicationConfig = {
     provideNzIcons(icons),
     provideNzI18n(zh_CN),
     provideNzDateFnsAdapter(),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([OxHttpInterceptor, JwtInterceptor]),
-    ),
+    provideHttpClient(withInterceptors([OxHttpInterceptor, JwtInterceptor])),
   ],
 };
