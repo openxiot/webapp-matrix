@@ -13,8 +13,8 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { AccountService } from '../../service/account.service';
-import { MatrixService } from '../../service/matrix.service';
-import { Organization } from '../../typedef/define/developer/Organization';
+import { UserService } from '../../service/user.service';
+import { Organization } from '../../typedef/define/user/Organization';
 
 @Component({
   selector: 'app-org-picker',
@@ -45,7 +45,7 @@ export class OrgPicker implements OnInit {
 
   constructor(
     public account: AccountService,
-    private service: MatrixService,
+    private service: UserService,
     private msg: NzMessageService,
     private router: Router,
   ) {}

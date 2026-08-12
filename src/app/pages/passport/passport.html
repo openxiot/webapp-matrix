@@ -13,12 +13,12 @@
 
         <nz-divider></nz-divider>
 
-        <nz-spin [nzSpinning]="loading">
+        <nz-spin [nzSpinning]="platforms.isLoading()">
           <div class="login-btn-container">
-            @if (config) {
-              <button nz-button nzType="primary" class="login-button" (click)="open(config)">
-                <span nz-icon [nzType]="iconOf(config.platformId)" nzTheme="outline"></span>
-                {{ config.platformName }} 登录
+            @if (config(); as primary) {
+              <button nz-button nzType="primary" class="login-button" (click)="open(primary)">
+                <span nz-icon [nzType]="iconOf(primary.platformId)" nzTheme="outline"></span>
+                {{ primary.platformName }} 登录
               </button>
             }
           </div>
@@ -26,19 +26,17 @@
           <nz-divider style="font-size: 12px; color: gray" nzText="或使用以下方式登录"></nz-divider>
 
           <div class="login-btn-others">
-            @for (item of list; track item.platformId) {
-              @if (item.platformId !== config?.platformId) {
-                <button
-                  nz-button
-                  nzSize="large"
-                  nzShape="circle"
-                  nz-tooltip
-                  [nzTooltipTitle]="item.platformName"
-                  (click)="open(item)"
-                >
-                  <span nz-icon [nzType]="iconOf(item.platformId)" nzTheme="outline"></span>
-                </button>
-              }
+            @for (item of others(); track item.platformId) {
+              <button
+                nz-button
+                nzSize="large"
+                nzShape="circle"
+                nz-tooltip
+                [nzTooltipTitle]="item.platformName"
+                (click)="open(item)"
+              >
+                <span nz-icon [nzType]="iconOf(item.platformId)" nzTheme="outline"></span>
+              </button>
             }
           </div>
         </nz-spin>

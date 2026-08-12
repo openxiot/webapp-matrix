@@ -10,20 +10,20 @@
   <nz-card [nzBordered]="false" class="account-card">
     <div class="account-head">
       <nz-avatar
-        [nzSrc]="account.developer.avatar || undefined"
+        [nzSrc]="account.user.avatar || undefined"
         [nzText]="initial()"
         [nzSize]="72"
       ></nz-avatar>
       <div class="account-info">
-        <div class="account-name">{{ account.developer.name || '未命名' }}</div>
-        <div class="account-platform">{{ account.developer.platform }}</div>
+        <div class="account-name">{{ account.user.name || '未命名' }}</div>
+        <div class="account-platform">{{ account.user.platform }}</div>
       </div>
     </div>
 
     <nz-descriptions nzSize="small" [nzColumn]="1" class="account-desc">
-      <nz-descriptions-item nzTitle="用户名">{{ account.developer.name || '-' }}</nz-descriptions-item>
-      <nz-descriptions-item nzTitle="登录平台">{{ account.developer.platform || '-' }}</nz-descriptions-item>
-      <nz-descriptions-item nzTitle="邮箱">{{ account.developer.email || '-' }}</nz-descriptions-item>
+      <nz-descriptions-item nzTitle="用户名">{{ account.user.name || '-' }}</nz-descriptions-item>
+      <nz-descriptions-item nzTitle="登录平台">{{ account.user.platform || '-' }}</nz-descriptions-item>
+      <nz-descriptions-item nzTitle="邮箱">{{ account.user.email || '-' }}</nz-descriptions-item>
       <nz-descriptions-item nzTitle="当前组织">{{ account.organization?.name || '未选择' }}</nz-descriptions-item>
       <nz-descriptions-item nzTitle="当前项目">{{ account.currentRootSpaceName() || '未选择' }}</nz-descriptions-item>
     </nz-descriptions>

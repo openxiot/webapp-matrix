@@ -22,7 +22,7 @@ export class Account {
   ) {}
 
   initial(): string {
-    return (this.account.developer.name || 'U').charAt(0).toUpperCase();
+    return (this.account.user.name || 'U').charAt(0).toUpperCase();
   }
 
   routerBack() {

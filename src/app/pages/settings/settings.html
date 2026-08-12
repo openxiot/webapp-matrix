@@ -2,13 +2,13 @@
   <a routerLink="/account" class="profile-header">
     <nz-avatar
       class="profile-avatar"
-      [nzSrc]="account.developer.avatar || undefined"
+      [nzSrc]="account.user.avatar || undefined"
       [nzText]="initial()"
       [nzSize]="64"
     ></nz-avatar>
     <div class="profile-info">
-      <div class="profile-name">{{ account.developer.name || '未命名' }}</div>
-      <div class="profile-platform">{{ account.developer.platform }}</div>
+      <div class="profile-name">{{ account.user.name || '未命名' }}</div>
+      <div class="profile-platform">{{ account.user.platform }}</div>
     </div>
     <nz-icon nzType="right" nzTheme="outline" class="chevron" />
   </a>

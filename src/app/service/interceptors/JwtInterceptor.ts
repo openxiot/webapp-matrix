@@ -11,7 +11,7 @@ export function JwtInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn) {
       (req.url.startsWith(environment.server) ||
         req.url.startsWith(environment.account))
     ) {
-      let headers = req.headers.append('Authorization', 'Bearer ' + account.developer.token);
+      let headers = req.headers.append('Authorization', 'Bearer ' + account.user.token);
       if (account.organization && account.organization.id.length > 0) {
         headers = headers.append('X-Org-Id', account.organization.id);
       }

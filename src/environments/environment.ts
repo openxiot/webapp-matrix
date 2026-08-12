@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  server: 'https://site.openxiot.cn',
+  server: 'https://matrix.openxiot.cn',
   account: 'https://account.openxiot.cn',
   product: 'https://product.openxiot.cn',
 };

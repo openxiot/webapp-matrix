@@ -4,6 +4,7 @@ export class Oauth2ConfigurationCodec {
   static decode(o: any): Oauth2Configuration {
     const x: Oauth2Configuration = new Oauth2Configuration();
 
+    x.type = o.type || 'null';
     x.platformId = o.platformId || '';
     x.platformName = o.platformName || '';
     x.clientId = o.clientId || '';
@@ -21,6 +22,7 @@ export class Oauth2ConfigurationCodec {
 
   static encode(x: Oauth2Configuration): any {
     return {
+      type: x.type || '',
       platformId: x.platformId,
       platformName: x.platformName,
       clientId: x.clientId,
@@ -40,7 +42,10 @@ export class Oauth2ConfigurationCodec {
 
     if (list instanceof Array) {
       list.forEach(json => {
-        array.push(Oauth2ConfigurationCodec.decode(json));
+        const item = Oauth2ConfigurationCodec.decode(json);
+        if (item.type === 'web') {
+          array.push(item);
+        }
       });
     }
 

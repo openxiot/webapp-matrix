@@ -14,8 +14,8 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { AccountService } from '../../service/account.service';
-import { MatrixService } from '../../service/matrix.service';
-import { Organization, OrganizationMember } from '../../typedef/define/developer/Organization';
+import { UserService } from '../../service/user.service';
+import { Organization, OrganizationMember } from '../../typedef/define/user/Organization';
 
 @Component({
   selector: 'app-org-detail',
@@ -53,7 +53,7 @@ export class OrgDetail implements OnInit {
     public account: AccountService,
     private route: ActivatedRoute,
     private router: Router,
-    private service: MatrixService,
+    private service: UserService,
     private msg: NzMessageService,
   ) {}
 
@@ -80,14 +80,14 @@ export class OrgDetail implements OnInit {
     });
   }
 
-  /** 当前用户标识：优先 developer.uid，兜底按名称匹配 */
+  /** 当前用户标识：优先 user.uid，兜底按名称匹配 */
   currentUserId(): string {
-    return this.account.developer.uid || '';
+    return this.account.user.id || '';
   }
 
   isCurrentUser(member: OrganizationMember): boolean {
     if (this.currentUserId()) return member.developerId === this.currentUserId();
-    return member.name === this.account.developer.name;
+    return member.name === this.account.user.name;
   }
 
   isAdmin(): boolean {

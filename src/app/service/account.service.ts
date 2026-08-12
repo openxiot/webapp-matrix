@@ -1,9 +1,9 @@
 import { Injectable, signal } from "@angular/core";
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { MatrixService } from './matrix.service';
-import { Organization } from '../typedef/define/developer/Organization';
-import { Developer } from '../typedef/define/developer/Developer';
-import { DeveloperCodec } from '../typedef/codec/developer/DeveloperCodec';
+import { UserService } from './user.service';
+import { Organization } from '../typedef/define/user/Organization';
+import { User } from '../typedef/define/user/User';
+import { UserCodec } from '../typedef/codec/user/UserCodec';
 
 @Injectable({ providedIn: 'root' })
 export class AccountService {
@@ -11,7 +11,7 @@ export class AccountService {
   public loading: boolean = false;
   public organizations: Organization[] = [];
   public login: boolean = false;
-  public developer: Developer = new Developer();
+  public user: User = new User();
   public organization!: Organization;
 
   /** 当前项目（根空间）上下文，持久化到 localStorage */
@@ -19,17 +19,17 @@ export class AccountService {
   public currentRootSpaceName = signal<string | null>(localStorage.getItem('current_root_space_name'));
 
   constructor(
-    private main: MatrixService,
+    private main: UserService,
     private msg: NzMessageService,
   ) {
     const a = localStorage.getItem('developer') || null;
     if (a !== null) {
-      this.developer = DeveloperCodec.decode(JSON.parse(a));
+      this.user = UserCodec.decode(JSON.parse(a));
       this.login = true;
     }
 
-    console.info('AccountService Constructed: ', this.developer);
-    console.info('developer.avatar: ' + this.developer.avatar);
+    console.info('AccountService Constructed: ', this.user);
+    console.info('user.avatar: ' + this.user.avatar);
   }
 
   setOrganization(organization: Organization) {
@@ -64,10 +64,10 @@ export class AccountService {
     }
   }
 
-  setDeveloper(developer: Developer) {
+  setDeveloper(developer: User) {
     console.log('setDeveloper: ', developer);
-    localStorage.setItem('developer', DeveloperCodec.encode(developer));
-    this.developer = developer;
+    localStorage.setItem('developer', UserCodec.encode(developer));
+    this.user = developer;
     this.login = true;
   }
 

@@ -1,8 +1,8 @@
-export class Developer {
+export class User {
 
   token: string = '';
   name: string = '';
-  uid: string = '';
+  id: string = '';
   platform: string = '';
   avatar: string = '';
   email: string = '';

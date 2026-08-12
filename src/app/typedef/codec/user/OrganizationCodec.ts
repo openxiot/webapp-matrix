@@ -1,4 +1,4 @@
-import {Organization, OrganizationMember, Person} from '../../define/developer/Organization';
+import {Organization, OrganizationMember, Person} from '../../define/user/Organization';
 
 export class OrganizationMemberCodec {
 

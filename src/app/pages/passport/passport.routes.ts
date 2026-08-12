@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { Passport } from './passport';
-import { Callback } from './callback';
+import { Callback } from './callback/callback';
 
 export const PASSPORT_ROUTES: Routes = [
   {

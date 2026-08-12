@@ -1,4 +1,5 @@
 export class Oauth2Configuration {
+  type: string = '';
   platformId: string = '';
   platformName: string = '';
   clientId: string = '';
