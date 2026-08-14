@@ -1,21 +1,21 @@
 <nz-form-item>
-  <nz-form-label [nzRequired]="true">用户ID</nz-form-label>
+  <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '用户ID' | translate }}</nz-form-label>
   <nz-form-control>
     <input nz-input [value]="userId()" (input)="onUserIdInput($event)" type="text"/>
   </nz-form-control>
 </nz-form-item>
 <nz-form-item>
-  <nz-form-label [nzRequired]="true">用户名称</nz-form-label>
+  <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '用户名称' | translate }}</nz-form-label>
   <nz-form-control>
     <input nz-input [value]="name()" (input)="onNameInput($event)" type="text"/>
   </nz-form-control>
 </nz-form-item>
 <nz-form-item>
-  <nz-form-label>用户角色</nz-form-label>
+  <nz-form-label [nzSpan]="4" >{{ '用户角色' | translate }}</nz-form-label>
   <nz-form-control>
-    <nz-select [ngModel]="role()" (ngModelChange)="onRoleChange($event)" style="width: 100%">
-      <nz-option nzValue="admin" nzLabel="管理员"></nz-option>
-      <nz-option nzValue="member" nzLabel="普通成员"></nz-option>
-    </nz-select>
+    <nz-radio-group [ngModel]="role()" nzButtonStyle="solid" (ngModelChange)="onRoleChange($event)">
+      <label nz-radio-button nzValue="admin">管理员</label>
+      <label nz-radio-button nzValue="member">普通成员</label>
+    </nz-radio-group>
   </nz-form-control>
 </nz-form-item>
