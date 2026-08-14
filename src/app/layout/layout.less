@@ -107,6 +107,8 @@ nz-header {
 
 nz-content {
   //margin: 24px;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   overflow: auto;
 }
@@ -114,9 +116,11 @@ nz-content {
 .inner-content {
   //padding: 8px;
   //background: #fff;
-  min-height: 100%;
+  // 填充内容区剩余高度（footer 也在滚动区内，min-height:100% 会让 footer 叠加溢出产生多余滚动条）
+  flex: 1 0 auto;
 }
 
 nz-footer {
+  flex: 0 0 auto;
   text-align: center;
 }
