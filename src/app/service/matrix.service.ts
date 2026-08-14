@@ -23,43 +23,43 @@ export class MatrixService {
    *------------------------------------------------------------------------------------------------*/
   getAllSpaces(): Observable<SpaceEntity[]> {
     return this.http
-      .get<OxResponse>(`${this.server}/v1/space/all`)
+      .get<OxResponse>(`${this.server}/matrix/v1/space/all`)
       .pipe(map((r) => SpaceEntityCodec.decodeArray(r.data)));
   }
 
   getSpace(id: string): Observable<SpaceEntity> {
     return this.http
-      .get<OxResponse>(`${this.server}/v1/space/one/${id}`)
+      .get<OxResponse>(`${this.server}/matrix/v1/space/one/${id}`)
       .pipe(map((r) => SpaceEntityCodec.decode(r.data)));
   }
 
   getSpaceTree(rootId: string): Observable<SpaceEntity> {
     return this.http
-      .get<OxResponse>(`${this.server}/v1/space/tree/${rootId}`)
+      .get<OxResponse>(`${this.server}/matrix/v1/space/tree/${rootId}`)
       .pipe(map((r) => SpaceEntityCodec.decode(r.data)));
   }
 
   getSpaceGraph(rootId: string): Observable<SpaceGraph> {
     return this.http
-      .get<OxResponse>(`${this.server}/v1/space/graph/${rootId}`)
+      .get<OxResponse>(`${this.server}/matrix/v1/space/graph/${rootId}`)
       .pipe(map((r) => SpaceGraphCodec.decode(r.data)));
   }
 
   createSpace(space: SpaceEntity): Observable<SpaceEntity> {
     return this.http
-      .post<OxResponse>(`${this.server}/v1/space/one`, SpaceEntityCodec.encode(space))
+      .post<OxResponse>(`${this.server}/matrix/v1/space/one`, SpaceEntityCodec.encode(space))
       .pipe(map((r) => SpaceEntityCodec.decode(r.data)));
   }
 
   updateSpace(space: SpaceEntity): Observable<SpaceEntity> {
     return this.http
-      .put<OxResponse>(`${this.server}/v1/space/one`, SpaceEntityCodec.encode(space))
+      .put<OxResponse>(`${this.server}/matrix/v1/space/one`, SpaceEntityCodec.encode(space))
       .pipe(map((r) => SpaceEntityCodec.decode(r.data)));
   }
 
   deleteSpace(spaceId: string): Observable<void> {
     return this.http
-      .delete<OxResponse>(`${this.server}/v1/space/one/${spaceId}`)
+      .delete<OxResponse>(`${this.server}/matrix/v1/space/one/${spaceId}`)
       .pipe(map(() => undefined));
   }
 
@@ -68,26 +68,26 @@ export class MatrixService {
    *------------------------------------------------------------------------------------------------*/
   getDevices(spaceId: string): Observable<DeviceEntity[]> {
     return this.http
-      .get<OxResponse>(`${this.server}/v1/device/many/${spaceId}`)
+      .get<OxResponse>(`${this.server}/matrix/v1/device/many/${spaceId}`)
       .pipe(map((r) => DeviceEntityCodec.decodeArray(r.data)));
   }
 
   addDevices(spaceId: string, devices: DeviceRegistration[]): Observable<void> {
     return this.http
-      .post<OxResponse>(`${this.server}/v1/device/many/${spaceId}`, devices)
+      .post<OxResponse>(`${this.server}/matrix/v1/device/many/${spaceId}`, devices)
       .pipe(map(() => undefined));
   }
 
   /** 通过二维码内容添加设备，body 为解析后的 key:value map */
   addDeviceByQr(spaceId: string, body: Record<string, string>): Observable<void> {
     return this.http
-      .post<OxResponse>(`${this.server}/v1/device/one/${spaceId}`, body)
+      .post<OxResponse>(`${this.server}/matrix/v1/device/one/${spaceId}`, body)
       .pipe(map(() => undefined));
   }
 
   moveDevices(req: MoveDeviceRequest): Observable<void> {
     return this.http
-      .put<OxResponse>(`${this.server}/v1/device/many/space`, req)
+      .put<OxResponse>(`${this.server}/matrix/v1/device/many/space`, req)
       .pipe(map(() => undefined));
   }
 
@@ -97,19 +97,19 @@ export class MatrixService {
       params = params.append('pid', pid);
     }
     return this.http
-      .get<OxResponse>(`${this.server}/v1/device/properties/${spaceId}`, { params })
+      .get<OxResponse>(`${this.server}/matrix/v1/device/properties/${spaceId}`, { params })
       .pipe(map((r) => (r.data as Array<Record<string, unknown>>) || []));
   }
 
   setDeviceProperties(spaceId: string, body: Record<string, unknown>): Observable<Array<Record<string, unknown>>> {
     return this.http
-      .post<OxResponse>(`${this.server}/v1/device/properties/${spaceId}`, body)
+      .post<OxResponse>(`${this.server}/matrix/v1/device/properties/${spaceId}`, body)
       .pipe(map((r) => (r.data as Array<Record<string, unknown>>) || []));
   }
 
   invokeDeviceAction(spaceId: string, body: Record<string, unknown>): Observable<Array<Record<string, unknown>>> {
     return this.http
-      .post<OxResponse>(`${this.server}/v1/device/actions/${spaceId}`, body)
+      .post<OxResponse>(`${this.server}/matrix/v1/device/actions/${spaceId}`, body)
       .pipe(map((r) => (r.data as Array<Record<string, unknown>>) || []));
   }
 }

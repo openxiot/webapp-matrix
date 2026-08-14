@@ -15,15 +15,15 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { BreadcrumbTranslateDirective } from '../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { Organization } from '../../typedef/define/user/Organization';
 import { AccountService } from '../../service/account.service';
-import { UserOrganizationService } from '../../service/user.organization.service';
+import { SpaceEntity } from '../../typedef/define/space/SpaceEntity';
+import { MatrixService } from '../../service/matrix.service';
 
 @Component({
-  selector: 'main-organization',
+  selector: 'main-project',
   standalone: true,
-  templateUrl: './organization.component.html',
-  styleUrl: './organization.component.less',
+  templateUrl: './project.component.html',
+  styleUrl: './project.component.less',
   imports: [
     FormsModule,
     NzPageHeaderModule,
@@ -39,18 +39,17 @@ import { UserOrganizationService } from '../../service/user.organization.service
     RouterLink,
     TranslatePipe,
     NzColDirective,
-    NzIconDirective,
     NzRowDirective,
   ],
 })
-export class OrganizationComponent implements OnInit {
+export class ProjectComponent implements OnInit {
   loading = signal(true);
-  organizations = signal<Organization[]>([]);
+  spaces = signal<SpaceEntity[]>([]);
 
   constructor(
     public account: AccountService,
     private router: Router,
-    private service: UserOrganizationService,
+    private service: MatrixService,
     private msg: NzMessageService,
   ) {}
 
@@ -60,9 +59,9 @@ export class OrganizationComponent implements OnInit {
 
   loadDataFromServer(): void {
     this.loading.set(true);
-    this.service.getOrganizations().subscribe({
+    this.service.getAllSpaces().subscribe({
       next: (data) => {
-        this.organizations.set(data);
+        this.spaces.set(data);
         this.loading.set(false);
       },
       error: (error) => {
@@ -72,16 +71,16 @@ export class OrganizationComponent implements OnInit {
     });
   }
 
-  protected setCurrentOrganization(organization: Organization) {
-    this.account.setOrganization(organization);
-
-    this.router
-      .navigate(['/'])
-      .then(() => {
-        console.log('setCurrentOrganization ok!');
-      })
-      .catch((e) => {
-        console.log('setCurrentOrganization failed: ', e);
-      });
+  protected setCurrentProject(space: SpaceEntity) {
+  //   this.account.setOrganization(organization);
+  //
+  //   this.router
+  //     .navigate(['/'])
+  //     .then(() => {
+  //       console.log('setCurrentOrganization ok!');
+  //     })
+  //     .catch((e) => {
+  //       console.log('setCurrentOrganization failed: ', e);
+  //     });
   }
 }

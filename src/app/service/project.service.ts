@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { Observable } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AccountService } from './account.service';
 import { ProductService } from './product.service';
@@ -53,7 +54,7 @@ export class ProjectService {
   error = signal<string | null>(null);
 
   constructor(
-    private site: MatrixService,
+    private matrix: MatrixService,
     private product: ProductService,
     private account: AccountService,
     private msg: NzMessageService,
@@ -63,7 +64,7 @@ export class ProjectService {
     this.loading.set(true);
     this.error.set(null);
 
-    this.site.getSpaceGraph(rootId).subscribe({
+    this.matrix.getSpaceGraph(rootId).subscribe({
       next: (graph) => {
         this.rootSpace.set(buildTree(graph.spaces));
         this.devices.set(graph.devices);
@@ -167,28 +168,33 @@ export class ProjectService {
    * 空间/设备操作（操作成功后刷新）
    *------------------------------------------------------------------------------------------------*/
   createSpace(space: SpaceEntity, rootId: string) {
-    this.site.createSpace(space).subscribe({
+    this.matrix.createSpace(space).subscribe({
       next: () => this.loadSpaceGraph(rootId),
       error: (e) => this.msg.error(e?.message ?? e),
     });
   }
 
+  /** 创建根空间（项目），返回创建后的空间实体（含新 id） */
+  createRootSpace(space: SpaceEntity): Observable<SpaceEntity> {
+    return this.matrix.createSpace(space);
+  }
+
   updateSpace(space: SpaceEntity, rootId: string) {
-    this.site.updateSpace(space).subscribe({
+    this.matrix.updateSpace(space).subscribe({
       next: () => this.loadSpaceGraph(rootId),
       error: (e) => this.msg.error(e?.message ?? e),
     });
   }
 
   deleteSpace(spaceId: string, rootId: string) {
-    this.site.deleteSpace(spaceId).subscribe({
+    this.matrix.deleteSpace(spaceId).subscribe({
       next: () => this.loadSpaceGraph(rootId),
       error: (e) => this.msg.error(e?.message ?? e),
     });
   }
 
   addDevice(spaceId: string, registration: DeviceRegistration, rootId: string) {
-    this.site.addDevices(spaceId, [registration]).subscribe({
+    this.matrix.addDevices(spaceId, [registration]).subscribe({
       next: () => this.loadSpaceGraph(rootId),
       error: (e) => this.msg.error(e?.message ?? e),
     });
@@ -200,7 +206,7 @@ export class ProjectService {
       const kv = part.split(':', 2);
       if (kv.length === 2) body[kv[0].trim()] = kv[1].trim();
     }
-    this.site.addDeviceByQr(spaceId, body).subscribe({
+    this.matrix.addDeviceByQr(spaceId, body).subscribe({
       next: () => this.loadSpaceGraph(rootId),
       error: (e) => this.msg.error(e?.message ?? e),
     });
@@ -213,7 +219,7 @@ export class ProjectService {
       dids: [device.did],
     };
     const rootId = device.space?.rootId || this.rootSpace()?.id || '';
-    this.site.moveDevices(req).subscribe({
+    this.matrix.moveDevices(req).subscribe({
       next: () => this.loadSpaceGraph(rootId),
       error: (e) => this.msg.error(e?.message ?? e),
     });

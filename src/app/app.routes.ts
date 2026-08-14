@@ -24,6 +24,14 @@ export const routes: Routes = [
     component: Layout,
     canActivate: [authGuard],
     data: { breadcrumb: '组织' },
-    loadChildren: () => import('./pages/organization/organization.routes').then((m) => m.ORGANIZATION_ROUTES),
+    loadChildren: () =>
+      import('./pages/organization/organization.routes').then((m) => m.ORGANIZATION_ROUTES),
+  },
+  {
+    path: 'project',
+    component: Layout,
+    canActivate: [authGuard],
+    data: { breadcrumb: '项目' },
+    loadChildren: () => import('./pages/project/project.routes').then((m) => m.PROJECT_ROUTES),
   },
 ];

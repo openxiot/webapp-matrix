@@ -25,7 +25,7 @@ export class SpaceEntityCodec {
 
   static encode(x: SpaceEntity): any {
     return {
-      id: x.id,
+      // id: x.id,
       tenantId: x.tenantId,
       name: x.name,
       type: x.type,
