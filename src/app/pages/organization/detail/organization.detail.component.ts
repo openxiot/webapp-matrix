@@ -25,7 +25,7 @@ import { MainI18nService } from '../../../service/i18n.service';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { StringValueEditComponent } from '../../../common/dialog/string/string.value.edit.component';
 import { StringValue } from '../../../common/dialog/string/StringValue';
-import { MemberAddComponent } from '../../../common/dialog/member/member.add.component';
+import { MemberAddComponent } from '../../../common/dialog/member/add/member.add.component';
 
 @Component({
   selector: 'organization-detail',
@@ -185,6 +185,33 @@ export class OrganizationDetailComponent implements OnInit {
   }
 
   protected removeMember(member: OrganizationMember) {
+    const modal = this.modal.create<ConfirmComponent, string, string>({
+      nzTitle: this.i18n.translate.instant('您真的要删除这个成员吗？'),
+      nzContent: ConfirmComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: member.name,
+      nzFooter: [
+        {
+          label: this.i18n.translate.instant('取消'),
+          onClick: (component) => component!.cancel(),
+        },
+        {
+          label: this.i18n.translate.instant('确认'),
+          danger: true,
+          type: 'primary',
+          onClick: (component) => component!.ok(),
+        },
+      ],
+    });
+
+    modal.afterClose.subscribe((result) => {
+      if (result) {
+        this.doRemoveMember(member);
+      }
+    });
+  }
+
+  protected doRemoveMember(member: OrganizationMember) {
     this.loading.set(true);
     this.service.removeOrganizationMember(this.id(), member.userId).subscribe({
       next: () => {
