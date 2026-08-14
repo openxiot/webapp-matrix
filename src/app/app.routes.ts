@@ -34,4 +34,17 @@ export const routes: Routes = [
     data: { breadcrumb: '项目' },
     loadChildren: () => import('./pages/project/project.routes').then((m) => m.PROJECT_ROUTES),
   },
+  {
+    path: 'device',
+    component: Layout,
+    canActivate: [authGuard],
+    data: { breadcrumb: '设备' },
+    loadChildren: () => import('./pages/device/device.routes').then((m) => m.DEVICE_ROUTES),
+  },
+  {
+    path: 'product',
+    component: Layout,
+    data: { breadcrumb: '产品' },
+    loadChildren: () => import('./pages/product/product.routes').then((m) => m.PRODUCT_ROUTES),
+  },
 ];
