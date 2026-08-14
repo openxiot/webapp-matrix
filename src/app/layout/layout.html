@@ -77,16 +77,16 @@
             }
 
             @if (account.login()) {
-<!--              @if (account.organization().id) {-->
-<!--                <li nz-menu-item [nzMatchRouter]="true" routerLink="/project" style="float: right">-->
-<!--                  {{ account.organization().name }} ({{ account.organization().id }})-->
-<!--                </li>-->
-<!--              } @else {-->
+              @if (account.space().id) {
+                <li nz-menu-item [nzMatchRouter]="true" routerLink="/project" style="float: right">
+                  {{ account.space().name }}
+                </li>
+              } @else {
                 <li nz-menu-item [nzMatchRouter]="true" routerLink="/project/create" style="float: right">
                   <span nz-icon nzType="plus-circle" nzTheme="outline"></span>
                   <span>{{ '创建项目' }}</span>
                 </li>
-<!--              }-->
+              }
             }
           </ul>
         </span>

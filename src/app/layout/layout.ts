@@ -42,7 +42,7 @@ export class Layout implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.account.loadOrganizations();
+    this.account.load();
   }
 
   protected changeLanguage() {

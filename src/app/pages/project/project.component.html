@@ -10,14 +10,14 @@
 </nz-page-header>
 
 <ng-template #pageTitle>
-  {{ '组织' | translate }}
+  {{ '项目' | translate }}
 </ng-template>
 
 <div style="padding: 20px 20px">
 
   <nz-row [nzGutter]="[8, 8]">
     @for (space of spaces(); track space.id) {
-      <nz-col [nzSpan]="4" (click)="setCurrentProject(space)">
+      <nz-col [nzSpan]="8" (click)="setCurrentProject(space)">
         <nz-card [nzHoverable]="true" [nzActions]="[detail]">
           <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
         </nz-card>
@@ -27,11 +27,11 @@
         <span>
           <span>{{ space.id }}</span>
 
-<!--          @if (account.isCurrentOrganization(space)) {-->
-<!--            <span style="float: right">-->
-<!--              <span nz-icon nzType="check" nzTheme="outline"></span>-->
-<!--            </span>-->
-<!--          }-->
+          @if (account.isCurrentProject(space)) {
+            <span style="float: right">
+              <span nz-icon nzType="check" nzTheme="outline"></span>
+            </span>
+          }
         </span>
       </ng-template>
 
@@ -40,7 +40,7 @@
       </ng-template>
 
       <ng-template #detail>
-        <a [routerLink]="['/organization/detail', space.id]">{{ "详情" | translate }}</a>
+        <a [routerLink]="['/project/detail', space.id]">{{ "详情" | translate }}</a>
       </ng-template>
     }
   </nz-row>

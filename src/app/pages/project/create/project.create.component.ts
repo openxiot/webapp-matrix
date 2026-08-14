@@ -88,7 +88,7 @@ export class ProjectCreateComponent implements OnInit {
     this.service.createSpace(space).subscribe({
       next: (created) => {
         this.loading.set(false);
-        this.account.setCurrentRootSpace(created.id, created.name);
+        this.account.setCurrentProject(created);
         this.msg.success('创建项目成功');
         this.router.navigate(['/project']).then(() => {});
       },

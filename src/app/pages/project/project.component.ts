@@ -40,6 +40,7 @@ import { MatrixService } from '../../service/matrix.service';
     TranslatePipe,
     NzColDirective,
     NzRowDirective,
+    NzIconDirective,
   ],
 })
 export class ProjectComponent implements OnInit {
@@ -72,15 +73,15 @@ export class ProjectComponent implements OnInit {
   }
 
   protected setCurrentProject(space: SpaceEntity) {
-  //   this.account.setOrganization(organization);
-  //
-  //   this.router
-  //     .navigate(['/'])
-  //     .then(() => {
-  //       console.log('setCurrentOrganization ok!');
-  //     })
-  //     .catch((e) => {
-  //       console.log('setCurrentOrganization failed: ', e);
-  //     });
+    this.account.setCurrentProject(space);
+
+    this.router
+      .navigate(['/'])
+      .then(() => {
+        console.log('setCurrentProject ok!');
+      })
+      .catch((e) => {
+        console.log('setCurrentProject failed: ', e);
+      });
   }
 }

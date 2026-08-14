@@ -4,24 +4,23 @@ import { UserOrganizationService } from './user.organization.service';
 import { Organization } from '../typedef/define/user/Organization';
 import { User } from '../typedef/define/user/User';
 import { UserCodec } from '../typedef/codec/user/UserCodec';
+import { SpaceEntity } from '../typedef/define/space/SpaceEntity';
+import { MatrixService } from './matrix.service';
 
 @Injectable({ providedIn: 'root' })
 export class AccountService {
   public loading = signal(false);
   public organizations: Organization[] = [];
+  public spaces: SpaceEntity[] = [];
 
   public login = signal(false);
   public user = signal<User>(new User());
   public organization = signal<Organization>(new Organization());
-
-  /** 当前项目（根空间）上下文，持久化到 localStorage */
-  public currentRootSpaceId = signal<string | null>(localStorage.getItem('current_root_space_id'));
-  public currentRootSpaceName = signal<string | null>(
-    localStorage.getItem('current_root_space_name'),
-  );
+  public space = signal<SpaceEntity>(new SpaceEntity());
 
   constructor(
     private service: UserOrganizationService,
+    private matrix: MatrixService,
     private msg: NzMessageService,
   ) {
     const a = localStorage.getItem('user') || null;
@@ -29,9 +28,6 @@ export class AccountService {
       this.user.set(UserCodec.decode(JSON.parse(a)));
       this.login.set(true);
     }
-
-    console.info('AccountService Constructed: ', this.user);
-    console.info('user.avatar: ' + this.user().avatar);
   }
 
   setOrganization(organization: Organization) {
@@ -52,18 +48,22 @@ export class AccountService {
     return false;
   }
 
-  setCurrentRootSpace(id: string, name: string) {
-    localStorage.setItem('current_root_space_id', id);
-    localStorage.setItem('current_root_space_name', name);
-    this.currentRootSpaceId.set(id);
-    this.currentRootSpaceName.set(name);
+  public isCurrentProject(space: SpaceEntity): boolean {
+    if (this.space()) {
+      return this.space().id === space.id;
+    }
+
+    return false;
+  }
+
+  setCurrentProject(space: SpaceEntity) {
+    localStorage.setItem('spaceId', space.id);
+    this.space.set(space);
   }
 
   clearCurrentRootSpace() {
-    localStorage.removeItem('current_root_space_id');
-    localStorage.removeItem('current_root_space_name');
-    this.currentRootSpaceId.set(null);
-    this.currentRootSpaceName.set(null);
+    localStorage.removeItem('spaceId');
+    this.space.set(new SpaceEntity());
   }
 
   private isOrganizationChanged(organization: Organization): boolean {
@@ -85,22 +85,45 @@ export class AccountService {
     console.log('clear');
     localStorage.clear();
     this.login.set(false);
-    this.currentRootSpaceId.set(null);
-    this.currentRootSpaceName.set(null);
+    this.space.set(new SpaceEntity());
   }
 
-  public loadOrganizations() {
+  public load() {
+    this.loadOrganizations();
+  }
+
+  private loadOrganizations() {
     if (this.login()) {
       this.service.getOrganizations().subscribe({
         next: (data) => {
           this.organizations = data;
           this.selectCurrentOrganization();
           this.loading.set(false);
+
+          this.loadSpaces();
         },
         error: (error) => {
           this.msg.warning(error);
         },
       });
+    }
+  }
+
+  private loadSpaces() {
+    if (this.organization()) {
+      if (this.organization().id.length > 0) {
+        this.loading.set(true);
+        this.matrix.getAllSpaces().subscribe({
+          next: (data) => {
+            this.spaces = data;
+            this.selectCurrentSpace();
+            this.loading.set(false);
+          },
+          error: (error) => {
+            this.msg.warning(error);
+          },
+        });
+      }
     }
   }
 
@@ -115,6 +138,21 @@ export class AccountService {
       if (this.organizations.length > 0) {
         const org = this.organizations[0];
         this.setOrganization(org);
+      }
+    }
+  }
+
+  private selectCurrentSpace() {
+    const selected = localStorage.getItem('spaceId') || null;
+    if (selected !== null) {
+      const project = this.spaces.find((x) => x.id === selected);
+      if (project) {
+        this.setCurrentProject(project);
+      }
+    } else {
+      if (this.spaces.length > 0) {
+        const project = this.spaces[0];
+        this.setCurrentProject(project);
       }
     }
   }

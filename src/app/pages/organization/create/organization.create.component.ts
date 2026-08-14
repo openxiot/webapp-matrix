@@ -76,7 +76,7 @@ export class OrganizationCreateComponent implements OnInit {
       next: () => {
         console.log('createOrganization ok');
         this.loading.set(false);
-        this.account.loadOrganizations();
+        this.account.load();
         this.router.navigate(['/']).then(() => {});
       },
       error: (error) => {
