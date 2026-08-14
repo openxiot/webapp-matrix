@@ -7,12 +7,20 @@
 
 .app-layout {
   height: 100vh;
+  overflow: hidden;
+}
+
+.app-inner-layout {
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .menu-sidebar {
   position: relative;
   z-index: 10;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: auto;
   box-shadow: 2px 0 6px rgba(0, 21, 41, 0.35);
 }
 
@@ -99,6 +107,8 @@ nz-header {
 
 nz-content {
   //margin: 24px;
+  min-height: 0;
+  overflow: auto;
 }
 
 .inner-content {
