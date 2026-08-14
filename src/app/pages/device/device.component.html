@@ -1,47 +1,52 @@
-<nz-page-header [nzTitle]="pageTitle" [nzGhost]="false">
-  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+<nz-spin [nzSpinning]="project.loading()">
+  <nz-page-header [nzTitle]="pageTitle" [nzGhost]="false">
+    <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+  </nz-page-header>
 
-  @if (account.login()) {
-    <nz-page-header-extra>
-      <button nz-button nzType="primary" [nzDanger]="true" [routerLink]="['/organization/create']">{{ '创建' | translate }}
-      </button>
-    </nz-page-header-extra>
-  }
-</nz-page-header>
+  <ng-template #pageTitle>
+    {{ '设备' | translate }}
+  </ng-template>
 
-<ng-template #pageTitle>
-  {{ '项目' | translate }}
-</ng-template>
+  <div style="padding: 20px 20px">
+    @if (account.space().id) {
+      @if (project.devices().length > 0) {
+        <nz-row [nzGutter]="[16, 16]">
+          @for (device of project.devices(); track device.did) {
+            <nz-col [nzSpan]="6">
+              <nz-card [nzHoverable]="true" [nzActions]="[detail]">
+                <nz-card-meta [nzTitle]="title" [nzDescription]="desc" [nzAvatar]="avatar"></nz-card-meta>
+              </nz-card>
 
-<div style="padding: 20px 20px">
+              <ng-template #avatar>
+                @if (project.deviceIcon(device); as icon) {
+                  <nz-avatar [nzSrc]="icon" [nzSize]="40"></nz-avatar>
+                } @else {
+                  <nz-avatar [nzSize]="40" nzIcon="hdd"></nz-avatar>
+                }
+              </ng-template>
 
-  <nz-row [nzGutter]="[8, 8]">
-    @for (space of spaces(); track space.id) {
-      <nz-col [nzSpan]="8" (click)="setCurrentProject(space)">
-        <nz-card [nzHoverable]="true" [nzActions]="[detail]">
-          <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
-        </nz-card>
-      </nz-col>
+              <ng-template #title>
+                {{ project.deviceName(device) }}
+              </ng-template>
 
-      <ng-template #title>
-        <span>
-          <span>{{ space.id }}</span>
+              <ng-template #desc>
+                <nz-tag [nzColor]="device.online ? 'success' : 'default'">{{ device.online ? '在线' : '离线' }}</nz-tag>
+                <div>{{ device.did }}</div>
+                <div>{{ deviceTypeLabel(device) }}</div>
+                <div>{{ '所在空间' | translate }}: {{ project.spaceName(device.space.spaceId) }}</div>
+              </ng-template>
 
-          @if (account.isCurrentProject(space)) {
-            <span style="float: right">
-              <span nz-icon nzType="check" nzTheme="outline"></span>
-            </span>
+              <ng-template #detail>
+                <a [routerLink]="['/device/detail', device.did]">{{ '详情' | translate }}</a>
+              </ng-template>
+            </nz-col>
           }
-        </span>
-      </ng-template>
-
-      <ng-template #desc>
-        {{ space.name }}
-      </ng-template>
-
-      <ng-template #detail>
-        <a [routerLink]="['/project/detail', space.id]">{{ "详情" | translate }}</a>
-      </ng-template>
+        </nz-row>
+      } @else if (!project.loading()) {
+        <nz-empty></nz-empty>
+      }
+    } @else {
+      <nz-empty [nzNotFoundContent]="'请先在项目列表中选择一个项目'"></nz-empty>
     }
-  </nz-row>
-</div>
+  </div>
+</nz-spin>

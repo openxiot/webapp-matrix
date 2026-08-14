@@ -1,0 +1,14 @@
+<nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
+  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+</nz-page-header>
+
+<ng-template #pageTitle>
+  {{ '设备详情' | translate }}
+</ng-template>
+
+<div style="padding: 20px 20px">
+  <nz-card nzSize="small">
+    <p>{{ '设备 ID' | translate }}: {{ id() }}</p>
+    <p style="color: #999">{{ '设备详情功能开发中...' | translate }}</p>
+  </nz-card>
+</div>

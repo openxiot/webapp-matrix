@@ -2,22 +2,17 @@ import { Component, OnInit, signal } from '@angular/core';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
-import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzCardModule } from 'ng-zorro-antd/card';
-import { NzTabsModule } from 'ng-zorro-antd/tabs';
-import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
-import { NzTableModule } from 'ng-zorro-antd/table';
-import { NzButtonComponent } from 'ng-zorro-antd/button';
-import { NzWaveDirective } from 'ng-zorro-antd/core/wave';
-import { Router, RouterLink } from '@angular/router';
+import { NzAvatarModule } from 'ng-zorro-antd/avatar';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
-import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { BreadcrumbTranslateDirective } from '../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { AccountService } from '../../service/account.service';
-import { SpaceEntity } from '../../typedef/define/space/SpaceEntity';
-import { MatrixService } from '../../service/matrix.service';
+import { ProductService } from '../../service/product.service';
+import { ProductBasic } from '@openxiot/xiot-core-spec-ts';
+import { MainI18nService } from '../../service/i18n.service';
 
 @Component({
   selector: 'main-product',
@@ -25,44 +20,34 @@ import { MatrixService } from '../../service/matrix.service';
   templateUrl: './product.component.html',
   styleUrl: './product.component.less',
   imports: [
-    FormsModule,
     NzPageHeaderModule,
     NzBreadCrumbModule,
     BreadcrumbTranslateDirective,
     NzSpinModule,
     NzCardModule,
-    NzTabsModule,
-    NzTableModule,
-    NzDescriptionsModule,
-    NzButtonComponent,
-    NzWaveDirective,
+    NzAvatarModule,
+    NzEmptyModule,
     RouterLink,
     TranslatePipe,
     NzColDirective,
     NzRowDirective,
-    NzIconDirective,
   ],
 })
 export class ProductComponent implements OnInit {
-  loading = signal(true);
-  spaces = signal<SpaceEntity[]>([]);
+  loading = signal(false);
+  products = signal<ProductBasic[]>([]);
 
   constructor(
-    public account: AccountService,
-    private router: Router,
-    private service: MatrixService,
+    private service: ProductService,
     private msg: NzMessageService,
+    protected i18n: MainI18nService,
   ) {}
 
   ngOnInit() {
-    this.loadDataFromServer();
-  }
-
-  loadDataFromServer(): void {
     this.loading.set(true);
-    this.service.getAllSpaces().subscribe({
+    this.service.getPublicProducts().subscribe({
       next: (data) => {
-        this.spaces.set(data);
+        this.products.set(data);
         this.loading.set(false);
       },
       error: (error) => {
@@ -72,16 +57,8 @@ export class ProductComponent implements OnInit {
     });
   }
 
-  protected setCurrentProject(space: SpaceEntity) {
-    this.account.setCurrentProject(space);
-
-    this.router
-      .navigate(['/'])
-      .then(() => {
-        console.log('setCurrentProject ok!');
-      })
-      .catch((e) => {
-        console.log('setCurrentProject failed: ', e);
-      });
+  /** 产品显示名：中文名 -> model -> id */
+  productName(p: ProductBasic): string {
+    return p.name?.value?.get('zh-CN') || p.model || p.id || '未知产品';
   }
 }

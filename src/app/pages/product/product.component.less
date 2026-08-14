@@ -1,0 +1,16 @@
+::ng-deep .ant-card-cover {
+  position: relative;
+  width: 100%;
+  padding-top: 100%; /* 关键：高度 = 宽度（正方形） */
+  overflow: hidden; /* 隐藏超出容器的部分 */
+}
+
+::ng-deep .ant-card-cover .cover-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 关键：图片缩放至覆盖容器，保持宽高比（裁剪超出部分） */
+  /* 可选：object-fit: contain; （图片完整显示，容器内可能留空白） */
+}
