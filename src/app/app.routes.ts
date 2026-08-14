@@ -51,6 +51,13 @@ export const routes: Routes = [
     path: 'dashboard',
     component: Layout,
     data: { breadcrumb: '首页' },
-    loadChildren: () => import('./pages/dashboard/dashboard.routes').then((m) => m.DASHBOARD_ROUTES),
+    loadChildren: () =>
+      import('./pages/dashboard/dashboard.routes').then((m) => m.DASHBOARD_ROUTES),
+  },
+  {
+    path: 'alarm',
+    component: Layout,
+    data: { breadcrumb: '报警' },
+    loadChildren: () => import('./pages/alarm/alarm.routes').then((m) => m.ALARM_ROUTES),
   },
 ];

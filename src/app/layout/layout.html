@@ -14,7 +14,7 @@
     </div>
     <ul nz-menu nzTheme="dark" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
       <li nz-menu-item routerLink="/dashboard" [nzMatchRouter]="true">
-        <nz-icon nzType="project" nzTheme="outline" />
+        <nz-icon nzType="dashboard" nzTheme="outline" />
         <span>{{ '首页' | translate }}</span>
       </li>
       <li nz-menu-item routerLink="/project" [nzMatchRouter]="true">
@@ -24,6 +24,10 @@
       <li nz-menu-item routerLink="/device" [nzMatchRouter]="true">
         <nz-icon nzType="bulb" nzTheme="outline" />
         <span>{{ '设备' | translate }}</span>
+      </li>
+      <li nz-menu-item routerLink="/alarm" [nzMatchRouter]="true">
+        <nz-icon nzType="alert" nzTheme="outline" />
+        <span>{{ '报警' | translate }}</span>
       </li>
       <li nz-menu-item routerLink="/product" [nzMatchRouter]="true">
         <nz-icon nzType="table" nzTheme="outline" />
