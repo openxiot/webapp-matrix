@@ -25,10 +25,10 @@
         <nz-icon nzType="table" nzTheme="outline" />
         <span>产品</span>
       </li>
-      <li nz-menu-item routerLink="/settings" [nzMatchRouter]="true">
-        <nz-icon nzType="user" nzTheme="outline" />
-        <span>我</span>
-      </li>
+<!--      <li nz-menu-item routerLink="/settings" [nzMatchRouter]="true">-->
+<!--        <nz-icon nzType="user" nzTheme="outline" />-->
+<!--        <span>我</span>-->
+<!--      </li>-->
     </ul>
   </nz-sider>
   <nz-layout>
@@ -111,11 +111,11 @@
 
             @if (account.login()) {
               @if (account.organization().id) {
-                <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/organization" style="float: right">
+                <li nz-menu-item [nzMatchRouter]="true" routerLink="/organization" style="float: right">
                   {{ account.organization().name }} ({{ account.organization().id }})
                 </li>
               } @else {
-                <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/organization/create" style="float: right">
+                <li nz-menu-item [nzMatchRouter]="true" routerLink="/organization/create" style="float: right">
                   <span nz-icon nzType="plus-circle" nzTheme="outline"></span>
                   <span>{{ '创建组织' }}</span>
                 </li>

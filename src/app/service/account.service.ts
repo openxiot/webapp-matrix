@@ -1,6 +1,6 @@
 import { Injectable, signal } from "@angular/core";
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { UserService } from './user.service';
+import { UserOrganizationService } from './user.organization.service';
 import { Organization } from '../typedef/define/user/Organization';
 import { User } from '../typedef/define/user/User';
 import { UserCodec } from '../typedef/codec/user/UserCodec';
@@ -21,10 +21,10 @@ export class AccountService {
   );
 
   constructor(
-    private main: UserService,
+    private service: UserOrganizationService,
     private msg: NzMessageService,
   ) {
-    const a = localStorage.getItem('developer') || null;
+    const a = localStorage.getItem('user') || null;
     if (a !== null) {
       this.user.set(UserCodec.decode(JSON.parse(a)));
       this.login.set(true);
@@ -42,6 +42,14 @@ export class AccountService {
       // 切换组织后清空当前项目（对齐 Android TokenManager 行为）
       this.clearCurrentRootSpace();
     }
+  }
+
+  public isCurrentOrganization(organization: Organization): boolean {
+    if (this.organization()) {
+      return this.organization().id === organization.id;
+    }
+
+    return false;
   }
 
   setCurrentRootSpace(id: string, name: string) {
@@ -68,7 +76,7 @@ export class AccountService {
 
   setUser(user: User) {
     console.log('setUser: ', user);
-    localStorage.setItem('setUser', UserCodec.encode(user));
+    localStorage.setItem('user', UserCodec.encode(user));
     this.user.set(user);
     this.login.set(true);
   }
@@ -83,7 +91,7 @@ export class AccountService {
 
   public loadOrganizations() {
     if (this.login()) {
-      this.main.getOrganizations().subscribe({
+      this.service.getOrganizations().subscribe({
         next: (data) => {
           this.organizations = data;
           this.selectCurrentOrganization();

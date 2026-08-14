@@ -37,18 +37,18 @@ export class Callback implements OnInit {
       return;
     }
 
-    const developer: User = new User();
-    developer.name = name;
-    developer.id = id;
-    developer.avatar = avatar;
-    developer.email = email;
-    developer.token = token;
-    developer.platform = platform;
+    const user: User = new User();
+    user.name = name;
+    user.id = id;
+    user.avatar = avatar;
+    user.email = email;
+    user.token = token;
+    user.platform = platform;
 
-    this.account.setUser(developer);
+    this.account.setUser(user);
 
     const redirect = this.route.snapshot.queryParams['redirect'];
-    const target = redirect && redirect.startsWith('/') ? redirect : '/project';
+    const target = redirect && redirect.startsWith('/') ? redirect : '/account';
     // 跳转后本页即被销毁，无需再关掉 loading
     void this.router.navigateByUrl(target);
   }

@@ -9,7 +9,7 @@ import { Oauth2Configuration } from '../typedef/define/oauth/Oauth2Configuration
 import { Oauth2ConfigurationCodec } from '../typedef/codec/oauth/Oauth2ConfigurationCodec';
 
 @Injectable({providedIn: 'root'})
-export class UserService {
+export class UserOrganizationService {
   private server: string = environment.server;
   private account: string = environment.account;
 

@@ -4,15 +4,15 @@ export class OrganizationMemberCodec {
 
   public static encode(member: OrganizationMember): any {
     return {
-      developerId: member.developerId,
+      userId: member.userId,
       role: member.role,
-      name: member.name
-    }
+      name: member.name,
+    };
   }
 
   static decode(o: any): OrganizationMember {
     let member = new OrganizationMember();
-    member.developerId = o.developerId;
+    member.userId = o.userId;
     member.role = o.role;
     member.name = o.name;
     member.update = new Date(o.update?.replace(/\[UTC]$/, ""));

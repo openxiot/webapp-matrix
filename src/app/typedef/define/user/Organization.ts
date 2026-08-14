@@ -1,5 +1,5 @@
 export class OrganizationMember {
-  developerId: string = '';
+  userId: string = '';
   role: string = '';
   name: string = '';
   update: Date = new Date();

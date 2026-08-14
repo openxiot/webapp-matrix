@@ -6,76 +6,24 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: '/project',
+    redirectTo: '/account',
   },
   {
     path: 'passport',
     loadChildren: () => import('./pages/passport/passport.routes').then((m) => m.PASSPORT_ROUTES),
   },
   {
-    path: '',
+    path: 'account',
     component: Layout,
     canActivate: [authGuard],
-    children: [
-      {
-        path: 'project',
-        loadChildren: () => import('./pages/project/project.routes').then((m) => m.PROJECT_ROUTES),
-      },
-      {
-        path: 'device',
-        loadChildren: () => import('./pages/device/device.routes').then((m) => m.DEVICE_ROUTES),
-      },
-      {
-        path: 'product',
-        loadChildren: () => import('./pages/product/product.routes').then((m) => m.PRODUCT_ROUTES),
-      },
-      {
-        path: 'settings',
-        loadChildren: () =>
-          import('./pages/settings/settings.routes').then((m) => m.SETTINGS_ROUTES),
-      },
-      {
-        path: 'org-picker',
-        loadComponent: () => import('./pages/organization/org-picker').then((m) => m.OrgPicker),
-      },
-      {
-        path: 'org/:orgId',
-        loadComponent: () => import('./pages/organization/org-detail').then((m) => m.OrgDetail),
-      },
-      {
-        path: 'project-picker',
-        loadComponent: () => import('./pages/project/project-picker').then((m) => m.ProjectPicker),
-      },
-      {
-        path: 'space/:rootId',
-        loadComponent: () => import('./pages/project/space-tree').then((m) => m.SpaceTree),
-      },
-      {
-        path: 'device/:did',
-        loadComponent: () => import('./pages/device/device-detail').then((m) => m.DeviceDetail),
-      },
-      {
-        path: 'device-operation/:did',
-        loadComponent: () =>
-          import('./pages/device/device-operation').then((m) => m.DeviceOperation),
-      },
-      {
-        path: 'product/:productId',
-        loadComponent: () => import('./pages/product/product-detail').then((m) => m.ProductDetail),
-      },
-      {
-        path: 'account',
-        data: { breadcrumb: '账号' },
-        loadChildren: () => import('./pages/account/account.routes').then((m) => m.ACCOUNT_ROUTES),
-      },
-      // {
-      //   path: 'account',
-      //   loadComponent: () => import('./pages/settings/account').then((m) => m.Account),
-      // },
-      {
-        path: 'about',
-        loadComponent: () => import('./pages/settings/about').then((m) => m.About),
-      },
-    ],
+    data: { breadcrumb: '账号' },
+    loadChildren: () => import('./pages/account/account.routes').then((m) => m.ACCOUNT_ROUTES),
+  },
+  {
+    path: 'organization',
+    component: Layout,
+    canActivate: [authGuard],
+    data: { breadcrumb: '组织' },
+    loadChildren: () => import('./pages/organization/organization.routes').then((m) => m.ORGANIZATION_ROUTES),
   },
 ];

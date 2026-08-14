@@ -1,0 +1,52 @@
+<nz-spin [nzSpinning]="loading()">
+  <nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
+    <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+
+    <nz-page-header-content>
+      <nz-descriptions nzSize="small" [nzColumn]="4">
+        <nz-descriptions-item nzTitle="{{ '组织代码' | translate }}" [nzSpan]="1">{{ organization().id }}
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="{{ '组织名称' | translate }}" [nzSpan]="1"><a>{{ organization().name }}</a>
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="{{ '创建者' | translate }}" [nzSpan]="1">{{ organization().creator.name }}
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="{{ '创建时间' | translate }}"
+                              [nzSpan]="1">{{ organization().creator.timestamp | date:'yyyy-MM-dd HH:mm:ss':'GMT+00:00' }}
+        </nz-descriptions-item>
+      </nz-descriptions>
+    </nz-page-header-content>
+  </nz-page-header>
+
+  <ng-template #pageTitle>
+    {{ '组织详情' | translate }}
+  </ng-template>
+
+  <div style="padding: 20px 20px">
+    <nz-table
+      [nzData]="organization().members"
+      nzShowSizeChanger
+      [nzHideOnSinglePage]="true"
+    >
+      <thead>
+      <tr>
+        <th>用户ID</th>
+        <th>用户名称</th>
+        <th>角色</th>
+        <th>更新时间</th>
+        <th>操作</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        @for (member of organization().members; track member.userId) {
+          <td>{{ member.userId }}</td>
+          <td>{{ member.name }}</td>
+          <td>{{ member.role }}</td>
+          <td>{{ member.update | date:'yyyy-MM-dd HH:mm:ss':'GMT+00:00' }}</td>
+          <td></td>
+        }
+      </tr>
+      </tbody>
+    </nz-table>
+  </div>
+</nz-spin>

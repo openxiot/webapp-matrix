@@ -10,7 +10,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { AccountService } from '../../service/account.service';
-import { UserService } from '../../service/user.service';
+import { UserOrganizationService } from '../../service/user.organization.service';
 import { Oauth2Configuration } from '../../typedef/define/oauth/Oauth2Configuration';
 
 const PLATFORM_ICONS: Record<string, string> = {
@@ -38,7 +38,7 @@ const PLATFORM_ICONS: Record<string, string> = {
 export class Passport {
   private readonly title = inject(Title);
   private readonly msg = inject(NzMessageService);
-  private readonly service = inject(UserService);
+  private readonly service = inject(UserOrganizationService);
   private readonly account = inject(AccountService);
 
   /** 登录平台列表（含加载/错误状态），来自 OAuth2 配置接口 */
