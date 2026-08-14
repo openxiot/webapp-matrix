@@ -26,6 +26,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { StringValueEditComponent } from '../../../common/dialog/string/string.value.edit.component';
 import { StringValue } from '../../../common/dialog/string/StringValue';
 import { MemberAddComponent } from '../../../common/dialog/member/add/member.add.component';
+import { MemberEditComponent } from '../../../common/dialog/member/edit/member.edit.component';
 
 @Component({
   selector: 'organization-detail',
@@ -89,23 +90,6 @@ export class OrganizationDetailComponent implements OnInit {
       },
     });
   }
-
-  // protected submitForm() {
-  //   const name = this.form.value.name || 'null';
-  //
-  //   this.loading.set(true);
-  //   this.service.updateOrganizationName(this.id(), name).subscribe({
-  //     next: () => {
-  //       console.log('updateOrganizationName ok');
-  //       this.loading.set(false);
-  //       this.router.navigate(['/']).then(() => {});
-  //     },
-  //     error: (error) => {
-  //       this.msg.warning(error);
-  //       this.loading.set(false);
-  //     },
-  //   });
-  // }
 
   protected removeOrganization() {
     const modal = this.modal.create<ConfirmComponent, string, string>({
@@ -173,6 +157,43 @@ export class OrganizationDetailComponent implements OnInit {
         this.service.addOrganizationMember(this.id(), result).subscribe({
           next: () => {
             this.msg.success('添加成员成功');
+            this.load();
+          },
+          error: (error) => {
+            this.msg.warning(error);
+            this.loading.set(false);
+          },
+        });
+      }
+    });
+  }
+
+  protected editMember(member: OrganizationMember) {
+    const modal = this.modal.create<MemberEditComponent, OrganizationMember, OrganizationMember>({
+      nzTitle: this.i18n.translate.instant('修改成员'),
+      nzContent: MemberEditComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: member,
+      nzFooter: [
+        {
+          label: this.i18n.translate.instant('取消'),
+          onClick: (component) => component!.cancel(),
+        },
+        {
+          label: this.i18n.translate.instant('确认'),
+          type: 'primary',
+          disabled: (component) => !(component!.valid() && component!.changed()),
+          onClick: (component) => component!.ok(),
+        },
+      ],
+    });
+
+    modal.afterClose.subscribe((result) => {
+      if (result) {
+        this.loading.set(true);
+        this.service.updateOrganizationMember(this.id(), result).subscribe({
+          next: () => {
+            this.msg.success('修改成员成功');
             this.load();
           },
           error: (error) => {

@@ -1,0 +1,21 @@
+<nz-form-item>
+  <nz-form-label [nzSpan]="4" >{{ '用户ID' | translate }}</nz-form-label>
+  <nz-form-control>
+    <input nz-input [value]="userId()" type="text" disabled/>
+  </nz-form-control>
+</nz-form-item>
+<nz-form-item>
+  <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '用户名称' | translate }}</nz-form-label>
+  <nz-form-control>
+    <input nz-input [value]="name()" (input)="onNameInput($event)" type="text"/>
+  </nz-form-control>
+</nz-form-item>
+<nz-form-item>
+  <nz-form-label [nzSpan]="4" >{{ '用户角色' | translate }}</nz-form-label>
+  <nz-form-control>
+    <nz-radio-group [ngModel]="role()" nzButtonStyle="solid" (ngModelChange)="onRoleChange($event)">
+      <label nz-radio-button nzValue="admin">管理员</label>
+      <label nz-radio-button nzValue="member">普通成员</label>
+    </nz-radio-group>
+  </nz-form-control>
+</nz-form-item>

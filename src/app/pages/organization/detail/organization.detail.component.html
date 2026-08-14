@@ -52,6 +52,8 @@
                 <td>{{ member.role }}</td>
                 <td>{{ member.update ? (member.update | date:'yyyy-MM-dd HH:mm:ss':'GMT+00:00') : '-' }}</td>
                 <td>
+                  <a (click)="editMember(member)">编辑</a>
+                  <nz-divider nzType="vertical"></nz-divider>
                   <a (click)="removeMember(member)">删除</a>
                 </td>
               </tr>
