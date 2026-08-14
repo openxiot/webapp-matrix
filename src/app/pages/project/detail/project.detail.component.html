@@ -1,32 +1,82 @@
-<nz-spin [nzSpinning]="loading()">
+<nz-spin [nzSpinning]="project.loading()">
   <nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
     <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
 
-    <nz-page-header-extra>
-      @if (isAdmin()) {
-        <button nz-button nzType="primary" nzDanger="" (click)="removeSpace()">{{ '删除项目' | translate }}</button>
-      }
-    </nz-page-header-extra>
-
     <nz-page-header-content>
-<!--      <nz-descriptions nzSize="small" [nzColumn]="4">-->
-<!--        <nz-descriptions-item nzTitle="{{ '组织代码' | translate }}" [nzSpan]="1">{{ organization().id }}-->
-<!--        </nz-descriptions-item>-->
-<!--        <nz-descriptions-item nzTitle="{{ '组织名称' | translate }}" [nzSpan]="1"><a (click)="editOrganizationName()">{{ organization().name }}</a>-->
-<!--        </nz-descriptions-item>-->
-<!--        <nz-descriptions-item nzTitle="{{ '创建者' | translate }}" [nzSpan]="1">{{ organization().creator.name }}-->
-<!--        </nz-descriptions-item>-->
-<!--        <nz-descriptions-item nzTitle="{{ '创建时间' | translate }}" [nzSpan]="1">{{ organization().creator.timestamp ? (organization().creator.timestamp | date:'yyyy-MM-dd HH:mm:ss':'GMT+00:00') : '-' }}-->
-<!--        </nz-descriptions-item>-->
-<!--      </nz-descriptions>-->
+      @if (project.rootSpace(); as root) {
+        <nz-descriptions nzSize="small" [nzColumn]="4">
+          <nz-descriptions-item nzTitle="{{ '空间代码' | translate }}" [nzSpan]="1">{{ root.id }}</nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '空间名称' | translate }}" [nzSpan]="1">{{ root.name }}</nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '空间类型' | translate }}" [nzSpan]="1">{{ typeLabel(root) }}</nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '设备数量' | translate }}" [nzSpan]="1">{{ project.devices().length }}</nz-descriptions-item>
+        </nz-descriptions>
+      }
     </nz-page-header-content>
   </nz-page-header>
 
   <ng-template #pageTitle>
-    {{ '项目详情' | translate }}
+    {{ project.rootSpace()?.name || ('项目详情' | translate) }}
   </ng-template>
 
   <div style="padding: 20px 20px">
-
+    <nz-table [nzData]="rows()" [nzFrontPagination]="false" [nzShowPagination]="false">
+      <thead>
+        <tr>
+          <th>名称</th>
+          <th>类型</th>
+          <th>状态</th>
+          <th>更新时间</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.key) {
+          <tr>
+            <td
+              [nzIndentSize]="row.level * 20"
+              [nzShowExpand]="row.hasChildren"
+              [nzExpand]="row.kind === 'space' && row.space !== null && expandedIds().has(row.space.id)"
+              (nzExpandChange)="onExpandChange(row, $event)"
+            >
+              @if (row.kind === 'space') {
+                <span nz-icon [nzType]="iconOf(row.space!)"></span>&nbsp;{{ row.space!.name }}
+              } @else {
+                <span nz-icon nzType="hdd"></span>&nbsp;{{ project.deviceName(row.device!) }}
+              }
+            </td>
+            <td>
+              @if (row.kind === 'space') {
+                <nz-tag>{{ typeLabel(row.space!) }}</nz-tag>
+              } @else {
+                {{ deviceTypeLabel(row.device!) }}
+              }
+            </td>
+            <td>
+              @if (row.kind === 'space') {
+                {{ deviceCount(row.space!.id) }} 设备
+              } @else {
+                <nz-tag [nzColor]="row.device!.online ? 'success' : 'default'">
+                  {{ row.device!.online ? '在线' : '离线' }}
+                </nz-tag>
+              }
+            </td>
+            <td>
+              @if (row.kind === 'space') {
+                {{ row.space!.updateTime ? (row.space!.updateTime | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
+              } @else {
+                {{ (row.device!.lastOnline || row.device!.lastOffline) ? ((row.device!.lastOnline || row.device!.lastOffline) | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
+              }
+            </td>
+            <td>
+              @if (row.kind === 'space') {
+                <a (click)="addChildSpace(row.space!)">{{ '添加子空间' | translate }}</a>
+                <nz-divider nzType="vertical"></nz-divider>
+                <a (click)="removeSpace(row.space!)">{{ '删除' | translate }}</a>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
   </div>
 </nz-spin>
