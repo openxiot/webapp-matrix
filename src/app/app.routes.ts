@@ -6,7 +6,7 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: '/account',
+    redirectTo: '/dashboard',
   },
   {
     path: 'passport',
@@ -46,5 +46,11 @@ export const routes: Routes = [
     component: Layout,
     data: { breadcrumb: '产品' },
     loadChildren: () => import('./pages/product/product.routes').then((m) => m.PRODUCT_ROUTES),
+  },
+  {
+    path: 'dashboard',
+    component: Layout,
+    data: { breadcrumb: '首页' },
+    loadChildren: () => import('./pages/dashboard/dashboard.routes').then((m) => m.DASHBOARD_ROUTES),
   },
 ];

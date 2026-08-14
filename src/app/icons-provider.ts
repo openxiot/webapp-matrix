@@ -38,6 +38,8 @@ import {
   SwapOutline,
   LeftOutline,
   TeamOutline,
+  ThunderboltOutline,
+  AlertOutline,
 } from '@ant-design/icons-angular/icons';
 
 export const icons = [
@@ -80,4 +82,6 @@ export const icons = [
   SwapOutline,
   LeftOutline,
   TeamOutline,
+  ThunderboltOutline,
+  AlertOutline,
 ];

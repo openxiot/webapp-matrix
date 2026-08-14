@@ -13,6 +13,10 @@
       </a>
     </div>
     <ul nz-menu nzTheme="dark" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
+      <li nz-menu-item routerLink="/dashboard" [nzMatchRouter]="true">
+        <nz-icon nzType="project" nzTheme="outline" />
+        <span>{{ '首页' | translate }}</span>
+      </li>
       <li nz-menu-item routerLink="/project" [nzMatchRouter]="true">
         <nz-icon nzType="project" nzTheme="outline" />
         <span>{{ '项目' | translate }}</span>
