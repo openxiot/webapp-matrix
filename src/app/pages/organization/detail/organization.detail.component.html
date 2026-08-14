@@ -42,11 +42,11 @@
         >
           <thead>
           <tr>
-            <th>用户ID</th>
-            <th>用户名称</th>
-            <th>角色</th>
-            <th>更新时间</th>
-            <th>操作</th>
+            <th>{{ '用户ID' | translate }}</th>
+            <th>{{ '用户名称' | translate }}</th>
+            <th>{{ '角色' | translate }}</th>
+            <th>{{ '更新时间' | translate }}</th>
+            <th>{{ '操作' | translate }}</th>
           </tr>
           </thead>
           <tbody>
@@ -54,7 +54,7 @@
               <tr>
                 <td>{{ member.userId }}</td>
                 <td>{{ member.name }}</td>
-                <td>{{ member.role }}</td>
+                <td>{{ member.role === 'admin' ? ('管理员' | translate) : ('普通成员' | translate) }}</td>
                 <td>{{ member.update ? (member.update | date:'yyyy-MM-dd HH:mm:ss':'GMT+00:00') : '-' }}</td>
                 <td>
                   @if (isMe(member)) {
@@ -63,9 +63,9 @@
                     }
                   } @else {
                     @if (isAdmin()) {
-                      <a (click)="editMember(member)">编辑</a>
+                      <a (click)="editMember(member)">{{ '编辑' | translate }}</a>
                       <nz-divider nzType="vertical"></nz-divider>
-                      <a (click)="removeMember(member)">删除</a>
+                      <a (click)="removeMember(member)">{{ '删除' | translate }}</a>
                     }
                   }
                 </td>

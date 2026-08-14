@@ -14,8 +14,8 @@
   <nz-form-label [nzSpan]="4" >{{ '用户角色' | translate }}</nz-form-label>
   <nz-form-control>
     <nz-radio-group [ngModel]="role()" nzButtonStyle="solid" (ngModelChange)="onRoleChange($event)">
-      <label nz-radio-button nzValue="admin">管理员</label>
-      <label nz-radio-button nzValue="member">普通成员</label>
+      <label nz-radio-button nzValue="admin">{{ '管理员' | translate }}</label>
+      <label nz-radio-button nzValue="member">{{ '普通成员' | translate }}</label>
     </nz-radio-group>
   </nz-form-control>
 </nz-form-item>

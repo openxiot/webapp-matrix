@@ -59,6 +59,6 @@ export class ProductComponent implements OnInit {
 
   /** 产品显示名：中文名 -> model -> id */
   productName(p: ProductBasic): string {
-    return p.name?.value?.get('zh-CN') || p.model || p.id || '未知产品';
+    return p.name?.value?.get('zh-CN') || p.model || p.id || this.i18n.translate.instant('未知产品');
   }
 }

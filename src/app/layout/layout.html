@@ -15,15 +15,15 @@
     <ul nz-menu nzTheme="dark" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
       <li nz-menu-item routerLink="/project" [nzMatchRouter]="true">
         <nz-icon nzType="project" nzTheme="outline" />
-        <span>项目</span>
+        <span>{{ '项目' | translate }}</span>
       </li>
       <li nz-menu-item routerLink="/device" [nzMatchRouter]="true">
         <nz-icon nzType="bulb" nzTheme="outline" />
-        <span>设备</span>
+        <span>{{ '设备' | translate }}</span>
       </li>
       <li nz-menu-item routerLink="/product" [nzMatchRouter]="true">
         <nz-icon nzType="table" nzTheme="outline" />
-        <span>产品</span>
+        <span>{{ '产品' | translate }}</span>
       </li>
     </ul>
   </nz-sider>
@@ -78,7 +78,7 @@
               } @else {
                 <li nz-menu-item [nzMatchRouter]="true" routerLink="/organization/create" style="float: right">
                   <span nz-icon nzType="plus-circle" nzTheme="outline"></span>
-                  <span>{{ '创建组织' }}</span>
+                  <span>{{ '创建组织' | translate }}</span>
                 </li>
               }
             }
@@ -98,7 +98,7 @@
               } @else {
                 <li nz-menu-item [nzMatchRouter]="true" routerLink="/project/create" style="float: right">
                   <span nz-icon nzType="plus-circle" nzTheme="outline"></span>
-                  <span>{{ '创建项目' }}</span>
+                  <span>{{ '创建项目' | translate }}</span>
                 </li>
               }
             }

@@ -226,7 +226,7 @@ export class ProjectDetailComponent implements OnInit {
 
         this.matrix.createSpace(space).subscribe({
           next: () => {
-            this.msg.success('添加子空间成功');
+            this.msg.success(this.i18n.translate.instant('添加子空间成功'));
             this.project.loadSpaceGraph(this.rootId());
           },
           error: (error) => {
@@ -268,12 +268,12 @@ export class ProjectDetailComponent implements OnInit {
   private doRemoveSpace(space: SpaceEntity): void {
     // 服务端不允许删除有子空间的空间，提前拦截给出明确提示
     if (space.children.length > 0) {
-      this.msg.warning('该空间下存在子空间，无法删除');
+      this.msg.warning(this.i18n.translate.instant('该空间下存在子空间，无法删除'));
       return;
     }
     this.matrix.deleteSpace(space.id).subscribe({
       next: () => {
-        this.msg.success('删除空间成功');
+        this.msg.success(this.i18n.translate.instant('删除空间成功'));
         if (space.id === this.rootId()) {
           // 删除的是项目本身（根空间），项目已不存在，清除当前项目并返回列表
           this.account.clearCurrentRootSpace();

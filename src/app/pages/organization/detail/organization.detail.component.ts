@@ -140,7 +140,7 @@ export class OrganizationDetailComponent implements OnInit {
     this.loading.set(true);
     this.service.removeOrganization(this.id()).subscribe({
       next: () => {
-        this.msg.success('删除成功');
+        this.msg.success(this.i18n.translate.instant('删除成功'));
         this.location.back();
       },
       error: (error) => {
@@ -174,7 +174,7 @@ export class OrganizationDetailComponent implements OnInit {
         this.loading.set(true);
         this.service.addOrganizationMember(this.id(), result).subscribe({
           next: () => {
-            this.msg.success('添加成员成功');
+            this.msg.success(this.i18n.translate.instant('添加成员成功'));
             this.load();
           },
           error: (error) => {
@@ -211,7 +211,7 @@ export class OrganizationDetailComponent implements OnInit {
         this.loading.set(true);
         this.service.updateOrganizationMember(this.id(), result).subscribe({
           next: () => {
-            this.msg.success('修改成员成功');
+            this.msg.success(this.i18n.translate.instant('修改成员成功'));
             this.load();
           },
           error: (error) => {
@@ -250,7 +250,7 @@ export class OrganizationDetailComponent implements OnInit {
     });
   }
 
-  protected doRemoveMember(member: OrganizationMember, successMessage: string = '删除成功') {
+  protected doRemoveMember(member: OrganizationMember, successMessage: string = this.i18n.translate.instant('删除成功')) {
     this.loading.set(true);
     this.service.removeOrganizationMember(this.id(), member.userId).subscribe({
       next: () => {
@@ -287,7 +287,7 @@ export class OrganizationDetailComponent implements OnInit {
 
     modal.afterClose.subscribe((result) => {
       if (result) {
-        this.doRemoveMember(member, '已退出组织');
+        this.doRemoveMember(member, this.i18n.translate.instant('已退出组织'));
       }
     });
   }
@@ -318,7 +318,7 @@ export class OrganizationDetailComponent implements OnInit {
         this.loading.set(true);
         this.service.updateOrganizationName(this.organization().id, result).subscribe({
           next: () => {
-            this.msg.success('修改组织名称成功');
+            this.msg.success(this.i18n.translate.instant('修改组织名称成功'));
             this.load();
           },
           error: (error) => {

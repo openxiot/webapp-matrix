@@ -9,7 +9,7 @@
   <nz-content>
     <div class="centered-card">
       <nz-card [nzBordered]="false">
-        <div class="login-title">登录</div>
+        <div class="login-title">{{ '登录' | translate }}</div>
 
         <nz-divider></nz-divider>
 
@@ -18,12 +18,12 @@
             @if (config(); as primary) {
               <button nz-button nzType="primary" class="login-button" (click)="open(primary)">
                 <span nz-icon [nzType]="iconOf(primary.platformId)" nzTheme="outline"></span>
-                {{ primary.platformName }} 登录
+                {{ primary.platformName }} {{ '登录' | translate }}
               </button>
             }
           </div>
 
-          <nz-divider style="font-size: 12px; color: gray" nzText="或使用以下方式登录"></nz-divider>
+          <nz-divider style="font-size: 12px; color: gray" [nzText]="'或使用以下方式登录' | translate"></nz-divider>
 
           <div class="login-btn-others">
             @for (item of others(); track item.platformId) {

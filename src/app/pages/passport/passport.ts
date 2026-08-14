@@ -9,6 +9,7 @@ import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountService } from '../../service/account.service';
 import { UserOrganizationService } from '../../service/user.organization.service';
 import { Oauth2Configuration } from '../../typedef/define/oauth/Oauth2Configuration';
@@ -31,6 +32,7 @@ const PLATFORM_ICONS: Record<string, string> = {
     NzDividerModule,
     NzTooltipModule,
     NzSpinModule,
+    TranslatePipe,
   ],
   templateUrl: './passport.html',
   styleUrl: './passport.less',
@@ -38,6 +40,7 @@ const PLATFORM_ICONS: Record<string, string> = {
 export class Passport {
   private readonly title = inject(Title);
   private readonly msg = inject(NzMessageService);
+  private readonly translate = inject(TranslateService);
   private readonly service = inject(UserOrganizationService);
   private readonly account = inject(AccountService);
 
@@ -54,7 +57,7 @@ export class Passport {
   readonly redirectUrl = `${window.location.href.split('#')[0]}#passport/callback`;
 
   constructor() {
-    this.title.setTitle('登录');
+    this.title.setTitle(this.translate.instant('登录'));
     this.account.clear();
 
     // 加载失败时弹出提示（响应 error signal 变化）
@@ -68,7 +71,7 @@ export class Passport {
 
   open(config: Oauth2Configuration): void {
     if (!config.available) {
-      this.msg.info('该平台暂未开放');
+      this.msg.info(this.translate.instant('该平台暂未开放'));
       return;
     }
 

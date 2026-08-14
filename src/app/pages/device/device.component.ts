@@ -8,7 +8,7 @@ import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { RouterLink } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { BreadcrumbTranslateDirective } from '../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { AccountService } from '../../service/account.service';
@@ -41,12 +41,13 @@ export class DeviceComponent implements OnInit {
     public account: AccountService,
     public project: ProjectService,
     private msg: NzMessageService,
+    private translate: TranslateService,
   ) {}
 
   ngOnInit() {
     const rootId = this.account.space().id;
     if (!rootId) {
-      this.msg.warning('请先在项目列表中选择一个项目');
+      this.msg.warning(this.translate.instant('请先在项目列表中选择一个项目'));
       return;
     }
     this.project.loadSpaceGraph(rootId);

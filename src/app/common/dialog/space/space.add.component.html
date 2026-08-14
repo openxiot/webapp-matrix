@@ -8,10 +8,10 @@
   <nz-form-label [nzSpan]="5">{{ '空间类型' | translate }}</nz-form-label>
   <nz-form-control>
     <nz-radio-group [ngModel]="type()" nzButtonStyle="solid" (ngModelChange)="onTypeChange($event)">
-      <label nz-radio-button nzValue="building">楼栋</label>
-      <label nz-radio-button nzValue="floor">楼层</label>
-      <label nz-radio-button nzValue="room">房间</label>
-      <label nz-radio-button nzValue="zone">区域</label>
+      <label nz-radio-button nzValue="building">{{ '楼栋' | translate }}</label>
+      <label nz-radio-button nzValue="floor">{{ '楼层' | translate }}</label>
+      <label nz-radio-button nzValue="room">{{ '房间' | translate }}</label>
+      <label nz-radio-button nzValue="zone">{{ '区域' | translate }}</label>
     </nz-radio-group>
   </nz-form-control>
 </nz-form-item>

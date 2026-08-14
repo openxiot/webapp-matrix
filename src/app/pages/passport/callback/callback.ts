@@ -2,12 +2,13 @@ import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountService } from '../../../service/account.service';
 import { User } from '../../../typedef/define/user/User';
 
 @Component({
   selector: 'app-passport-callback',
-  imports: [NzSpinModule],
+  imports: [NzSpinModule, TranslatePipe],
   templateUrl: './callback.html',
   styleUrl: './callback.less',
 })
@@ -19,6 +20,7 @@ export class Callback implements OnInit {
     private route: ActivatedRoute,
     private account: AccountService,
     private msg: NzMessageService,
+    private translate: TranslateService,
   ) {}
 
   ngOnInit() {
@@ -33,7 +35,7 @@ export class Callback implements OnInit {
   private save(token: string, name: string, avatar: string, email: string, id: string, platform: string) {
     if (!token) {
       this.loading.set(false);
-      this.msg.info('登录失败, token is null');
+      this.msg.info(this.translate.instant('登录失败, token is null'));
       return;
     }
 

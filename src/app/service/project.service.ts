@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AccountService } from './account.service';
@@ -36,8 +37,9 @@ function buildTree(spaces: SpaceEntity[]): SpaceEntity | null {
   return root;
 }
 
-function displayName(p: ProductBasic): string {
-  return p.name?.value?.get('zh-CN') || p.model || p.id || '未知产品';
+/** 产品显示名：中文名 -> model -> id */
+function displayName(p: ProductBasic, unknown: string): string {
+  return p.name?.value?.get('zh-CN') || p.model || p.id || unknown;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -58,6 +60,7 @@ export class ProjectService {
     private product: ProductService,
     private account: AccountService,
     private msg: NzMessageService,
+    private translate: TranslateService,
   ) {}
 
   loadSpaceGraph(rootId: string) {
@@ -128,7 +131,7 @@ export class ProjectService {
           const names = new Map<string, string>();
           const icons = new Map<string, string>();
           for (const p of products) {
-            names.set(p.model, displayName(p));
+            names.set(p.model, displayName(p, this.translate.instant('未知产品')));
             icons.set(p.model, p.icon);
           }
           this.productNames.set(names);
@@ -151,7 +154,7 @@ export class ProjectService {
       this.product.getProductByOrgModel(org, model).subscribe({
         next: (p) => {
           this.productNames.update((m) => {
-            m.set(model, displayName(p));
+            m.set(model, displayName(p, this.translate.instant('未知产品')));
             return new Map(m);
           });
           this.productIcons.update((m) => {

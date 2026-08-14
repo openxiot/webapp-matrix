@@ -20,7 +20,7 @@ import {
 } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { Location } from '@angular/common';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountService } from '../../../service/account.service';
 import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
@@ -62,6 +62,7 @@ export class ProjectCreateComponent implements OnInit {
     private fb: NonNullableFormBuilder,
     private msg: NzMessageService,
     private service: MatrixService,
+    private translate: TranslateService,
   ) {
     this.form = this.fb.group({
       name: this.fb.control('', [Validators.required]),
@@ -89,7 +90,7 @@ export class ProjectCreateComponent implements OnInit {
       next: (created) => {
         this.loading.set(false);
         this.account.setCurrentProject(created);
-        this.msg.success('创建项目成功');
+        this.msg.success(this.translate.instant('创建项目成功'));
         this.router.navigate(['/project']).then(() => {});
       },
       error: (error) => {

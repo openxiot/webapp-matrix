@@ -7,7 +7,7 @@
         <nz-descriptions nzSize="small" [nzColumn]="4">
           <nz-descriptions-item nzTitle="{{ '空间代码' | translate }}" [nzSpan]="1">{{ root.id }}</nz-descriptions-item>
           <nz-descriptions-item nzTitle="{{ '空间名称' | translate }}" [nzSpan]="1">{{ root.name }}</nz-descriptions-item>
-          <nz-descriptions-item nzTitle="{{ '空间类型' | translate }}" [nzSpan]="1">{{ typeLabel(root) }}</nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '空间类型' | translate }}" [nzSpan]="1">{{ typeLabel(root) | translate }}</nz-descriptions-item>
           <nz-descriptions-item nzTitle="{{ '设备数量' | translate }}" [nzSpan]="1">{{ project.devices().length }}</nz-descriptions-item>
         </nz-descriptions>
       }
@@ -22,11 +22,11 @@
     <nz-table [nzData]="rows()" [nzFrontPagination]="false" [nzShowPagination]="false">
       <thead>
         <tr>
-          <th>名称</th>
-          <th>类型</th>
-          <th>状态</th>
-          <th>更新时间</th>
-          <th>操作</th>
+          <th>{{ '名称' | translate }}</th>
+          <th>{{ '类型' | translate }}</th>
+          <th>{{ '状态' | translate }}</th>
+          <th>{{ '更新时间' | translate }}</th>
+          <th>{{ '操作' | translate }}</th>
         </tr>
       </thead>
       <tbody>
@@ -46,17 +46,17 @@
             </td>
             <td>
               @if (row.kind === 'space') {
-                <nz-tag>{{ typeLabel(row.space!) }}</nz-tag>
+                <nz-tag>{{ typeLabel(row.space!) | translate }}</nz-tag>
               } @else {
                 {{ deviceTypeLabel(row.device!) }}
               }
             </td>
             <td>
               @if (row.kind === 'space') {
-                {{ deviceCount(row.space!.id) }} 设备
+                {{ deviceCount(row.space!.id) }} {{ '设备' | translate }}
               } @else {
                 <nz-tag [nzColor]="row.device!.online ? 'success' : 'default'">
-                  {{ row.device!.online ? '在线' : '离线' }}
+                  {{ row.device!.online ? ('在线' | translate) : ('离线' | translate) }}
                 </nz-tag>
               }
             </td>
