@@ -10,27 +10,27 @@
   <nz-card [nzBordered]="false" class="account-card">
     <div class="account-head">
       <nz-avatar
-        [nzSrc]="account.user.avatar || undefined"
+        [nzSrc]="account.user().avatar || undefined"
         [nzText]="initial()"
         [nzSize]="72"
       ></nz-avatar>
       <div class="account-info">
         <div class="account-name">{{ account.user.name || '未命名' }}</div>
-        <div class="account-platform">{{ account.user.platform }}</div>
+        <div class="account-platform">{{ account.user().platform }}</div>
       </div>
     </div>
 
     <nz-descriptions nzSize="small" [nzColumn]="1" class="account-desc">
-      <nz-descriptions-item nzTitle="用户名">{{ account.user.name || '-' }}</nz-descriptions-item>
-      <nz-descriptions-item nzTitle="登录平台">{{ account.user.platform || '-' }}</nz-descriptions-item>
-      <nz-descriptions-item nzTitle="邮箱">{{ account.user.email || '-' }}</nz-descriptions-item>
-      <nz-descriptions-item nzTitle="当前组织">{{ account.organization?.name || '未选择' }}</nz-descriptions-item>
+      <nz-descriptions-item nzTitle="用户名">{{ account.user().name || '-' }}</nz-descriptions-item>
+      <nz-descriptions-item nzTitle="登录平台">{{ account.user().platform || '-' }}</nz-descriptions-item>
+      <nz-descriptions-item nzTitle="邮箱">{{ account.user().email || '-' }}</nz-descriptions-item>
+      <nz-descriptions-item nzTitle="当前组织">{{ account.organization().name || '未选择' }}</nz-descriptions-item>
       <nz-descriptions-item nzTitle="当前项目">{{ account.currentRootSpaceName() || '未选择' }}</nz-descriptions-item>
     </nz-descriptions>
   </nz-card>
 
   <div class="logout-action">
-    <button nz-button nzDanger nzBlock (click)="logout()">
+    <button nz-button [nzDanger]="true" [nzBlock]="true" (click)="logout()">
       <nz-icon nzType="logout" nzTheme="outline" />
       退出登录
     </button>
