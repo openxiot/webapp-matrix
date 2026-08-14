@@ -61,9 +61,7 @@ export class OrganizationDetailComponent implements OnInit {
   /** 当前账号在该组织中的角色是否为管理员 */
   readonly isAdmin = computed(() => {
     const me = this.account.user();
-    console.log('me: ', me);
     const member = this.organization().members.find((m) => m.userId === me.id);
-    console.log('member: ', member);
     return member !== undefined && member.role === 'admin';
   });
 
