@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, ViewContainerRef } from '@angular/core';
+import { Component, computed, OnInit, signal, ViewContainerRef } from '@angular/core';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
@@ -57,6 +57,26 @@ export class OrganizationDetailComponent implements OnInit {
   loading = signal(false);
   id = signal('');
   organization = signal(new Organization());
+
+  /** 当前账号在该组织中的角色是否为管理员 */
+  readonly isAdmin = computed(() => {
+    const me = this.account.user();
+    console.log('me: ', me);
+    const member = this.organization().members.find((m) => m.userId === me.id);
+    console.log('member: ', member);
+    return member !== undefined && member.role === 'admin';
+  });
+
+  /** 除当前账号外是否还有其他管理员（决定自己能否退出组织） */
+  readonly hasOtherAdmin = computed(() => {
+    const me = this.account.user();
+    return this.organization().members.some((m) => m.role === 'admin' && m.userId !== me.id);
+  });
+
+  /** 该成员是否为当前账号 */
+  protected isMe(member: OrganizationMember): boolean {
+    return member.userId === this.account.user().id;
+  }
 
   constructor(
     public i18n: MainI18nService,
@@ -232,17 +252,45 @@ export class OrganizationDetailComponent implements OnInit {
     });
   }
 
-  protected doRemoveMember(member: OrganizationMember) {
+  protected doRemoveMember(member: OrganizationMember, successMessage: string = '删除成功') {
     this.loading.set(true);
     this.service.removeOrganizationMember(this.id(), member.userId).subscribe({
       next: () => {
-        this.msg.success('删除成功');
+        this.msg.success(successMessage);
         this.load();
       },
       error: (error) => {
         this.msg.warning(error);
         this.loading.set(false);
       },
+    });
+  }
+
+  /** 退出组织（实际调用删除成员接口） */
+  protected leaveOrganization(member: OrganizationMember) {
+    const modal = this.modal.create<ConfirmComponent, string, string>({
+      nzTitle: this.i18n.translate.instant('您真的要退出这个组织吗？'),
+      nzContent: ConfirmComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: this.organization().name,
+      nzFooter: [
+        {
+          label: this.i18n.translate.instant('取消'),
+          onClick: (component) => component!.cancel(),
+        },
+        {
+          label: this.i18n.translate.instant('确认'),
+          danger: true,
+          type: 'primary',
+          onClick: (component) => component!.ok(),
+        },
+      ],
+    });
+
+    modal.afterClose.subscribe((result) => {
+      if (result) {
+        this.doRemoveMember(member, '已退出组织');
+      }
     });
   }
 

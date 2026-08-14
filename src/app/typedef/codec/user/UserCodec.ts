@@ -8,7 +8,7 @@ export class UserCodec {
 
   static decode(o: any): User {
     let developer = new User();
-    developer.id = o.uid;
+    developer.id = o.uid || o.id;
     developer.token = o.token;
     developer.name = o.name;
     developer.platform = o.platform || '';

@@ -3,7 +3,9 @@
     <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
 
     <nz-page-header-extra>
-      <button nz-button nzType="primary" nzDanger="" (click)="removeOrganization()">{{ '删除组织' | translate }}</button>
+      @if (isAdmin()) {
+        <button nz-button nzType="primary" nzDanger="" (click)="removeOrganization()">{{ '删除组织' | translate }}</button>
+      }
     </nz-page-header-extra>
 
     <nz-page-header-content>
@@ -26,13 +28,16 @@
 
   <div style="padding: 20px 20px">
     <nz-row [nzGutter]="[8, 8]">
-      <nz-col nzSpan="24">
-        <button nz-button nzType="primary" (click)="addMember()">{{ '添加成员' | translate }}</button>
-      </nz-col>
+      @if (isAdmin()) {
+        <nz-col nzSpan="24">
+          <button nz-button nzType="primary" (click)="addMember()">{{ '添加成员' | translate }}</button>
+        </nz-col>
+      }
+
       <nz-col nzSpan="24">
         <nz-table
           [nzData]="organization().members"
-          nzShowSizeChanger
+          [nzShowSizeChanger]="true"
           [nzHideOnSinglePage]="true"
         >
           <thead>
@@ -52,9 +57,17 @@
                 <td>{{ member.role }}</td>
                 <td>{{ member.update ? (member.update | date:'yyyy-MM-dd HH:mm:ss':'GMT+00:00') : '-' }}</td>
                 <td>
-                  <a (click)="editMember(member)">编辑</a>
-                  <nz-divider nzType="vertical"></nz-divider>
-                  <a (click)="removeMember(member)">删除</a>
+                  @if (isMe(member)) {
+                    @if (hasOtherAdmin()) {
+                      <a (click)="leaveOrganization(member)">{{ '退出组织' | translate }}</a>
+                    }
+                  } @else {
+                    @if (isAdmin()) {
+                      <a (click)="editMember(member)">编辑</a>
+                      <nz-divider nzType="vertical"></nz-divider>
+                      <a (click)="removeMember(member)">删除</a>
+                    }
+                  }
                 </td>
               </tr>
             }
