@@ -25,6 +25,7 @@ import { MainI18nService } from '../../../service/i18n.service';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { StringValueEditComponent } from '../../../common/dialog/string/string.value.edit.component';
 import { StringValue } from '../../../common/dialog/string/StringValue';
+import { MemberAddComponent } from '../../../common/dialog/member/member.add.component';
 
 @Component({
   selector: 'organization-detail',
@@ -147,7 +148,41 @@ export class OrganizationDetailComponent implements OnInit {
     });
   }
 
-  protected addMember() {}
+  protected addMember() {
+    const modal = this.modal.create<MemberAddComponent, undefined, OrganizationMember>({
+      nzTitle: this.i18n.translate.instant('添加成员'),
+      nzContent: MemberAddComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzFooter: [
+        {
+          label: this.i18n.translate.instant('取消'),
+          onClick: (component) => component!.cancel(),
+        },
+        {
+          label: this.i18n.translate.instant('确认'),
+          type: 'primary',
+          disabled: (component) => !component!.valid(),
+          onClick: (component) => component!.ok(),
+        },
+      ],
+    });
+
+    modal.afterClose.subscribe((result) => {
+      if (result) {
+        this.loading.set(true);
+        this.service.addOrganizationMember(this.id(), result).subscribe({
+          next: () => {
+            this.msg.success('添加成员成功');
+            this.load();
+          },
+          error: (error) => {
+            this.msg.warning(error);
+            this.loading.set(false);
+          },
+        });
+      }
+    });
+  }
 
   protected removeMember(member: OrganizationMember) {
     this.loading.set(true);
