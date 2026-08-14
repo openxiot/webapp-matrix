@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ViewContainerRef } from '@angular/core';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
@@ -17,9 +17,14 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { AccountService } from '../../../service/account.service';
 import { UserOrganizationService } from '../../../service/user.organization.service';
 import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { Organization } from '../../../typedef/define/user/Organization';
+import { Organization, OrganizationMember } from '../../../typedef/define/user/Organization';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzTableModule } from 'ng-zorro-antd/table';
+import { ConfirmComponent } from '../../../common/dialog/confirm/confirm.component';
+import { MainI18nService } from '../../../service/i18n.service';
+import { NzModalService } from 'ng-zorro-antd/modal';
+import { StringValueEditComponent } from '../../../common/dialog/string/string.value.edit.component';
+import { StringValue } from '../../../common/dialog/string/StringValue';
 
 @Component({
   selector: 'organization-detail',
@@ -44,6 +49,7 @@ import { NzTableModule } from 'ng-zorro-antd/table';
     DatePipe,
     NzTableModule,
   ],
+  providers: [NzModalService],
 })
 export class OrganizationDetailComponent implements OnInit {
   loading = signal(false);
@@ -51,14 +57,16 @@ export class OrganizationDetailComponent implements OnInit {
   organization = signal(new Organization());
 
   constructor(
+    public i18n: MainI18nService,
+    private modal: NzModalService,
+    private viewContainerRef: ViewContainerRef,
     protected location: Location,
     private router: Router,
     private route: ActivatedRoute,
     private account: AccountService,
     private msg: NzMessageService,
     private service: UserOrganizationService,
-  ) {
-  }
+  ) {}
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
@@ -97,4 +105,99 @@ export class OrganizationDetailComponent implements OnInit {
   //     },
   //   });
   // }
+
+  protected removeOrganization() {
+    const modal = this.modal.create<ConfirmComponent, string, string>({
+      nzTitle: this.i18n.translate.instant('您真的要删除这个组织吗？'),
+      nzContent: ConfirmComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: this.organization().name,
+      nzFooter: [
+        {
+          label: this.i18n.translate.instant('取消'),
+          onClick: (component) => component!.cancel(),
+        },
+        {
+          label: this.i18n.translate.instant('确认'),
+          danger: true,
+          type: 'primary',
+          onClick: (component) => component!.ok(),
+        },
+      ],
+    });
+
+    modal.afterClose.subscribe((result) => {
+      if (result) {
+        this.doRemoveOrganization();
+      }
+    });
+  }
+
+  protected doRemoveOrganization() {
+    this.loading.set(true);
+    this.service.removeOrganization(this.id()).subscribe({
+      next: () => {
+        this.msg.success('删除成功');
+        this.location.back();
+      },
+      error: (error) => {
+        this.msg.warning(error);
+        this.loading.set(false);
+      },
+    });
+  }
+
+  protected addMember() {}
+
+  protected removeMember(member: OrganizationMember) {
+    this.loading.set(true);
+    this.service.removeOrganizationMember(this.id(), member.userId).subscribe({
+      next: () => {
+        this.msg.success('删除成功');
+        this.load();
+      },
+      error: (error) => {
+        this.msg.warning(error);
+        this.loading.set(false);
+      },
+    });
+  }
+
+  protected editOrganizationName() {
+    const modal = this.modal.create<StringValueEditComponent, StringValue, string>({
+      nzTitle: this.i18n.translate.instant('修改组织名称'),
+      nzContent: StringValueEditComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: new StringValue(this.organization().name),
+      nzFooter: [
+        {
+          label: this.i18n.translate.instant('取消'),
+          onClick: (component) => component!.cancel(),
+        },
+        {
+          label: this.i18n.translate.instant('确认'),
+          danger: true,
+          type: 'primary',
+          disabled: (component) => !component!.changed(),
+          onClick: (component) => component!.ok(),
+        },
+      ],
+    });
+
+    modal.afterClose.subscribe((result) => {
+      if (result) {
+        this.loading.set(true);
+        this.service.updateOrganizationName(this.organization().id, result).subscribe({
+          next: () => {
+            this.msg.success('修改组织名称成功');
+            this.load();
+          },
+          error: (error) => {
+            this.msg.warning(error);
+            this.loading.set(false);
+          },
+        });
+      }
+    });
+  }
 }

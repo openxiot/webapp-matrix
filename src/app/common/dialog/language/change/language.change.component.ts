@@ -1,7 +1,5 @@
-import {Component, inject} from '@angular/core';
-import {NZ_MODAL_DATA, NzModalRef} from 'ng-zorro-antd/modal';
-import {FormsModule} from '@angular/forms';
-import {NzInputModule} from 'ng-zorro-antd/input';
+import {Component, computed, inject, signal} from '@angular/core';
+import {NzModalRef} from 'ng-zorro-antd/modal';
 import {MainI18nService} from '../../../../service/i18n.service';
 import {NzColDirective, NzRowDirective} from 'ng-zorro-antd/grid';
 import {NzCardModule} from 'ng-zorro-antd/card';
@@ -13,39 +11,30 @@ import {TranslatePipe} from '@ngx-translate/core';
   templateUrl: './language.change.component.html',
   styleUrl: './language.change.component.less',
   imports: [
-    FormsModule,
-    NzInputModule,
     NzRowDirective,
     NzColDirective,
     NzCardModule,
     NzIconModule,
     TranslatePipe,
   ],
-  providers: [],
-  standalone: true
 })
 export class LanguageChangeComponent {
 
+  readonly i18n = inject(MainI18nService);
   readonly #modal = inject(NzModalRef);
-  readonly message: string = inject(NZ_MODAL_DATA);
 
-  protected showAllLanguages = false;
+  protected showAllLanguages = signal(false);
 
-  get displayedLanguages() {
+  readonly displayedLanguages = computed(() => {
     const all = this.i18n.languages;
-    if (this.showAllLanguages || all.length <= 12) {
+    if (this.showAllLanguages() || all.length <= 12) {
       return all;
     }
     return all.slice(0, 12);
-  }
+  });
 
   protected showMore(): void {
-    this.showAllLanguages = true;
-  }
-
-  constructor(
-    public i18n: MainI18nService,
-  ) {
+    this.showAllLanguages.set(true);
   }
 
   cancel(): void {
@@ -57,7 +46,7 @@ export class LanguageChangeComponent {
   }
 
   protected changeLanguage(code: string): void {
-    this.i18n.changeLanguage(code)
+    this.i18n.changeLanguage(code);
     this.ok();
   }
 }

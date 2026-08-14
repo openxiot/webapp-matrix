@@ -2,13 +2,13 @@ export class OrganizationMember {
   userId: string = '';
   role: string = '';
   name: string = '';
-  update: Date = new Date();
+  update: Date | null = null;
 }
 
 export class Person {
   id: string = '';
   name: string = '';
-  timestamp: Date = new Date();
+  timestamp: Date | null = null;
 }
 
 export class Organization {

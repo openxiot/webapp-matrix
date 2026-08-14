@@ -15,7 +15,7 @@ export class OrganizationMemberCodec {
     member.userId = o.userId;
     member.role = o.role;
     member.name = o.name;
-    member.update = new Date(o.update?.replace(/\[UTC]$/, ""));
+    member.update = o.update ? new Date(o.update.replace(/\[UTC]$/, "")) : null;
     return member;
   }
 
@@ -71,7 +71,7 @@ export class OrganizationCodec {
     if (o.creator) {
       organization.creator.id = o.creator.id;
       organization.creator.name = o.creator.name;
-      organization.creator.timestamp = new Date(o.creator.timestamp?.replace(/\[UTC]$/, ""));
+      organization.creator.timestamp = o.creator.timestamp ? new Date(o.creator.timestamp.replace(/\[UTC]$/, "")) : null;
     }
     organization.members = OrganizationMemberCodec.decodeArray(o.members);
     organization.personal = o.personal;

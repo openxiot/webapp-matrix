@@ -1,5 +1,5 @@
 <nz-row [nzGutter]="[8, 8]">
-  @for (lang of displayedLanguages; track lang.code) {
+  @for (lang of displayedLanguages(); track lang.code) {
     <nz-col [nzSpan]="4" (click)="changeLanguage(lang.code)">
       <nz-card [nzHoverable]="true" nzSize="small">
         <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
@@ -23,7 +23,7 @@
     </ng-template>
   }
 
-  @if (!showAllLanguages && i18n.languages.length > 12) {
+  @if (!showAllLanguages() && i18n.languages.length > 12) {
     <nz-col [nzSpan]="4" (click)="showMore()">
       <nz-card [nzHoverable]="true" nzSize="small">
         <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
