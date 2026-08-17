@@ -1,0 +1,47 @@
+<nz-spin [nzSpinning]="loading()">
+  <nz-page-header [nzTitle]="pageTitle" [nzGhost]="false">
+    <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+  </nz-page-header>
+
+  <ng-template #pageTitle>
+    {{ '产品' | translate }}
+  </ng-template>
+
+  <div style="padding: 20px 20px">
+    @if (products().length > 0) {
+      <nz-row [nzGutter]="[16, 16]">
+        @for (product of products(); track product.id) {
+          <nz-col [nzSpan]="4">
+            <nz-card [nzHoverable]="true" [nzCover]="coverTemplate" [nzActions]="[detail]">
+              <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
+            </nz-card>
+
+            <ng-template #coverTemplate>
+              <img [src]="product.icon" alt="{{ product.name.value.get(i18n.getCurrentLang()) }}" class="cover-image">
+<!--              @if (product.icon; as icon) {-->
+<!--                <nz-avatar [nzSrc]="icon" [nzSize]="40"></nz-avatar>-->
+<!--              } @else {-->
+<!--                <nz-avatar [nzSize]="40" nzIcon="appstore"></nz-avatar>-->
+<!--              }-->
+            </ng-template>
+
+            <ng-template #title>
+              {{ productName(product) }}
+            </ng-template>
+
+            <ng-template #desc>
+              <div>{{ product.model }}</div>
+              <div>{{ '组织' | translate }}: {{ product.organization }}</div>
+            </ng-template>
+
+            <ng-template #detail>
+              <a [routerLink]="['/main/product/detail', product.id]">{{ '详情' | translate }}</a>
+            </ng-template>
+          </nz-col>
+        }
+      </nz-row>
+    } @else if (!loading()) {
+      <nz-empty></nz-empty>
+    }
+  </div>
+</nz-spin>

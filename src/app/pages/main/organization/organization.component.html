@@ -1,0 +1,47 @@
+<nz-page-header [nzTitle]="pageTitle" [nzGhost]="false">
+  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+
+  @if (account.login()) {
+    <nz-page-header-extra>
+      <button nz-button nzType="primary" [nzDanger]="true" [routerLink]="['/organization/create']">{{ '创建' | translate }}
+      </button>
+    </nz-page-header-extra>
+  }
+</nz-page-header>
+
+<ng-template #pageTitle>
+  {{ '组织' | translate }}
+</ng-template>
+
+<div style="padding: 20px 20px">
+
+  <nz-row [nzGutter]="[8, 8]">
+    @for (org of organizations(); track org) {
+      <nz-col [nzSpan]="4" (click)="setCurrentOrganization(org)">
+        <nz-card [nzHoverable]="true" [nzActions]="[detail]">
+          <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
+        </nz-card>
+      </nz-col>
+
+      <ng-template #title>
+        <span>
+          <span>{{ org.id }}</span>
+
+          @if (account.isCurrentOrganization(org)) {
+            <span style="float: right">
+              <span nz-icon nzType="check" nzTheme="outline"></span>
+            </span>
+          }
+        </span>
+      </ng-template>
+
+      <ng-template #desc>
+        {{ org.name }}
+      </ng-template>
+
+      <ng-template #detail>
+        <a [routerLink]="['/main/organization/detail', org.id]">{{ "详情" | translate }}</a>
+      </ng-template>
+    }
+  </nz-row>
+</div>

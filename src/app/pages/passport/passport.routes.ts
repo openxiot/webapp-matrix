@@ -1,14 +1,14 @@
 import { Routes } from '@angular/router';
-import { Passport } from './passport';
-import { Callback } from './callback/callback';
+import { PassportComponent } from './passport.component';
+import { CallbackComponent } from './callback/callback.component';
 
 export const PASSPORT_ROUTES: Routes = [
   {
     path: '',
-    component: Passport,
+    component: PassportComponent,
   },
   {
     path: 'callback',
-    component: Callback,
+    component: CallbackComponent,
   },
 ];
