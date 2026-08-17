@@ -7,14 +7,29 @@
 </ng-template>
 
 <div style="padding: 20px 20px">
-  <nz-card style="width:300px;" [nzHoverable]="true">
+  <nz-card style="width:400px;" [nzHoverable]="false">
     <nz-card-meta
-      [nzTitle]="account.user().name"
-      [nzDescription]="account.user().platform"
+      [nzTitle]="title"
+      [nzDescription]="desc"
       [nzAvatar]="avatarTemplate"
     ></nz-card-meta>
   </nz-card>
+
+  <ng-template #title>
+    {{ account.user().name }} ({{ account.user().platform }})
+  </ng-template>
+
   <ng-template #avatarTemplate>
     <nz-avatar [nzSrc]="account.user().avatar"></nz-avatar>
+  </ng-template>
+
+  <ng-template #desc>
+    <nz-row [nzGutter]="[8, 8]">
+      <nz-col nzSpan="24">
+        <nz-input-search nzEnterButton="{{ '复制' | translate }}" (nzSearch)="onCopy($event)">
+          <input nz-input [(ngModel)]="account.user().id" nzVariant="borderless" />
+        </nz-input-search>
+      </nz-col>
+    </nz-row>
   </ng-template>
 </div>

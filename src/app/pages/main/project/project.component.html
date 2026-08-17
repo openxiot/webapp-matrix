@@ -18,14 +18,14 @@
   <nz-row [nzGutter]="[8, 8]">
     @for (space of spaces(); track space.id) {
       <nz-col [nzSpan]="8" (click)="setCurrentProject(space)">
-        <nz-card [nzHoverable]="true" [nzActions]="[detail]">
+        <nz-card [nzHoverable]="true" [nzActions]="[detail, user]">
           <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
         </nz-card>
       </nz-col>
 
       <ng-template #title>
         <span>
-          <span>{{ space.id }}</span>
+          <span>{{ space.name }}</span>
 
           @if (account.isCurrentProject(space)) {
             <span style="float: right">
@@ -36,11 +36,15 @@
       </ng-template>
 
       <ng-template #desc>
-        {{ space.name }}
+        {{ space.id }}
       </ng-template>
 
       <ng-template #detail>
         <a [routerLink]="['/main/project/detail', space.id]">{{ "详情" | translate }}</a>
+      </ng-template>
+
+      <ng-template #user>
+        <a [routerLink]="['/main/project/user', space.id]">{{ "用户" | translate }}</a>
       </ng-template>
     }
   </nz-row>
