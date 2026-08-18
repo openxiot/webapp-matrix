@@ -35,14 +35,22 @@ export class EChartsDirective implements OnInit, OnChanges, OnDestroy {
   private resizeObserver?: ResizeObserver;
 
   ngOnInit() {
-    this.chart = init(this.host);
-    this.setOption();
-    this.resizeObserver = new ResizeObserver(() => this.chart?.resize());
+    // 首次渲染时容器可能尚未完成布局（clientWidth/clientHeight 为 0），
+    // 此时 init 会触发 ECharts "Can't get DOM width or height" 警告；
+    // 统一由 ResizeObserver 在容器具备非零尺寸后再创建图表，顺带避免 0 尺寸闪帧。
+    this.resizeObserver = new ResizeObserver(() => {
+      if (this.chart) {
+        this.chart.resize();
+      } else {
+        this.initChart();
+      }
+    });
     this.resizeObserver.observe(this.host);
+    this.initChart();
   }
 
   ngOnChanges() {
-    // 首次绑定先于 ngOnInit，此时 chart 尚未创建，由 ngOnInit 兜底渲染
+    // 首次绑定先于 ngOnInit，此时 chart 尚未创建，由 initChart 兜底渲染
     this.setOption();
   }
 
@@ -50,6 +58,15 @@ export class EChartsDirective implements OnInit, OnChanges, OnDestroy {
     this.resizeObserver?.disconnect();
     this.chart?.dispose();
     this.chart = undefined;
+  }
+
+  /** 仅在容器具备非零尺寸时创建图表，避免 ECharts 0 尺寸警告 */
+  private initChart() {
+    if (this.chart || this.host.clientWidth === 0 || this.host.clientHeight === 0) {
+      return;
+    }
+    this.chart = init(this.host);
+    this.setOption();
   }
 
   private setOption() {
