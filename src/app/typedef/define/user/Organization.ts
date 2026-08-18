@@ -2,6 +2,7 @@ export class OrganizationMember {
   userId: string = '';
   role: string = '';
   name: string = '';
+  email: string = '';
   update: Date | null = null;
 }
 

@@ -11,6 +11,8 @@ import { SpaceGraph } from '../typedef/define/device/SpaceGraph';
 import { SpaceGraphCodec } from '../typedef/codec/device/SpaceGraphCodec';
 import { DeviceRegistration } from '../typedef/define/device/DeviceRegistration';
 import { MoveDeviceRequest } from '../typedef/define/device/MoveDeviceRequest';
+import { OrganizationMember } from '../typedef/define/user/Organization';
+import { OrganizationMemberCodec } from '../typedef/codec/user/OrganizationCodec';
 
 @Injectable({ providedIn: 'root' })
 export class MatrixService {
@@ -111,5 +113,27 @@ export class MatrixService {
     return this.http
       .post<OxResponse>(`${this.server}/matrix/v1/device/actions/${spaceId}`, body)
       .pipe(map((r) => (r.data as Array<Record<string, unknown>>) || []));
+  }
+
+  /**------------------------------------------------------------------------------------------------
+   * 项目成员（虚拟组织）
+   *------------------------------------------------------------------------------------------------*/
+  listMembers(rootId: string): Observable<OrganizationMember[]> {
+    return this.http
+      .get<OxResponse>(`${this.server}/matrix/v1/space/${rootId}/member`)
+      .pipe(map((r) => OrganizationMemberCodec.decodeArray(r.data)));
+  }
+
+  addMember(rootId: string, memberId: string): Observable<void> {
+    return this.http
+      .post<OxResponse>(`${this.server}/matrix/v1/space/${rootId}/member`, { memberId })
+      .pipe(map(() => undefined));
+  }
+
+  removeMember(rootId: string, memberId: string): Observable<void> {
+    let params = new HttpParams().set('memberId', memberId);
+    return this.http
+      .delete<OxResponse>(`${this.server}/matrix/v1/space/${rootId}/member`, { params })
+      .pipe(map(() => undefined));
   }
 }

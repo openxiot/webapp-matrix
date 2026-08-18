@@ -1,0 +1,6 @@
+<nz-form-item>
+  <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '用户ID' | translate }}</nz-form-label>
+  <nz-form-control>
+    <input nz-input [value]="userId()" (input)="onUserIdInput($event)" type="text"/>
+  </nz-form-control>
+</nz-form-item>

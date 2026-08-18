@@ -15,6 +15,7 @@ export class OrganizationMemberCodec {
     member.userId = o.userId;
     member.role = o.role;
     member.name = o.name;
+    member.email = o.email;
     member.update = o.update ? new Date(o.update.replace(/\[UTC]$/, "")) : null;
     return member;
   }

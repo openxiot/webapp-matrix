@@ -1,0 +1,36 @@
+import { Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { NzModalRef } from 'ng-zorro-antd/modal';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzFormModule } from 'ng-zorro-antd/form';
+import { TranslatePipe } from '@ngx-translate/core';
+
+/** 添加项目成员对话框：只需用户 ID，名称/邮箱由后端按账号解析 */
+@Component({
+  selector: 'project-member-add',
+  templateUrl: './member.add.component.html',
+  styleUrl: './member.add.component.less',
+  imports: [FormsModule, NzInputModule, NzFormModule, TranslatePipe],
+})
+export class ProjectMemberAddComponent {
+  readonly #modal = inject(NzModalRef);
+
+  readonly userId = signal('');
+
+  readonly valid = computed(() => this.userId().trim().length > 0);
+
+  cancel(): void {
+    this.#modal.destroy(undefined);
+  }
+
+  ok(): void {
+    if (!this.valid()) {
+      return;
+    }
+    this.#modal.destroy(this.userId().trim());
+  }
+
+  protected onUserIdInput($event: Event): void {
+    this.userId.set(($event.target as HTMLInputElement).value);
+  }
+}

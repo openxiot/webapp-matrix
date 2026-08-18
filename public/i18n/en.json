@@ -101,5 +101,12 @@
   "项目": "Project",
   "项目名称": "Project Name",
   "项目详情": "Project Details",
-  "高温报警": "High Temperature"
+  "高温报警": "High Temperature",
+  "项目成员": "Project Members",
+  "成员": "Members",
+  "移除成员": "Remove Member",
+  "移除成员成功": "Member removed",
+  "您真的要移除这个成员吗？": "Are you sure you want to remove this member?",
+  "邮箱": "Email",
+  "成员数量": "Member Count"
 }

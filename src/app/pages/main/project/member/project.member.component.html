@@ -1,0 +1,58 @@
+<nz-spin [nzSpinning]="loading()">
+  <nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
+    <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+
+    <nz-page-header-extra>
+      @if (isAdmin()) {
+        <button nz-button nzType="primary" (click)="addMember()">{{ '添加成员' | translate }}</button>
+      }
+    </nz-page-header-extra>
+
+    <nz-page-header-content>
+      <nz-descriptions nzSize="small" [nzColumn]="4">
+        <nz-descriptions-item nzTitle="{{ '项目代码' | translate }}" [nzSpan]="1">{{ rootId() }}</nz-descriptions-item>
+        <nz-descriptions-item nzTitle="{{ '项目名称' | translate }}" [nzSpan]="1">{{ space()?.name || '-' }}</nz-descriptions-item>
+        <nz-descriptions-item nzTitle="{{ '成员数量' | translate }}" [nzSpan]="1">{{ members().length }}</nz-descriptions-item>
+      </nz-descriptions>
+    </nz-page-header-content>
+  </nz-page-header>
+
+  <ng-template #pageTitle>
+    {{ space()?.name || ('项目成员' | translate) }}
+  </ng-template>
+
+  <div style="padding: 20px 20px">
+    <nz-table [nzData]="members()" [nzShowSizeChanger]="true" [nzHideOnSinglePage]="true">
+      <thead>
+        <tr>
+          <th>{{ '用户ID' | translate }}</th>
+          <th>{{ '用户名称' | translate }}</th>
+          <th>{{ '角色' | translate }}</th>
+          <th>{{ '邮箱' | translate }}</th>
+          <th>{{ '操作' | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (member of members(); track member.userId) {
+          <tr>
+            <td>{{ member.userId }}</td>
+            <td>{{ member.name }}</td>
+            <td>
+              @if (member.role === 'admin') {
+                <nz-tag color="gold">{{ '管理员' | translate }}</nz-tag>
+              } @else {
+                <nz-tag>{{ '普通成员' | translate }}</nz-tag>
+              }
+            </td>
+            <td>{{ member.email || '-' }}</td>
+            <td>
+              @if (isAdmin()) {
+                <a (click)="removeMember(member)">{{ '移除成员' | translate }}</a>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+  </div>
+</nz-spin>
