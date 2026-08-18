@@ -18,18 +18,13 @@
   <nz-row [nzGutter]="[8, 8]">
     @for (org of organizations(); track org.id) {
       <nz-col [nzSpan]="8" class="card-col" (click)="setCurrentOrganization(org)">
-        @if (org.virtual) {
-          <span class="card-corner-ribbon">
-            <span>{{ '项目' | translate }}</span>
-          </span>
-        }
-        <nz-card [nzHoverable]="true" [nzActions]="org.virtual ? [detail, member] : [detail]">
+        <nz-card [nzHoverable]="true" [nzActions]="[detail]">
           <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
         </nz-card>
       </nz-col>
 
       <ng-template #title>
-        <span [class.card-title-virtual]="org.virtual">
+        <span>
           <span>{{ org.name }}</span>
 
           @if (account.isCurrentOrganization(org)) {
@@ -45,15 +40,7 @@
       </ng-template>
 
       <ng-template #detail>
-        @if (org.virtual) {
-          <a [routerLink]="['/main/project/detail', org.id]">{{ "详情" | translate }}</a>
-        } @else {
-          <a [routerLink]="['/main/organization/detail', org.id]">{{ "详情" | translate }}</a>
-        }
-      </ng-template>
-
-      <ng-template #member>
-        <a [routerLink]="['/main/project/member', org.id]">{{ "成员" | translate }}</a>
+        <a [routerLink]="['/main/organization/detail', org.id]">{{ "详情" | translate }}</a>
       </ng-template>
     }
   </nz-row>

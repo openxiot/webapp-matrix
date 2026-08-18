@@ -13,11 +13,7 @@
         <nz-descriptions-item nzTitle="{{ '组织代码' | translate }}" [nzSpan]="1">{{ organization().id }}
         </nz-descriptions-item>
         <nz-descriptions-item nzTitle="{{ '组织名称' | translate }}" [nzSpan]="1">
-          @if (organization().virtual) {
-            {{ organization().name }}
-          } @else {
-            <a (click)="editOrganizationName()">{{ organization().name }}</a>
-          }
+          <a (click)="editOrganizationName()">{{ organization().name }}</a>
         </nz-descriptions-item>
         <nz-descriptions-item nzTitle="{{ '创建者' | translate }}" [nzSpan]="1">{{ organization().creator.name }}
         </nz-descriptions-item>

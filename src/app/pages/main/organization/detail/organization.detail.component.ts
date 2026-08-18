@@ -10,7 +10,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzStepsModule } from 'ng-zorro-antd/steps';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { DatePipe, Location } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -81,7 +81,6 @@ export class OrganizationDetailComponent implements OnInit {
     private modal: NzModalService,
     private viewContainerRef: ViewContainerRef,
     protected location: Location,
-    private router: Router,
     private route: ActivatedRoute,
     private account: AccountService,
     private msg: NzMessageService,
@@ -267,7 +266,6 @@ export class OrganizationDetailComponent implements OnInit {
 
   /** 退出组织（实际调用删除成员接口） */
   protected leaveOrganization(member: OrganizationMember) {
-    const isVirtual = this.organization().virtual;
     const modal = this.modal.create<ConfirmComponent, string, string>({
       nzTitle: this.i18n.translate.instant('您真的要退出这个组织吗？'),
       nzContent: ConfirmComponent,
@@ -289,13 +287,7 @@ export class OrganizationDetailComponent implements OnInit {
 
     modal.afterClose.subscribe((result) => {
       if (result) {
-        this.doRemoveMember(member, this.i18n.translate.instant('已退出组织'), () => {
-          if (isVirtual) {
-            // 退出虚拟组织：清空当前组织/项目，返回首页并刷新界面
-            this.account.clearCurrentOrganization();
-            this.router.navigate(['/main/dashboard']).then(() => this.account.load());
-          }
-        });
+        this.doRemoveMember(member, this.i18n.translate.instant('已退出组织'));
       }
     });
   }

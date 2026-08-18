@@ -76,7 +76,6 @@ export class UserOrganizationCodec {
     }
     organization.members = OrganizationMemberCodec.decodeArray(o.members);
     organization.personal = o.personal;
-    organization.virtual = o.virtual;
     return organization;
   }
 
