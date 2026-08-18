@@ -32,7 +32,8 @@
 }
 
 // 虚拟组织卡片标题让出左上角角标区域
+// 注意：外层保持内联（不要 display:inline-block），否则 float:right 的 check 角标
+// 的包含块会变成这个收缩宽度的 inline-block，导致无法右对齐到卡片右缘
 .card-title-virtual {
-  display: inline-block;
   margin-left: 40px;
 }

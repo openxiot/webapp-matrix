@@ -45,7 +45,11 @@
       </ng-template>
 
       <ng-template #detail>
-        <a [routerLink]="['/main/project/detail', org.id]">{{ "详情" | translate }}</a>
+        @if (org.virtual) {
+          <a [routerLink]="['/main/project/detail', org.id]">{{ "详情" | translate }}</a>
+        } @else {
+          <a [routerLink]="['/main/organization/detail', org.id]">{{ "详情" | translate }}</a>
+        }
       </ng-template>
 
       <ng-template #member>
