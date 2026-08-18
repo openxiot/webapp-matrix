@@ -1,0 +1,38 @@
+// 卡片容器相对定位，供角标定位
+.card-col {
+  position: relative;
+}
+
+// 虚拟组织左上角 45° 角标
+.card-corner-ribbon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 88px;
+  height: 88px;
+  overflow: hidden;
+  z-index: 1;
+  pointer-events: none;
+
+  > span {
+    position: absolute;
+    top: 18px;
+    left: -30px;
+    display: block;
+    width: 140px;
+    padding: 5px 0;
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #fff;
+    background: #722ed1;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.18);
+    transform: rotate(-45deg);
+  }
+}
+
+// 虚拟组织卡片标题让出左上角角标区域
+.card-title-virtual {
+  display: inline-block;
+  margin-left: 40px;
+}

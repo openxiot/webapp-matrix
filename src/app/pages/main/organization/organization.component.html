@@ -16,16 +16,21 @@
 <div style="padding: 20px 20px">
 
   <nz-row [nzGutter]="[8, 8]">
-    @for (org of organizations(); track org) {
-      <nz-col [nzSpan]="4" (click)="setCurrentOrganization(org)">
-        <nz-card [nzHoverable]="true" [nzActions]="[detail]">
+    @for (org of organizations(); track org.id) {
+      <nz-col [nzSpan]="8" class="card-col" (click)="setCurrentOrganization(org)">
+        @if (org.virtual) {
+          <span class="card-corner-ribbon">
+            <span>{{ '项目' | translate }}</span>
+          </span>
+        }
+        <nz-card [nzHoverable]="true" [nzActions]="org.virtual ? [detail, member] : [detail]">
           <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
         </nz-card>
       </nz-col>
 
       <ng-template #title>
-        <span>
-          <span>{{ org.id }}</span>
+        <span [class.card-title-virtual]="org.virtual">
+          <span>{{ org.name }}</span>
 
           @if (account.isCurrentOrganization(org)) {
             <span style="float: right">
@@ -36,11 +41,15 @@
       </ng-template>
 
       <ng-template #desc>
-        {{ org.name }}
+        {{ org.id }}
       </ng-template>
 
       <ng-template #detail>
-        <a [routerLink]="['/main/organization/detail', org.id]">{{ "详情" | translate }}</a>
+        <a [routerLink]="['/main/project/detail', org.id]">{{ "详情" | translate }}</a>
+      </ng-template>
+
+      <ng-template #member>
+        <a [routerLink]="['/main/project/member', org.id]">{{ "成员" | translate }}</a>
       </ng-template>
     }
   </nz-row>
