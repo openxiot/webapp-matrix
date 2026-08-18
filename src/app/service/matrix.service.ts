@@ -116,24 +116,24 @@ export class MatrixService {
   }
 
   /**------------------------------------------------------------------------------------------------
-   * 项目成员（虚拟组织）
+   * 根空间访问条目（accesses 中 type = user 的条目，即成员）
    *------------------------------------------------------------------------------------------------*/
-  listMembers(rootId: string): Observable<OrganizationMember[]> {
+  listAccesses(rootId: string): Observable<OrganizationMember[]> {
     return this.http
-      .get<OxResponse>(`${this.server}/matrix/v1/space/${rootId}/member`)
+      .get<OxResponse>(`${this.server}/matrix/v1/space/${rootId}/access`)
       .pipe(map((r) => OrganizationMemberCodec.decodeArray(r.data)));
   }
 
-  addMember(rootId: string, memberId: string): Observable<void> {
+  addAccess(rootId: string, memberId: string): Observable<void> {
     return this.http
-      .post<OxResponse>(`${this.server}/matrix/v1/space/${rootId}/member`, { memberId })
+      .post<OxResponse>(`${this.server}/matrix/v1/space/${rootId}/access`, { memberId })
       .pipe(map(() => undefined));
   }
 
-  removeMember(rootId: string, memberId: string): Observable<void> {
+  removeAccess(rootId: string, memberId: string): Observable<void> {
     let params = new HttpParams().set('memberId', memberId);
     return this.http
-      .delete<OxResponse>(`${this.server}/matrix/v1/space/${rootId}/member`, { params })
+      .delete<OxResponse>(`${this.server}/matrix/v1/space/${rootId}/access`, { params })
       .pipe(map(() => undefined));
   }
 }

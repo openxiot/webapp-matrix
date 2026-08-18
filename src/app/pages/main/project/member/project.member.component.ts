@@ -88,7 +88,7 @@ export class ProjectMemberComponent implements OnInit {
     this.loading.set(true);
     forkJoin({
       space: this.matrix.getSpace(id),
-      members: this.matrix.listMembers(id),
+      members: this.matrix.listAccesses(id),
     }).subscribe({
       next: ({ space, members }) => {
         this.space.set(space);
@@ -125,7 +125,7 @@ export class ProjectMemberComponent implements OnInit {
     modal.afterClose.subscribe((result) => {
       if (result) {
         this.loading.set(true);
-        this.matrix.addMember(this.rootId(), result).subscribe({
+        this.matrix.addAccess(this.rootId(), result).subscribe({
           next: () => {
             this.msg.success(this.i18n.translate.instant('添加成员成功'));
             this.load(this.rootId());
@@ -169,7 +169,7 @@ export class ProjectMemberComponent implements OnInit {
 
   private doRemoveMember(member: OrganizationMember): void {
     this.loading.set(true);
-    this.matrix.removeMember(this.rootId(), member.userId).subscribe({
+    this.matrix.removeAccess(this.rootId(), member.userId).subscribe({
       next: () => {
         this.msg.success(this.i18n.translate.instant('移除成员成功'));
         this.load(this.rootId());
