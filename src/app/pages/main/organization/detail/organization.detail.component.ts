@@ -250,12 +250,13 @@ export class OrganizationDetailComponent implements OnInit {
     });
   }
 
-  protected doRemoveMember(member: OrganizationMember, successMessage: string = this.i18n.translate.instant('删除成功')) {
+  protected doRemoveMember(member: OrganizationMember, successMessage: string = this.i18n.translate.instant('删除成功'), onSuccess?: () => void) {
     this.loading.set(true);
     this.service.removeOrganizationMember(this.id(), member.userId).subscribe({
       next: () => {
         this.msg.success(successMessage);
         this.load();
+        onSuccess?.();
       },
       error: (error) => {
         this.msg.warning(error);
@@ -266,6 +267,7 @@ export class OrganizationDetailComponent implements OnInit {
 
   /** 退出组织（实际调用删除成员接口） */
   protected leaveOrganization(member: OrganizationMember) {
+    const isVirtual = this.organization().virtual;
     const modal = this.modal.create<ConfirmComponent, string, string>({
       nzTitle: this.i18n.translate.instant('您真的要退出这个组织吗？'),
       nzContent: ConfirmComponent,
@@ -287,7 +289,13 @@ export class OrganizationDetailComponent implements OnInit {
 
     modal.afterClose.subscribe((result) => {
       if (result) {
-        this.doRemoveMember(member, this.i18n.translate.instant('已退出组织'));
+        this.doRemoveMember(member, this.i18n.translate.instant('已退出组织'), () => {
+          if (isVirtual) {
+            // 退出虚拟组织：清空当前组织/项目，返回首页并刷新界面
+            this.account.clearCurrentOrganization();
+            this.router.navigate(['/main/dashboard']).then(() => this.account.load());
+          }
+        });
       }
     });
   }

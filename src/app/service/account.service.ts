@@ -66,6 +66,13 @@ export class AccountService {
     this.space.set(new SpaceEntity());
   }
 
+  /** 清空当前组织（退出虚拟组织后使用），同时清空当前项目 */
+  clearCurrentOrganization() {
+    localStorage.removeItem('organizationId');
+    this.organization.set(new UserOrganization());
+    this.clearCurrentRootSpace();
+  }
+
   private isOrganizationChanged(organization: UserOrganization): boolean {
     if (this.organization) {
       return this.organization().id !== organization.id;

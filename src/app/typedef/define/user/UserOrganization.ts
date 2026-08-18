@@ -18,5 +18,6 @@ export class UserOrganization {
   creator: Person = new Person();
   members: OrganizationMember[] = [];
   personal: boolean = false;
+  virtual: boolean = false;
   _role: string = 'member';
 }
