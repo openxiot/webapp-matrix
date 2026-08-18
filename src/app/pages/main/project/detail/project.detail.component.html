@@ -1,21 +1,21 @@
-<nz-spin [nzSpinning]="project.loading()">
+<nz-spin [nzSpinning]="loading()">
   <nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
     <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
 
     <nz-page-header-content>
-      @if (project.rootSpace(); as root) {
+      @if (rootSpace(); as root) {
         <nz-descriptions nzSize="small" [nzColumn]="4">
           <nz-descriptions-item nzTitle="{{ '空间代码' | translate }}" [nzSpan]="1">{{ root.id }}</nz-descriptions-item>
           <nz-descriptions-item nzTitle="{{ '空间名称' | translate }}" [nzSpan]="1">{{ root.name }}</nz-descriptions-item>
           <nz-descriptions-item nzTitle="{{ '空间类型' | translate }}" [nzSpan]="1">{{ typeLabel(root) | translate }}</nz-descriptions-item>
-          <nz-descriptions-item nzTitle="{{ '设备数量' | translate }}" [nzSpan]="1">{{ project.devices().length }}</nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '设备数量' | translate }}" [nzSpan]="1">{{ devices().length }}</nz-descriptions-item>
         </nz-descriptions>
       }
     </nz-page-header-content>
   </nz-page-header>
 
   <ng-template #pageTitle>
-    {{ project.rootSpace()?.name || ('项目详情' | translate) }}
+    {{ rootSpace()?.name || ('项目详情' | translate) }}
   </ng-template>
 
   <div style="padding: 20px 20px">
@@ -41,7 +41,7 @@
               @if (row.kind === 'space') {
                 <span nz-icon [nzType]="iconOf(row.space!)"></span>&nbsp;{{ row.space!.name }}
               } @else {
-                <span nz-icon nzType="hdd"></span>&nbsp;{{ project.deviceName(row.device!) }}
+                <span nz-icon nzType="hdd"></span>&nbsp;{{ deviceName(row.device!) }}
               }
             </td>
             <td>

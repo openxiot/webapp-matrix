@@ -10,7 +10,6 @@ import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AccountService } from '../../../service/account.service';
-import { MatrixService } from '../../../service/matrix.service';
 import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { MainI18nService } from '../../../service/i18n.service';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
@@ -42,7 +41,6 @@ import { FormsModule } from '@angular/forms';
 export class AccountComponent implements OnInit {
   constructor(
     public account: AccountService,
-    private service: MatrixService,
     private msg: NzMessageService,
     private i18n: MainI18nService,
   ) {}

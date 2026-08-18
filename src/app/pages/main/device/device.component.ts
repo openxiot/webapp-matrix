@@ -12,7 +12,6 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { AccountService } from '../../../service/account.service';
-import { ProjectService } from '../../../service/project.service';
 import { DeviceEntity } from '../../../typedef/define/device/DeviceEntity';
 import { UrnUtils } from '../../../typedef/utils/UrnUtils';
 
@@ -39,7 +38,6 @@ import { UrnUtils } from '../../../typedef/utils/UrnUtils';
 export class DeviceComponent implements OnInit {
   constructor(
     public account: AccountService,
-    public project: ProjectService,
     private msg: NzMessageService,
     private translate: TranslateService,
   ) {}
@@ -50,7 +48,6 @@ export class DeviceComponent implements OnInit {
       this.msg.warning(this.translate.instant('请先在项目列表中选择一个项目'));
       return;
     }
-    this.project.loadSpaceGraph(rootId);
   }
 
   /** 设备类型显示名（URN 类型段） */

@@ -72,16 +72,20 @@ export class OrganizationComponent implements OnInit {
     });
   }
 
-  protected setCurrentOrganization(organization: UserOrganization) {
-    this.account.setOrganization(organization);
+  protected clickOrganization(organization: UserOrganization) {
+    if (this.account.organization().id === organization.id) {
+      this.account.setOrganization(new UserOrganization());
+    } else {
+      this.account.setOrganization(organization);
+    }
 
     this.router
       .navigate(['/'])
       .then(() => {
-        console.log('setCurrentOrganization ok!');
+        console.log('clickOrganization ok!');
       })
       .catch((e) => {
-        console.log('setCurrentOrganization failed: ', e);
+        console.log('clickOrganization failed: ', e);
       });
   }
 }

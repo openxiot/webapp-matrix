@@ -35,8 +35,11 @@ export class AccountService {
       localStorage.setItem('organizationId', organization.id);
 
       this.organization.set(organization);
+
       // 切换组织后清空当前项目（对齐 Android TokenManager 行为）
-      this.clearCurrentRootSpace();
+      // this.clearCurrentRootSpace();
+
+      this.loadSpaces();
     }
   }
 
@@ -97,6 +100,7 @@ export class AccountService {
 
   public load() {
     this.loadOrganizations();
+    this.loadSpaces();
   }
 
   private loadOrganizations() {
@@ -104,10 +108,8 @@ export class AccountService {
       this.service.getOrganizations().subscribe({
         next: (data) => {
           this.organizations = data;
-          this.selectCurrentOrganization();
+          // this.selectCurrentOrganization();
           this.loading.set(false);
-
-          this.loadSpaces();
         },
         error: (error) => {
           this.msg.warning(error);
@@ -117,21 +119,17 @@ export class AccountService {
   }
 
   private loadSpaces() {
-    if (this.organization()) {
-      if (this.organization().id.length > 0) {
-        this.loading.set(true);
-        this.matrix.getAllSpaces().subscribe({
-          next: (data) => {
-            this.spaces = data;
-            this.selectCurrentSpace();
-            this.loading.set(false);
-          },
-          error: (error) => {
-            this.msg.warning(error);
-          },
-        });
-      }
-    }
+    this.loading.set(true);
+    this.matrix.getAllSpaces().subscribe({
+      next: (data) => {
+        this.spaces = data;
+        this.selectCurrentSpace();
+        this.loading.set(false);
+      },
+      error: (error) => {
+        this.msg.warning(error);
+      },
+    });
   }
 
   private selectCurrentOrganization() {
@@ -142,10 +140,10 @@ export class AccountService {
         this.setOrganization(org);
       }
     } else {
-      if (this.organizations.length > 0) {
-        const org = this.organizations[0];
-        this.setOrganization(org);
-      }
+      // if (this.organizations.length > 0) {
+      //   const org = this.organizations[0];
+      //   this.setOrganization(org);
+      // }
     }
   }
 

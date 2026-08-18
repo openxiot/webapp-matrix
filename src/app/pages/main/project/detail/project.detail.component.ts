@@ -13,7 +13,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { DatePipe, Location } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AccountService } from '../../../../service/account.service';
-import { ProjectService } from '../../../../service/project.service';
+import { ProductService } from '../../../../service/product.service';
 import { MatrixService } from '../../../../service/matrix.service';
 import { MainI18nService } from '../../../../service/i18n.service';
 import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
@@ -23,6 +23,7 @@ import { SpaceAddComponent, SpaceAddResult } from '../../../../common/dialog/spa
 import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
 import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
 import { UrnUtils } from '../../../../typedef/utils/UrnUtils';
+import { ProductBasic } from '@openxiot/xiot-core-spec-ts';
 
 /** 空间类型 -> 中文名 */
 const SPACE_TYPE_LABELS: Record<string, string> = {
@@ -49,6 +50,36 @@ function spaceIcon(type: string): string {
     default:
       return 'folder';
   }
+}
+
+/** 从扁平空间列表构建嵌套树（parentId 关系，首元素为根） */
+function buildTree(spaces: SpaceEntity[]): SpaceEntity | null {
+  if (!spaces || spaces.length === 0) return null;
+
+  const byParentId = new Map<string, SpaceEntity[]>();
+  for (const s of spaces) {
+    const list = byParentId.get(s.parentId) || [];
+    list.push(s);
+    byParentId.set(s.parentId, list);
+  }
+
+  const buildChildren = (parentId: string): SpaceEntity[] => {
+    const children = byParentId.get(parentId) || [];
+    return children.map((c) => {
+      const copy = Object.assign(new SpaceEntity(), c);
+      copy.children = buildChildren(c.id);
+      return copy;
+    });
+  };
+
+  const root = Object.assign(new SpaceEntity(), spaces[0]);
+  root.children = buildChildren(root.id);
+  return root;
+}
+
+/** 产品显示名：中文名 -> model -> id */
+function productDisplayName(p: ProductBasic, unknown: string): string {
+  return p.name?.value?.get('zh-CN') || p.model || p.id || unknown;
 }
 
 /** 表格中的一行：空间节点或设备节点 */
@@ -89,6 +120,15 @@ export class ProjectDetailComponent implements OnInit {
   /** 已展开的空间 id 集合 */
   expandedIds = signal<Set<string>>(new Set());
 
+  /** 嵌套的根空间树 */
+  rootSpace = signal<SpaceEntity | null>(null);
+  /** 当前项目全部设备（扁平） */
+  devices = signal<DeviceEntity[]>([]);
+  /** model -> 产品显示名 */
+  productNames = signal<Map<string, string>>(new Map());
+  loading = signal(false);
+  error = signal<string | null>(null);
+
   constructor(
     public i18n: MainI18nService,
     private modal: NzModalService,
@@ -97,8 +137,8 @@ export class ProjectDetailComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private account: AccountService,
+    private product: ProductService,
     private msg: NzMessageService,
-    public project: ProjectService,
     private matrix: MatrixService,
   ) {}
 
@@ -108,20 +148,92 @@ export class ProjectDetailComponent implements OnInit {
       this.rootId.set(id);
       if (id) {
         this.expandedIds.set(new Set([id]));
-        this.project.loadSpaceGraph(id);
+        this.loadSpaceGraph(id);
       }
     });
   }
 
+  /** 加载空间图（嵌套树 + 设备），成功后解析产品名 */
+  loadSpaceGraph(rootId: string) {
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.matrix.getSpaceGraph(rootId).subscribe({
+      next: (graph) => {
+        this.rootSpace.set(buildTree(graph.spaces));
+        this.devices.set(graph.devices);
+        this.loading.set(false);
+        this.resolveProductNames(graph.devices);
+      },
+      error: (e) => {
+        this.loading.set(false);
+        this.error.set(e?.message ?? String(e));
+        this.msg.error(e?.message ?? e);
+      },
+    });
+  }
+
+  /** 设备显示名：产品名 -> URN 类型名 -> did */
+  deviceName(device: DeviceEntity): string {
+    const model = this.deviceModel(device);
+    const name = this.productNames().get(model);
+    if (name) return name;
+    const typeName = UrnUtils.extractTypeName(device.type);
+    return typeName || device.did;
+  }
+
+  deviceModel(device: DeviceEntity): string {
+    return UrnUtils.extractOrgModel(device.type).model;
+  }
+
+  private resolveProductNames(devices: DeviceEntity[]) {
+    const orgId = this.account.organization().id;
+
+    // 宽泛兜底：拉取组织可见的全部产品建立 model -> 名称 映射
+    if (orgId) {
+      this.product.getVisibleProducts(orgId).subscribe({
+        next: (products) => {
+          const names = new Map<string, string>();
+          for (const p of products) {
+            names.set(p.model, productDisplayName(p, this.i18n.translate.instant('未知产品')));
+          }
+          this.productNames.set(names);
+        },
+        error: () => {},
+      });
+    }
+
+    // 逐型号精确解析
+    const orgModels = new Set<string>();
+    for (const d of devices) {
+      const { org, model } = UrnUtils.extractOrgModel(d.type);
+      if (model) orgModels.add(`${org}:${model}`);
+    }
+    for (const key of orgModels) {
+      const sep = key.indexOf(':');
+      const org = key.slice(0, sep);
+      const model = key.slice(sep + 1);
+      this.product.getProductByOrgModel(org, model).subscribe({
+        next: (p) => {
+          this.productNames.update((m) => {
+            m.set(model, productDisplayName(p, this.i18n.translate.instant('未知产品')));
+            return new Map(m);
+          });
+        },
+        error: () => {},
+      });
+    }
+  }
+
   /** 展平后的可见行（展开状态由 expandedIds 决定） */
   readonly rows = computed<TreeNode[]>(() => {
-    const root = this.project.rootSpace();
+    const root = this.rootSpace();
     if (!root) {
       return [];
     }
     const expanded = this.expandedIds();
     const list: TreeNode[] = [];
-    const devices = this.project.devices();
+    const devices = this.devices();
 
     const appendSpace = (space: SpaceEntity, level: number) => {
       const spaceDevices = devices.filter((d) => d.space?.spaceId === space.id);
@@ -172,7 +284,7 @@ export class ProjectDetailComponent implements OnInit {
 
   /** 某空间下的设备数量 */
   deviceCount(spaceId: string): number {
-    return this.project.devices().filter((d) => d.space?.spaceId === spaceId).length;
+    return this.devices().filter((d) => d.space?.spaceId === spaceId).length;
   }
 
   /** 行展开/收起（仅空间行有展开图标） */
@@ -227,7 +339,7 @@ export class ProjectDetailComponent implements OnInit {
         this.matrix.createSpace(space).subscribe({
           next: () => {
             this.msg.success(this.i18n.translate.instant('添加子空间成功'));
-            this.project.loadSpaceGraph(this.rootId());
+            this.loadSpaceGraph(this.rootId());
           },
           error: (error) => {
             this.msg.warning(error);
@@ -279,7 +391,7 @@ export class ProjectDetailComponent implements OnInit {
           this.account.clearCurrentRootSpace();
           this.router.navigate(['/main/project']).then(() => {});
         } else {
-          this.project.loadSpaceGraph(this.rootId());
+          this.loadSpaceGraph(this.rootId());
         }
       },
       error: (error) => {

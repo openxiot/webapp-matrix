@@ -17,7 +17,7 @@
 
   <nz-row [nzGutter]="[8, 8]">
     @for (org of organizations(); track org.id) {
-      <nz-col [nzSpan]="8" class="card-col" (click)="setCurrentOrganization(org)">
+      <nz-col [nzSpan]="8" class="card-col" (click)="clickOrganization(org)">
         <nz-card [nzHoverable]="true" [nzActions]="[detail]">
           <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
         </nz-card>
