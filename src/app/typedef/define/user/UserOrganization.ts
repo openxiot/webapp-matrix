@@ -12,7 +12,7 @@ export class Person {
   timestamp: Date | null = null;
 }
 
-export class Organization {
+export class UserOrganization {
   id: string = '';
   name: string = '';
   creator: Person = new Person();

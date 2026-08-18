@@ -17,7 +17,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { AccountService } from '../../../../service/account.service';
 import { UserOrganizationService } from '../../../../service/user.organization.service';
 import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { Organization, OrganizationMember } from '../../../../typedef/define/user/Organization';
+import { UserOrganization, OrganizationMember } from '../../../../typedef/define/user/UserOrganization';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { ConfirmComponent } from '../../../../common/dialog/confirm/confirm.component';
@@ -56,7 +56,7 @@ import { MemberEditComponent } from '../../../../common/dialog/member/edit/membe
 export class OrganizationDetailComponent implements OnInit {
   loading = signal(false);
   id = signal('');
-  organization = signal(new Organization());
+  organization = signal(new UserOrganization());
 
   /** 当前账号在该组织中的角色是否为管理员 */
   readonly isAdmin = computed(() => {

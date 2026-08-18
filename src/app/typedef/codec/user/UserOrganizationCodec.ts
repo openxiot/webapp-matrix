@@ -1,4 +1,4 @@
-import {Organization, OrganizationMember, Person} from '../../define/user/Organization';
+import {UserOrganization, OrganizationMember, Person} from '../../define/user/UserOrganization';
 
 export class OrganizationMemberCodec {
 
@@ -43,9 +43,9 @@ export class OrganizationMemberCodec {
   }
 }
 
-export class OrganizationCodec {
+export class UserOrganizationCodec {
 
-  public static encode(organization: Organization): any {
+  public static encode(organization: UserOrganization): any {
     let o: any = {
       code: organization.id,
       name: organization.name,
@@ -65,8 +65,8 @@ export class OrganizationCodec {
     return o;
   }
 
-  static decode(o: any): Organization {
-    let organization = new Organization();
+  static decode(o: any): UserOrganization {
+    let organization = new UserOrganization();
     organization.id = o.code;
     organization.name = o.name;
     if (o.creator) {
@@ -79,8 +79,8 @@ export class OrganizationCodec {
     return organization;
   }
 
-  public static decodeArray(array: Object): Organization[] {
-    const list: Array<Organization> = [];
+  public static decodeArray(array: Object): UserOrganization[] {
+    const list: Array<UserOrganization> = [];
 
     if (array == null) {
       return [];
@@ -95,9 +95,9 @@ export class OrganizationCodec {
     return list;
   }
 
-  static encodeArray(list: Organization[]): any {
+  static encodeArray(list: UserOrganization[]): any {
     return list.map(x => {
-      return OrganizationCodec.encode(x);
+      return UserOrganizationCodec.encode(x);
     });
   }
 }

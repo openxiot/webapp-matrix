@@ -1,7 +1,7 @@
 import { Injectable, signal } from "@angular/core";
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { UserOrganizationService } from './user.organization.service';
-import { Organization } from '../typedef/define/user/Organization';
+import { UserOrganization } from '../typedef/define/user/UserOrganization';
 import { User } from '../typedef/define/user/User';
 import { UserCodec } from '../typedef/codec/user/UserCodec';
 import { SpaceEntity } from '../typedef/define/space/SpaceEntity';
@@ -10,12 +10,12 @@ import { MatrixService } from './matrix.service';
 @Injectable({ providedIn: 'root' })
 export class AccountService {
   public loading = signal(false);
-  public organizations: Organization[] = [];
+  public organizations: UserOrganization[] = [];
   public spaces: SpaceEntity[] = [];
 
   public login = signal(false);
   public user = signal<User>(new User());
-  public organization = signal<Organization>(new Organization());
+  public organization = signal<UserOrganization>(new UserOrganization());
   public space = signal<SpaceEntity>(new SpaceEntity());
 
   constructor(
@@ -30,7 +30,7 @@ export class AccountService {
     }
   }
 
-  setOrganization(organization: Organization) {
+  setOrganization(organization: UserOrganization) {
     if (this.isOrganizationChanged(organization)) {
       localStorage.setItem('organizationId', organization.id);
 
@@ -40,7 +40,7 @@ export class AccountService {
     }
   }
 
-  public isCurrentOrganization(organization: Organization): boolean {
+  public isCurrentOrganization(organization: UserOrganization): boolean {
     if (this.organization()) {
       return this.organization().id === organization.id;
     }
@@ -66,7 +66,7 @@ export class AccountService {
     this.space.set(new SpaceEntity());
   }
 
-  private isOrganizationChanged(organization: Organization): boolean {
+  private isOrganizationChanged(organization: UserOrganization): boolean {
     if (this.organization) {
       return this.organization().id !== organization.id;
     } else {

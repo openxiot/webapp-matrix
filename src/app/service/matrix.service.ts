@@ -11,8 +11,8 @@ import { SpaceGraph } from '../typedef/define/device/SpaceGraph';
 import { SpaceGraphCodec } from '../typedef/codec/device/SpaceGraphCodec';
 import { DeviceRegistration } from '../typedef/define/device/DeviceRegistration';
 import { MoveDeviceRequest } from '../typedef/define/device/MoveDeviceRequest';
-import { OrganizationMember } from '../typedef/define/user/Organization';
-import { OrganizationMemberCodec } from '../typedef/codec/user/OrganizationCodec';
+import { OrganizationMember } from '../typedef/define/user/UserOrganization';
+import { OrganizationMemberCodec } from '../typedef/codec/user/UserOrganizationCodec';
 
 @Injectable({ providedIn: 'root' })
 export class MatrixService {

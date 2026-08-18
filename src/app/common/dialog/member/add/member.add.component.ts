@@ -4,7 +4,7 @@ import { NzModalRef } from 'ng-zorro-antd/modal';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzFormModule } from 'ng-zorro-antd/form';
-import { OrganizationMember } from '../../../../typedef/define/user/Organization';
+import { OrganizationMember } from '../../../../typedef/define/user/UserOrganization';
 import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({

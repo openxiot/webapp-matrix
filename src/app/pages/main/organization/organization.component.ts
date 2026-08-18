@@ -15,7 +15,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { Organization } from '../../../typedef/define/user/Organization';
+import { UserOrganization } from '../../../typedef/define/user/UserOrganization';
 import { AccountService } from '../../../service/account.service';
 import { UserOrganizationService } from '../../../service/user.organization.service';
 
@@ -45,7 +45,7 @@ import { UserOrganizationService } from '../../../service/user.organization.serv
 })
 export class OrganizationComponent implements OnInit {
   loading = signal(true);
-  organizations = signal<Organization[]>([]);
+  organizations = signal<UserOrganization[]>([]);
 
   constructor(
     public account: AccountService,
@@ -72,7 +72,7 @@ export class OrganizationComponent implements OnInit {
     });
   }
 
-  protected setCurrentOrganization(organization: Organization) {
+  protected setCurrentOrganization(organization: UserOrganization) {
     this.account.setOrganization(organization);
 
     this.router

@@ -3,8 +3,8 @@ import {environment} from "../../environments/environment";
 import {HttpClient} from "@angular/common/http";
 import {lastValueFrom, map, Observable} from "rxjs";
 import {OxResponse} from "./response/OxResponse";
-import {Organization, OrganizationMember} from '../typedef/define/user/Organization';
-import {OrganizationCodec, OrganizationMemberCodec} from '../typedef/codec/user/OrganizationCodec';
+import {UserOrganization, OrganizationMember} from '../typedef/define/user/UserOrganization';
+import {UserOrganizationCodec, OrganizationMemberCodec} from '../typedef/codec/user/UserOrganizationCodec';
 import { Oauth2Configuration } from '../typedef/define/oauth/Oauth2Configuration';
 import { Oauth2ConfigurationCodec } from '../typedef/codec/oauth/Oauth2ConfigurationCodec';
 
@@ -77,22 +77,22 @@ export class UserOrganizationService {
       .pipe(map(() => undefined));
   }
 
-  getOrganization(organizationId: string): Observable<Organization> {
+  getOrganization(organizationId: string): Observable<UserOrganization> {
     console.log(`getOrganization: ${organizationId}`);
     return this.http
       .get<OxResponse>(`${this.account}/user/organization/one/${organizationId}`)
-      .pipe(map((response) => OrganizationCodec.decode(response.data)));
+      .pipe(map((response) => UserOrganizationCodec.decode(response.data)));
   }
 
-  getOrganizations(): Observable<Organization[]> {
+  getOrganizations(): Observable<UserOrganization[]> {
     return this.http
       .get<OxResponse>(`${this.account}/user/organization/many`)
-      .pipe(map((response) => OrganizationCodec.decodeArray(response.data)));
+      .pipe(map((response) => UserOrganizationCodec.decodeArray(response.data)));
   }
 
-  getAllOrganizations(): Observable<Organization[]> {
+  getAllOrganizations(): Observable<UserOrganization[]> {
     return this.http
       .get<OxResponse>(`${this.account}/user/organization/all`)
-      .pipe(map((response) => OrganizationCodec.decodeArray(response.data)));
+      .pipe(map((response) => UserOrganizationCodec.decodeArray(response.data)));
   }
 }
