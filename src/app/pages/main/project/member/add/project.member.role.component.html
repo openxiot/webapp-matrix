@@ -1,0 +1,14 @@
+<nz-form-item>
+  <nz-form-label [nzSpan]="4">{{ '成员' | translate }}</nz-form-label>
+  <nz-form-control>
+    <span>{{ name() }}</span>
+  </nz-form-control>
+</nz-form-item>
+<nz-form-item>
+  <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '角色' | translate }}</nz-form-label>
+  <nz-form-control>
+    <nz-select [nzPlaceHolder]="'选择角色' | translate" [ngModel]="role()" (ngModelChange)="role.set($event)">
+      <nz-option *ngFor="let option of options" [nzLabel]="option.label" [nzValue]="option.value"></nz-option>
+    </nz-select>
+  </nz-form-control>
+</nz-form-item>

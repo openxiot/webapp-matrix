@@ -1,4 +1,5 @@
 import { DeviceEntity } from '../device/DeviceEntity';
+import { SpaceAccess } from './SpaceAccess';
 
 export class SpaceEntity {
   id: string = '';
@@ -13,6 +14,7 @@ export class SpaceEntity {
   sortOrder: number = 0;
   children: SpaceEntity[] = [];
   devices: DeviceEntity[] = [];
+  accesses: SpaceAccess[] = [];
   createTime: string = '';
   updateTime: string = '';
 }

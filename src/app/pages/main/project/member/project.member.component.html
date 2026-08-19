@@ -46,7 +46,11 @@
             </td>
             <td>{{ member.email || '-' }}</td>
             <td>
-              @if (isAdmin()) {
+              @if (isMe(member)) {
+                <a (click)="exitProject()">{{ '退出项目' | translate }}</a>
+              } @else if (isAdmin()) {
+                <a (click)="updateRole(member)">{{ '调整角色' | translate }}</a>
+                <nz-divider nzType="vertical"></nz-divider>
                 <a (click)="removeMember(member)">{{ '移除成员' | translate }}</a>
               }
             </td>

@@ -1,4 +1,5 @@
 import { SpaceEntity } from '../../define/space/SpaceEntity';
+import { SpaceAccess } from '../../define/space/SpaceAccess';
 import { DeviceEntityCodec } from '../device/DeviceEntityCodec';
 
 export class SpaceEntityCodec {
@@ -17,6 +18,7 @@ export class SpaceEntityCodec {
     x.sortOrder = o.sortOrder || 0;
     x.children = SpaceEntityCodec.decodeArray(o.children);
     x.devices = DeviceEntityCodec.decodeArray(o.devices);
+    x.accesses = SpaceEntityCodec.decodeAccesses(o.accesses);
     x.createTime = o.createTime || '';
     x.updateTime = o.updateTime || '';
 
@@ -56,5 +58,23 @@ export class SpaceEntityCodec {
 
   static encodeArray(list: SpaceEntity[]): any {
     return list.map((x) => SpaceEntityCodec.encode(x));
+  }
+
+  static decodeAccesses(array: Object): SpaceAccess[] {
+    const list: SpaceAccess[] = [];
+
+    if (array instanceof Array) {
+      for (const item of array) {
+        const a = new SpaceAccess();
+        a.id = item.id || '';
+        a.type = item.type || '';
+        a.role = item.role || '';
+        a.name = item.name || '';
+        a.remark = item.remark || '';
+        list.push(a);
+      }
+    }
+
+    return list;
   }
 }
