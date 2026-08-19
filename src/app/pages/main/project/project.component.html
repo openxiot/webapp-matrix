@@ -1,29 +1,31 @@
-<nz-page-header [nzTitle]="pageTitle" [nzGhost]="false">
-  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+<nz-spin [nzSpinning]="loading()">
 
-  @if (account.login()) {
-    <nz-page-header-extra>
-      <button nz-button nzType="primary" [nzDanger]="true" [routerLink]="['/main/project/create']">{{ '创建' | translate }}
-      </button>
-    </nz-page-header-extra>
-  }
-</nz-page-header>
+  <nz-page-header [nzTitle]="pageTitle" [nzGhost]="false">
+    <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
 
-<ng-template #pageTitle>
-  {{ '项目' | translate }}
-</ng-template>
+    @if (account.login()) {
+      <nz-page-header-extra>
+        <button nz-button nzType="primary" [nzDanger]="true" [routerLink]="['/main/project/create']">{{ '创建' | translate }}
+        </button>
+      </nz-page-header-extra>
+    }
+  </nz-page-header>
 
-<div style="padding: 20px 20px">
+  <ng-template #pageTitle>
+    {{ '项目' | translate }}
+  </ng-template>
 
-  <nz-row [nzGutter]="[8, 8]">
-    @for (space of spaces(); track space.id) {
-      <nz-col [nzSpan]="8" (click)="setCurrentProject(space)">
-        <nz-card [nzHoverable]="true" [nzActions]="[detail, user]">
-          <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
-        </nz-card>
-      </nz-col>
+  <div style="padding: 20px 20px">
 
-      <ng-template #title>
+    <nz-row [nzGutter]="[8, 8]">
+      @for (space of spaces(); track space.id) {
+        <nz-col [nzSpan]="8" (click)="setCurrentProject(space)">
+          <nz-card [nzHoverable]="true" [nzActions]="[detail, user]">
+            <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
+          </nz-card>
+        </nz-col>
+
+        <ng-template #title>
         <span>
           <span>{{ space.name }}</span>
 
@@ -33,19 +35,21 @@
             </span>
           }
         </span>
-      </ng-template>
+        </ng-template>
 
-      <ng-template #desc>
-        {{ space.id }}
-      </ng-template>
+        <ng-template #desc>
+          {{ space.id }}
+        </ng-template>
 
-      <ng-template #detail>
-        <a [routerLink]="['/main/project/detail', space.id]">{{ "详情" | translate }}</a>
-      </ng-template>
+        <ng-template #detail>
+          <a [routerLink]="['/main/project/detail', space.id]">{{ "详情" | translate }}</a>
+        </ng-template>
 
-      <ng-template #user>
-        <a [routerLink]="['/main/project/member', space.id]">{{ "成员" | translate }}</a>
-      </ng-template>
-    }
-  </nz-row>
-</div>
+        <ng-template #user>
+          <a [routerLink]="['/main/project/member', space.id]">{{ "成员" | translate }}</a>
+        </ng-template>
+      }
+    </nz-row>
+  </div>
+
+</nz-spin>

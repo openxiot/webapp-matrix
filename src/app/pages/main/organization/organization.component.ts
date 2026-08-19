@@ -41,6 +41,7 @@ import { UserOrganizationService } from '../../../service/user.organization.serv
     NzColDirective,
     NzIconDirective,
     NzRowDirective,
+    NzSpinModule,
   ],
 })
 export class OrganizationComponent implements OnInit {

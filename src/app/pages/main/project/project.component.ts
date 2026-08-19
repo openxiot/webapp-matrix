@@ -41,6 +41,7 @@ import { MatrixService } from '../../../service/matrix.service';
     NzColDirective,
     NzRowDirective,
     NzIconDirective,
+    NzSpinModule,
   ],
 })
 export class ProjectComponent implements OnInit {

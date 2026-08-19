@@ -1,29 +1,30 @@
-<nz-page-header [nzTitle]="pageTitle" [nzGhost]="false">
-  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+<nz-spin [nzSpinning]="loading()">
+  <nz-page-header [nzTitle]="pageTitle" [nzGhost]="false">
+    <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
 
-  @if (account.login()) {
-    <nz-page-header-extra>
-      <button nz-button nzType="primary" [nzDanger]="true" [routerLink]="['/main/organization/create']">{{ '创建' | translate }}
-      </button>
-    </nz-page-header-extra>
-  }
-</nz-page-header>
+    @if (account.login()) {
+      <nz-page-header-extra>
+        <button nz-button nzType="primary" [nzDanger]="true" [routerLink]="['/main/organization/create']">{{ '创建' | translate }}
+        </button>
+      </nz-page-header-extra>
+    }
+  </nz-page-header>
 
-<ng-template #pageTitle>
-  {{ '组织' | translate }}
-</ng-template>
+  <ng-template #pageTitle>
+    {{ '组织' | translate }}
+  </ng-template>
 
-<div style="padding: 20px 20px">
+  <div style="padding: 20px 20px">
 
-  <nz-row [nzGutter]="[8, 8]">
-    @for (org of organizations(); track org.id) {
-      <nz-col [nzSpan]="8" class="card-col" (click)="clickOrganization(org)">
-        <nz-card [nzHoverable]="true" [nzActions]="[detail]">
-          <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
-        </nz-card>
-      </nz-col>
+    <nz-row [nzGutter]="[8, 8]">
+      @for (org of organizations(); track org.id) {
+        <nz-col [nzSpan]="8" class="card-col" (click)="clickOrganization(org)">
+          <nz-card [nzHoverable]="true" [nzActions]="[detail]">
+            <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
+          </nz-card>
+        </nz-col>
 
-      <ng-template #title>
+        <ng-template #title>
         <span>
           <span>{{ org.name }}</span>
 
@@ -33,15 +34,16 @@
             </span>
           }
         </span>
-      </ng-template>
+        </ng-template>
 
-      <ng-template #desc>
-        {{ org.id }}
-      </ng-template>
+        <ng-template #desc>
+          {{ org.id }}
+        </ng-template>
 
-      <ng-template #detail>
-        <a [routerLink]="['/main/organization/detail', org.id]">{{ "详情" | translate }}</a>
-      </ng-template>
-    }
-  </nz-row>
-</div>
+        <ng-template #detail>
+          <a [routerLink]="['/main/organization/detail', org.id]">{{ "详情" | translate }}</a>
+        </ng-template>
+      }
+    </nz-row>
+  </div>
+</nz-spin>
