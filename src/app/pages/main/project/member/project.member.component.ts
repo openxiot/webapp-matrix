@@ -18,8 +18,8 @@ import { MainI18nService } from '../../../../service/i18n.service';
 import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { ConfirmComponent } from '../../../../common/dialog/confirm/confirm.component';
-import { ProjectMemberAddComponent } from './add/project.member.add.component';
-import { ProjectMemberRoleComponent } from './add/project.member.role.component';
+import { ProjectMemberAddComponent, ProjectMemberAddResult } from './add/project.member.add.component';
+import { ProjectMemberRoleComponent } from './role/project.member.role.component';
 import { OrganizationMember } from '../../../../typedef/define/user/UserOrganization';
 import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
 
@@ -86,6 +86,21 @@ export class ProjectMemberComponent implements OnInit {
     return this.members().find((m) => m.userId === me?.id) || null;
   });
 
+  /**
+   * 自己是否为最后一个管理员（决定能否退出项目，镜像后端 hasAdminWithout）：
+   * 存在 organization 条目 → 组织兜底管理员，自己不是唯一管理员；
+   * 否则需存在其他 user admin 条目（用 members() 渲染数据判断，与列表一致）。
+   */
+  readonly isLastAdmin = computed(() => {
+    const me = this.account.user();
+    const selfEntry = this.self();
+    if (!me?.id || !selfEntry || selfEntry.role !== 'admin') return false;
+
+    if (this.space()?.accesses?.some((a) => a.type === 'organization')) return false;
+
+    return !this.members().some((m) => m.userId !== selfEntry.userId && m.role === 'admin');
+  });
+
   /** 该成员是否为当前账号（本人只能退出项目，不能移除/调整自己） */
   protected isMe(member: OrganizationMember): boolean {
     return member.userId === this.account.user().id;
@@ -130,9 +145,9 @@ export class ProjectMemberComponent implements OnInit {
     });
   }
 
-  /** 添加项目成员（当前账号为创建者） */
+  /** 添加项目成员（管理员可指定角色） */
   protected addMember() {
-    const modal = this.modal.create<ProjectMemberAddComponent, undefined, string>({
+    const modal = this.modal.create<ProjectMemberAddComponent, undefined, ProjectMemberAddResult>({
       nzTitle: this.i18n.translate.instant('添加成员'),
       nzContent: ProjectMemberAddComponent,
       nzViewContainerRef: this.viewContainerRef,
@@ -153,7 +168,7 @@ export class ProjectMemberComponent implements OnInit {
     modal.afterClose.subscribe((result) => {
       if (result) {
         this.loading.set(true);
-        this.matrix.addAccess(this.rootId(), result).subscribe({
+        this.matrix.addAccess(this.rootId(), result.memberId, result.role).subscribe({
           next: () => {
             this.msg.success(this.i18n.translate.instant('添加成员成功'));
             this.load(this.rootId());

@@ -4,3 +4,13 @@
     <input nz-input [value]="userId()" (input)="onUserIdInput($event)" type="text"/>
   </nz-form-control>
 </nz-form-item>
+<nz-form-item>
+  <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '角色' | translate }}</nz-form-label>
+  <nz-form-control>
+    <nz-radio-group nzButtonStyle="solid" [ngModel]="role()" (ngModelChange)="role.set($event)">
+      @for (option of roleOptions; track option.value) {
+        <label nz-radio-button [nzValue]="option.value">{{ option.label }}</label>
+      }
+    </nz-radio-group>
+  </nz-form-control>
+</nz-form-item>

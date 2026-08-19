@@ -7,8 +7,10 @@
 <nz-form-item>
   <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '角色' | translate }}</nz-form-label>
   <nz-form-control>
-    <nz-select [nzPlaceHolder]="'选择角色' | translate" [ngModel]="role()" (ngModelChange)="role.set($event)">
-      <nz-option *ngFor="let option of options" [nzLabel]="option.label" [nzValue]="option.value"></nz-option>
-    </nz-select>
+    <nz-radio-group nzButtonStyle="solid" [ngModel]="role()" (ngModelChange)="role.set($event)">
+      @for (option of options; track option.value) {
+        <label nz-radio-button [nzValue]="option.value">{{ option.label }}</label>
+      }
+    </nz-radio-group>
   </nz-form-control>
 </nz-form-item>

@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
-import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { TranslatePipe } from '@ngx-translate/core';
 import { OrganizationMember } from '../../../../../typedef/define/user/UserOrganization';
@@ -10,7 +10,7 @@ import { OrganizationMember } from '../../../../../typedef/define/user/UserOrgan
 @Component({
   selector: 'project-member-role',
   templateUrl: './project.member.role.component.html',
-  imports: [FormsModule, NzSelectModule, NzFormModule, TranslatePipe],
+  imports: [FormsModule, NzRadioModule, NzFormModule, TranslatePipe],
 })
 export class ProjectMemberRoleComponent {
   readonly #modal = inject(NzModalRef);
@@ -23,8 +23,8 @@ export class ProjectMemberRoleComponent {
   readonly role = signal(this.data.role || 'member');
 
   readonly options = [
-    { label: 'admin', value: 'admin' },
-    { label: 'member', value: 'member' },
+    { label: '管理员', value: 'admin' },
+    { label: '普通成员', value: 'member' },
   ];
 
   cancel(): void {

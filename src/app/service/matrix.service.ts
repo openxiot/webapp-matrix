@@ -124,9 +124,9 @@ export class MatrixService {
       .pipe(map((r) => OrganizationMemberCodec.decodeArray(r.data)));
   }
 
-  addAccess(rootId: string, memberId: string): Observable<void> {
+  addAccess(rootId: string, memberId: string, role?: string): Observable<void> {
     return this.http
-      .post<OxResponse>(`${this.server}/matrix/v1/space/${rootId}/access`, { memberId })
+      .post<OxResponse>(`${this.server}/matrix/v1/space/${rootId}/access`, { memberId, role })
       .pipe(map(() => undefined));
   }
 
