@@ -102,7 +102,7 @@ export class AccountService {
   /** 读取当前用户设置：先同步读缓存立即渲染，再刷新服务器值（避免菜单闪烁） */
   private loadSettings() {
     if (this.login()) {
-      this.login.set(true);
+      this.loading.set(true);
 
       const cached = localStorage.getItem('userSettings');
       if (cached !== null) {
@@ -114,7 +114,7 @@ export class AccountService {
           this.userSettings.set(settings);
           localStorage.setItem('userSettings', UserSettingsCodec.encode(settings));
 
-          this.login.set(false);
+          this.loading.set(false);
 
           this.loadRootSpaces();
         },
