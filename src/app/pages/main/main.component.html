@@ -71,7 +71,7 @@
               </li>
             }
 
-            @if (account.login()) {
+            @if (account.login() && account.userSettings().organizationEnabled) {
               @if (account.organization().id) {
                 <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/organization" style="float: right">
                   <span nz-icon nzType="team" nzTheme="outline"></span>

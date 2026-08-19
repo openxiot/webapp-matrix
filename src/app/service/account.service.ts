@@ -4,6 +4,9 @@ import { UserOrganizationService } from './user.organization.service';
 import { UserOrganization } from '../typedef/define/user/UserOrganization';
 import { User } from '../typedef/define/user/User';
 import { UserCodec } from '../typedef/codec/user/UserCodec';
+import { UserSettings } from '../typedef/define/user/UserSettings';
+import { UserSettingsCodec } from '../typedef/codec/user/UserSettingsCodec';
+import { UserSettingsService } from './user.settings.service';
 import { SpaceEntity } from '../typedef/define/space/SpaceEntity';
 import { MatrixService } from './matrix.service';
 
@@ -17,9 +20,11 @@ export class AccountService {
   public user = signal<User>(new User());
   public organization = signal<UserOrganization>(new UserOrganization());
   public space = signal<SpaceEntity>(new SpaceEntity());
+  public userSettings = signal<UserSettings>(new UserSettings());
 
   constructor(
     private service: UserOrganizationService,
+    private settingsService: UserSettingsService,
     private matrix: MatrixService,
     private msg: NzMessageService,
   ) {
@@ -89,11 +94,45 @@ export class AccountService {
     localStorage.clear();
     this.login.set(false);
     this.space.set(new SpaceEntity());
+    this.userSettings.set(new UserSettings());
   }
 
   public load() {
     this.loadOrganizations();
     this.loadRootSpaces();
+    this.loadSettings();
+  }
+
+  /** 读取当前用户设置：先同步读缓存立即渲染，再刷新服务器值（避免菜单闪烁） */
+  private loadSettings() {
+    if (this.login()) {
+      const cached = localStorage.getItem('userSettings');
+      if (cached !== null) {
+        this.userSettings.set(UserSettingsCodec.decode(JSON.parse(cached)));
+      }
+
+      this.settingsService.getSettings().subscribe({
+        next: (settings) => {
+          this.userSettings.set(settings);
+          localStorage.setItem('userSettings', UserSettingsCodec.encode(settings));
+        },
+        error: (error) => {
+          this.msg.warning(error);
+        },
+      });
+    }
+  }
+
+  /** 更新当前用户设置：先乐观更新本地，失败则回滚为服务器上的值 */
+  updateSettings(settings: UserSettings) {
+    this.userSettings.set(settings);
+    localStorage.setItem('userSettings', UserSettingsCodec.encode(settings));
+    this.settingsService.updateSettings(settings).subscribe({
+      error: (error) => {
+        this.msg.warning(error);
+        this.loadSettings();
+      },
+    });
   }
 
   private loadOrganizations() {

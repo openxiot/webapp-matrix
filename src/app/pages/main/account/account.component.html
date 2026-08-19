@@ -7,29 +7,49 @@
 </ng-template>
 
 <div style="padding: 20px 20px">
-  <nz-card style="width:400px;" [nzHoverable]="false">
-    <nz-card-meta
-      [nzTitle]="title"
-      [nzDescription]="desc"
-      [nzAvatar]="avatarTemplate"
-    ></nz-card-meta>
-  </nz-card>
+  <nz-row [nzGutter]="[8, 8]">
+    <nz-col nzSpan="12">
+      <nz-card [nzHoverable]="false">
+        <nz-card-meta
+          [nzTitle]="title"
+          [nzDescription]="desc"
+          [nzAvatar]="avatarTemplate"
+        ></nz-card-meta>
+      </nz-card>
 
-  <ng-template #title>
-    {{ account.user().name }} ({{ account.user().platform }})
-  </ng-template>
+      <ng-template #title>
+        {{ account.user().name }} ({{ account.user().platform }})
+      </ng-template>
 
-  <ng-template #avatarTemplate>
-    <nz-avatar [nzSrc]="account.user().avatar"></nz-avatar>
-  </ng-template>
+      <ng-template #avatarTemplate>
+        <nz-avatar [nzSrc]="account.user().avatar"></nz-avatar>
+      </ng-template>
 
-  <ng-template #desc>
-    <nz-row [nzGutter]="[8, 8]">
-      <nz-col nzSpan="24">
-        <nz-input-search nzEnterButton="{{ '复制' | translate }}" (nzSearch)="onCopy($event)">
-          <input nz-input [(ngModel)]="account.user().id" nzVariant="borderless" />
-        </nz-input-search>
-      </nz-col>
-    </nz-row>
-  </ng-template>
+      <ng-template #desc>
+        <nz-row [nzGutter]="[8, 8]">
+          <nz-col nzSpan="24">
+            <nz-input-search nzEnterButton="{{ '复制' | translate }}" (nzSearch)="onCopy($event)">
+              <input nz-input [(ngModel)]="account.user().id" nzVariant="borderless" />
+            </nz-input-search>
+          </nz-col>
+        </nz-row>
+      </ng-template>
+    </nz-col>
+
+    <nz-col nzSpan="12">
+      <nz-card>
+        <form nz-form [formGroup]="form">
+          <nz-form-item>
+            <nz-form-label [nzSpan]="4" nzFor="enabled">{{ '组织' | translate }}</nz-form-label>
+            <nz-form-control [nzSpan]="10">
+              <nz-radio-group formControlName="enabled" nzButtonStyle="solid">
+                <label nz-radio-button [nzValue]="true">{{ '启用' | translate }}</label>
+                <label nz-radio-button [nzValue]="false">{{ '禁用' | translate }}</label>
+              </nz-radio-group>
+            </nz-form-control>
+          </nz-form-item>
+        </form>
+      </nz-card>
+    </nz-col>
+  </nz-row>
 </div>

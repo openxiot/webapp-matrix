@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, effect, OnInit } from '@angular/core';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
@@ -14,7 +14,16 @@ import { BreadcrumbTranslateDirective } from '../../../common/components/breadcr
 import { MainI18nService } from '../../../service/i18n.service';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { NzInputModule, NzInputSearchEvent } from 'ng-zorro-antd/input';
-import { FormsModule } from '@angular/forms';
+import {
+  FormControl,
+  FormGroup,
+  FormsModule,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+} from '@angular/forms';
+import { NzFormControlComponent, NzFormDirective, NzFormItemComponent, NzFormLabelComponent } from 'ng-zorro-antd/form';
+import { NzRadioModule } from 'ng-zorro-antd/radio';
+import { UserSettings } from '../../../typedef/define/user/UserSettings';
 
 @Component({
   selector: 'main-account',
@@ -36,14 +45,45 @@ import { FormsModule } from '@angular/forms';
     NzRowDirective,
     NzInputModule,
     FormsModule,
+    NzFormControlComponent,
+    NzFormDirective,
+    NzFormItemComponent,
+    NzFormLabelComponent,
+    ReactiveFormsModule,
+    NzRadioModule,
   ],
 })
 export class AccountComponent implements OnInit {
+
+  form: FormGroup<{
+    enabled: FormControl<boolean>;
+  }>;
+
   constructor(
+    private fb: NonNullableFormBuilder,
     public account: AccountService,
     private msg: NzMessageService,
     private i18n: MainI18nService,
-  ) {}
+  ) {
+    this.form = this.fb.group({
+      enabled: this.fb.control(false),
+    });
+
+    // 设置加载/回滚时（service 更新 signal）同步到表单；emitEvent: false 避免触发下方保存逻辑
+    effect(() => {
+      const enabled = this.account.userSettings().organizationEnabled;
+      if (this.form.get('enabled')!.value !== enabled) {
+        this.form.get('enabled')!.setValue(enabled, { emitEvent: false });
+      }
+    });
+
+    // 选中即保存：切换 radio 立即持久化，失败由 service 回滚并重新加载
+    this.form.get('enabled')!.valueChanges.subscribe((enabled) => {
+      const next = new UserSettings();
+      next.organizationEnabled = enabled;
+      this.account.updateSettings(next);
+    });
+  }
 
   ngOnInit() {}
 
