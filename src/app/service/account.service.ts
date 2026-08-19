@@ -98,8 +98,6 @@ export class AccountService {
   }
 
   public load() {
-    this.loadOrganizations();
-    this.loadRootSpaces();
     this.loadSettings();
   }
 
@@ -115,6 +113,9 @@ export class AccountService {
         next: (settings) => {
           this.userSettings.set(settings);
           localStorage.setItem('userSettings', UserSettingsCodec.encode(settings));
+
+          this.loadOrganizations();
+          this.loadRootSpaces();
         },
         error: (error) => {
           this.msg.warning(error);
@@ -131,6 +132,7 @@ export class AccountService {
       next: () => {
         // 保存成功后清空已选组织（组织可能已被禁用，不再保留选中状态）
         this.clearCurrentOrganization();
+        this.load();
       },
       error: (error) => {
         this.msg.warning(error);
@@ -174,21 +176,6 @@ export class AccountService {
       },
     });
   }
-
-  // private selectCurrentOrganization() {
-  //   const selected = localStorage.getItem('organizationId') || null;
-  //   if (selected !== null) {
-  //     const org = this.organizations.find((x) => x.id === selected);
-  //     if (org) {
-  //       this.setOrganization(org);
-  //     }
-  //   } else {
-  //     // if (this.organizations.length > 0) {
-  //     //   const org = this.organizations[0];
-  //     //   this.setOrganization(org);
-  //     // }
-  //   }
-  // }
 
   private selectCurrentSpace() {
     const selected = localStorage.getItem('spaceId') || null;
