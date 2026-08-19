@@ -87,16 +87,13 @@ export class ProjectMemberComponent implements OnInit {
   });
 
   /**
-   * 自己是否为最后一个管理员（决定能否退出项目，镜像后端 hasAdminWithout）：
-   * 存在 organization 条目 → 组织兜底管理员，自己不是唯一管理员；
-   * 否则需存在其他 user admin 条目（用 members() 渲染数据判断，与列表一致）。
+   * 自己是否为最后一个管理员（决定能否退出项目）：
+   * 自己是 user admin 且成员列表中没有其他 user admin 即为最后一个，不做组织兜底。
    */
   readonly isLastAdmin = computed(() => {
     const me = this.account.user();
     const selfEntry = this.self();
     if (!me?.id || !selfEntry || selfEntry.role !== 'admin') return false;
-
-    if (this.space()?.accesses?.some((a) => a.type === 'organization')) return false;
 
     return !this.members().some((m) => m.userId !== selfEntry.userId && m.role === 'admin');
   });
