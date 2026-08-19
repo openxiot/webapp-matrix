@@ -128,11 +128,22 @@ export class AccountService {
     this.userSettings.set(settings);
     localStorage.setItem('userSettings', UserSettingsCodec.encode(settings));
     this.settingsService.updateSettings(settings).subscribe({
+      next: () => {
+        // 保存成功后清空已选组织（组织可能已被禁用，不再保留选中状态）
+        this.clearCurrentOrganization();
+      },
       error: (error) => {
         this.msg.warning(error);
         this.loadSettings();
       },
     });
+  }
+
+  /** 清空已选组织：移除 localStorage 记录并复位信号，同时清空其下的当前项目（对齐切换组织行为） */
+  private clearCurrentOrganization() {
+    localStorage.removeItem('organizationId');
+    this.organization.set(new UserOrganization());
+    this.clearCurrentRootSpace();
   }
 
   private loadOrganizations() {
@@ -164,20 +175,20 @@ export class AccountService {
     });
   }
 
-  private selectCurrentOrganization() {
-    const selected = localStorage.getItem('organizationId') || null;
-    if (selected !== null) {
-      const org = this.organizations.find((x) => x.id === selected);
-      if (org) {
-        this.setOrganization(org);
-      }
-    } else {
-      // if (this.organizations.length > 0) {
-      //   const org = this.organizations[0];
-      //   this.setOrganization(org);
-      // }
-    }
-  }
+  // private selectCurrentOrganization() {
+  //   const selected = localStorage.getItem('organizationId') || null;
+  //   if (selected !== null) {
+  //     const org = this.organizations.find((x) => x.id === selected);
+  //     if (org) {
+  //       this.setOrganization(org);
+  //     }
+  //   } else {
+  //     // if (this.organizations.length > 0) {
+  //     //   const org = this.organizations[0];
+  //     //   this.setOrganization(org);
+  //     // }
+  //   }
+  // }
 
   private selectCurrentSpace() {
     const selected = localStorage.getItem('spaceId') || null;
