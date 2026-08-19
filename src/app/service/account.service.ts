@@ -1,6 +1,5 @@
 import { Injectable, signal } from "@angular/core";
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { UserOrganizationService } from './user.organization.service';
 import { UserOrganization } from '../typedef/define/user/UserOrganization';
 import { User } from '../typedef/define/user/User';
 import { UserCodec } from '../typedef/codec/user/UserCodec';
@@ -12,9 +11,9 @@ import { MatrixService } from './matrix.service';
 
 @Injectable({ providedIn: 'root' })
 export class AccountService {
+
   public loading = signal(false);
-  public organizations: UserOrganization[] = [];
-  public spaces: SpaceEntity[] = [];
+  private spaces: SpaceEntity[] = [];
 
   public login = signal(false);
   public user = signal<User>(new User());
@@ -23,7 +22,6 @@ export class AccountService {
   public userSettings = signal<UserSettings>(new UserSettings());
 
   constructor(
-    private service: UserOrganizationService,
     private settingsService: UserSettingsService,
     private matrix: MatrixService,
     private msg: NzMessageService,
@@ -104,6 +102,8 @@ export class AccountService {
   /** 读取当前用户设置：先同步读缓存立即渲染，再刷新服务器值（避免菜单闪烁） */
   private loadSettings() {
     if (this.login()) {
+      this.login.set(true);
+
       const cached = localStorage.getItem('userSettings');
       if (cached !== null) {
         this.userSettings.set(UserSettingsCodec.decode(JSON.parse(cached)));
@@ -114,7 +114,8 @@ export class AccountService {
           this.userSettings.set(settings);
           localStorage.setItem('userSettings', UserSettingsCodec.encode(settings));
 
-          this.loadOrganizations();
+          this.login.set(false);
+
           this.loadRootSpaces();
         },
         error: (error) => {
@@ -146,21 +147,6 @@ export class AccountService {
     localStorage.removeItem('organizationId');
     this.organization.set(new UserOrganization());
     this.clearCurrentRootSpace();
-  }
-
-  private loadOrganizations() {
-    if (this.login()) {
-      this.service.getOrganizations().subscribe({
-        next: (data) => {
-          this.organizations = data;
-          // this.selectCurrentOrganization();
-          this.loading.set(false);
-        },
-        error: (error) => {
-          this.msg.warning(error);
-        },
-      });
-    }
   }
 
   private loadRootSpaces() {

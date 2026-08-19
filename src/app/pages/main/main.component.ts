@@ -11,6 +11,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { MainI18nService } from '../../service/i18n.service';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { LanguageChangeComponent } from '../../common/dialog/language/change/language.change.component';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
 
 @Component({
   selector: 'app-main',
@@ -25,6 +26,7 @@ import { LanguageChangeComponent } from '../../common/dialog/language/change/lan
     NzSpaceModule,
     NzAvatarModule,
     TranslatePipe,
+    NzSpinModule,
   ],
   providers: [
     NzModalService

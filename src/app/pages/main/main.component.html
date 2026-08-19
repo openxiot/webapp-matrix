@@ -74,8 +74,10 @@
             @if (account.login() && account.userSettings().organizationEnabled) {
               @if (account.organization().id) {
                 <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/organization" style="float: right">
-                  <span nz-icon nzType="team" nzTheme="outline"></span>
-                  <span>{{ account.organization().name }} ({{ account.organization().id }})</span>
+                  <nz-spin [nzSpinning]="account.loading()">
+                    <span nz-icon nzType="team" nzTheme="outline"></span>
+                    <span>{{ account.organization().name }} ({{ account.organization().id }})</span>
+                  </nz-spin>
                 </li>
               } @else {
                 <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/organization" style="float: right">
@@ -88,14 +90,16 @@
             @if (account.login()) {
               @if (account.space().id) {
                 <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/project" style="float: right">
-                  <nz-space>
-                    <div *nzSpaceItem>
-                      <nz-icon nzType="project" nzTheme="outline" />
-                    </div>
-                    <div *nzSpaceItem>
-                      {{ account.space().name }}
-                    </div>
-                  </nz-space>
+                  <nz-spin [nzSpinning]="account.loading()">
+                    <nz-space>
+                      <div *nzSpaceItem>
+                        <nz-icon nzType="project" nzTheme="outline" />
+                      </div>
+                      <div *nzSpaceItem>
+                        {{ account.space().name }}
+                      </div>
+                    </nz-space>
+                  </nz-spin>
                 </li>
               } @else {
                 <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/project/create" style="float: right">
