@@ -39,7 +39,7 @@
             <td>{{ member.name }}</td>
             <td>
               @if (member.role === 'admin') {
-                <nz-tag color="gold">{{ '管理员' | translate }}</nz-tag>
+                <nz-tag nzColor="gold">{{ '管理员' | translate }}</nz-tag>
               } @else {
                 <nz-tag>{{ '普通成员' | translate }}</nz-tag>
               }

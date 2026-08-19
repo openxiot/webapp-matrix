@@ -17,7 +17,7 @@ import { MainI18nService } from '../../../../service/i18n.service';
 import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { ConfirmComponent } from '../../../../common/dialog/confirm/confirm.component';
-import { ProjectMemberAddComponent } from './member.add.component';
+import { ProjectMemberAddComponent } from './add/project.member.add.component';
 import { OrganizationMember } from '../../../../typedef/define/user/UserOrganization';
 import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
 

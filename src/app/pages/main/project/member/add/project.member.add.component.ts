@@ -8,8 +8,8 @@ import { TranslatePipe } from '@ngx-translate/core';
 /** 添加项目成员对话框：只需用户 ID，名称/邮箱由后端按账号解析 */
 @Component({
   selector: 'project-member-add',
-  templateUrl: './member.add.component.html',
-  styleUrl: './member.add.component.less',
+  templateUrl: './project.member.add.component.html',
+  styleUrl: './project.member.add.component.less',
   imports: [FormsModule, NzInputModule, NzFormModule, TranslatePipe],
 })
 export class ProjectMemberAddComponent {
