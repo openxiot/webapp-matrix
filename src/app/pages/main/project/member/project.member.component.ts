@@ -20,6 +20,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { ConfirmComponent } from '../../../../common/dialog/confirm/confirm.component';
 import { ProjectMemberAddComponent, ProjectMemberAddResult } from './add/project.member.add.component';
 import { ProjectMemberRoleComponent } from './role/project.member.role.component';
+import { ProjectMemberRemarkComponent } from './remark/project.member.remark.component';
 import { OrganizationMember } from '../../../../typedef/define/user/UserOrganization';
 import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
 
@@ -254,6 +255,47 @@ export class ProjectMemberComponent implements OnInit {
     this.matrix.updateAccessRole(this.rootId(), member.userId, role).subscribe({
       next: () => {
         this.msg.success(this.i18n.translate.instant('调整角色成功'));
+        this.load(this.rootId());
+      },
+      error: (error) => {
+        this.msg.warning(error?.message ?? error);
+        this.loading.set(false);
+      },
+    });
+  }
+
+  /** 编辑成员备注（仅管理员可见） */
+  protected editRemark(member: OrganizationMember) {
+    const modal = this.modal.create<ProjectMemberRemarkComponent, OrganizationMember, string>({
+      nzTitle: this.i18n.translate.instant('编辑备注'),
+      nzContent: ProjectMemberRemarkComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: member,
+      nzFooter: [
+        {
+          label: this.i18n.translate.instant('取消'),
+          onClick: (component) => component!.cancel(),
+        },
+        {
+          label: this.i18n.translate.instant('确认'),
+          type: 'primary',
+          onClick: (component) => component!.ok(),
+        },
+      ],
+    });
+
+    modal.afterClose.subscribe((remark) => {
+      if (remark !== undefined && remark !== member.remark) {
+        this.doUpdateRemark(member, remark);
+      }
+    });
+  }
+
+  private doUpdateRemark(member: OrganizationMember, remark: string): void {
+    this.loading.set(true);
+    this.matrix.updateAccessRemark(this.rootId(), member.userId, remark).subscribe({
+      next: () => {
+        this.msg.success(this.i18n.translate.instant('备注已更新'));
         this.load(this.rootId());
       },
       error: (error) => {

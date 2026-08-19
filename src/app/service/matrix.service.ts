@@ -136,6 +136,12 @@ export class MatrixService {
       .pipe(map(() => undefined));
   }
 
+  updateAccessRemark(rootId: string, memberId: string, remark: string): Observable<void> {
+    return this.http
+      .put<OxResponse>(`${this.server}/matrix/v1/space/${rootId}/access`, { memberId, remark })
+      .pipe(map(() => undefined));
+  }
+
   removeAccess(rootId: string, memberId: string): Observable<void> {
     let params = new HttpParams().set('memberId', memberId);
     return this.http

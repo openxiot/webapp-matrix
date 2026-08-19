@@ -28,7 +28,7 @@
           <th>{{ '用户ID' | translate }}</th>
           <th>{{ '用户名称' | translate }}</th>
           <th>{{ '角色' | translate }}</th>
-          <th>{{ '邮箱' | translate }}</th>
+          <th>{{ '备注' | translate }}</th>
           <th>{{ '操作' | translate }}</th>
         </tr>
       </thead>
@@ -44,7 +44,7 @@
                 <nz-tag>{{ '普通成员' | translate }}</nz-tag>
               }
             </td>
-            <td>{{ member.email || '-' }}</td>
+            <td>{{ member.remark || '-' }}</td>
             <td>
               @if (isMe(member)) {
                 @if (!isLastAdmin()) {
@@ -52,6 +52,8 @@
                 }
               } @else if (isAdmin()) {
                 <a (click)="updateRole(member)">{{ '调整角色' | translate }}</a>
+                <nz-divider nzType="vertical"></nz-divider>
+                <a (click)="editRemark(member)">{{ '编辑备注' | translate }}</a>
                 <nz-divider nzType="vertical"></nz-divider>
                 <a (click)="removeMember(member)">{{ '移除成员' | translate }}</a>
               }
