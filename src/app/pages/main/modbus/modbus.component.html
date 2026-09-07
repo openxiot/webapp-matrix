@@ -2,7 +2,7 @@
   <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
 
   <nz-page-header-extra>
-    @if (account.organization().id) {
+    @if (orgActive()) {
       <button nz-button nzType="primary" routerLink="/main/modbus/create">
         <nz-icon nzType="plus"></nz-icon>
         {{ '新建' | translate }}
@@ -14,15 +14,14 @@
 <ng-template #pageTitle>{{ '设备点表' | translate }}</ng-template>
 
 <div style="padding: 20px 20px">
-  @if (!account.organization().id) {
-    <div class="empty-hint">
-      <nz-empty nzNotFoundImage="simple">
-        <div class="hint-text">{{ '请先在组织列表中选择或创建一个组织，再管理设备点表。' | translate }}</div>
-        <button nz-button nzType="primary" routerLink="/main/organization">{{ '前往组织' | translate }}</button>
-      </nz-empty>
-    </div>
-  } @else {
-    <nz-spin [nzSpinning]="loading()">
+<!--  @if (!orgActive()) {-->
+<!--    <div class="public-hint">-->
+<!--      <span class="hint-text">{{ '未选择组织或组织不可用，仅展示公开的设备点表' | translate }}</span>-->
+<!--      <button nz-button nzType="primary" nzSize="small" routerLink="/main/organization">{{ '前往组织' | translate }}</button>-->
+<!--    </div>-->
+<!--  }-->
+
+  <nz-spin [nzSpinning]="loading()">
       <nz-table
         [nzData]="configs()"
         [nzShowSizeChanger]="true"
@@ -38,7 +37,8 @@
           <th nzWidth="140px">{{ '描述' | translate }}</th>
           <th nzWidth="80px">{{ '创建者' | translate }}</th>
           <th nzWidth="100px">{{ '最后更新' | translate }}</th>
-          <th nzWidth="80px">{{ '操作' | translate }}</th>
+          <th nzWidth="120px">{{ '所属组织' | translate }}</th>
+          <th nzWidth="100px">{{ '操作' | translate }}</th>
         </tr>
         </thead>
         <tbody>
@@ -72,15 +72,23 @@
                   -
                 }
               </td>
+              <td class="ellipsis-cell" [title]="orgLabel(config.orgId)">
+                {{ orgLabel(config.orgId) }}
+              </td>
               <td>
-                <a [routerLink]="['/main/modbus/edit', config.id]">{{ '详情' | translate }}</a>
-                <nz-divider nzType="vertical"></nz-divider>
-                <a (click)="remove(config)">{{ '删除' | translate }}</a>
+                @if (isOwn(config)) {
+                  <a [routerLink]="['/main/modbus/detail', config.id]">{{ '详情' | translate }}</a>
+                  @if (canDelete(config)) {
+                    <nz-divider nzType="vertical"></nz-divider>
+                    <a class="danger-link" (click)="remove(config)">{{ '删除' | translate }}</a>
+                  }
+                } @else {
+                  -
+                }
               </td>
             </tr>
           }
         </tbody>
       </nz-table>
     </nz-spin>
-  }
 </div>

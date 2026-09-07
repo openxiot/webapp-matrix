@@ -2,14 +2,14 @@
   <nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
     <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
     <nz-page-header-extra>
-      <button nz-button nzType="primary" [nzLoading]="submitting()" (click)="submit()">
+      <button nz-button nzType="primary" [nzLoading]="submitting()" [disabled]="!changed()" (click)="submit()">
         {{ '保存' | translate }}
       </button>
     </nz-page-header-extra>
   </nz-page-header>
 
   <ng-template #pageTitle>
-    {{ (isEdit() ? '编辑设备点表' : '新建设备点表') | translate }}
+    {{ (isAdd ? '新建设备点表' : '编辑设备点表') | translate }}
   </ng-template>
 
   <div style="padding: 20px 20px">
@@ -116,16 +116,5 @@
       </nz-col>
 
     </nz-row>
-
-    <!--    <nz-card [nzTitle]="tableTitle" [nzExtra]="tableExtra">-->
-
-
-    <!--      <ng-template #tableTitle>-->
-    <!--        {{ '点位列表' | translate }}-->
-    <!--      </ng-template>-->
-
-    <!--      <ng-template #tableExtra>-->
-    <!--      </ng-template>-->
-    <!--    </nz-card>-->
   </div>
 </nz-spin>

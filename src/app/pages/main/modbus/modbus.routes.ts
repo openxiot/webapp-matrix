@@ -1,7 +1,8 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '../../../service/auth.guard';
 import { ModbusComponent } from './modbus.component';
-import { ModbusEditComponent } from './edit/modbus.edit.component';
+import { ModbusAddComponent } from './add/modbus.add.component';
+import { ModbusDetailComponent } from './detail/modbus.detail.component';
 
 export const MODBUS_ROUTES: Routes = [
   {
@@ -12,13 +13,13 @@ export const MODBUS_ROUTES: Routes = [
   },
   {
     path: 'create',
-    component: ModbusEditComponent,
+    component: ModbusAddComponent,
     canActivate: [authGuard],
     data: { breadcrumb: '创建' },
   },
   {
-    path: 'edit/:id',
-    component: ModbusEditComponent,
+    path: 'detail/:id',
+    component: ModbusDetailComponent,
     canActivate: [authGuard],
     data: { breadcrumb: '编辑' },
   },

@@ -1,102 +1,104 @@
-import { Component, effect, signal, ViewContainerRef } from '@angular/core';
+import { computed, effect, inject, signal, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
-import { NzSpinModule } from 'ng-zorro-antd/spin';
-import { NzCardModule } from 'ng-zorro-antd/card';
-import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzTableModule } from 'ng-zorro-antd/table';
-import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
-import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from '../../../../service/account.service';
 import { ModbusService } from '../../../../service/modbus.service';
-import {
-  ModbusDeviceConfig,
-  ModbusDeviceInfo,
-  ModbusPoint,
-} from '../../../../typedef/define/modbus/Modbus';
-import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { NzBreadCrumbComponent } from 'ng-zorro-antd/breadcrumb';
+import { ModbusDeviceConfig, ModbusDeviceInfo, ModbusPoint } from '../../../../typedef/define/modbus/Modbus';
 import { PointAddComponent } from '../point/point.add.component';
 import { PointEditComponent } from '../point/point.edit.component';
-import { areaLabelKey, rwLabelKey } from '../point/point.options';
 import { ModbusDeviceInfoEditComponent } from '../device-info/modbus.device.info.edit.component';
-import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
+import { areaLabelKey, rwLabelKey } from '../point/point.options';
 
-@Component({
-  selector: 'main-modbus-edit',
-  standalone: true,
-  templateUrl: './modbus.edit.component.html',
-  styleUrl: './modbus.edit.component.less',
-  imports: [
-    NzPageHeaderModule,
-    NzSpinModule,
-    NzCardModule,
-    NzButtonModule,
-    NzTableModule,
-    NzDescriptionsModule,
-    NzIconModule,
-    NzDividerModule,
-    TranslatePipe,
-    BreadcrumbTranslateDirective,
-    NzBreadCrumbComponent,
-    NzRowDirective,
-    NzColDirective,
-  ],
-  providers: [NzModalService],
-})
-export class ModbusEditComponent {
+/**
+ * 新建设备点表 / 编辑设备点表 两个页面共用的编辑器逻辑与视图状态。
+ * 页面文案、路由行为等差异由子类以 {@link kind} 区分：
+ * - ModbusAddComponent（新建）：空表单起步，submit 走 create；
+ * - ModbusDetailComponent（编辑）：按路由 id 载入既有点表，submit 走 update。
+ *
+ * 保存有效性：修改了设备信息、或增删改点位后，保存按钮才可点击（changed）。
+ */
+export abstract class ModbusEditorBase {
+  /** add：新建设备点表；detail：编辑设备点表 */
+  protected abstract get kind(): 'add' | 'detail';
+
   /** 点位枚举值 → 展示用 i18n key（模板经 translate 管道渲染） */
   protected readonly areaLabelKey = areaLabelKey;
   protected readonly rwLabelKey = rwLabelKey;
 
   loading = signal(false);
   submitting = signal(false);
-  isEdit = signal(false);
 
-  /** 设备信息：默认私有、空值，进入页后只读，经对话框编辑 */
+  /** 设备信息：默认私有、空值，经对话框只读展示/编辑 */
   deviceInfo = signal<ModbusDeviceInfo>(emptyDeviceInfo());
 
   points = signal<ModbusPoint[]>([]);
 
+  /** 相对初始值是否发生变化（设备信息或点位），决定「保存」是否可用 */
+  readonly changed = computed(
+    () =>
+      deviceInfoKey(this.deviceInfo()) !== deviceInfoKey(this.baseDeviceInfo) ||
+      pointsKey(this.points()) !== pointsKey(this.basePoints),
+  );
+
+  /** 新建页标题用 */
+  protected get isAdd(): boolean {
+    return this.kind === 'add';
+  }
+
+  /** 修改判定基准：进入页面 / 载入既有点表时的快照 */
+  protected baseDeviceInfo: ModbusDeviceInfo = emptyDeviceInfo();
+  protected basePoints: ModbusPoint[] = [];
+
+  protected location = inject(Location);
+  protected account = inject(AccountService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private service = inject(ModbusService);
+  private msg = inject(NzMessageService);
+  private translate = inject(TranslateService);
+  private modal = inject(NzModalService);
+  private viewContainerRef = inject(ViewContainerRef);
+
   private routeId = '';
   private currentOrgId = '';
+  private loadedKey = '';
 
-  constructor(
-    protected location: Location,
-    private router: Router,
-    private route: ActivatedRoute,
-    private account: AccountService,
-    private service: ModbusService,
-    private msg: NzMessageService,
-    private translate: TranslateService,
-    private modal: NzModalService,
-    private viewContainerRef: ViewContainerRef,
-  ) {
-    effect(() => {
-      const orgId = this.account.organization().id;
-      if (orgId && orgId !== this.currentOrgId) {
-        this.currentOrgId = orgId;
-        this.reloadIfEdit();
+  constructor() {
+    this.route.params.subscribe((params) => {
+      const id = (params['id'] as string) || '';
+      if (id !== this.routeId) {
+        this.routeId = id;
+        this.maybeLoadDetail();
       }
     });
 
-    this.route.params.subscribe((params) => {
-      const id = params['id'] || '';
-      this.routeId = id;
-      this.isEdit.set(id.length > 0);
-      this.reloadIfEdit();
+    // 组织信号变化（异步加载 / 切换组织）时若处于编辑页则重新载入
+    effect(() => {
+      const orgId = this.account.organization().id;
+      if (orgId !== this.currentOrgId) {
+        this.currentOrgId = orgId;
+        this.maybeLoadDetail();
+      }
     });
   }
 
-  private reloadIfEdit(): void {
-    if (this.isEdit() && this.routeId && this.currentOrgId) {
-      this.loadConfig();
+  /** 仅在「编辑设备点表」且组织、路由 id 就绪时载入（防重复请求） */
+  private maybeLoadDetail(): void {
+    if (this.kind !== 'detail') {
+      return;
     }
+    if (!this.routeId || !this.currentOrgId) {
+      return;
+    }
+    const key = `${this.routeId}|${this.currentOrgId}`;
+    if (key === this.loadedKey) {
+      return;
+    }
+    this.loadedKey = key;
+    this.loadConfig();
   }
 
   private loadConfig(): void {
@@ -122,6 +124,9 @@ export class ModbusEditComponent {
       description: config.description,
     });
     this.points.set((config.points ?? []).map((p) => ({ ...p })));
+    // 载入完成后再拍基准：初始状态保存按钮应为禁用
+    this.baseDeviceInfo = this.deviceInfo();
+    this.basePoints = this.points();
   }
 
   /* ----------------------------------------------------------------------------------------------
@@ -236,7 +241,7 @@ export class ModbusEditComponent {
   }
 
   /* ----------------------------------------------------------------------------------------------
-   * 提交
+   * 提交（新建 create / 编辑 update）
    * ----------------------------------------------------------------------------------------------*/
   protected submit(): void {
     const info = this.deviceInfo();
@@ -275,13 +280,16 @@ export class ModbusEditComponent {
     };
 
     this.submitting.set(true);
-    const request = this.isEdit()
-      ? this.service.update(this.routeId, body)
-      : this.service.create(body);
+    const request =
+      this.kind === 'detail'
+        ? this.service.update(this.routeId, body)
+        : this.service.create(body);
     request.subscribe({
       next: () => {
         this.submitting.set(false);
-        this.msg.success(this.translate.instant(this.isEdit() ? '保存成功' : '创建成功'));
+        this.msg.success(
+          this.translate.instant(this.kind === 'detail' ? '保存成功' : '创建成功'),
+        );
         void this.router.navigate(['/main/modbus']);
       },
       error: (error) => {
@@ -302,4 +310,44 @@ export class ModbusEditComponent {
 
 function emptyDeviceInfo(): ModbusDeviceInfo {
   return { manufacturer: '', model: '', visibility: 'private' };
+}
+
+/** 空串/null/undefined 视作同一「空」，仅用于变更比对，不影响真实提交值 */
+function normValue(value: unknown): unknown {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length === 0 ? undefined : trimmed;
+  }
+  return value;
+}
+
+function deviceInfoKey(info: ModbusDeviceInfo): string {
+  return JSON.stringify([
+    normValue(info.manufacturer),
+    normValue(info.model),
+    normValue(info.slaveId),
+    normValue(info.visibility),
+    normValue(info.description),
+  ]);
+}
+
+function pointKey(point: ModbusPoint): string {
+  return JSON.stringify([
+    normValue(point.name),
+    normValue(point.area),
+    normValue(point.address),
+    normValue(point.logicalAddress),
+    normValue(point.dataType),
+    normValue(point.rw),
+    normValue(point.scale),
+    normValue(point.unit),
+    normValue(point.description),
+  ]);
+}
+
+function pointsKey(points: ModbusPoint[]): string {
+  return (points ?? []).map((p) => pointKey(p)).join('\u0001');
 }

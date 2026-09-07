@@ -17,10 +17,23 @@ export class ModbusService {
 
   constructor(private http: HttpClient) {}
 
-  /** 查询当前组织下全部设备点表 */
-  list(): Observable<ModbusDeviceConfig[]> {
+  /**
+   * 查询当前账号可见的全部设备点表：本组织私有 + 各组织公开（GET /visible）。
+   * 组织经拦截器附加的 X-Org-Id 携带。
+   */
+  listVisible(): Observable<ModbusDeviceConfig[]> {
     return this.http
-      .get<OxResponse>(`${this.server}/matrix/v1/modbus/many`)
+      .get<OxResponse>(`${this.server}/matrix/v1/modbus/visible`)
+      .pipe(map((r) => r.data as ModbusDeviceConfig[]));
+  }
+
+  /**
+   * 查询全部公开设备点表（GET /public）。后端仅要求登录，不校验组织，
+   * 用于「未选择组织 / 组织不可用」时仍可浏览公开点表。
+   */
+  listPublic(): Observable<ModbusDeviceConfig[]> {
+    return this.http
+      .get<OxResponse>(`${this.server}/matrix/v1/modbus/public`)
       .pipe(map((r) => r.data as ModbusDeviceConfig[]));
   }
 
