@@ -27,17 +27,18 @@
         [nzData]="configs()"
         [nzShowSizeChanger]="true"
         [nzHideOnSinglePage]="true"
-        [nzScroll]="{ x: '1080px' }"
+        [nzScroll]="{ x: '1200px' }"
       >
         <thead>
         <tr>
-          <th nzWidth="150px">{{ '厂家' | translate }}</th>
+          <th nzWidth="140px">{{ '厂家' | translate }}</th>
           <th nzWidth="140px">{{ '型号' | translate }}</th>
-          <th nzWidth="110px">{{ '从站地址' | translate }}</th>
-          <th nzWidth="100px">{{ '可见度' | translate }}</th>
-          <th nzWidth="240px">{{ '描述' | translate }}</th>
-          <th nzWidth="170px">{{ '最后更新' | translate }}</th>
-          <th nzWidth="140px">{{ '操作' | translate }}</th>
+          <th nzWidth="80px">{{ '从站地址' | translate }}</th>
+          <th nzWidth="80px">{{ '可见度' | translate }}</th>
+          <th nzWidth="140px">{{ '描述' | translate }}</th>
+          <th nzWidth="80px">{{ '创建者' | translate }}</th>
+          <th nzWidth="100px">{{ '最后更新' | translate }}</th>
+          <th nzWidth="80px">{{ '操作' | translate }}</th>
         </tr>
         </thead>
         <tbody>
@@ -58,6 +59,10 @@
               <td class="ellipsis-cell" [title]="config.description || undefined">
                 {{ config.description || '-' }}
               </td>
+              <td class="ellipsis-cell"
+                  [title]="config.creator?.timestamp ? (config.creator!.timestamp | date:'yyyy-MM-dd HH:mm:ss') : undefined">
+                {{ config.creator?.name || '-' }}
+              </td>
               <td>
                 @if (config.updater?.timestamp) {
                   <span [title]="config.updater?.name ? ('由 {{name}} 更新' | translate:{ name: config.updater!.name }) : ''">
@@ -68,7 +73,7 @@
                 }
               </td>
               <td>
-                <a [routerLink]="['/main/modbus/edit', config.id]">{{ '编辑' | translate }}</a>
+                <a [routerLink]="['/main/modbus/edit', config.id]">{{ '详情' | translate }}</a>
                 <nz-divider nzType="vertical"></nz-divider>
                 <a (click)="remove(config)">{{ '删除' | translate }}</a>
               </td>

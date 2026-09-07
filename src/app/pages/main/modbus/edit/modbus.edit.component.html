@@ -55,24 +55,24 @@
 
       <nz-col nzSpan="24">
         <nz-table
-          nzSize="small"
           [nzBordered]="true"
           [nzData]="points()"
           [nzShowSizeChanger]="true"
           [nzHideOnSinglePage]="true"
+          [nzScroll]="{ x: '1200px' }"
         >
           <thead>
           <tr>
-            <th>{{ '名称' | translate }}</th>
-            <th>{{ '区域' | translate }}</th>
-            <th>{{ '地址' | translate }}</th>
-            <th>{{ '逻辑地址' | translate }}</th>
-            <th>{{ '数据类型' | translate }}</th>
-            <th>{{ '读写' | translate }}</th>
-            <th>{{ '比例' | translate }}</th>
-            <th>{{ '单位' | translate }}</th>
-            <th>{{ '描述' | translate }}</th>
-            <th>{{ '操作' | translate }}</th>
+            <th nzWidth="100px">{{ '名称' | translate }}</th>
+            <th nzWidth="100px">{{ '区域' | translate }}</th>
+            <th nzWidth="100px">{{ '地址' | translate }}</th>
+            <th nzWidth="100px">{{ '逻辑地址' | translate }}</th>
+            <th nzWidth="100px">{{ '数据类型' | translate }}</th>
+            <th nzWidth="60px">{{ '读写' | translate }}</th>
+            <th nzWidth="60px">{{ '比例' | translate }}</th>
+            <th nzWidth="60px">{{ '单位' | translate }}</th>
+            <th nzWidth="100px">{{ '描述' | translate }}</th>
+            <th nzWidth="160px">{{ '操作' | translate }}</th>
           </tr>
           </thead>
           <tbody>
