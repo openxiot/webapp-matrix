@@ -30,8 +30,12 @@
         <span>{{ '报警' | translate }}</span>
       </li>
       <li nz-menu-item routerLink="/main/product" [nzMatchRouter]="true">
-        <nz-icon nzType="table" nzTheme="outline" />
+        <nz-icon nzType="appstore" nzTheme="outline" />
         <span>{{ '产品' | translate }}</span>
+      </li>
+      <li nz-menu-item routerLink="/main/modbus" [nzMatchRouter]="true">
+        <nz-icon nzType="table" nzTheme="outline" />
+        <span>{{ '设备点表' | translate }}</span>
       </li>
     </ul>
   </nz-sider>

@@ -46,4 +46,10 @@ export const routes: Routes = [
     data: { breadcrumb: '报警' },
     loadChildren: () => import('./alarm/alarm.routes').then((m) => m.ALARM_ROUTES),
   },
+  {
+    path: 'modbus',
+    canActivate: [authGuard],
+    data: { breadcrumb: '设备点表' },
+    loadChildren: () => import('./modbus/modbus.routes').then((m) => m.MODBUS_ROUTES),
+  },
 ];

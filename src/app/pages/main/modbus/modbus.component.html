@@ -1,0 +1,81 @@
+<nz-page-header [nzTitle]="pageTitle" [nzGhost]="false">
+  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+
+  <nz-page-header-extra>
+    @if (account.organization().id) {
+      <button nz-button nzType="primary" routerLink="/main/modbus/create">
+        <nz-icon nzType="plus"></nz-icon>
+        {{ '新建' | translate }}
+      </button>
+    }
+  </nz-page-header-extra>
+</nz-page-header>
+
+<ng-template #pageTitle>{{ '设备点表' | translate }}</ng-template>
+
+<div style="padding: 20px 20px">
+  @if (!account.organization().id) {
+    <div class="empty-hint">
+      <nz-empty nzNotFoundImage="simple">
+        <div class="hint-text">{{ '请先在组织列表中选择或创建一个组织，再管理设备点表。' | translate }}</div>
+        <button nz-button nzType="primary" routerLink="/main/organization">{{ '前往组织' | translate }}</button>
+      </nz-empty>
+    </div>
+  } @else {
+    <nz-spin [nzSpinning]="loading()">
+      <nz-table
+        [nzData]="configs()"
+        [nzShowSizeChanger]="true"
+        [nzHideOnSinglePage]="true"
+        [nzScroll]="{ x: '1080px' }"
+      >
+        <thead>
+        <tr>
+          <th nzWidth="150px">{{ '厂家' | translate }}</th>
+          <th nzWidth="140px">{{ '型号' | translate }}</th>
+          <th nzWidth="110px">{{ '从站地址' | translate }}</th>
+          <th nzWidth="100px">{{ '可见度' | translate }}</th>
+          <th nzWidth="240px">{{ '描述' | translate }}</th>
+          <th nzWidth="170px">{{ '最后更新' | translate }}</th>
+          <th nzWidth="140px">{{ '操作' | translate }}</th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (config of configs(); track config.id) {
+            <tr>
+              <td>{{ config.manufacturer || '-' }}</td>
+              <td>{{ config.model || '-' }}</td>
+              <td>{{ config.slaveId ?? '-' }}</td>
+              <td>
+                <span
+                  class="visibility"
+                  [class.private]="config.visibility === 'private'"
+                  [class.public]="config.visibility === 'public'"
+                >
+                  {{ (config.visibility === 'public' ? '公开' : (config.visibility === 'private' ? '私有' : '-')) | translate }}
+                </span>
+              </td>
+              <td class="ellipsis-cell" [title]="config.description || undefined">
+                {{ config.description || '-' }}
+              </td>
+              <td>
+                @if (config.updater?.timestamp) {
+                  <span [title]="config.updater?.name ? ('由 {{name}} 更新' | translate:{ name: config.updater!.name }) : ''">
+                    {{ config.updater!.timestamp | date:'yyyy-MM-dd HH:mm:ss' }}
+                  </span>
+                } @else {
+                  -
+                }
+              </td>
+              <td>
+                <a [routerLink]="['/main/modbus/edit', config.id]">{{ '编辑' | translate }}</a>
+                <nz-divider nzType="vertical"></nz-divider>
+                <a (click)="remove(config)">{{ '删除' | translate }}</a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+    </nz-spin>
+  }
+</div>
