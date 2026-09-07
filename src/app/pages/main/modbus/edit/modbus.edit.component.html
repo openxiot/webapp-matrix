@@ -13,172 +13,119 @@
   </ng-template>
 
   <div style="padding: 20px 20px">
-    <nz-card [nzTitle]="'设备信息' | translate">
-      <form nz-form nzLayout="vertical" [formGroup]="form">
-        <div nz-row [nzGutter]="16">
-          <div nz-col [nzSpan]="8">
-            <nz-form-item>
-              <nz-form-label nzRequired="true" nzFor="manufacturer">{{ '厂家' | translate }}</nz-form-label>
-              <nz-form-control [nzErrorTip]="manufacturerErrorTip">
-                <input nz-input formControlName="manufacturer" id="manufacturer"
-                       placeholder="{{ '例如：特灵 / 开利 / 麦克维尔' | translate }}" />
-              </nz-form-control>
-            </nz-form-item>
-          </div>
-          <div nz-col [nzSpan]="8">
-            <nz-form-item>
-              <nz-form-label nzRequired="true" nzFor="model">{{ '型号' | translate }}</nz-form-label>
-              <nz-form-control [nzErrorTip]="modelErrorTip">
-                <input nz-input formControlName="model" id="model"
-                       placeholder="{{ '例如：19XRV / CVHG' | translate }}" />
-              </nz-form-control>
-            </nz-form-item>
-          </div>
-          <div nz-col [nzSpan]="8">
-            <nz-form-item>
-              <nz-form-label nzRequired="true" nzFor="slaveId">{{ '从站地址' | translate }}</nz-form-label>
-              <nz-form-control [nzErrorTip]="slaveIdErrorTip">
-                <nz-input-number formControlName="slaveId" id="slaveId" [nzMin]="0" [nzMax]="247" [nzStep]="1"
-                                 style="width: 100%"></nz-input-number>
-              </nz-form-control>
-            </nz-form-item>
-          </div>
-        </div>
-        <div nz-row [nzGutter]="16">
-          <div nz-col [nzSpan]="8">
-            <nz-form-item>
-              <nz-form-label nzRequired="true">{{ '可见度' | translate }}</nz-form-label>
-              <nz-form-control>
-                <nz-radio-group formControlName="visibility">
-                  <label nz-radio-button nzValue="private">{{ '私有' | translate }}</label>
-                  <label nz-radio-button nzValue="public">{{ '公开' | translate }}</label>
-                </nz-radio-group>
-              </nz-form-control>
-            </nz-form-item>
-          </div>
-          <div nz-col [nzSpan]="16">
-            <nz-form-item>
-              <nz-form-label nzFor="description">{{ '描述' | translate }}</nz-form-label>
-              <nz-form-control>
-                <input nz-input formControlName="description" id="description" placeholder="{{ '可选' | translate }}" />
-              </nz-form-control>
-            </nz-form-item>
-          </div>
-        </div>
-      </form>
-    </nz-card>
+    <nz-row [nzGutter]="[8, 8]">
+      <nz-col nzSpan="24">
+        <nz-card [nzTitle]="'设备信息' | translate" [nzExtra]="deviceInfoExtra">
+          <nz-descriptions nzSize="small" [nzColumn]="4">
+            <nz-descriptions-item nzTitle="{{ '厂家' | translate }}">{{ deviceInfo().manufacturer || '-' }}
+            </nz-descriptions-item>
+            <nz-descriptions-item nzTitle="{{ '型号' | translate }}">{{ deviceInfo().model || '-' }}
+            </nz-descriptions-item>
+            <nz-descriptions-item nzTitle="{{ '从站地址' | translate }}">{{ deviceInfo().slaveId ?? '-' }}
+            </nz-descriptions-item>
+            <nz-descriptions-item nzTitle="{{ '可见度' | translate }}">
+              @if (deviceInfo().visibility === 'public') {
+                {{ '公开' | translate }}
+              } @else if (deviceInfo().visibility === 'private') {
+                {{ '私有' | translate }}
+              } @else {
+                -
+              }
+            </nz-descriptions-item>
+            <nz-descriptions-item nzTitle="{{ '描述' | translate }}" [nzSpan]="4">
+              {{ deviceInfo().description || '-' }}
+            </nz-descriptions-item>
+          </nz-descriptions>
 
-    <nz-card [nzTitle]="tableTitle" [nzBodyStyle]="{ padding: 0 }" [nzExtra]="tableExtra">
-      <nz-table
-        nzSize="small"
-        [nzBordered]="true"
-        [nzData]="points()"
-        [nzShowSizeChanger]="true"
-        [nzHideOnSinglePage]="true"
-        [nzScroll]="{ x: '1500px' }"
-      >
-        <thead>
-        <tr>
-          <th>{{ '名称' | translate }}</th>
-          <th>{{ '区域' | translate }}</th>
-          <th>{{ '地址' | translate }}</th>
-          <th>{{ '逻辑地址' | translate }}</th>
-          <th>{{ '数据类型' | translate }}</th>
-          <th>{{ '读写' | translate }}</th>
-          <th>{{ '比例' | translate }}</th>
-          <th>{{ '单位' | translate }}</th>
-          <th>{{ '描述' | translate }}</th>
-          <th>{{ '操作' | translate }}</th>
-        </tr>
-        </thead>
-        <tbody>
-          @for (point of points(); track $index) {
-            <tr>
-              <td>
-                <input nz-input [ngModel]="point.name" (ngModelChange)="onName(point, $event)"
-                       placeholder="{{ '点位名称' | translate }}" />
-              </td>
-              <td>
-                <nz-select [ngModel]="point.area" (ngModelChange)="onArea(point, $event)" style="width: 100%">
-                  @for (option of areaOptions; track option.value) {
-                    <nz-option [nzValue]="option.value" [nzLabel]="option.label | translate"></nz-option>
-                  }
-                </nz-select>
-              </td>
-              <td>
-                <nz-input-number [ngModel]="point.address" (ngModelChange)="onAddress(point, $event)" [nzMin]="0"
-                                 style="width: 100%"></nz-input-number>
-              </td>
-              <td>
-                <nz-input-number [ngModel]="point.logicalAddress" (ngModelChange)="onLogicalAddress(point, $event)"
-                                 [nzMin]="0" style="width: 100%"></nz-input-number>
-              </td>
-              <td>
-                <nz-select [ngModel]="point.dataType" (ngModelChange)="onDataType(point, $event)" style="width: 100%">
-                  @for (option of dataTypeOptions; track option.value) {
-                    <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
-                  }
-                </nz-select>
-              </td>
-              <td>
-                <nz-select [ngModel]="point.rw" (ngModelChange)="onRw(point, $event)" style="width: 100%">
-                  @for (option of rwOptions; track option.value) {
-                    <nz-option [nzValue]="option.value" [nzLabel]="option.label | translate"></nz-option>
-                  }
-                </nz-select>
-              </td>
-              <td>
-                <nz-input-number [ngModel]="point.scale" (ngModelChange)="onScale(point, $event)"
-                                 style="width: 100%"></nz-input-number>
-              </td>
-              <td>
-                <input nz-input [ngModel]="point.unit" (ngModelChange)="onUnit(point, $event)"
-                       placeholder="{{ '单位' | translate }}" />
-              </td>
-              <td>
-                <input nz-input [ngModel]="point.description" (ngModelChange)="onDescription(point, $event)"
-                       placeholder="{{ '描述' | translate }}" />
-              </td>
-              <td>
-                <a (click)="movePoint($index, -1)">{{ '上移' | translate }}</a>
-                <nz-divider nzType="vertical"></nz-divider>
-                <a (click)="movePoint($index, 1)">{{ '下移' | translate }}</a>
-                <nz-divider nzType="vertical"></nz-divider>
-                <a class="danger-link" (click)="removePoint($index)">{{ '删除' | translate }}</a>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </nz-table>
+          <ng-template #deviceInfoExtra>
+            <button nz-button (click)="editDeviceInfo()">
+              <nz-icon nzType="edit"></nz-icon>
+              {{ '编辑' | translate }}
+            </button>
+          </ng-template>
+        </nz-card>
+      </nz-col>
 
-      <ng-template #tableTitle>
-        {{ '点位列表' | translate }}
-      </ng-template>
-
-      <ng-template #tableExtra>
-        <button nz-button nzType="dashed" (click)="addPoint()">
+      <nz-col nzSpan="24">
+        <button nz-button nzType="primary" (click)="addPoint()">
           <nz-icon nzType="plus"></nz-icon>
           {{ '添加点位' | translate }}
         </button>
-      </ng-template>
-    </nz-card>
+      </nz-col>
+
+      <nz-col nzSpan="24">
+        <nz-table
+          nzSize="small"
+          [nzBordered]="true"
+          [nzData]="points()"
+          [nzShowSizeChanger]="true"
+          [nzHideOnSinglePage]="true"
+        >
+          <thead>
+          <tr>
+            <th>{{ '名称' | translate }}</th>
+            <th>{{ '区域' | translate }}</th>
+            <th>{{ '地址' | translate }}</th>
+            <th>{{ '逻辑地址' | translate }}</th>
+            <th>{{ '数据类型' | translate }}</th>
+            <th>{{ '读写' | translate }}</th>
+            <th>{{ '比例' | translate }}</th>
+            <th>{{ '单位' | translate }}</th>
+            <th>{{ '描述' | translate }}</th>
+            <th>{{ '操作' | translate }}</th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (point of points(); track $index) {
+              <tr>
+                <td>{{ point.name || '-' }}</td>
+                <td>
+                  @if (point.area) {
+                    {{ areaLabelKey(point.area) | translate }}
+                  } @else {
+                    -
+                  }
+                </td>
+                <td>{{ point.address ?? '-' }}</td>
+                <td>{{ point.logicalAddress ?? '-' }}</td>
+                <td>{{ point.dataType || '-' }}</td>
+                <td>
+                  @if (point.rw) {
+                    {{ rwLabelKey(point.rw) | translate }}
+                  } @else {
+                    -
+                  }
+                </td>
+                <td>{{ point.scale ?? '-' }}</td>
+                <td>{{ point.unit || '-' }}</td>
+                <td class="point-description" [title]="point.description || undefined">{{ point.description || '-' }}
+                </td>
+                <td>
+                  <a (click)="editPoint($index)">{{ '编辑' | translate }}</a>
+                  <nz-divider nzType="vertical"></nz-divider>
+                  <a (click)="movePoint($index, -1)">{{ '上移' | translate }}</a>
+                  <nz-divider nzType="vertical"></nz-divider>
+                  <a (click)="movePoint($index, 1)">{{ '下移' | translate }}</a>
+                  <nz-divider nzType="vertical"></nz-divider>
+                  <a class="danger-link" (click)="removePoint($index)">{{ '删除' | translate }}</a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </nz-table>
+      </nz-col>
+
+    </nz-row>
+
+    <!--    <nz-card [nzTitle]="tableTitle" [nzExtra]="tableExtra">-->
+
+
+    <!--      <ng-template #tableTitle>-->
+    <!--        {{ '点位列表' | translate }}-->
+    <!--      </ng-template>-->
+
+    <!--      <ng-template #tableExtra>-->
+    <!--      </ng-template>-->
+    <!--    </nz-card>-->
   </div>
 </nz-spin>
-
-<ng-template #manufacturerErrorTip let-control>
-  @if (control.errors?.['required']) {
-    <span>{{ '请输入厂家' | translate }}</span>
-  }
-</ng-template>
-
-<ng-template #modelErrorTip let-control>
-  @if (control.errors?.['required']) {
-    <span>{{ '请输入型号' | translate }}</span>
-  }
-</ng-template>
-
-<ng-template #slaveIdErrorTip let-control>
-  @if (control.errors?.['required']) {
-    <span>{{ '请输入从站地址（0-247）' | translate }}</span>
-  }
-</ng-template>

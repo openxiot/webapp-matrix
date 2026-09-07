@@ -1,0 +1,98 @@
+<div class="ant-form-vertical">
+  <div nz-row [nzGutter]="16">
+    <div nz-col [nzSpan]="12">
+      <nz-form-item>
+        <nz-form-label nzFor="pointName" [nzRequired]="true">{{ '名称' | translate }}</nz-form-label>
+        <nz-form-control>
+          <input nz-input id="pointName" [value]="name()" (input)="onNameInput($event)" />
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+    <div nz-col [nzSpan]="12">
+      <nz-form-item>
+        <nz-form-label>{{ '区域' | translate }}</nz-form-label>
+        <nz-form-control>
+          <nz-select [ngModel]="area()" (ngModelChange)="onAreaChange($event)" nzAllowClear style="width: 100%">
+            @for (option of areaOptions; track option.value) {
+              <nz-option [nzValue]="option.value" [nzLabel]="option.label | translate"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+  </div>
+
+  <div nz-row [nzGutter]="16">
+    <div nz-col [nzSpan]="12">
+      <nz-form-item>
+        <nz-form-label>{{ '地址' | translate }}</nz-form-label>
+        <nz-form-control>
+          <nz-input-number [ngModel]="address()" (ngModelChange)="onAddressChange($event)" [nzMin]="0" [nzStep]="1"
+                           style="width: 100%"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+    <div nz-col [nzSpan]="12">
+      <nz-form-item>
+        <nz-form-label>{{ '逻辑地址' | translate }}</nz-form-label>
+        <nz-form-control>
+          <nz-input-number [ngModel]="logicalAddress()" (ngModelChange)="onLogicalAddressChange($event)" [nzMin]="0"
+                           [nzStep]="1" style="width: 100%"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+  </div>
+
+  <div nz-row [nzGutter]="16">
+    <div nz-col [nzSpan]="12">
+      <nz-form-item>
+        <nz-form-label [nzRequired]="true">{{ '数据类型' | translate }}</nz-form-label>
+        <nz-form-control>
+          <nz-select [ngModel]="dataType()" (ngModelChange)="onDataTypeChange($event)" style="width: 100%">
+            @for (option of dataTypeOptions; track option.value) {
+              <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+    <div nz-col [nzSpan]="12">
+      <nz-form-item>
+        <nz-form-label>{{ '读写' | translate }}</nz-form-label>
+        <nz-form-control>
+          <nz-select [ngModel]="rw()" (ngModelChange)="onRwChange($event)" nzAllowClear style="width: 100%">
+            @for (option of rwOptions; track option.value) {
+              <nz-option [nzValue]="option.value" [nzLabel]="option.label | translate"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+  </div>
+
+  <div nz-row [nzGutter]="16">
+    <div nz-col [nzSpan]="12">
+      <nz-form-item>
+        <nz-form-label>{{ '比例' | translate }}</nz-form-label>
+        <nz-form-control>
+          <nz-input-number [ngModel]="scale()" (ngModelChange)="onScaleChange($event)" style="width: 100%"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+    <div nz-col [nzSpan]="12">
+      <nz-form-item>
+        <nz-form-label>{{ '单位' | translate }}</nz-form-label>
+        <nz-form-control>
+          <input nz-input [value]="unit()" (input)="onUnitInput($event)" />
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+  </div>
+
+  <nz-form-item>
+    <nz-form-label>{{ '描述' | translate }}</nz-form-label>
+    <nz-form-control>
+      <input nz-input [value]="description()" (input)="onDescriptionInput($event)" />
+    </nz-form-control>
+  </nz-form-item>
+</div>

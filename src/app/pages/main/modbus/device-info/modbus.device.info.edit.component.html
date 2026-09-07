@@ -1,0 +1,52 @@
+<div class="ant-form-vertical">
+  <div nz-row [nzGutter]="16">
+    <div nz-col [nzSpan]="12">
+      <nz-form-item>
+        <nz-form-label nzFor="deviceInfoManufacturer" [nzRequired]="true">{{ '厂家' | translate }}</nz-form-label>
+        <nz-form-control>
+          <input nz-input id="deviceInfoManufacturer" [value]="manufacturer()" (input)="onManufacturerInput($event)"
+                 placeholder="{{ '例如：特灵 / 开利 / 麦克维尔' | translate }}" />
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+    <div nz-col [nzSpan]="12">
+      <nz-form-item>
+        <nz-form-label nzFor="deviceInfoModel" [nzRequired]="true">{{ '型号' | translate }}</nz-form-label>
+        <nz-form-control>
+          <input nz-input id="deviceInfoModel" [value]="model()" (input)="onModelInput($event)"
+                 placeholder="{{ '例如：19XRV / CVHG' | translate }}" />
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+  </div>
+
+  <div nz-row [nzGutter]="16">
+    <div nz-col [nzSpan]="12">
+      <nz-form-item>
+        <nz-form-label nzFor="deviceInfoSlaveId" [nzRequired]="true">{{ '从站地址' | translate }}</nz-form-label>
+        <nz-form-control>
+          <nz-input-number id="deviceInfoSlaveId" [ngModel]="slaveId()" (ngModelChange)="onSlaveIdChange($event)"
+                           [nzMin]="0" [nzMax]="247" [nzStep]="1" style="width: 100%"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+    <div nz-col [nzSpan]="12">
+      <nz-form-item>
+        <nz-form-label [nzRequired]="true">{{ '可见度' | translate }}</nz-form-label>
+        <nz-form-control>
+          <nz-radio-group [ngModel]="visibility()" nzButtonStyle="solid" (ngModelChange)="onVisibilityChange($event)">
+            <label nz-radio-button nzValue="private">{{ '私有' | translate }}</label>
+            <label nz-radio-button nzValue="public">{{ '公开' | translate }}</label>
+          </nz-radio-group>
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+  </div>
+
+  <nz-form-item>
+    <nz-form-label nzFor="deviceInfoDescription">{{ '描述' | translate }}</nz-form-label>
+    <nz-form-control>
+      <input nz-input id="deviceInfoDescription" [value]="description()" (input)="onDescriptionInput($event)" />
+    </nz-form-control>
+  </nz-form-item>
+</div>

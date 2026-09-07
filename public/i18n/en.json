@@ -138,6 +138,8 @@
   "确认删除设备点表": "Are you sure you want to delete device point table \"{{label}}\"?",
   "保存": "Save",
   "编辑设备点表": "Edit Device Point Table",
+  "编辑设备信息": "Edit Device Info",
+  "编辑点位": "Edit Point",
   "新建设备点表": "New Device Point Table",
   "设备信息": "Device Info",
   "例如：特灵 / 开利 / 麦克维尔": "e.g. Trane / Carrier / McQuay",
