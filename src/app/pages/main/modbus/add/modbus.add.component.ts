@@ -1,3 +1,4 @@
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { Component } from '@angular/core';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
@@ -20,6 +21,7 @@ import { ModbusEditorBase } from '../editor/modbus.editor.base';
   templateUrl: '../editor/modbus.editor.html',
   styleUrl: '../editor/modbus.editor.less',
   imports: [
+    DragDropModule,
     NzPageHeaderModule,
     NzSpinModule,
     NzCardModule,

@@ -1,3 +1,4 @@
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { computed, effect, inject, signal, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
@@ -327,15 +328,14 @@ export abstract class ModbusEditorBase {
     this.commands.update((list) => list.filter((_, i) => i !== index));
   }
 
-  protected moveCommand(index: number, delta: number): void {
+  /**
+   * 拖拽行重排功能码（取代原 上移/下移 行操作）。
+   * 表格行由 cdkDropList + cdkDrag 驱动，松开时把命令移到新位置即可（changed 生效）。
+   */
+  protected onCommandDropped(event: CdkDragDrop<ModbusCommand[]>): void {
     this.commands.update((list) => {
-      const target = index + delta;
-      if (target < 0 || target >= list.length) {
-        return list;
-      }
       const copy = [...list];
-      const [item] = copy.splice(index, 1);
-      copy.splice(target, 0, item);
+      moveItemInArray(copy, event.previousIndex, event.currentIndex);
       return copy;
     });
   }

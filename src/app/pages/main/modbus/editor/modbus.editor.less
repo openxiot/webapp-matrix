@@ -1,6 +1,38 @@
-.danger-link {
-  color: #ff4d4f;
+/* 拖拽提示（管理态下显示在 添加功能码 旁） */
+.cmd-drag-hint {
+  margin-left: 12px;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
 }
+
+/* 管理态下整行可拖拽：行级光标提示 */
+.cmd-draggable {
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+/*
+ * cdkDropList 拖拽行的占位与浮动层样式。
+ * 占位符是 cdk 克隆的原行，被插回原位作为「落点空隙」——透明即可露出表格，只留一个行高槽位；
+ * 浮动层（preview）跟随指针，加深阴影与白底以区别于静止行。
+ * ::ng-deep 穿透组件封装（这两个元素由 cdk 挂到表格/body 上，不在组件样式范围内）。
+ */
+::ng-deep tr.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+::ng-deep .cdk-drag-preview {
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+}
+
+::ng-deep .cdk-drag-preview td {
+  background: #fff;
+}
+
 
 .command-name {
   font-weight: 500;

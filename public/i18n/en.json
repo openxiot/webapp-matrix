@@ -165,8 +165,6 @@
   "只读(r)": "Read-only (r)",
   "只写(w)": "Write-only (w)",
   "读写(rw)": "Read-write (rw)",
-  "上移": "Move Up",
-  "下移": "Move Down",
   "请填写厂家与型号": "Please fill in the manufacturer and model",
   "请先选择组织": "Please select an organization first",
   "保存成功": "Saved successfully",
@@ -213,5 +211,6 @@
   "由功能码与起始地址换算": "derived from function code and start address",
   "该参数占用的位/线圈个数": "bits/coils this parameter occupies",
   "偏移从 0 起、不可修改，与线圈一一对应": "Offset is auto from 0, one per coil",
-  "寄存器地址由起始地址按类型跨度自动连续排布": "Register addresses are laid out contiguously from the start address by type span"
+  "寄存器地址由起始地址按类型跨度自动连续排布": "Register addresses are laid out contiguously from the start address by type span",
+  "拖拽表格行可调整功能码顺序": "Drag table rows to reorder function codes"
 }

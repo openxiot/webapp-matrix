@@ -56,6 +56,7 @@
             <nz-icon nzType="plus"></nz-icon>
             {{ '添加功能码' | translate }}
           </button>
+          <span class="cmd-drag-hint">{{ '拖拽表格行可调整功能码顺序' | translate }}</span>
         }
       </nz-col>
 
@@ -83,9 +84,16 @@
             <th nzWidth="160px">{{ '操作' | translate }}</th>
           </tr>
           </thead>
-          <tbody>
-            @for (command of commands(); track $index) {
-              <tr>
+          <tbody
+            cdkDropList
+            [cdkDropListData]="commands()"
+            [cdkDropListDisabled]="!canManage()"
+            (cdkDropListDropped)="onCommandDropped($event)"
+          >
+            <!-- track 用命令对象本身：cdkDrag 松开时会把被拖的 <tr> 节点插到新位置，
+                 Angular 按对象身份做 diff 才能让 DOM 顺序与新数组一致（track $index 不会移动节点，会错位） -->
+            @for (command of commands(); track command) {
+              <tr cdkDrag [cdkDragDisabled]="!canManage()" [class.cmd-draggable]="canManage()">
                 <td class="command-name">{{ command.name || '-' }}</td>
                 <td>
                   <span class="fc-code">{{ command.fc }}</span>
@@ -120,10 +128,6 @@
                 <td>
                   @if (canManage()) {
                     <a (click)="editCommand($index)">{{ '编辑' | translate }}</a>
-                    <nz-divider nzType="vertical"></nz-divider>
-                    <a (click)="moveCommand($index, -1)">{{ '上移' | translate }}</a>
-                    <nz-divider nzType="vertical"></nz-divider>
-                    <a (click)="moveCommand($index, 1)">{{ '下移' | translate }}</a>
                     <nz-divider nzType="vertical"></nz-divider>
                     <a class="danger-link" (click)="removeCommand($index)">{{ '删除' | translate }}</a>
                   } @else {
