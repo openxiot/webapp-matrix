@@ -1,0 +1,24 @@
+<!--@if (property.hasConstraintValue()) {-->
+<!--  @if (property.hasValueList()) {-->
+<!--    {{property.value.value().rawValue()}}-->
+<!--  }-->
+<!--  @if (property.hasValueRange()) {-->
+<!--    {{property.value.value().rawValue()}}-->
+<!--  }-->
+<!--} @else {-->
+<!--  @if (property.formatBoolean()) {-->
+<!--    {{property.value.value().rawValue()}}-->
+<!--  } @else if (property.formatNumber()) {-->
+<!--    {{property.value.value().rawValue()}}-->
+<!--  } @else if (property.formatString()) {-->
+<!--    {{property.value.value().rawValue()}}-->
+<!--  } @else if (property.formatCombination()) {-->
+<!--    @for (memberId of property.members; track memberId) {-->
+<!--      <nz-tag>{{ getProperty(memberId)?.description!.get(i18n.getCurrentLang()) }}</nz-tag>-->
+<!--    }-->
+<!--  }-->
+<!--}-->
+
+@if (property.value.defaultValue !== null) {
+  {{ property.value.defaultValue.rawValue() }}
+}

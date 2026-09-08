@@ -1,0 +1,28 @@
+<nz-tabs nzSize="small">
+  @if (service.properties.size > 0) {
+    <nz-tab nzTitle="属性({{service.properties.size}})">
+      <debugger-properties-controller
+        [did]="did"
+        [service]="service"
+      ></debugger-properties-controller>
+    </nz-tab>
+  }
+
+  @if (service.actions.size > 0) {
+    <nz-tab nzTitle="方法({{service.actions.size}})">
+        <debugger-actions-controller
+          [did]="did"
+          [service]="service"
+        ></debugger-actions-controller>
+    </nz-tab>
+  }
+
+  @if (service.events.size > 0) {
+    <nz-tab nzTitle="事件({{service.events.size}})">
+      <debugger-events-controller
+        [did]="did"
+        [service]="service"
+      ></debugger-events-controller>
+    </nz-tab>
+  }
+</nz-tabs>

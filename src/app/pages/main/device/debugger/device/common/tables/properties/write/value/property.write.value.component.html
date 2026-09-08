@@ -1,0 +1,49 @@
+@if (property?.hasConstraintValue()) {
+  @if (property?.hasValueList()) {
+    <property-write-list-value [property]="property" (valueChange)="onValueChanged($event)"></property-write-list-value>
+  }
+
+  @if (property?.hasValueRange()) {
+    @if (property?.formatNumber()) {
+      <property-write-range-value [property]="property" (valueChange)="onValueChanged($event)"></property-write-range-value>
+    } @else {
+      <property-write-string-value [property]="property" (valueChange)="onValueChanged($event)"></property-write-string-value>
+    }
+  }
+} @else {
+  @switch (property?.format) {
+    @case (DataFormat.BOOL) {
+      <property-write-boolean-value [property]="property" (valueChange)="onValueChanged($event)"></property-write-boolean-value>
+    }
+    @case (DataFormat.INT8) {
+      <property-write-int8-value [property]="property" (valueChange)="onValueChanged($event)"></property-write-int8-value>
+    }
+    @case (DataFormat.INT16) {
+      <property-write-int16-value [property]="property" (valueChange)="onValueChanged($event)"></property-write-int16-value>
+    }
+    @case (DataFormat.INT32) {
+      <property-write-int32-value [property]="property" (valueChange)="onValueChanged($event)"></property-write-int32-value>
+    }
+    @case (DataFormat.UINT8) {
+      <property-write-uint8-value [property]="property" (valueChange)="onValueChanged($event)"></property-write-uint8-value>
+    }
+    @case (DataFormat.UINT16) {
+      <property-write-uint16-value [property]="property" (valueChange)="onValueChanged($event)"></property-write-uint16-value>
+    }
+    @case (DataFormat.UINT32) {
+      <property-write-uint32-value [property]="property" (valueChange)="onValueChanged($event)"></property-write-uint32-value>
+    }
+    @case (DataFormat.FLOAT) {
+      <property-write-float-value [property]="property" (valueChange)="onValueChanged($event)"></property-write-float-value>
+    }
+    @case (DataFormat.COMBINATION) {
+      <property-write-combination-value [service]="service" [property]="property" (valueChange)="onValueChanged($event)"></property-write-combination-value>
+    }
+    @case (DataFormat.STRING) {
+      <property-write-string-value [property]="property" (valueChange)="onValueChanged($event)"></property-write-string-value>
+    }
+    @case (DataFormat.HEX) {
+      <property-write-hex-value [property]="property" (valueChange)="onValueChanged($event)"></property-write-hex-value>
+    }
+  }
+}

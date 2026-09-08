@@ -1,0 +1,73 @@
+@if (service) {
+  @if (service.properties.size > 0) {
+    <div style="width: 100%">
+      <nz-table
+        style="width: 100%"
+        #propertyTable
+        [nzData]="service.getProperties()"
+        [nzSize]="'small'"
+        [nzPageSize]="30"
+        [nzHideOnSinglePage]="true"
+        [nzBordered]="true"
+      >
+        <thead>
+        <tr>
+          <th>
+            <nz-space>
+              <span *nzSpaceItem nz-icon nzType="setting" nzTheme="outline"></span>
+              <span *nzSpaceItem>属性</span>
+            </nz-space>
+          </th>
+          <th>缺省值</th>
+          <th>格式</th>
+          <th>访问方式</th>
+          <th>操作</th>
+          <!--        <th>操作结果</th>-->
+        </tr>
+        </thead>
+        <tbody>
+          @for (p of propertyTable.data; track p) {
+            <tr>
+              <td>
+                <nz-tag [nzColor]="'blue'">{{ p.iid }}</nz-tag>
+                {{ p.description.get(i18n.getCurrentLang()) }}
+              </td>
+              <td>
+                <debugger-property-default-value [service]="service" [property]="p"></debugger-property-default-value>
+              </td>
+              <td>
+                {{ p.format.toString() }}
+              </td>
+              <td>
+                @if (p.access.isWritable) {
+                  <nz-tag [nzColor]="'red'">可写</nz-tag>
+                }
+
+                @if (p.access.isReadable) {
+                  <nz-tag [nzColor]="'blue'">可读</nz-tag>
+                }
+
+                @if (p.access.isNotifiable) {
+                  <nz-tag [nzColor]="'green'">可通知</nz-tag>
+                }
+              </td>
+              <td>
+                @if (p.access.isWritable) {
+                  <a (click)="setProperty(p)">写入</a>
+                }
+
+                @if (p.access.isWritable && p.access.isReadable) {
+                  <nz-divider nzType="vertical"></nz-divider>
+                }
+
+                @if (p.access.isReadable) {
+                  <a (click)="getProperty(p)">读取</a>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+    </div>
+  }
+}

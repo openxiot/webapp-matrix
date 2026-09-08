@@ -1,0 +1,51 @@
+@if (property?.hasConstraintValue()) {
+  @if (property?.hasValueList()) {
+    <action-in-list-value [property]="property" (valueChange)="onValueChange($event)"></action-in-list-value>
+  }
+  @if (property?.hasValueRange()) {
+    @if (property?.formatNumber()) {
+      <action-in-range-value [property]="property" (valueChange)="onValueChange($event)"></action-in-range-value>
+    } @else {
+      <action-in-string-value [property]="property" (valueChange)="onValueChange($event)"></action-in-string-value>
+    }
+  }
+} @else {
+  @switch (property?.format) {
+    @case (DataFormat.INT8) {
+      <action-in-int8-value [property]="property" (valueChange)="onValueChange($event)"></action-in-int8-value>
+    }
+    @case (DataFormat.INT16) {
+      <action-in-int16-value [property]="property" (valueChange)="onValueChange($event)"></action-in-int16-value>
+    }
+    @case (DataFormat.INT32) {
+      <action-in-int32-value [property]="property" (valueChange)="onValueChange($event)"></action-in-int32-value>
+    }
+    @case (DataFormat.INT64) {
+      <action-in-int64-value [property]="property" (valueChange)="onValueChange($event)"></action-in-int64-value>
+    }
+    @case (DataFormat.UINT8) {
+      <action-in-uint8-value [property]="property" (valueChange)="onValueChange($event)"></action-in-uint8-value>
+    }
+    @case (DataFormat.UINT16) {
+      <action-in-uint16-value [property]="property" (valueChange)="onValueChange($event)"></action-in-uint16-value>
+    }
+    @case (DataFormat.UINT32) {
+      <action-in-uint32-value [property]="property" (valueChange)="onValueChange($event)"></action-in-uint32-value>
+    }
+    @case (DataFormat.FLOAT) {
+      <action-in-float-value [property]="property" (valueChange)="onValueChange($event)"></action-in-float-value>
+    }
+    @case (DataFormat.BOOL) {
+      <action-in-boolean-value [property]="property" (valueChange)="onValueChange($event)"></action-in-boolean-value>
+    }
+    @case (DataFormat.COMBINATION) {
+      <action-in-combination-value [service]="service" [argument]="argument" [property]="property" (valueChange)="onValueChange($event)"></action-in-combination-value>
+    }
+    @case (DataFormat.STRING) {
+      <action-in-string-value [property]="property" (valueChange)="onValueChange($event)"></action-in-string-value>
+    }
+    @case (DataFormat.HEX) {
+      <action-in-hex-value [property]="property" (valueChange)="onValueChange($event)"></action-in-hex-value>
+    }
+  }
+}

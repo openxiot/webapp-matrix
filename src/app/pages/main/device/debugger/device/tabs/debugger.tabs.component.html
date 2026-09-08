@@ -1,0 +1,38 @@
+@if (device) {
+  <nz-card nzSize="small">
+    <nz-tabs nzSize="small">
+      @for (s of device.getServices(); track s) {
+        <nz-tab [nzTitle]="title">
+          @if (s.properties.size > 0) {
+            <debugger-properties-controller
+              [did]="did"
+              [service]="s"
+            ></debugger-properties-controller>
+          }
+
+          @if (s.actions.size > 0) {
+            <div style="padding-top: 8px">
+              <debugger-actions-controller
+                [did]="did"
+                [service]="s"
+              ></debugger-actions-controller>
+            </div>
+          }
+
+          @if (s.events.size > 0) {
+            <div style="padding-top: 8px">
+              <debugger-events-controller
+                [did]="did"
+                [service]="s"
+              ></debugger-events-controller>
+            </div>
+          }
+        </nz-tab>
+        <ng-template #title>
+          <nz-tag [nzColor]="'blue'">{{ s.iid }}</nz-tag>
+          <span>{{ s.description.get(i18n.getCurrentLang()) }}</span>
+        </ng-template>
+      }
+    </nz-tabs>
+  </nz-card>
+}

@@ -1,0 +1,51 @@
+@if (property?.hasConstraintValue()) {
+  @if (property?.hasValueList()) {
+    <out-member-list-value [property]="property" [value]="value"></out-member-list-value>
+  }
+  @if (property?.hasValueRange()) {
+    @if (property?.formatNumber()) {
+      <out-member-range-value [property]="property" [value]="value"></out-member-range-value>
+    } @else {
+      <out-member-string-value [property]="property" [value]="value"></out-member-string-value>
+    }
+  }
+} @else {
+  @switch (property?.format) {
+    @case (DataFormat.BOOL) {
+      <out-member-boolean-value [property]="property" [value]="value"></out-member-boolean-value>
+    }
+    @case (DataFormat.INT8) {
+      <out-member-int8-value [property]="property" [value]="value"></out-member-int8-value>
+    }
+    @case (DataFormat.INT16) {
+      <out-member-int16-value [property]="property" [value]="value"></out-member-int16-value>
+    }
+    @case (DataFormat.INT32) {
+      <out-member-int32-value [property]="property" [value]="value"></out-member-int32-value>
+    }
+    @case (DataFormat.INT64) {
+      <out-member-int64-value [property]="property" [value]="value"></out-member-int64-value>
+    }
+    @case (DataFormat.UINT8) {
+      <out-member-uint8-value [property]="property" [value]="value"></out-member-uint8-value>
+    }
+    @case (DataFormat.UINT16) {
+      <out-member-uint16-value [property]="property" [value]="value"></out-member-uint16-value>
+    }
+    @case (DataFormat.UINT32) {
+      <out-member-uint32-value [property]="property" [value]="value"></out-member-uint32-value>
+    }
+    @case (DataFormat.FLOAT) {
+      <out-member-float-value [property]="property" [value]="value"></out-member-float-value>
+    }
+    @case (DataFormat.COMBINATION) {
+      <out-member-combination-value [service]="service" [argument]="argument" [property]="property" [value]="value"></out-member-combination-value>
+    }
+    @case (DataFormat.STRING) {
+      <out-member-string-value [property]="property" [value]="value"></out-member-string-value>
+    }
+    @default {
+      {{value}}
+    }
+  }
+}

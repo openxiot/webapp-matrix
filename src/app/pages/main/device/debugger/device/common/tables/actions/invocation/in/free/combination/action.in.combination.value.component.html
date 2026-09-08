@@ -1,0 +1,9 @@
+@if (property) {
+  <nz-descriptions nzBordered [nzSize]="'small'" nzLayout="horizontal" [nzColumn]="1">
+    @for (iid of property.members; track iid) {
+      <nz-descriptions-item [nzTitle]="getMemberName(iid)">
+        <action-in-value [service]="service" [argument]="getMemberArgument(iid)" (valueChange)="onValueChanged(iid, $event)"></action-in-value>
+      </nz-descriptions-item>
+    }
+  </nz-descriptions>
+}

@@ -13,7 +13,7 @@
         <nz-row [nzGutter]="[16, 16]">
           @for (device of devices(); track device.did) {
             <nz-col [nzSpan]="6">
-              <nz-card [nzHoverable]="true" [nzActions]="[detail]">
+              <nz-card [nzHoverable]="true" [nzActions]="[detail, debug]">
                 <nz-card-meta [nzTitle]="title" [nzDescription]="desc" [nzAvatar]="avatar"></nz-card-meta>
               </nz-card>
 
@@ -38,6 +38,10 @@
 
               <ng-template #detail>
                 <a [routerLink]="['/main/device/detail', device.did]">{{ '详情' | translate }}</a>
+              </ng-template>
+
+              <ng-template #debug>
+                <a [routerLink]="['/main/device/debugger', device.did]">{{ '调试' | translate }}</a>
               </ng-template>
             </nz-col>
           }

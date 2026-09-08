@@ -1,0 +1,15 @@
+<div class="results">
+  @if (operation()) {
+    @switch (operation()!.status) {
+      @case (0) {
+        <property-read-value [service]="data.service" [property]="data.property" [value]="operation()!.value"></property-read-value>
+      }
+      @default {
+        <nz-descriptions nzBordered nzTitle="读属性失败" [nzSize]="'small'" nzLayout="horizontal" [nzColumn]="1">
+          <nz-descriptions-item nzTitle="状态码">{{ operation()!.status }}</nz-descriptions-item>
+          <nz-descriptions-item nzTitle="描述">{{ operation()!.description }}</nz-descriptions-item>
+        </nz-descriptions>
+      }
+    }
+  }
+</div>

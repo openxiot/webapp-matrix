@@ -1,0 +1,49 @@
+@if (property?.hasConstraintValue()) {
+  @if (property?.hasValueList()) {
+    <property-read-list-value [property]="property" [value]="value"></property-read-list-value>
+  }
+
+  @if (property?.hasValueRange()) {
+    @if (property?.formatNumber()) {
+      <property-read-range-value [property]="property" [value]="value"></property-read-range-value>
+    } @else {
+      <property-read-string-value [property]="property" [value]="value"></property-read-string-value>
+    }
+  }
+} @else {
+  @switch (property?.format) {
+    @case (DataFormat.BOOL) {
+      <property-read-boolean-value [property]="property" [value]="value"></property-read-boolean-value>
+    }
+    @case (DataFormat.INT8) {
+      <property-read-int8-value [property]="property" [value]="value"></property-read-int8-value>
+    }
+    @case (DataFormat.INT16) {
+      <property-read-int16-value [property]="property" [value]="value"></property-read-int16-value>
+    }
+    @case (DataFormat.INT32) {
+      <property-read-int32-value [property]="property" [value]="value"></property-read-int32-value>
+    }
+    @case (DataFormat.UINT8) {
+      <property-read-uint8-value [property]="property" [value]="value"></property-read-uint8-value>
+    }
+    @case (DataFormat.UINT16) {
+      <property-read-uint16-value [property]="property" [value]="value"></property-read-uint16-value>
+    }
+    @case (DataFormat.UINT32) {
+      <property-read-uint32-value [property]="property" [value]="value"></property-read-uint32-value>
+    }
+    @case (DataFormat.FLOAT) {
+      <property-read-float-value [property]="property" [value]="value"></property-read-float-value>
+    }
+    @case (DataFormat.COMBINATION) {
+      <property-read-combination-value [service]="service" [property]="property" [value]="value"></property-read-combination-value>
+    }
+    @case (DataFormat.STRING) {
+      <property-read-string-value [property]="property" [value]="value"></property-read-string-value>
+    }
+    @case (DataFormat.HEX) {
+      <property-read-hex-value [property]="property" [value]="value"></property-read-hex-value>
+    }
+  }
+}

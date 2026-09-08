@@ -1,0 +1,53 @@
+<nz-card nzSize="small" [nzTitle]="serviceTitle" [nzExtra]="serviceExtra" style="width: 100%">
+  @if (expand) {
+    @if (service.properties.size > 0) {
+      <debugger-properties-controller
+        [did]="did"
+        [service]="service"
+      ></debugger-properties-controller>
+    }
+
+    @if (service.actions.size > 0) {
+      <debugger-actions-controller
+        [did]="did"
+        [service]="service"
+      ></debugger-actions-controller>
+    }
+
+    @if (service.events.size > 0) {
+      <debugger-events-controller
+        [did]="did"
+        [service]="service"
+      ></debugger-events-controller>
+    }
+  } @else {
+    <span>属性: {{ service.properties.size }}</span>
+    <nz-divider nzType="vertical"></nz-divider>
+    <span>方法: {{ service.actions.size }}</span>
+    <nz-divider nzType="vertical"></nz-divider>
+    <span>事件: {{ service.events.size }}</span>
+  }
+</nz-card>
+
+<ng-template #serviceTitle>
+  <span>
+    @if (expand) {
+      <span nz-icon nzType="folder-open" nzTheme="outline" (click)="onExpandChanged()"></span>
+    } @else {
+      <span nz-icon nzType="folder" nzTheme="outline" (click)="onExpandChanged()"></span>
+    }
+
+    <nz-divider nzType="vertical"></nz-divider>
+
+    <nz-tag [nzColor]="'blue'">{{ service.iid }}</nz-tag>
+
+    <span>{{ service.description.get(i18n.getCurrentLang()) }}</span>
+
+    <span style="float: right">
+      <nz-tag nzColor="blue">版本 {{ service.type.version }}</nz-tag>
+    </span>
+  </span>
+</ng-template>
+
+<ng-template #serviceExtra>
+</ng-template>

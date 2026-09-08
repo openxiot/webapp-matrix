@@ -1,0 +1,12 @@
+@if (device) {
+  <nz-list [nzDataSource]="device.getServices()" [nzRenderItem]="s" nzSplit="false">
+    <ng-template #s let-service>
+      <nz-list-item>
+        <debugger-service-controller
+          [did]="did"
+          [service]="service" style="width: 100%"
+        ></debugger-service-controller>
+      </nz-list-item>
+    </ng-template>
+  </nz-list>
+}

@@ -1,0 +1,11 @@
+@if (property) {
+  <nz-space>
+    <nz-descriptions nzBordered [nzSize]="'small'" nzLayout="horizontal" [nzColumn]="1">
+      @for (iid of property.members; track iid) {
+        <nz-descriptions-item [nzTitle]="getMemberName(iid)">
+          <out-member-value [service]="service" [argument]="getMemberArgument(iid)" [value]="getMemberValue(iid, value)"></out-member-value>
+        </nz-descriptions-item>
+      }
+    </nz-descriptions>
+  </nz-space>
+}

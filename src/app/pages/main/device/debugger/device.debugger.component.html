@@ -1,0 +1,88 @@
+<nz-spin [nzSpinning]="loadingDetail() || loadingInstance()">
+    <nz-page-header (nzBack)="onBack()" nzBackIcon [nzTitle]="deviceTitle" [nzSubtitle]="deviceOnline" [nzGhost]="false">
+        <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+
+        <nz-page-header-content>
+            <nz-descriptions nzSize="small" [nzColumn]="3">
+                <nz-descriptions-item nzTitle="设备ID" [nzSpan]="1">
+                    @if (device()) {
+                        {{ device()!.did }}
+                    }
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="产品名称" [nzSpan]="1">
+                    @if (instance()) {
+                        {{ instance()!.description.get(i18n.getCurrentLang()) || instance()!.type.name }}
+                    }
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="产品型号" [nzSpan]="1">
+                    @if (instance()) {
+                        @if (instance()!.type) {
+                            {{ instance()!.type.model }}
+                        }
+                    }
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="功能版本" [nzSpan]="1">
+                    @if (instance()) {
+                        @if (instance()!.type) {
+                            {{ instance()!.type.version }}
+                        }
+                    }
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="功能列表" [nzSpan]="1">
+                    <nz-segmented [nzSize]="'small'" [nzOptions]="deviceDisplayOptions"
+                                  [(ngModel)]="deviceDisplayStyle"></nz-segmented>
+                </nz-descriptions-item>
+                @if (deviceDisplayStyle === 0) {
+                    <nz-descriptions-item nzTitle="功能内容" [nzSpan]="1">
+                        <nz-segmented [nzSize]="'small'" [nzOptions]="serviceDisplayOptions"
+                                      [(ngModel)]="serviceDisplayStyle"></nz-segmented>
+                    </nz-descriptions-item>
+                }
+            </nz-descriptions>
+        </nz-page-header-content>
+    </nz-page-header>
+
+    <ng-template #deviceTitle>
+        @if (device()) {
+            {{ device()!.did }}
+        }
+    </ng-template>
+
+    <ng-template #deviceOnline>
+        @if (device()) {
+            @if (device()!.online) {
+                <nz-tag nzColor="blue">在线</nz-tag>
+            } @else {
+                <nz-tag nzColor="red">离线</nz-tag>
+            }
+        }
+    </ng-template>
+
+    <div style="padding: 20px 20px;">
+        @if (device() && instance()) {
+            @switch (deviceDisplayStyle) {
+                @case (0) {
+                    <debugger-slider
+                            [did]="did"
+                            [device]="instance()!"
+                            [style]="serviceDisplayStyle"
+                    ></debugger-slider>
+                }
+                @case (1) {
+                    <debugger-waterfall
+                            [did]="did"
+                            [device]="instance()!"
+                            [style]="serviceDisplayStyle"
+                    ></debugger-waterfall>
+                }
+                @case (2) {
+                    <debugger-tabs
+                            [did]="did"
+                            [device]="instance()!"
+                            [style]="serviceDisplayStyle"
+                    ></debugger-tabs>
+                }
+            }
+        }
+    </div>
+</nz-spin>

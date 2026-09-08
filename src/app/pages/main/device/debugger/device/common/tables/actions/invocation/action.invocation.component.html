@@ -1,0 +1,118 @@
+<nz-row [nzGutter]="[8, 8]">
+
+    @if (data.action.in.size > 0) {
+        <nz-col nzSpan="24">
+
+            <nz-table
+                #inTable
+                nzBordered
+                [nzTitle]="inTitle"
+                [nzShowPagination]="'false'"
+                [nzSize]="'small'"
+                [nzData]="data.action.getArgumentsIn()"
+                [nzWidthConfig]="['100px', '400px']"
+            >
+                <tbody>
+                    @for (arg of inTable.data; track arg) {
+                        <tr>
+                            <td>
+                        <span nz-tooltip nzTooltipTitle="属性IID: {{arg.piid}}">
+                            {{ getArgumentName(arg) }}
+                        </span>
+                            </td>
+                            <td>
+                                <nz-row [nzGutter]="[8, 8]">
+                                    @for (value of argValues.get(arg.piid); track value) {
+                                        <nz-col nzSpan="22">
+                                            <action-in-value
+                                                    [service]="data.service"
+                                                    [argument]="arg"
+                                                    (valueChange)="onValueChanged(arg, value, $event)"
+                                            ></action-in-value>
+                                        </nz-col>
+
+                                        @if (value.removable) {
+                                            <nz-col nzSpan="1">
+                                                <button nz-button nzType="primary" nzDanger nzShape="circle"
+                                                        (click)="removeValue(arg.piid, value)">
+                                                    <span nz-icon nzType="delete" nzTheme="outline"></span>
+                                                </button>
+                                            </nz-col>
+                                        }
+                                    }
+                                    @if (argValues.get(arg.piid)!.length < arg.maxRepeat) {
+                                        <nz-col nzSpan="22">
+                                            <button nz-button nzType="dashed" style="width: 100%"
+                                                    (click)="addValue(arg)">
+                                                <span nz-icon nzType="plus" nzTheme="outline"></span>
+                                            </button>
+                                        </nz-col>
+                                    }
+                                </nz-row>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </nz-table>
+
+            <ng-template #inTitle>
+                {{ '参数' | translate }}
+            </ng-template>
+        </nz-col>
+    }
+
+    @if (operation()) {
+        <nz-col nzSpan="24">
+
+            @switch (operation()!.status) {
+                @case (0) {
+                    @if (operation()!.out.size == 0) {
+                        <div class="results">
+                            <nz-result nzStatus="success" nzTitle="方法调用成功！"></nz-result>
+                        </div>
+                    } @else if (operation()!.out.size > 0) {
+                        <nz-table
+                            #outTable
+                            nzBordered
+                            [nzTitle]="outTitle"
+                            [nzShowPagination]="'false'"
+                            [nzSize]="'small'"
+                            [nzData]="data.action.getArgumentsOut()"
+                            [nzWidthConfig]="['100px', '400px']"
+                        >
+                            <tbody>
+                                @for (arg of outTable.data; track arg) {
+                                    <tr>
+                                        <td>
+                                    <span nz-tooltip nzTooltipTitle="属性IID: {{arg.piid}}">
+                                        {{ getArgumentName(arg) }}
+                                    </span>
+                                        </td>
+                                        <td>
+                                            <action-out-value
+                                                    [service]="data.service"
+                                                    [argument]="arg"
+                                                    [values]="getOutValue(arg.piid)"
+                                            ></action-out-value>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </nz-table>
+
+                        <ng-template #outTitle>
+                            {{ '应答' | translate }}
+                        </ng-template>
+                    }
+                }
+                @default {
+                    <nz-descriptions nzBordered nzTitle="方法调用失败" [nzSize]="'small'" nzLayout="horizontal"
+                                     [nzColumn]="1">
+                        <nz-descriptions-item nzTitle="状态码">{{ operation()!.status }}</nz-descriptions-item>
+                        <nz-descriptions-item nzTitle="描述">{{ operation()!.description }}</nz-descriptions-item>
+                    </nz-descriptions>
+                }
+            }
+        </nz-col>
+    }
+</nz-row>

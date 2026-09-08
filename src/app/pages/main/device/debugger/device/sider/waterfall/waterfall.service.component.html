@@ -1,0 +1,15 @@
+@if (service.properties.size > 0) {
+  <debugger-properties-controller [did]="did" [service]="service"></debugger-properties-controller>
+}
+
+@if (service.actions.size > 0) {
+  <div style="padding-top: 8px">
+    <debugger-actions-controller style="padding-top: 8px" [did]="did" [service]="service"></debugger-actions-controller>
+  </div>
+}
+
+@if (service.events.size > 0) {
+  <div style="padding-top: 8px">
+    <debugger-events-controller style="padding-top: 8px" [did]="did" [service]="service"></debugger-events-controller>
+  </div>
+}

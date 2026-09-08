@@ -1,0 +1,44 @@
+@if (service) {
+  <div style="width: 100%;">
+    @if (service.events.size > 0) {
+      <nz-table
+        style="width: 100%"
+        #eventTable
+        [nzData]="service.getEvents()"
+        [nzSize]="'small'"
+        [nzPageSize]="30"
+        [nzHideOnSinglePage]="true"
+        [nzBordered]="true"
+      >
+        <thead>
+        <tr>
+          <th>
+            <nz-space>
+              <span *nzSpaceItem nz-icon nzType="fire" nzTheme="outline"></span>
+              <span *nzSpaceItem>事件</span>
+            </nz-space>
+          </th>
+          <th>参数</th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (p of eventTable.data; track p) {
+            <tr>
+              <td>
+                <nz-tag [nzColor]="'blue'">{{ p.iid }}</nz-tag>
+                {{ p.description.get(i18n.getCurrentLang()) }}
+              </td>
+              <td>
+                @for (arg of p.getArguments(); track arg) {
+                  <span nz-tooltip nzTooltipTitle="最少{{arg.minRepeat}}个，最多{{arg.maxRepeat}}个">
+                    <nz-tag>{{ getProperty(arg.piid)?.description!.get(i18n.getCurrentLang()) }}</nz-tag>
+                  </span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+    }
+  </div>
+}

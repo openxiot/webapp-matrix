@@ -1,0 +1,71 @@
+@if (service) {
+  @if (service.actions.size > 0) {
+    <div style="width: 100%;">
+      <nz-table
+        style="width: 100%"
+        #actionTable
+        [nzData]="service.getActions()"
+        [nzSize]="'small'"
+        [nzPageSize]="30"
+        [nzHideOnSinglePage]="true"
+        [nzBordered]="true"
+      >
+        <thead>
+        <tr>
+          <th>
+            <nz-space>
+              <span *nzSpaceItem nz-icon nzType="thunderbolt" nzTheme="outline"></span>
+              <span *nzSpaceItem>方法</span>
+            </nz-space>
+          </th>
+          <th>参数</th>
+          <th>返回值</th>
+          <th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        @for (p of actionTable.data; track p) {
+          <tr>
+            <td>
+              <nz-tag [nzColor]="'blue'">{{ p.iid }}</nz-tag>
+              {{ p.description.get(i18n.getCurrentLang()) }}
+            </td>
+            <td>
+              @for (arg of p.getArgumentsIn(); track arg) {
+                <span nz-tooltip nzTooltipTitle="最少{{arg.minRepeat}}个，最多{{arg.maxRepeat}}个">
+                  @switch (getProperty(arg.piid)?.format) {
+                    @case (DataFormat.COMBINATION) {
+                      <nz-tag nzColor="red">{{ getProperty(arg.piid)?.description!.get(i18n.getCurrentLang()) }}</nz-tag>
+                    }
+                    @default {
+                      <nz-tag>{{ getProperty(arg.piid)?.description!.get(i18n.getCurrentLang()) }}</nz-tag>
+                    }
+                  }
+                </span>
+              }
+            </td>
+            <td>
+              @for (arg of p.getArgumentsOut(); track arg) {
+                <span nz-tooltip nzTooltipTitle="最少{{arg.minRepeat}}个，最多{{arg.maxRepeat}}个">
+                  @switch (getProperty(arg.piid)?.format) {
+                    @case(DataFormat.COMBINATION) {
+                      <nz-tag nzColor="red">{{ getProperty(arg.piid)?.description!.get(i18n.getCurrentLang()) }}</nz-tag>
+                    }
+                    @default {
+                      <nz-tag>{{ getProperty(arg.piid)?.description!.get(i18n.getCurrentLang()) }}</nz-tag>
+                    }
+                  }
+                </span>
+              }
+            </td>
+            <td>
+              <a (click)="doInvocation(p)">调用方法</a>
+              <!--          <button nz-button nzType="dashed" (click)="doInvocation(p)">调用方法</button>-->
+            </td>
+          </tr>
+        }
+        </tbody>
+      </nz-table>
+    </div>
+  }
+}

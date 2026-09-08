@@ -1,0 +1,22 @@
+<nz-row>
+  <nz-col nzSpan="12">
+    <nz-slider
+      [nzMin]="property?.valueRange()?.minValue?.rawValue()"
+      [nzMax]="property?.valueRange()?.maxValue?.rawValue()"
+      [nzStep]="property?.valueRange()?.stepValue?.rawValue()"
+      [(ngModel)]="value"
+      (ngModelChange)="onValueChanged($event)"
+    >
+    </nz-slider>
+  </nz-col>
+  <nz-col nzSpan="4">
+    <nz-input-number
+      [nzMin]="property?.valueRange()?.minValue?.rawValue()"
+      [nzMax]="property?.valueRange()?.maxValue?.rawValue()"
+      [nzStep]="property?.valueRange()?.stepValue?.rawValue()"
+      [(ngModel)]="value"
+      (ngModelChange)="onValueChanged($event)"
+    >
+    </nz-input-number>
+  </nz-col>
+</nz-row>

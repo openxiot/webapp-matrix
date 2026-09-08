@@ -1,0 +1,9 @@
+<nz-input-number
+  style="width: 200px"
+  [nzMin]="-32767"
+  [nzMax]="32767"
+  [nzStep]="1"
+  [(ngModel)]="value"
+  (ngModelChange)="onValueChanged($event)"
+>
+</nz-input-number>

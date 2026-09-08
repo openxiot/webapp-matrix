@@ -1,0 +1,10 @@
+<nz-select
+  style="width: 100%"
+  nzPlaceHolder="请选择"
+  [(ngModel)]="value"
+  (ngModelChange)="onValueChanged($event)"
+>
+  @for (v of property?.valueList()?.values; track v) {
+    <nz-option nzValue="{{ v.value.rawValue() }}" nzLabel="{{ v.value.rawValue() }} {{ v.description.get(i18n.getCurrentLang()) || v.description.get('en-US') }} "></nz-option>
+  }
+</nz-select>

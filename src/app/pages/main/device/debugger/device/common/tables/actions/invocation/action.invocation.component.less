@@ -1,0 +1,29 @@
+/* 固定标签宽度为 120px */
+::ng-deep .fixed-label .ant-descriptions-item-label {
+  background: white;
+  width: 120px;             /* 固定宽度 */
+  min-width: 120px;         /* 防止内容挤压 */
+  max-width: 120px;         /* 防止内容拉伸 */
+  text-align: right;         /* 可选：文本对齐 */
+  white-space: nowrap;      /* 防止换行 */
+  overflow: hidden;         /* 隐藏溢出 */
+  text-overflow: ellipsis;  /* 溢出显示省略号 */
+  display: inline-block;
+  vertical-align: center;   /* 对齐方式 */
+}
+
+/* 内容区域自适应 */
+::ng-deep .fixed-label .ant-descriptions-item-content {
+  display: inline-block;
+  width: calc(100% - 120px); /* 自动计算剩余宽度 */
+}
+
+.results {
+  //border: 1px dashed #e9e9e9;
+  border-radius: 6px;
+  //background-color: #fafafa;
+  min-height: 200px;
+  text-align: center;
+  padding-top: 16px;
+  margin-top: 16px;
+}
