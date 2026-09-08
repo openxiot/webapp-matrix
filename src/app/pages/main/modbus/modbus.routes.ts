@@ -21,6 +21,6 @@ export const MODBUS_ROUTES: Routes = [
     path: 'detail/:id',
     component: ModbusDetailComponent,
     canActivate: [authGuard],
-    data: { breadcrumb: '编辑' },
+    data: { breadcrumb: '详情' },
   },
 ];

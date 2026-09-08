@@ -13,7 +13,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { NzBreadCrumbComponent } from 'ng-zorro-antd/breadcrumb';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
-import { ModbusEditorBase } from '../editor/modbus.editor.base';
+import { ModbusEditor } from '../editor/modbus.editor';
 
 @Component({
   selector: 'main-modbus-detail',
@@ -38,7 +38,7 @@ import { ModbusEditorBase } from '../editor/modbus.editor.base';
   ],
   providers: [NzModalService],
 })
-export class ModbusDetailComponent extends ModbusEditorBase {
+export class ModbusDetailComponent extends ModbusEditor {
   protected override get kind(): 'add' | 'detail' {
     return 'detail';
   }
