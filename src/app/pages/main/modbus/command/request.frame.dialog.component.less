@@ -1,0 +1,105 @@
+.req-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.req-name {
+  font-weight: 500;
+}
+
+.fc-code {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: #e6f4ff;
+  color: #1677ff;
+  font-weight: 600;
+  font-family: Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.req-frame {
+  padding: 10px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  background: #fafafa;
+  font-family: Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  letter-spacing: 0.5px;
+  word-break: break-all;
+  user-select: all;
+  white-space: pre-wrap;
+}
+
+.req-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.req-note {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+}
+
+.req-parse {
+  margin-top: 14px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 10px;
+}
+
+.req-parse-title {
+  margin-bottom: 4px;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.req-parse-row {
+  display: grid;
+  grid-template-columns: 88px 200px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 3px 0;
+  border-bottom: 1px dashed #f0f0f0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.req-parse-label {
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.req-parse-hex {
+  font-family: Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 20px;
+  word-break: break-all;
+  user-select: all;
+}
+
+.req-parse-value {
+  color: rgba(0, 0, 0, 0.88);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.req-parse-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  color: rgba(0, 0, 0, 0.65);
+  font-family: Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 18px;
+}

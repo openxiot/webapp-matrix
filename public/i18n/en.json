@@ -212,5 +212,17 @@
   "该参数占用的位/线圈个数": "bits/coils this parameter occupies",
   "偏移从 0 起、不可修改，与线圈一一对应": "Offset is auto from 0, one per coil",
   "寄存器地址由起始地址按类型跨度自动连续排布": "Register addresses are laid out contiguously from the start address by type span",
-  "拖拽表格行可调整功能码顺序": "Drag table rows to reorder function codes"
+  "拖拽表格行可调整功能码顺序": "Drag table rows to reorder function codes",
+  "命令": "Command",
+  "请求命令": "Request Command",
+  "已复制": "Copied",
+  "请先设置从站地址": "Please set the slave address first",
+  "命令数据不完整，无法生成请求帧": "Command data is incomplete, cannot generate a request frame",
+  "完整请求帧，含从站地址与 CRC16": "Full request frame incl. slave address and CRC16",
+  "共 {{count}} 字节": "{{count}} bytes total",
+  "字节数": "Byte count",
+  "线圈数据": "Coil data",
+  "寄存器数据": "Register data",
+  "CRC16": "CRC16",
+  "帧结构解析": "Frame breakdown"
 }

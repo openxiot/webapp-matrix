@@ -1,0 +1,40 @@
+<div class="req-head">
+  <span class="req-name">{{ data.command.name || '-' }}</span>
+  <span class="fc-code">{{ data.command.fc }}</span>
+  {{ fcLabelKey(data.command.fc) | translate }}
+</div>
+
+<div class="req-frame">{{ data.frame.hex }}</div>
+
+<div class="req-meta">
+  <span class="req-note">{{ '完整请求帧，含从站地址与 CRC16' | translate }}</span>
+  <span class="req-note">{{ '共 {{count}} 字节' | translate: { count: data.frame.count } }}</span>
+  <button nz-button nzType="link" nzSize="small" (click)="copy()">
+    {{ copied() ? ('已复制' | translate) : ('复制' | translate) }}
+  </button>
+</div>
+
+<div class="req-parse">
+  <div class="req-parse-title">{{ '帧结构解析' | translate }}</div>
+  @for (part of parts; track $index) {
+    <div class="req-parse-row">
+      <span class="req-parse-label">{{ part.labelKey | translate }}</span>
+      <code class="req-parse-hex">{{ part.hex }}</code>
+      <span class="req-parse-value">
+        @if (part.text != null) {
+          {{ part.text }}
+        } @else if (part.textKey) {
+          {{ part.textKey | translate: part.textParams }}
+        } @else if (part.lines && part.lines.length) {
+          <span class="req-parse-lines">
+            @for (line of part.lines; track $index) {
+              <span>{{ line }}</span>
+            }
+          </span>
+        } @else {
+          -
+        }
+      </span>
+    </div>
+  }
+</div>

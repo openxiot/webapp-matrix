@@ -10,6 +10,11 @@ import { ModbusService } from '../../../../service/modbus.service';
 import { UserOrganizationService } from '../../../../service/user.organization.service';
 import { ModbusCommand, ModbusDeviceConfig, ModbusDeviceInfo } from '../../../../typedef/define/modbus/Modbus';
 import { CommandEditComponent, type ModbusCommandDialogData } from '../command/command.edit.component';
+import {
+  RequestFrameDialogComponent,
+  type RequestFrameDialogData,
+} from '../command/request.frame.dialog.component';
+import { buildRequestFrame } from '../command/request.frame';
 import { ModbusDeviceInfoEditComponent } from '../device-info/modbus.device.info.edit.component';
 import { coilStateText, fcLabelKey, logicalAddressOf } from '../command/point.options';
 
@@ -21,7 +26,7 @@ import { coilStateText, fcLabelKey, logicalAddressOf } from '../command/point.op
  *
  * 保存有效性：修改了设备信息、或增删改功能码动作后，保存按钮才可点击（changed）。
  */
-export abstract class ModbusEditorBase {
+export abstract class ModbusEditor {
   /** add：新建设备点表；detail：编辑设备点表 */
   protected abstract get kind(): 'add' | 'detail';
 
@@ -326,6 +331,41 @@ export abstract class ModbusEditorBase {
 
   protected removeCommand(index: number): void {
     this.commands.update((list) => list.filter((_, i) => i !== index));
+  }
+
+  /**
+   * 行操作「命令」：按当前 从站地址 + 该功能码数据 生成完整 Modbus RTU 请求帧
+   * （含从站地址与 CRC16；0F/10 数据区按配置编码真实值），弹窗展示十六进制。
+   * 从站地址未设置或命令数据不完整时提示，不弹窗。
+   */
+  protected showRequest(index: number): void {
+    const command = this.commands()[index];
+    if (!command) {
+      return;
+    }
+    const slaveId = this.deviceInfo().slaveId;
+    if (slaveId == null) {
+      this.msg.warning(this.translate.instant('请先设置从站地址'));
+      return;
+    }
+    const result = buildRequestFrame(command, slaveId);
+    if (!result.ok) {
+      this.msg.warning(this.translate.instant(result.messageKey));
+      return;
+    }
+    this.modal.create<RequestFrameDialogComponent, RequestFrameDialogData, void>({
+      nzTitle: this.translate.instant('请求命令'),
+      nzContent: RequestFrameDialogComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: { command, frame: result.frame },
+      nzWidth: 720,
+      nzFooter: [
+        {
+          label: this.translate.instant('关闭'),
+          onClick: (component) => component!.cancel(),
+        },
+      ],
+    });
   }
 
   /**
