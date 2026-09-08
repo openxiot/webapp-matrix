@@ -55,24 +55,25 @@
 
       <nz-col nzSpan="24">
         <nz-table
+          nzSize="small"
           [nzBordered]="true"
           [nzData]="commands()"
           [nzShowSizeChanger]="true"
           [nzHideOnSinglePage]="true"
-          [nzScroll]="{ x: '1200px' }"
+          [nzScroll]="{ x: '1000px' }"
         >
           <thead>
           <tr>
-            <th nzWidth="120px">{{ '名称' | translate }}</th>
+            <th nzWidth="100px">{{ '名称' | translate }}</th>
             <th nzWidth="150px">{{ '功能码' | translate }}</th>
             <th nzWidth="80px">{{ '起始地址' | translate }}</th>
             <th nzWidth="80px">{{ '逻辑地址' | translate }}</th>
             <th nzWidth="60px">{{ '数量' | translate }}</th>
             <th nzWidth="80px">{{ '数据格式' | translate }}</th>
-            <th nzWidth="60px">{{ '字节序' | translate }}</th>
-            <th nzWidth="80px">{{ '缩放系数' | translate }}</th>
+            <th nzWidth="80px">{{ '字节序' | translate }}</th>
+            <th nzWidth="60px">{{ '缩放' | translate }}</th>
             <th nzWidth="60px">{{ '单位' | translate }}</th>
-            <th nzWidth="140px">{{ '写内容' | translate }}</th>
+            <th nzWidth="100px">{{ '写内容' | translate }}</th>
             <th nzWidth="160px">{{ '操作' | translate }}</th>
           </tr>
           </thead>
@@ -84,8 +85,8 @@
                   <span class="fc-code">{{ command.fc }}</span>
                   {{ fcLabelKey(command.fc) | translate }}
                 </td>
-                <td class="cmd-addr">{{ hexText(command.start) }}</td>
-                <td class="cmd-addr">{{ hexText(logicalAddressOf(command.fc, command.start)) }}</td>
+                <td>{{ command.start ?? '-' }}</td>
+                <td>{{ logicalAddressOf(command.fc, command.start) ?? '-' }}</td>
                 <td>{{ command.quantity ?? '-' }}</td>
                 <td>{{ command.dataType || '-' }}</td>
                 <td>

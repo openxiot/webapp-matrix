@@ -1,0 +1,52 @@
+<!-- 10 写多个寄存器：寄存器表格（地址十进制、数值十六进制），添加按钮在表格下方 -->
+<div class="cmd-sublist">
+  <div class="cmd-sublist-head">
+    <span class="cmd-hint">{{ '寄存器地址由起始地址按类型跨度自动连续排布' | translate }}</span>
+  </div>
+  <nz-table [nzData]="registers()" [nzSize]="'small'" [nzShowPagination]="false" [nzBordered]="true"
+            [nzScroll]="{ x: '620px' }">
+    <thead>
+    <tr>
+      <th nzWidth="110px">{{ '寄存器地址' | translate }}</th>
+      <th nzWidth="120px">{{ '数据类型' | translate }}</th>
+      <th nzWidth="150px">{{ '字节序' | translate }}</th>
+      <th nzWidth="140px">{{ '数值(16进制)' | translate }}</th>
+      <th nzWidth="100px">{{ '操作' | translate }}</th>
+    </tr>
+    </thead>
+    <tbody>
+      @for (row of registers(); track $index) {
+        <tr>
+          <td>{{ registerAddress($index) }}</td>
+          <td>
+            <nz-select [ngModel]="row.dataType" (ngModelChange)="onRegTypeChange($index, $event)" style="width: 100%">
+              @for (option of registerTypeOptions; track option.value) {
+                <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+              }
+            </nz-select>
+          </td>
+          <td>
+            <nz-select [ngModel]="row.byteOrder" (ngModelChange)="onRegByteOrderChange($index, $event)" style="width: 100%">
+              @for (option of byteOrderOptionsForRow(row); track option.value) {
+                <nz-option [nzValue]="option.value" [nzLabel]="byteOrderDisplay(option.value)"></nz-option>
+              }
+            </nz-select>
+          </td>
+          <td>
+            <input nz-input class="cmd-addr" [value]="regValueText(row, $index)"
+                   (input)="onRegValueInput($event, $index)" (blur)="onRegValueBlur($index)" placeholder="0000" />
+          </td>
+          <td>
+            <a (click)="removeRegister($index)">{{ '删除' | translate }}</a>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </nz-table>
+  <div class="cmd-sublist-foot">
+    <button nz-button nzType="dashed" (click)="addRegister()">
+      <nz-icon nzType="plus"></nz-icon>
+      {{ '添加寄存器' | translate }}
+    </button>
+  </div>
+</div>

@@ -1,0 +1,40 @@
+<!-- 0F 写多个线圈：线圈数量 + 线圈选择子表，添加按钮在表格下方 -->
+<div class="cmd-sublist">
+  <div class="cmd-sublist-head">
+    <span class="cmd-hint">{{ '线圈数量' | translate }}：{{ coils().length }}</span>
+  </div>
+  <nz-table [nzData]="coils()" [nzSize]="'small'" [nzShowPagination]="false" [nzBordered]="true"
+            [nzScroll]="{ x: '520px' }">
+    <thead>
+    <tr>
+      <th nzWidth="100px">{{ '偏移' | translate }}</th>
+      <th nzWidth="150px">{{ '线圈状态' | translate }}</th>
+      <th nzWidth="100px">{{ '操作' | translate }}</th>
+    </tr>
+    </thead>
+    <tbody>
+      @for (row of coils(); track $index) {
+        <tr>
+          <td>{{ $index }}</td>
+          <td>
+            <nz-select [ngModel]="row.state" (ngModelChange)="onCoilRowStateChange($index, $event)" style="width: 100%">
+              @for (option of coilStateOptions; track option.value) {
+                <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+              }
+            </nz-select>
+          </td>
+          <td>
+            <a (click)="removeCoil($index)">{{ '删除' | translate }}</a>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </nz-table>
+  <div class="cmd-sublist-foot">
+    <button nz-button nzSize="small" nzType="dashed" (click)="addCoil()">
+      <nz-icon nzType="plus"></nz-icon>
+      {{ '添加线圈' | translate }}
+    </button>
+  </div>
+  <div class="cmd-hint cmd-hint-block">{{ '偏移从 0 起、不可修改，与线圈一一对应' | translate }}</div>
+</div>

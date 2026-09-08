@@ -95,17 +95,62 @@ export function byteOrderOptionsFor(dataType?: string): PointSelectOption[] {
   return BYTE_ORDER_OPTIONS;
 }
 
+/** 线圈状态选项（05/0F 下拉用）：on=ON、off=OFF（无需翻译）。 */
+export const COIL_STATE_OPTIONS = [
+  { value: 'on', label: 'ON' },
+  { value: 'off', label: 'OFF' },
+];
+
 /** 线圈状态：on/off（显示 ON/OFF，通用无需翻译）。 */
 export function coilStateText(value?: string): string {
   return value === 'on' ? 'ON' : value === 'off' ? 'OFF' : '-';
 }
 
-/** 数值 → 大写十六进制展示（无 0x 前缀，与起始地址输入框一致）；空值 → '-'。 */
-export function hexText(value?: number | null): string {
+/** 寄存器原始值的位宽：int16/uint16→16 位，其余（int32/uint32/float32/未知）→32 位。 */
+function registerBits(dataType?: string): 16 | 32 {
+  return dataType === 'int16' || dataType === 'uint16' ? 16 : 32;
+}
+
+/** 有符号整型（负数值按补码写/读）。 */
+function isSignedInt(dataType?: string): boolean {
+  return dataType === 'int16' || dataType === 'int32';
+}
+
+/**
+ * 寄存器原始值 → 按类型的位模式十六进制文本（FC10 子表用，随 dataType 联动）：
+ * - int16/int32 负数显示补码（-1 → FFFF / FFFFFFFF）；
+ * - uint32/float32 显示其 32 位位模式原值。
+ */
+export function registerValueHex(value?: number | null, dataType?: string): string {
   if (value == null) {
-    return '-';
+    return '';
   }
-  return value.toString(16).toUpperCase();
+  const mod = 2 ** registerBits(dataType);
+  const unsigned = value >= 0 ? value % mod : (value % mod) + mod;
+  return unsigned.toString(16).toUpperCase();
+}
+
+/**
+ * 位模式十六进制文本 → 按类型的带符号数值（FC10 子表用）：
+ * - int16/int32 高位置位按补码解释为负数（FFFF → -1）；
+ * - uint32/float32 保持 32 位位模式无符号原值。
+ */
+export function parseRegisterHex(text: string, dataType?: string): number | undefined {
+  const clean = text.trim().toUpperCase().replace(/^0X/, '');
+  if (clean.length === 0) {
+    return undefined;
+  }
+  const raw = parseInt(clean, 16);
+  if (Number.isNaN(raw)) {
+    return undefined;
+  }
+  const bits = registerBits(dataType);
+  const mod = 2 ** bits;
+  let value = raw % mod;
+  if (isSignedInt(dataType) && value >= mod / 2) {
+    value -= mod;
+  }
+  return value;
 }
 
 /** fc 枚举值 → 功能码名称 i18n key；未知/空值返回占位符。 */

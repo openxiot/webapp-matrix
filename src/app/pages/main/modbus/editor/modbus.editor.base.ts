@@ -9,7 +9,7 @@ import { ModbusService } from '../../../../service/modbus.service';
 import { ModbusCommand, ModbusDeviceConfig, ModbusDeviceInfo } from '../../../../typedef/define/modbus/Modbus';
 import { CommandEditComponent } from '../command/command.edit.component';
 import { ModbusDeviceInfoEditComponent } from '../device-info/modbus.device.info.edit.component';
-import { coilStateText, fcLabelKey, hexText, logicalAddressOf } from '../command/point.options';
+import { coilStateText, fcLabelKey, logicalAddressOf } from '../command/point.options';
 
 /**
  * 新建设备点表 / 编辑设备点表 两个页面共用的编辑器逻辑与视图状态。
@@ -27,7 +27,6 @@ export abstract class ModbusEditorBase {
   protected readonly fcLabelKey = fcLabelKey;
   protected readonly logicalAddressOf = logicalAddressOf;
   protected readonly coilStateText = coilStateText;
-  protected readonly hexText = hexText;
 
   loading = signal(false);
   submitting = signal(false);
