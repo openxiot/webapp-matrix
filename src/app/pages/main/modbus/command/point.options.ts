@@ -29,6 +29,13 @@ export const DEFAULT_FC = '03';
 export const READ_BIT_FCS = new Set(['01', '02']);
 /** 读寄存器（带 数据格式/字节序/缩放/单位） */
 export const READ_REG_FCS = new Set(['03', '04']);
+/** 写功能码（05/06/0F/10）：读功能码为 01–04，写动作在列表中用红色区分。 */
+export const WRITE_FCS = new Set(['05', '06', '0F', '10']);
+
+/** 是否为写功能码（05/06/0F/10）；用于表格里把写动作标红，区别于读功能码的蓝色。 */
+export function isWriteFc(fc?: string): boolean {
+  return fc != null && WRITE_FCS.has(fc);
+}
 
 export const DATA_TYPE_OPTIONS: PointSelectOption[] = [
   { value: 'int16', label: 'int16' },

@@ -70,7 +70,7 @@
         >
           <thead>
           <tr>
-            <th nzWidth="100px">{{ '名称' | translate }}</th>
+            <th nzWidth="100px">{{ '功能名称' | translate }}</th>
             <th nzWidth="160px">{{ '功能码' | translate }}</th>
             <th nzWidth="80px">{{ '起始地址' | translate }}</th>
             <th nzWidth="80px">{{ '逻辑地址' | translate }}</th>
@@ -95,7 +95,8 @@
               <tr cdkDrag [cdkDragDisabled]="!canManage()" [class.cmd-draggable]="canManage()">
                 <td class="command-name">{{ command.name || '-' }}</td>
                 <td>
-                  <span class="fc-code">{{ command.fc }}</span>
+                  <!-- 写功能码（05/06/0F/10）标红，读功能码（01–04）保持蓝色 -->
+                  <span class="fc-code" [class.fc-write]="isWriteFc(command.fc)">{{ command.fc }}</span>
                   {{ fcLabelKey(command.fc) | translate }}
                 </td>
                 <td>{{ command.start ?? '-' }}</td>

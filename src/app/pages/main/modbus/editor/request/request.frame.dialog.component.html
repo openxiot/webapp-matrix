@@ -1,6 +1,7 @@
 <div class="req-head">
   <span class="req-name">{{ data.command.name || '-' }}</span>
-  <span class="fc-code">{{ data.command.fc }}</span>
+  <!-- 写功能码（05/06/0F/10）标红，与点表列表保持一致；读功能码（01–04）保持蓝色 -->
+  <span class="fc-code" [class.fc-write]="isWriteFc(data.command.fc)">{{ data.command.fc }}</span>
   {{ fcLabelKey(data.command.fc) | translate }}
 </div>
 

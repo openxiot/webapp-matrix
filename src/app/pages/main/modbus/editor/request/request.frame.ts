@@ -15,8 +15,8 @@ import {
   ModbusCoilItem,
   ModbusCommand,
   ModbusRegisterItem,
-} from '../../../../typedef/define/modbus/Modbus';
-import { fcLabelKey, registerSpan } from './point.options';
+} from '../../../../../typedef/define/modbus/Modbus';
+import { fcLabelKey, registerSpan } from '../../command/point.options';
 
 /** 生成结果帧（字节 + 展示用十六进制 + 字节数）。 */
 export interface RequestFrame {

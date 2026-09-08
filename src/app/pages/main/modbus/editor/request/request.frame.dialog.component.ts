@@ -2,8 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { TranslatePipe } from '@ngx-translate/core';
-import { ModbusCommand } from '../../../../typedef/define/modbus/Modbus';
-import { fcLabelKey } from './point.options';
+import { ModbusCommand } from '../../../../../typedef/define/modbus/Modbus';
+import { fcLabelKey, isWriteFc } from '../../command/point.options';
 import {
   RequestFrame,
   RequestFramePart,
@@ -39,6 +39,7 @@ export class RequestFrameDialogComponent {
   );
 
   protected readonly fcLabelKey = fcLabelKey;
+  protected readonly isWriteFc = isWriteFc;
   protected readonly copied = signal(false);
   private copyTimer: ReturnType<typeof setTimeout> | undefined;
 

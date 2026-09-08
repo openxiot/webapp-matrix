@@ -13,10 +13,10 @@ import { CommandEditComponent, type ModbusCommandDialogData } from '../command/c
 import {
   RequestFrameDialogComponent,
   type RequestFrameDialogData,
-} from '../command/request.frame.dialog.component';
-import { buildRequestFrame } from '../command/request.frame';
+} from './request/request.frame.dialog.component';
+import { buildRequestFrame } from './request/request.frame';
 import { ModbusDeviceInfoEditComponent } from '../device-info/modbus.device.info.edit.component';
-import { coilStateText, fcLabelKey, logicalAddressOf } from '../command/point.options';
+import { coilStateText, fcLabelKey, isWriteFc, logicalAddressOf } from '../command/point.options';
 
 /**
  * 新建设备点表 / 编辑设备点表 两个页面共用的编辑器逻辑与视图状态。
@@ -30,9 +30,10 @@ export abstract class ModbusEditor {
   /** add：新建设备点表；detail：编辑设备点表 */
   protected abstract get kind(): 'add' | 'detail';
 
-  /** 功能码枚举 → 展示用 i18n key / 逻辑地址换算 / 线圈状态文案（模板经 translate 管道渲染） */
+  /** 功能码枚举 → 展示用 i18n key / 逻辑地址换算 / 读写区分 / 线圈状态文案（模板经 translate 管道渲染） */
   protected readonly fcLabelKey = fcLabelKey;
   protected readonly logicalAddressOf = logicalAddressOf;
+  protected readonly isWriteFc = isWriteFc;
   protected readonly coilStateText = coilStateText;
 
   loading = signal(false);
