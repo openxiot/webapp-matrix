@@ -8,7 +8,7 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ModbusPoint } from '../../../../typedef/define/modbus/Modbus';
-import { AREA_OPTIONS, DATA_TYPE_OPTIONS, RW_OPTIONS } from './point.options';
+import { AREA_OPTIONS, DATA_TYPE_OPTIONS, rwForArea, rwLabelKey } from './point.options';
 
 @Component({
   selector: 'modbus-point-add',
@@ -20,7 +20,6 @@ export class PointAddComponent {
   readonly #modal = inject(NzModalRef);
 
   protected readonly areaOptions = AREA_OPTIONS;
-  protected readonly rwOptions = RW_OPTIONS;
   protected readonly dataTypeOptions = DATA_TYPE_OPTIONS;
 
   protected readonly name = signal('');
@@ -28,10 +27,18 @@ export class PointAddComponent {
   protected readonly address = signal<number | undefined>(undefined);
   protected readonly logicalAddress = signal<number | undefined>(undefined);
   protected readonly dataType = signal('int16');
-  protected readonly rw = signal('rw');
   protected readonly scale = signal<number | undefined>(undefined);
   protected readonly unit = signal('');
   protected readonly description = signal('');
+
+  /** 区域选中后固定不变的读写值（r / rw），用于只读展示 */
+  protected readonly fixedRw = computed(() => rwForArea(this.area()));
+
+  /** 固定读写值的展示用 i18n key；未选区域时为 undefined */
+  protected readonly fixedRwLabelKey = computed(() => {
+    const rw = this.fixedRw();
+    return rw ? rwLabelKey(rw) : undefined;
+  });
 
   /** 名称必填（服务端校验 name 非空）；dataType 有默认值恒非空 */
   readonly valid = computed(() => this.name().trim().length > 0);
@@ -54,7 +61,7 @@ export class PointAddComponent {
       address: this.address(),
       logicalAddress: this.logicalAddress(),
       dataType: this.dataType(),
-      rw: this.emptyToUndefined(this.rw()),
+      rw: this.fixedRw(),
       scale: this.scale(),
       unit: this.emptyToUndefined(this.unit()),
       description: this.emptyToUndefined(this.description()),
@@ -79,10 +86,6 @@ export class PointAddComponent {
 
   protected onDataTypeChange(value: string): void {
     this.dataType.set(value);
-  }
-
-  protected onRwChange(value: string | null): void {
-    this.rw.set(value ?? '');
   }
 
   protected onScaleChange(value: number | null): void {

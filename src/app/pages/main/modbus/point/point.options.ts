@@ -12,7 +12,25 @@ export const AREA_OPTIONS: PointSelectOption[] = [
   { value: 'input', label: '输入寄存器' },
   { value: 'holding', label: '保持寄存器' },
   { value: 'coil', label: '线圈' },
+  { value: 'discrete_input', label: '离散输入' },
 ];
+
+/**
+ * 各区域固定的读写值（Modbus 标准语义，选中区域即确定，不开放自由选择）：
+ * - coil 线圈 / holding 保持寄存器 → 可读可写（rw）；
+ * - discrete_input 离散输入 / input 输入寄存器 → 只读（r）。
+ */
+export const AREA_RW: Record<string, string> = {
+  coil: 'rw',
+  discrete_input: 'r',
+  input: 'r',
+  holding: 'rw',
+};
+
+/** 由区域推导其固定读写值；区域为空/未知时返回 undefined */
+export function rwForArea(area?: string): string | undefined {
+  return area ? AREA_RW[area] : undefined;
+}
 
 export const RW_OPTIONS: PointSelectOption[] = [
   { value: 'r', label: '只读(r)' },

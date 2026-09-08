@@ -8,7 +8,7 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ModbusPoint } from '../../../../typedef/define/modbus/Modbus';
-import { AREA_OPTIONS, DATA_TYPE_OPTIONS, RW_OPTIONS } from './point.options';
+import { AREA_OPTIONS, DATA_TYPE_OPTIONS, rwForArea, rwLabelKey } from './point.options';
 
 @Component({
   selector: 'modbus-point-edit',
@@ -21,7 +21,6 @@ export class PointEditComponent {
   readonly data: ModbusPoint = inject(NZ_MODAL_DATA);
 
   protected readonly areaOptions = AREA_OPTIONS;
-  protected readonly rwOptions = RW_OPTIONS;
   protected readonly dataTypeOptions = DATA_TYPE_OPTIONS;
 
   protected readonly name = signal(this.data.name ?? '');
@@ -29,15 +28,26 @@ export class PointEditComponent {
   protected readonly address = signal<number | undefined>(this.data.address);
   protected readonly logicalAddress = signal<number | undefined>(this.data.logicalAddress);
   protected readonly dataType = signal(this.data.dataType ?? 'int16');
-  protected readonly rw = signal(this.data.rw ?? '');
   protected readonly scale = signal<number | undefined>(this.data.scale);
   protected readonly unit = signal(this.data.unit ?? '');
   protected readonly description = signal(this.data.description ?? '');
 
+  /** 区域选中后固定不变的读写值（r / rw），用于只读展示 */
+  protected readonly fixedRw = computed(() => rwForArea(this.area()));
+
+  /** 固定读写值的展示用 i18n key；未选区域时为 undefined */
+  protected readonly fixedRwLabelKey = computed(() => {
+    const rw = this.fixedRw();
+    return rw ? rwLabelKey(rw) : undefined;
+  });
+
   /** 名称/数据类型必填（服务端校验） */
   readonly valid = computed(() => this.name().trim().length > 0 && this.dataType().trim().length > 0);
 
-  /** 任一字段相对原值变化后才允许确认 */
+  /**
+   * 任一字段相对原值变化后才允许确认。
+   * 注意：rw 由 area 唯一决定、不可编辑，因此不参与变更比对（改 area 即已体现）。
+   */
   readonly changed = computed(
     () =>
       this.name().trim() !== (this.data.name ?? '').trim() ||
@@ -45,7 +55,6 @@ export class PointEditComponent {
       (this.address() ?? undefined) !== (this.data.address ?? undefined) ||
       (this.logicalAddress() ?? undefined) !== (this.data.logicalAddress ?? undefined) ||
       this.dataType() !== (this.data.dataType ?? 'int16') ||
-      this.rw() !== (this.data.rw ?? '') ||
       (this.scale() ?? undefined) !== (this.data.scale ?? undefined) ||
       this.unit().trim() !== (this.data.unit ?? '').trim() ||
       this.description().trim() !== (this.data.description ?? '').trim(),
@@ -69,7 +78,7 @@ export class PointEditComponent {
       address: this.address(),
       logicalAddress: this.logicalAddress(),
       dataType: this.dataType(),
-      rw: this.emptyToUndefined(this.rw()),
+      rw: this.fixedRw(),
       scale: this.scale(),
       unit: this.emptyToUndefined(this.unit()),
       description: this.emptyToUndefined(this.description()),
@@ -94,10 +103,6 @@ export class PointEditComponent {
 
   protected onDataTypeChange(value: string): void {
     this.dataType.set(value);
-  }
-
-  protected onRwChange(value: string | null): void {
-    this.rw.set(value ?? '');
   }
 
   protected onScaleChange(value: number | null): void {

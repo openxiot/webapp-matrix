@@ -60,11 +60,14 @@
       <nz-form-item>
         <nz-form-label>{{ '读写' | translate }}</nz-form-label>
         <nz-form-control>
-          <nz-select [ngModel]="rw()" (ngModelChange)="onRwChange($event)" nzAllowClear style="width: 100%">
-            @for (option of rwOptions; track option.value) {
-              <nz-option [nzValue]="option.value" [nzLabel]="option.label | translate"></nz-option>
-            }
-          </nz-select>
+          @if (fixedRwLabelKey()) {
+            <span class="fixed-rw">
+              {{ fixedRwLabelKey() | translate }}
+              <span class="fixed-rw-note">（{{ '由区域固定' | translate }}）</span>
+            </span>
+          } @else {
+            <span>-</span>
+          }
         </nz-form-control>
       </nz-form-item>
     </div>

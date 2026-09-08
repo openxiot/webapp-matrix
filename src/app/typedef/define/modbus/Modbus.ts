@@ -3,13 +3,13 @@
  */
 export interface ModbusPoint {
   name: string;
-  /** input | holding | coil */
+  /** input 输入寄存器 | holding 保持寄存器 | coil 线圈 | discrete_input 离散输入 */
   area?: string;
   address?: number;
   logicalAddress?: number;
   /** int16 | uint16 | int32 | uint32 | float32 | string */
   dataType: string;
-  /** r | w | rw */
+  /** 由 area 固定：r 只读 / rw 读写（coil/holding→rw，discrete_input/input→r） */
   rw?: string;
   scale?: number;
   unit?: string;

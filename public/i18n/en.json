@@ -159,6 +159,8 @@
   "输入寄存器": "Input Register",
   "保持寄存器": "Holding Register",
   "线圈": "Coil",
+  "离散输入": "Discrete Input",
+  "由区域固定": "fixed by area type",
   "只读(r)": "Read-only (r)",
   "只写(w)": "Write-only (w)",
   "读写(rw)": "Read-write (rw)",
