@@ -18,7 +18,8 @@ import {ArgValue} from './arg/ArgValue';
 import {NzTableModule} from 'ng-zorro-antd/table';
 import {NzTooltipModule} from 'ng-zorro-antd/tooltip';
 import {NzMessageService} from 'ng-zorro-antd/message';
-import {DeviceDebuggerService} from '../../../../../../../../../service/device.debugger.service';
+import {MatrixService} from '../../../../../../../../../service/matrix.service';
+import {AccountService} from '../../../../../../../../../service/account.service';
 import {MainI18nService} from '../../../../../../../../../service/i18n.service';
 import {TranslatePipe} from "@ngx-translate/core";
 
@@ -57,7 +58,8 @@ export class ActionInvocationComponent {
   argValueId = 0;
 
   constructor(
-    private main: DeviceDebuggerService,
+    private matrix: MatrixService,
+    private account: AccountService,
     private msg: NzMessageService,
     protected i18n: MainI18nService
   ) {
@@ -90,7 +92,7 @@ export class ActionInvocationComponent {
 
     try {
       await firstValueFrom(
-        this.main.invokeAction(action)
+        this.matrix.invokeDeviceAction(this.account.space().id, action)
           .pipe(map(x => {
             this.operation.set(x);
             console.log('operation: ', this.operation());

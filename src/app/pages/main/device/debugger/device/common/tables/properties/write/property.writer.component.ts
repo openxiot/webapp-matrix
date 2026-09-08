@@ -15,7 +15,8 @@ import {IPropertyData} from '../IPropertyData';
 import {firstValueFrom, map} from 'rxjs';
 import {PropertyWriteValueComponent} from './value/property.write.value.component';
 import {NzMessageService} from 'ng-zorro-antd/message';
-import {DeviceDebuggerService} from '../../../../../../../../../service/device.debugger.service';
+import {MatrixService} from '../../../../../../../../../service/matrix.service';
+import {AccountService} from '../../../../../../../../../service/account.service';
 
 @Component({
     selector: 'property-writer',
@@ -48,7 +49,8 @@ export class PropertyWriterComponent {
   invalid = signal(true);
 
   constructor(
-    private main: DeviceDebuggerService,
+    private matrix: MatrixService,
+    private account: AccountService,
     private msg: NzMessageService,
   ) {
     this.value = this.data.property.value.value().rawValue();
@@ -86,7 +88,7 @@ export class PropertyWriterComponent {
 
     try {
       await firstValueFrom(
-        this.main.setProperty(property)
+        this.matrix.setDeviceProperty(this.account.space().id, property)
           .pipe(map(x => {
             this.operation.set(x);
             return x;

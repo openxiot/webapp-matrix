@@ -13,6 +13,12 @@ import { DeviceRegistration } from '../typedef/define/device/DeviceRegistration'
 import { MoveDeviceRequest } from '../typedef/define/device/MoveDeviceRequest';
 import { OrganizationMember } from '../typedef/define/user/UserOrganization';
 import { OrganizationMemberCodec } from '../typedef/codec/user/UserOrganizationCodec';
+import {
+  ActionOperation,
+  ActionOperationCodec,
+  PropertyOperation,
+  PropertyOperationCodec,
+} from '@openxiot/xiot-core-spec-ts';
 
 @Injectable({ providedIn: 'root' })
 export class MatrixService {
@@ -93,26 +99,47 @@ export class MatrixService {
       .pipe(map(() => undefined));
   }
 
-  getDeviceProperties(spaceId: string, pids: string[]): Observable<Array<Record<string, unknown>>> {
-    let params = new HttpParams();
-    for (const pid of pids) {
-      params = params.append('pid', pid);
-    }
+  /** 单设备摘要（did/type/online），调试器页头等使用。 */
+  getDevice(spaceId: string, did: string): Observable<DeviceEntity> {
+    return this.http
+      .get<OxResponse>(`${this.server}/matrix/v1/device/one/${spaceId}/${did}`)
+      .pipe(map((r) => DeviceEntityCodec.decode(r.data)));
+  }
+
+  /** 读取多个属性（pid 由操作自带，返回按 manipulation 契约解码的操作结果）。 */
+  getDeviceProperties(spaceId: string, properties: PropertyOperation[]): Observable<PropertyOperation[]> {
+    const params = new HttpParams({ fromObject: { pid: properties.map((x) => x.pid.toString()) } });
     return this.http
       .get<OxResponse>(`${this.server}/matrix/v1/device/properties/${spaceId}`, { params })
-      .pipe(map((r) => (r.data as Array<Record<string, unknown>>) || []));
+      .pipe(map((r) => PropertyOperationCodec.Get.RESULT.decodeArray(r.data)));
   }
 
-  setDeviceProperties(spaceId: string, body: Record<string, unknown>): Observable<Array<Record<string, unknown>>> {
+  getDeviceProperty(spaceId: string, property: PropertyOperation): Observable<PropertyOperation> {
+    return this.getDeviceProperties(spaceId, [property]).pipe(map((x) => x[0]));
+  }
+
+  /** 设置多个属性。 */
+  setDeviceProperties(spaceId: string, properties: PropertyOperation[]): Observable<PropertyOperation[]> {
+    const body = PropertyOperationCodec.Set.QUERY.encodeArray(properties);
     return this.http
       .post<OxResponse>(`${this.server}/matrix/v1/device/properties/${spaceId}`, body)
-      .pipe(map((r) => (r.data as Array<Record<string, unknown>>) || []));
+      .pipe(map((r) => PropertyOperationCodec.Set.RESULT.decodeArray(r.data)));
   }
 
-  invokeDeviceAction(spaceId: string, body: Record<string, unknown>): Observable<Array<Record<string, unknown>>> {
+  setDeviceProperty(spaceId: string, property: PropertyOperation): Observable<PropertyOperation> {
+    return this.setDeviceProperties(spaceId, [property]).pipe(map((x) => x[0]));
+  }
+
+  /** 执行多个方法。 */
+  invokeDeviceActions(spaceId: string, actions: ActionOperation[]): Observable<ActionOperation[]> {
+    const body = ActionOperationCodec.Query.encodeArray(actions);
     return this.http
       .post<OxResponse>(`${this.server}/matrix/v1/device/actions/${spaceId}`, body)
-      .pipe(map((r) => (r.data as Array<Record<string, unknown>>) || []));
+      .pipe(map((r) => ActionOperationCodec.Result.decodeArray(r.data)));
+  }
+
+  invokeDeviceAction(spaceId: string, action: ActionOperation): Observable<ActionOperation> {
+    return this.invokeDeviceActions(spaceId, [action]).pipe(map((x) => x[0]));
   }
 
   /**------------------------------------------------------------------------------------------------

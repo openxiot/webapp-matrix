@@ -11,9 +11,11 @@ import {NzFormModule} from 'ng-zorro-antd/form';
 import {NzInputModule} from 'ng-zorro-antd/input';
 import {ActivatedRoute, Router} from '@angular/router';
 import {NzTabsModule} from 'ng-zorro-antd/tabs';
-import {DeviceDebuggerService} from '../../../../service/device.debugger.service';
 import {NzSpaceModule} from 'ng-zorro-antd/space';
 import {NzTagModule} from 'ng-zorro-antd/tag';
+import {MatrixService} from '../../../../service/matrix.service';
+import {AccountService} from '../../../../service/account.service';
+import {ProductService} from '../../../../service/product.service';
 import {DeviceInstance} from '@openxiot/xiot-core-spec-ts';
 import {DeviceEntity} from '../../../../typedef/define/device/DeviceEntity';
 import {NzDescriptionsModule} from 'ng-zorro-antd/descriptions';
@@ -81,7 +83,9 @@ export class DeviceDebuggerComponent implements OnInit {
         private route: ActivatedRoute,
         private msg: NzMessageService,
         private router: Router,
-        private service: DeviceDebuggerService,
+        private matrix: MatrixService,
+        private product: ProductService,
+        private account: AccountService,
     ) {
     }
 
@@ -94,7 +98,7 @@ export class DeviceDebuggerComponent implements OnInit {
 
     private loadDetail(did: string): void {
         this.loadingDetail.set(true);
-        this.service.getDevice(did)
+        this.matrix.getDevice(this.account.space().id, did)
             .subscribe({
                 next: data => {
                     this.device.set(data);
@@ -113,7 +117,7 @@ export class DeviceDebuggerComponent implements OnInit {
 
     private loadInstance(type: string): void {
         this.loadingInstance.set(true);
-        this.service.getInstance(type).subscribe({
+        this.product.getProductInstance(type).subscribe({
             next: data => {
                 this.instance.set(data);
                 this.loadingInstance.set(false);

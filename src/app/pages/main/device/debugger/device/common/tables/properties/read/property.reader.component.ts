@@ -15,7 +15,8 @@ import {IPropertyData} from '../IPropertyData';
 import {firstValueFrom, map} from 'rxjs';
 import {PropertyReadValueComponent} from './value/property.read.value.component';
 import {NzMessageService} from 'ng-zorro-antd/message';
-import {DeviceDebuggerService} from '../../../../../../../../../service/device.debugger.service';
+import {MatrixService} from '../../../../../../../../../service/matrix.service';
+import {AccountService} from '../../../../../../../../../service/account.service';
 
 @Component({
     selector: 'property-reader',
@@ -46,7 +47,8 @@ export class PropertyReaderComponent {
   loading = signal(false);
 
   constructor(
-    private main: DeviceDebuggerService,
+    private matrix: MatrixService,
+    private account: AccountService,
     private msg: NzMessageService,
   ) {
   }
@@ -71,7 +73,7 @@ export class PropertyReaderComponent {
 
     try {
       await firstValueFrom(
-        this.main.getProperty(property)
+        this.matrix.getDeviceProperty(this.account.space().id, property)
           .pipe(map(x => {
 
             if (x.status === 0) {
