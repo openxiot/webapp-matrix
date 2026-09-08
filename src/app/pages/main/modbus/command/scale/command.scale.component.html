@@ -1,0 +1,8 @@
+<!-- 值控件：缩放系数。readOnly（详情查看）直接以文本展示。
+     表单项骨架与标签「缩放系数」由父组件 command.edit 提供 -->
+@if (readOnly()) {
+  <span class="cmd-read-value">{{ scale() ?? '-' }}</span>
+} @else {
+  <nz-input-number [ngModel]="scale()" (ngModelChange)="onChange($event)" [nzMin]="0" [nzMax]="10"
+                   [nzStep]="0.1" style="width: 100%"></nz-input-number>
+}

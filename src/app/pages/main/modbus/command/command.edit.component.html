@@ -1,40 +1,106 @@
-<!-- 命令编辑对话框：骨架字段（名称/功能码/起始地址/逻辑地址）各自为独立组件，
-     值区按功能码组合对应的表单值组件（01/02、03/04、05、06 单值组件；0F/10 复用表格块） -->
-<modbus-command-name [(name)]="name" [readOnly]="readOnly" />
+<!-- 命令编辑对话框：每个表单项的 <nz-form-label>（文案/必填星标/nzFor）与 <nz-form-control> 栅格统一在
+     父组件这里提供；fields/ 下的各字段组件只渲染值控件本身（nz-form-control 的内容部分）。
+     0F/10 的多线圈/多寄存器表格块同样沿用此结构。
+     值区按功能码组合对应的字段：01/02、03/04、05、06 单值字段；0F/10 复用表格块。 -->
+<nz-form-item>
+  <nz-form-label [nzSpan]="4" nzFor="cmdName" [nzRequired]="true">{{ '名称' | translate }}</nz-form-label>
+  <nz-form-control>
+    <modbus-command-name [(name)]="name" [readOnly]="readOnly" />
+  </nz-form-control>
+</nz-form-item>
 
-<modbus-command-fc [fc]="fc()" (fcChange)="onFcChange($event)" [readOnly]="readOnly" />
+<nz-form-item>
+  <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '功能码' | translate }}</nz-form-label>
+  <nz-form-control>
+    <modbus-command-fc [fc]="fc()" (fcChange)="onFcChange($event)" [readOnly]="readOnly" />
+  </nz-form-control>
+</nz-form-item>
 
-<modbus-command-start [(start)]="start" [readOnly]="readOnly" />
+<nz-form-item>
+  <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '起始地址' | translate }}</nz-form-label>
+  <nz-form-control>
+    <modbus-command-start [(start)]="start" [readOnly]="readOnly" />
+  </nz-form-control>
+</nz-form-item>
 
-<modbus-command-logical-address [fc]="fc()" [start]="start()" />
+<nz-form-item>
+  <nz-form-label [nzSpan]="4">{{ '逻辑地址' | translate }}</nz-form-label>
+  <nz-form-control>
+    <modbus-command-logical-address [fc]="fc()" [start]="start()" />
+  </nz-form-control>
+</nz-form-item>
 
 <!-- 01/02 读位：数量 -->
 @if (readBitFcs.has(fc())) {
-  <modbus-command-quantity [(quantity)]="quantity"
-                           [hintKey]="'该参数占用的位/线圈个数'"
-                           [readOnly]="readOnly" />
+  <nz-form-item>
+    <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '数量' | translate }}</nz-form-label>
+    <nz-form-control>
+      <modbus-command-quantity [(quantity)]="quantity"
+                               [hintKey]="'该参数占用的位/线圈个数'"
+                               [readOnly]="readOnly" />
+    </nz-form-control>
+  </nz-form-item>
 }
 
 <!-- 03/04 读寄存器：数量（非 string 锁为类型跨度）/ 数据格式 / 字节序 / 缩放系数 / 单位 -->
 @if (readRegFcs.has(fc())) {
-  <modbus-command-quantity [(quantity)]="quantity" [locked]="quantityLocked()" [readOnly]="readOnly" />
-  <modbus-command-data-type [dataType]="dataType()" (dataTypeChange)="onDataTypeChange($event)" [readOnly]="readOnly" />
-  <modbus-command-byte-order [(byteOrder)]="byteOrder" [options]="byteOrderOptions()" [readOnly]="readOnly" />
-  <modbus-command-scale [(scale)]="scale" [readOnly]="readOnly" />
-  <modbus-command-unit [(unit)]="unit" [readOnly]="readOnly" />
+  <nz-form-item>
+    <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '数量' | translate }}</nz-form-label>
+    <nz-form-control>
+      <modbus-command-quantity [(quantity)]="quantity" [locked]="quantityLocked()" [readOnly]="readOnly" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '数据格式' | translate }}</nz-form-label>
+    <nz-form-control>
+      <modbus-command-data-type [dataType]="dataType()" (dataTypeChange)="onDataTypeChange($event)" [readOnly]="readOnly" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '字节序' | translate }}</nz-form-label>
+    <nz-form-control>
+      <modbus-command-byte-order [(byteOrder)]="byteOrder" [options]="byteOrderOptions()" [readOnly]="readOnly" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label [nzSpan]="4">{{ '缩放系数' | translate }}</nz-form-label>
+    <nz-form-control>
+      <modbus-command-scale [(scale)]="scale" [readOnly]="readOnly" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label [nzSpan]="4">{{ '单位' | translate }}</nz-form-label>
+    <nz-form-control>
+      <modbus-command-unit [(unit)]="unit" [readOnly]="readOnly" />
+    </nz-form-control>
+  </nz-form-item>
 }
 
 <!-- 05 写单个线圈：线圈状态 -->
 @if (fc() === '05') {
-  <modbus-command-coil-state [(coilState)]="coilState" [readOnly]="readOnly" />
+  <nz-form-item>
+    <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '线圈状态' | translate }}</nz-form-label>
+    <nz-form-control>
+      <modbus-command-coil-state [(coilState)]="coilState" [readOnly]="readOnly" />
+    </nz-form-control>
+  </nz-form-item>
 }
 
 <!-- 06 写单个寄存器：寄存器值 -->
 @if (fc() === '06') {
-  <modbus-command-register-value [(registerValue)]="registerValue" [readOnly]="readOnly" />
+  <nz-form-item>
+    <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '寄存器值' | translate }}</nz-form-label>
+    <nz-form-control>
+      <modbus-command-register-value [(registerValue)]="registerValue" [readOnly]="readOnly" />
+    </nz-form-control>
+  </nz-form-item>
 }
 
-<!-- 0F 写多个线圈：线圈数量 + 线圈选择子表 -->
+<!-- 0F 写多个线圈：线圈选择子表 -->
 @if (fc() === '0F') {
   <nz-form-item>
     <nz-form-label [nzSpan]="4">{{ '线圈选择' | translate }}</nz-form-label>

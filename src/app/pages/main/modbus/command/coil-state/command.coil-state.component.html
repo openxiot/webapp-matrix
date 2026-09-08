@@ -1,0 +1,11 @@
+<!-- 值控件：线圈状态下拉。readOnly（详情查看）直接以文本展示（ON/OFF）。
+     表单项骨架与标签「线圈状态」由父组件 command.edit 提供 -->
+@if (readOnly()) {
+  <span class="cmd-read-value">{{ coilStateText(coilState()) }}</span>
+} @else {
+  <nz-select [ngModel]="coilState()" (ngModelChange)="onChange($event)" style="width: 100%">
+    @for (option of coilStateOptions; track option.value) {
+      <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+    }
+  </nz-select>
+}

@@ -1,0 +1,8 @@
+<!-- 值控件：起始地址（十进制，0 基数据地址）。readOnly（详情查看）直接以文本展示。
+     表单项骨架与标签「起始地址」由父组件 command.edit 提供 -->
+@if (readOnly()) {
+  <span class="cmd-read-value">{{ start() ?? '-' }}</span>
+} @else {
+  <nz-input-number [ngModel]="start()" (ngModelChange)="onChange($event)" [nzMin]="0" [nzMax]="65535"
+                   [nzStep]="1" style="width: 100%"></nz-input-number>
+}

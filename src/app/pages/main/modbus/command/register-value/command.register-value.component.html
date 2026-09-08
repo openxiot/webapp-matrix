@@ -1,0 +1,8 @@
+<!-- 值控件：寄存器值。readOnly（详情查看）直接以文本展示。
+     表单项骨架与标签「寄存器值」由父组件 command.edit 提供 -->
+@if (readOnly()) {
+  <span class="cmd-read-value">{{ registerValue() ?? '-' }}</span>
+} @else {
+  <nz-input-number [ngModel]="registerValue()" (ngModelChange)="onChange($event)" [nzMin]="-32768"
+                   [nzMax]="65535" [nzStep]="1" style="width: 100%"></nz-input-number>
+}

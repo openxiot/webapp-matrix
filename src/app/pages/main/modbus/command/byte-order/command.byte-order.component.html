@@ -1,0 +1,11 @@
+<!-- 值控件：字节序下拉。readOnly（详情查看）直接以文本展示（如 "ABCD（大端）"）。
+     表单项骨架与标签「字节序」由父组件 command.edit 提供 -->
+@if (readOnly()) {
+  <span class="cmd-read-value">{{ byteOrderText() }}</span>
+} @else {
+  <nz-select [ngModel]="byteOrder()" (ngModelChange)="onChange($event)" style="width: 100%">
+    @for (option of options(); track option) {
+      <nz-option [nzValue]="option" [nzLabel]="display(option)"></nz-option>
+    }
+  </nz-select>
+}

@@ -1,0 +1,11 @@
+<!-- 值控件：数据格式下拉。readOnly（详情查看）直接以文本展示。
+     表单项骨架与标签「数据格式」由父组件 command.edit 提供 -->
+@if (readOnly()) {
+  <span class="cmd-read-value">{{ dataType() || '-' }}</span>
+} @else {
+  <nz-select [ngModel]="dataType()" (ngModelChange)="onChange($event)" style="width: 100%">
+    @for (option of dataTypeOptions; track option.value) {
+      <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+    }
+  </nz-select>
+}

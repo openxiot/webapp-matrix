@@ -1,4 +1,25 @@
 /*
+ * command/ 下各字段组件只渲染值控件（表单项骨架与标签在本组件），作为 nz-form-control 的子元素。
+ * 其宿主是自定义元素（默认 inline），这里块级化并占满控件列，内部控件的 width:100% 才能正确生效。
+ */
+:host ::ng-deep {
+  modbus-command-name,
+  modbus-command-fc,
+  modbus-command-start,
+  modbus-command-logical-address,
+  modbus-command-quantity,
+  modbus-command-data-type,
+  modbus-command-byte-order,
+  modbus-command-scale,
+  modbus-command-unit,
+  modbus-command-coil-state,
+  modbus-command-register-value {
+    display: block;
+    width: 100%;
+  }
+}
+
+/*
  * 只读（详情）模式：禁用控件不灰化，值保持正常可读（控件仍禁用、不可编辑）。
  * 宿主类 cmd-edit--readonly 由 host binding 依据 readOnly 加上；
  * ::ng-deep 穿透到各表单值组件及表格块内部，一处覆盖整张弹窗。

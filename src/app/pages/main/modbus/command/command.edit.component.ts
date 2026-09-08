@@ -26,17 +26,17 @@ import {
 } from './point.options';
 import { MultiCoilsBlockComponent } from './multi-coils/command.multi-coils.block.component';
 import { MultiRegistersBlockComponent } from './multi-registers/command.multi-registers.block.component';
-import { CommandNameComponent } from './fields/command.name.component';
-import { CommandFcComponent } from './fields/command.fc.component';
-import { CommandStartComponent } from './fields/command.start.component';
-import { CommandLogicalAddressComponent } from './fields/command.logical-address.component';
-import { CommandQuantityComponent } from './fields/command.quantity.component';
-import { CommandDataTypeComponent } from './fields/command.data-type.component';
-import { CommandByteOrderComponent } from './fields/command.byte-order.component';
-import { CommandScaleComponent } from './fields/command.scale.component';
-import { CommandUnitComponent } from './fields/command.unit.component';
-import { CommandCoilStateComponent } from './fields/command.coil-state.component';
-import { CommandRegisterValueComponent } from './fields/command.register-value.component';
+import { CommandNameComponent } from './name/command.name.component';
+import { CommandFcComponent } from './fc/command.fc.component';
+import { CommandStartComponent } from './start/command.start.component';
+import { CommandLogicalAddressComponent } from './logical-address/command.logical-address.component';
+import { CommandQuantityComponent } from './quantity/command.quantity.component';
+import { CommandDataTypeComponent } from './data-type/command.data-type.component';
+import { CommandByteOrderComponent } from './byte-order/command.byte-order.component';
+import { CommandScaleComponent } from './scale/command.scale.component';
+import { CommandUnitComponent } from './unit/command.unit.component';
+import { CommandCoilStateComponent } from './coil-state/command.coil-state.component';
+import { CommandRegisterValueComponent } from './register-value/command.register-value.component';
 
 /** 功能码对话框经 NZ_MODAL_DATA 传入的数据：待编辑/待查看的命令 + 是否只读。 */
 export interface ModbusCommandDialogData {
@@ -46,8 +46,9 @@ export interface ModbusCommandDialogData {
 
 /**
  * 功能码添加/编辑对话框。
- * 每个「表单值」都是独立小组件（fields/ 下，名称/功能码/起始地址/逻辑地址/数量/
- * 数据格式/字节序/缩放系数/单位/线圈状态/寄存器值），本组件只做两件事：
+ * 每个「表单值」都是独立小组件（command/ 下一个表单值对应一个子目录，共 11 个：
+ * 名称/功能码/起始地址/逻辑地址/数量/数据格式/字节序/缩放系数/单位/线圈状态/寄存器值），
+ * 本组件只做两件事：
  * 1) 持有全部值信号并统一做校验(valid)、变更判定(changed)、提交(buildCommand)；
  * 2) 按功能码组合展示哪些字段（0F/10 复用多线圈/多寄存器表格块组件）。
  * 跨字段联动（数据格式→数量/字节序、功能码切换→重置字段）也集中在这里。

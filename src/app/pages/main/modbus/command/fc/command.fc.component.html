@@ -1,0 +1,19 @@
+<!-- 值控件：功能码下拉。readOnly（详情查看）不渲染控件，与「设备点表详情」一致：
+     功能码值 = 读(蓝)/写(红)彩色徽标，功能码名称文字保持普通色。
+     表单项骨架与标签「功能码」由父组件 command.edit 提供 -->
+@if (readOnly()) {
+  @if (fc()) {
+    <span class="cmd-read-value cmd-fc-read">
+      <span class="fc-code" [class.fc-write]="isWriteFc(fc())">{{ fc() }}</span>
+      <span class="cmd-fc-label">{{ fcLabelKey(fc()) | translate }}</span>
+    </span>
+  } @else {
+    <span class="cmd-read-value">-</span>
+  }
+} @else {
+  <nz-select [ngModel]="fc()" (ngModelChange)="onChange($event)" style="width: 100%">
+    @for (option of options; track option.value) {
+      <nz-option [nzValue]="option.value" [nzLabel]="display(option.value)"></nz-option>
+    }
+  </nz-select>
+}

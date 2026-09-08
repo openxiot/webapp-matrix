@@ -1,0 +1,7 @@
+<!-- 值控件：单位输入。readOnly（详情查看）直接以文本展示。
+     表单项骨架与标签「单位」由父组件 command.edit 提供 -->
+@if (readOnly()) {
+  <span class="cmd-read-value">{{ unit() || '-' }}</span>
+} @else {
+  <input nz-input [value]="unit()" (input)="onInput($event)" placeholder="℃、kPa..." />
+}

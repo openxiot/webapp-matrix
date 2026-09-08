@@ -1,0 +1,8 @@
+<!-- 值控件：名称文本框。readOnly（详情查看）直接以文本展示，不渲染输入框。
+     表单项骨架与标签「名称」由父组件 command.edit 提供 -->
+@if (readOnly()) {
+  <span class="cmd-read-value">{{ name() || '-' }}</span>
+} @else {
+  <input nz-input id="cmdName" [value]="name()" (input)="onInput($event)"
+         placeholder="{{ '如：读蒸发器进水温度' | translate }}" />
+}

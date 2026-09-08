@@ -1,8 +1,0 @@
-<!-- 寄存器值 -->
-<nz-form-item>
-  <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '寄存器值' | translate }}</nz-form-label>
-  <nz-form-control>
-    <nz-input-number [ngModel]="registerValue()" (ngModelChange)="onChange($event)" [nzMin]="-32768"
-                     [nzMax]="65535" [nzStep]="1" [nzDisabled]="readOnly()" style="width: 100%"></nz-input-number>
-  </nz-form-control>
-</nz-form-item>
