@@ -45,6 +45,8 @@ export class MultiRegistersBlockComponent {
   readonly registers = model<RegRow[]>([]);
   /** 命令起始地址（0 基，读入用，换算各寄存器地址）。 */
   readonly start = input<number | undefined>();
+  /** 只读（详情查看）：各控件禁用，增删寄存器按钮隐藏。 */
+  readonly readOnly = input(false);
 
   protected readonly registerTypeOptions = WRITE_REGISTER_DATA_TYPE_OPTIONS;
   private readonly translate = inject(TranslateService);

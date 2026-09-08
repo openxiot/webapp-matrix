@@ -1,0 +1,14 @@
+<!-- 逻辑地址（只读，随功能码与起始地址联动） -->
+<nz-form-item>
+  <nz-form-label [nzSpan]="4">{{ '逻辑地址' | translate }}</nz-form-label>
+  <nz-form-control>
+    <div class="cmd-logical-line">
+      @if (logicalAddress() != null) {
+        <span class="cmd-logical">{{ logicalAddress() }}</span>
+        <span class="cmd-value-note">（{{ '由功能码与起始地址换算' | translate }}）</span>
+      } @else {
+        <span>-</span>
+      }
+    </div>
+  </nz-form-control>
+</nz-form-item>

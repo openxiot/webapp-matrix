@@ -1,21 +1,13 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
 import { NzFormModule } from 'ng-zorro-antd/form';
-import { NzInputModule } from 'ng-zorro-antd/input';
-import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
-import { NzSelectModule } from 'ng-zorro-antd/select';
-import { NzGridModule } from 'ng-zorro-antd/grid';
-import { NzButtonModule } from 'ng-zorro-antd/button';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
+  ModbusByteOrder,
   ModbusCoilItem,
   ModbusCommand,
   ModbusRegisterItem,
 } from '../../../../typedef/define/modbus/Modbus';
-import { MultiCoilsBlockComponent } from './multi-coils/command.multi-coils.block.component';
-import { MultiRegistersBlockComponent } from './multi-registers/command.multi-registers.block.component';
-import { ReadRegistersBlockComponent } from './read-registers/command.read-registers.block.component';
 import {
   type CoilRow,
   type RegRow,
@@ -25,25 +17,43 @@ import {
   toRegRows,
 } from './command.rows';
 import {
-  COIL_STATE_OPTIONS,
   DEFAULT_FC,
-  FC_OPTIONS,
   READ_BIT_FCS,
   READ_REG_FCS,
-  fcLabelKey,
-  logicalAddressOf,
+  byteOrderOptionsFor,
+  quantityForDataType,
   registerSpan,
 } from './point.options';
+import { MultiCoilsBlockComponent } from './multi-coils/command.multi-coils.block.component';
+import { MultiRegistersBlockComponent } from './multi-registers/command.multi-registers.block.component';
+import { CommandNameComponent } from './fields/command.name.component';
+import { CommandFcComponent } from './fields/command.fc.component';
+import { CommandStartComponent } from './fields/command.start.component';
+import { CommandLogicalAddressComponent } from './fields/command.logical-address.component';
+import { CommandQuantityComponent } from './fields/command.quantity.component';
+import { CommandDataTypeComponent } from './fields/command.data-type.component';
+import { CommandByteOrderComponent } from './fields/command.byte-order.component';
+import { CommandScaleComponent } from './fields/command.scale.component';
+import { CommandUnitComponent } from './fields/command.unit.component';
+import { CommandCoilStateComponent } from './fields/command.coil-state.component';
+import { CommandRegisterValueComponent } from './fields/command.register-value.component';
+
+/** 功能码对话框经 NZ_MODAL_DATA 传入的数据：待编辑/待查看的命令 + 是否只读。 */
+export interface ModbusCommandDialogData {
+  command?: ModbusCommand;
+  readOnly?: boolean;
+}
 
 /**
- * 功能码添加/编辑对话框（以功能码为中心，字段随功能码切换）。
- * - 无 nzData = 新增；有 nzData = 编辑（changed 生效）。
- * - 逻辑地址只读展示，由 fc+start 换算；FC10 各寄存器地址自动按类型跨度连续排布。
+ * 功能码添加/编辑对话框。
+ * 每个「表单值」都是独立小组件（fields/ 下，名称/功能码/起始地址/逻辑地址/数量/
+ * 数据格式/字节序/缩放系数/单位/线圈状态/寄存器值），本组件只做两件事：
+ * 1) 持有全部值信号并统一做校验(valid)、变更判定(changed)、提交(buildCommand)；
+ * 2) 按功能码组合展示哪些字段（0F/10 复用多线圈/多寄存器表格块组件）。
+ * 跨字段联动（数据格式→数量/字节序、功能码切换→重置字段）也集中在这里。
  *
- * 表单值区按功能码分组封装为独立值组件（model() 双向绑定）：03/04 → ReadRegistersBlock、
- * 0F → MultiCoilsBlock、10 → MultiRegistersBlock；本组件仅保留命令骨架字段
- * （名称/功能码/起始地址/逻辑地址）与单字段功能码（01/02 数量、05 线圈状态、06 寄存器值），
- * 并持有全部值信号统一做校验(valid)、变更判定(changed)与提交(buildCommand)。
+ * - 无 nzData = 新增；有 nzData + 非只读 = 编辑（changed 生效）；有 nzData + 只读 = 详情查看。
+ * - 逻辑地址只读展示，由 fc+start 换算；FC10 各寄存器地址自动按类型跨度连续排布。
  */
 @Component({
   selector: 'modbus-command-edit',
@@ -51,32 +61,41 @@ import {
   templateUrl: './command.edit.component.html',
   styleUrl: './command.edit.component.less',
   imports: [
-    FormsModule,
     NzFormModule,
-    NzInputModule,
-    NzInputNumberModule,
-    NzSelectModule,
-    NzGridModule,
-    NzButtonModule,
     TranslatePipe,
-    ReadRegistersBlockComponent,
     MultiCoilsBlockComponent,
     MultiRegistersBlockComponent,
+    CommandNameComponent,
+    CommandFcComponent,
+    CommandStartComponent,
+    CommandLogicalAddressComponent,
+    CommandQuantityComponent,
+    CommandDataTypeComponent,
+    CommandByteOrderComponent,
+    CommandScaleComponent,
+    CommandUnitComponent,
+    CommandCoilStateComponent,
+    CommandRegisterValueComponent,
   ],
+  host: {
+    '[class.cmd-edit--readonly]': 'readOnly',
+  },
 })
 export class CommandEditComponent {
   readonly #modal = inject(NzModalRef);
-  readonly data: ModbusCommand | undefined = inject(NZ_MODAL_DATA);
+  readonly modalData: ModbusCommandDialogData | undefined = inject(NZ_MODAL_DATA);
+
+  /** 原始命令（无 = 新增模式）。 */
+  readonly data: ModbusCommand | undefined = this.modalData?.command;
+
+  /** 只读查看（详情模式）：控件禁用、仅可关闭，不产生提交。 */
+  protected readonly readOnly = this.modalData?.readOnly ?? false;
 
   /** 新增模式（无原始数据） */
   protected readonly isAdd = !this.data;
 
-  protected readonly fcOptions = FC_OPTIONS;
   protected readonly readBitFcs = READ_BIT_FCS;
   protected readonly readRegFcs = READ_REG_FCS;
-  protected readonly coilStateOptions = COIL_STATE_OPTIONS;
-
-  private readonly translate = inject(TranslateService);
 
   protected readonly fc = signal<string>(this.data?.fc ?? DEFAULT_FC);
   protected readonly name = signal(this.data?.name ?? '');
@@ -91,10 +110,17 @@ export class CommandEditComponent {
   protected readonly coils = signal<CoilRow[]>(toCoilRows(this.data?.coils));
   protected readonly registers = signal<RegRow[]>(toRegRows(this.data?.registers));
 
-  /** 逻辑地址（只读）：fc+start 换算。 */
-  protected readonly logicalAddress = computed(() => logicalAddressOf(this.fc(), this.start()));
+  /** 03/04 读寄存器：非 string 数据格式时数量锁定为类型跨度。 */
+  protected readonly quantityLocked = computed(
+    () => !!this.dataType() && this.dataType() !== 'string',
+  );
 
-  /** 通用表单项（名称/功能码/起始地址/描述）是否合法。 */
+  /** 03/04 读寄存器：当前数据格式下可用的字节序子集（16 位只有 大端/小端）。 */
+  protected readonly byteOrderOptions = computed<ModbusByteOrder[]>(() =>
+    byteOrderOptionsFor(this.dataType()).map((o) => o.value as ModbusByteOrder),
+  );
+
+  /** 通用表单项（名称/功能码/起始地址）与按功能码的值区是否合法。 */
   readonly valid = computed(() => {
     if (this.name().trim().length === 0) {
       return false;
@@ -168,8 +194,8 @@ export class CommandEditComponent {
   }
 
   /** 功能码切换：清空与该功能码无关的读写字段，落到该功能码的默认值。 */
-  protected onFcChange(fc: string | null): void {
-    const f = fc ?? DEFAULT_FC;
+  protected onFcChange(fc: string): void {
+    const f = fc || DEFAULT_FC;
     this.fc.set(f);
     this.quantity.set(1);
     this.dataType.set(undefined);
@@ -182,33 +208,20 @@ export class CommandEditComponent {
     this.registers.set([defaultRegRow()]);
   }
 
-  protected onNameInput($event: Event): void {
-    this.name.set(($event.target as HTMLInputElement).value);
-  }
-
-  /** 起始地址变化（十进制，0 基数据地址；0-65535）。 */
-  protected onStartChange(value: number | null): void {
-    this.start.set(value ?? undefined);
-  }
-
-  /** 01/02 读位：数量变化（03/04 的数量在 ReadRegistersBlockComponent 内自理）。 */
-  protected onQuantityChange(value: number | null): void {
-    this.quantity.set(value ?? undefined);
-  }
-
-  /** 05 写单线圈：线圈状态变化。 */
-  protected onCoilStateChange(value: 'on' | 'off'): void {
-    this.coilState.set(value);
-  }
-
-  /** 06 写单寄存器：寄存器值变化。 */
-  protected onRegisterValueChange(value: number | null): void {
-    this.registerValue.set(value ?? undefined);
-  }
-
-  /** 功能码显示：如 "03 读取保持寄存器"。 */
-  protected fcDisplay(fc: string): string {
-    return `${fc} ${this.translate.instant(fcLabelKey(fc))}`;
+  /** 数据格式变化（03/04）：自动给数量（非 string = 类型跨度），必要时回落字节序。 */
+  protected onDataTypeChange(value: string | undefined): void {
+    this.dataType.set(value);
+    if (!value) {
+      return;
+    }
+    const q = quantityForDataType(value);
+    if (q != null) {
+      this.quantity.set(q);
+    }
+    const bo = this.byteOrder();
+    if (!byteOrderOptionsFor(value).some((o) => o.value === bo)) {
+      this.byteOrder.set('ABCD');
+    }
   }
 
   /** 提交：按当前功能码组出干净的 ModbusCommand（空串转 undefined）。 */

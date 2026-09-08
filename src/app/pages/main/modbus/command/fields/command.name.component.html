@@ -1,0 +1,8 @@
+<!-- 名称 -->
+<nz-form-item>
+  <nz-form-label [nzSpan]="4" nzFor="cmdName" [nzRequired]="true">{{ '名称' | translate }}</nz-form-label>
+  <nz-form-control>
+    <input nz-input id="cmdName" [value]="name()" (input)="onInput($event)" [disabled]="readOnly()"
+           placeholder="{{ '如：读蒸发器进水温度' | translate }}" />
+  </nz-form-control>
+</nz-form-item>

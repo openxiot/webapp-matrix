@@ -1,0 +1,11 @@
+<!-- 数据格式 -->
+<nz-form-item>
+  <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '数据格式' | translate }}</nz-form-label>
+  <nz-form-control>
+    <nz-select [ngModel]="dataType()" (ngModelChange)="onChange($event)" [nzDisabled]="readOnly()" style="width: 100%">
+      @for (option of dataTypeOptions; track option.value) {
+        <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+      }
+    </nz-select>
+  </nz-form-control>
+</nz-form-item>

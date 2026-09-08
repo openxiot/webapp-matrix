@@ -2,9 +2,11 @@
   <nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
     <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
     <nz-page-header-extra>
-      <button nz-button nzType="primary" [nzLoading]="submitting()" [disabled]="!changed()" (click)="submit()">
-        {{ '保存' | translate }}
-      </button>
+      @if (canManage()) {
+        <button nz-button nzType="primary" [nzLoading]="submitting()" [disabled]="!changed()" (click)="submit()">
+          {{ '保存' | translate }}
+        </button>
+      }
     </nz-page-header-extra>
   </nz-page-header>
 
@@ -38,19 +40,23 @@
           </nz-descriptions>
 
           <ng-template #deviceInfoExtra>
-            <button nz-button (click)="editDeviceInfo()">
-              <nz-icon nzType="edit"></nz-icon>
-              {{ '编辑' | translate }}
-            </button>
+            @if (canManage()) {
+              <button nz-button (click)="editDeviceInfo()">
+                <nz-icon nzType="edit"></nz-icon>
+                {{ '编辑' | translate }}
+              </button>
+            }
           </ng-template>
         </nz-card>
       </nz-col>
 
       <nz-col nzSpan="24">
-        <button nz-button nzType="primary" (click)="addCommand()">
-          <nz-icon nzType="plus"></nz-icon>
-          {{ '添加功能码' | translate }}
-        </button>
+        @if (canManage()) {
+          <button nz-button nzType="primary" (click)="addCommand()">
+            <nz-icon nzType="plus"></nz-icon>
+            {{ '添加功能码' | translate }}
+          </button>
+        }
       </nz-col>
 
       <nz-col nzSpan="24">
@@ -112,13 +118,17 @@
                   }
                 </td>
                 <td>
-                  <a (click)="editCommand($index)">{{ '编辑' | translate }}</a>
-                  <nz-divider nzType="vertical"></nz-divider>
-                  <a (click)="moveCommand($index, -1)">{{ '上移' | translate }}</a>
-                  <nz-divider nzType="vertical"></nz-divider>
-                  <a (click)="moveCommand($index, 1)">{{ '下移' | translate }}</a>
-                  <nz-divider nzType="vertical"></nz-divider>
-                  <a class="danger-link" (click)="removeCommand($index)">{{ '删除' | translate }}</a>
+                  @if (canManage()) {
+                    <a (click)="editCommand($index)">{{ '编辑' | translate }}</a>
+                    <nz-divider nzType="vertical"></nz-divider>
+                    <a (click)="moveCommand($index, -1)">{{ '上移' | translate }}</a>
+                    <nz-divider nzType="vertical"></nz-divider>
+                    <a (click)="moveCommand($index, 1)">{{ '下移' | translate }}</a>
+                    <nz-divider nzType="vertical"></nz-divider>
+                    <a class="danger-link" (click)="removeCommand($index)">{{ '删除' | translate }}</a>
+                  } @else {
+                    <a (click)="viewCommand($index)">{{ '详情' | translate }}</a>
+                  }
                 </td>
               </tr>
             }

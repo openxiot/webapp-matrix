@@ -1,28 +1,21 @@
-.cmd-hint {
-  display: inline-block;
-  margin-left: 8px;
-  color: rgba(0, 0, 0, 0.45);
-  font-size: 12px;
-}
-
-.cmd-hint-block {
-  display: block;
-  margin-left: 0;
-  margin-top: 2px;
-}
-
-.cmd-logical-line {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.cmd-logical {
-  font-weight: 600;
-  color: #1677ff;
-}
-
-.cmd-value-note {
-  color: rgba(0, 0, 0, 0.45);
-  font-size: 12px;
+/*
+ * 只读（详情）模式：禁用控件不灰化，值保持正常可读（控件仍禁用、不可编辑）。
+ * 宿主类 cmd-edit--readonly 由 host binding 依据 readOnly 加上；
+ * ::ng-deep 穿透到各表单值组件及表格块内部，一处覆盖整张弹窗。
+ */
+:host.cmd-edit--readonly {
+  ::ng-deep {
+    input[disabled],
+    textarea[disabled],
+    .ant-input[disabled],
+    .ant-input-number-disabled,
+    .ant-input-number-disabled .ant-input-number-input,
+    .ant-select-disabled.ant-select:not(.ant-select-customize-input) .ant-select-selector,
+    .ant-select-disabled .ant-select-selector {
+      background-color: #fff !important;
+      color: inherit !important;
+      -webkit-text-fill-color: currentColor;
+      cursor: default;
+    }
+  }
 }

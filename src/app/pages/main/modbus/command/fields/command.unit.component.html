@@ -1,0 +1,7 @@
+<!-- 单位 -->
+<nz-form-item>
+  <nz-form-label [nzSpan]="4">{{ '单位' | translate }}</nz-form-label>
+  <nz-form-control>
+    <input nz-input [value]="unit()" (input)="onInput($event)" [disabled]="readOnly()" placeholder="℃、kPa..." />
+  </nz-form-control>
+</nz-form-item>

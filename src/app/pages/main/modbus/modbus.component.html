@@ -76,14 +76,10 @@
                 {{ orgLabel(config.orgId) }}
               </td>
               <td>
-                @if (isOwn(config)) {
-                  <a [routerLink]="['/main/modbus/detail', config.id]">{{ '详情' | translate }}</a>
-                  @if (canDelete(config)) {
-                    <nz-divider nzType="vertical"></nz-divider>
-                    <a class="danger-link" (click)="remove(config)">{{ '删除' | translate }}</a>
-                  }
-                } @else {
-                  -
+                <a [routerLink]="['/main/modbus/detail', config.id]">{{ '详情' | translate }}</a>
+                @if (canDelete(config)) {
+                  <nz-divider nzType="vertical"></nz-divider>
+                  <a class="danger-link" (click)="remove(config)">{{ '删除' | translate }}</a>
                 }
               </td>
             </tr>

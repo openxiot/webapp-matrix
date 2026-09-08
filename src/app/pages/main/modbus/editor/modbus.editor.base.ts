@@ -6,8 +6,9 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from '../../../../service/account.service';
 import { ModbusService } from '../../../../service/modbus.service';
+import { UserOrganizationService } from '../../../../service/user.organization.service';
 import { ModbusCommand, ModbusDeviceConfig, ModbusDeviceInfo } from '../../../../typedef/define/modbus/Modbus';
-import { CommandEditComponent } from '../command/command.edit.component';
+import { CommandEditComponent, type ModbusCommandDialogData } from '../command/command.edit.component';
 import { ModbusDeviceInfoEditComponent } from '../device-info/modbus.device.info.edit.component';
 import { coilStateText, fcLabelKey, logicalAddressOf } from '../command/point.options';
 
@@ -48,6 +49,32 @@ export abstract class ModbusEditorBase {
     return this.kind === 'add';
   }
 
+  /** 是否已选择组织：未选组织时为只读浏览（隐藏 编辑/添加功能码/保存），详情仅能查看。 */
+  protected readonly hasOrg = computed(() => this.account.organization().id.length > 0);
+
+  /** 当前载入配置所属组织（applyConfig 时置；详情页据此判断能否管理）。 */
+  private readonly configOrgId = signal('');
+  /** 当前账号是否为「当前已选组织」的管理员（组织成员 role=admin，经组织列表接口判定）。 */
+  private readonly selectedOrgAdmin = signal(false);
+
+  /**
+   * 是否可管理（决定 保存/设备信息编辑/添加功能码/行操作 的可见性）：
+   * - add（新建）：有已选组织即可；
+   * - detail（详情/编辑）：需已选组织 + 当前载入配置属该组织 + 当前账号是该组织管理员，
+   *   否则页面退化为只读（行操作仅剩「详情」）。
+   */
+  protected readonly canManage = computed(() => {
+    if (this.kind !== 'detail') {
+      return this.hasOrg();
+    }
+    return (
+      this.hasOrg() &&
+      this.configOrgId().length > 0 &&
+      this.configOrgId() === this.account.organization().id &&
+      this.selectedOrgAdmin()
+    );
+  });
+
   /** 修改判定基准：进入页面 / 载入既有点表时的快照 */
   protected baseDeviceInfo: ModbusDeviceInfo = emptyDeviceInfo();
   protected baseCommands: ModbusCommand[] = [];
@@ -57,13 +84,15 @@ export abstract class ModbusEditorBase {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private service = inject(ModbusService);
+  private orgService = inject(UserOrganizationService);
   private msg = inject(NzMessageService);
   private translate = inject(TranslateService);
   private modal = inject(NzModalService);
   private viewContainerRef = inject(ViewContainerRef);
 
   private routeId = '';
-  private currentOrgId = '';
+  /** 初始即取当前已选组织（若已选）；这样带组织进入详情时不会先发一次无组织请求。 */
+  private currentOrgId = this.account.organization().id;
   private loadedKey = '';
 
   constructor() {
@@ -83,14 +112,57 @@ export abstract class ModbusEditorBase {
         this.maybeLoadDetail();
       }
     });
+
+    // 详情页：按「当前已选组织」刷新管理员身份（决定能否管理该组织的点表）；新建页用不到
+    effect(() => {
+      const orgId = this.account.organization().id;
+      if (this.kind === 'detail') {
+        this.refreshMembership(orgId);
+      } else {
+        this.selectedOrgAdmin.set(false);
+      }
+    });
   }
 
-  /** 仅在「编辑设备点表」且组织、路由 id 就绪时载入（防重复请求） */
+  /**
+   * 判定当前账号是否为「组织 orgId」的管理员：经组织列表接口读成员角色（与列表页一致）。
+   * 请求返回前若组织已切换则丢弃结果，避免旧组织身份覆盖新组织。
+   */
+  private refreshMembership(orgId: string): void {
+    if (!orgId) {
+      this.selectedOrgAdmin.set(false);
+      return;
+    }
+    this.orgService.getOrganizations().subscribe({
+      next: (organizations) => {
+        if (this.account.organization().id !== orgId) {
+          return; // 期间已切换组织，本次结果过期
+        }
+        const list = organizations ?? [];
+        const me = this.account.user().id;
+        let admin = false;
+        for (const org of list) {
+          if (org.id && org.id === orgId) {
+            admin = (org.members ?? []).some((m) => m.userId === me && m.role === 'admin');
+            break;
+          }
+        }
+        this.selectedOrgAdmin.set(admin);
+      },
+      error: () => this.selectedOrgAdmin.set(false),
+    });
+  }
+
+  /**
+   * 「编辑设备点表」按路由 id 载入（防重复请求）。
+   * 有组织时带组织头取「本组织或公开」配置；未选组织时同样发起请求（不带组织头），
+   * 后端按公开配置返回，保证无组织浏览也能打开详情看内容。
+   */
   private maybeLoadDetail(): void {
     if (this.kind !== 'detail') {
       return;
     }
-    if (!this.routeId || !this.currentOrgId) {
+    if (!this.routeId) {
       return;
     }
     const key = `${this.routeId}|${this.currentOrgId}`;
@@ -116,6 +188,7 @@ export abstract class ModbusEditorBase {
   }
 
   private applyConfig(config: ModbusDeviceConfig): void {
+    this.configOrgId.set(config.orgId ?? '');
     this.deviceInfo.set({
       manufacturer: config.manufacturer ?? '',
       model: config.model ?? '',
@@ -199,11 +272,11 @@ export abstract class ModbusEditorBase {
     if (!command) {
       return;
     }
-    const modal = this.modal.create<CommandEditComponent, ModbusCommand, ModbusCommand>({
+    const modal = this.modal.create<CommandEditComponent, ModbusCommandDialogData, ModbusCommand>({
       nzTitle: this.translate.instant('编辑功能码'),
       nzContent: CommandEditComponent,
       nzViewContainerRef: this.viewContainerRef,
-      nzData: command,
+      nzData: { command },
       nzWidth: 1024,
       nzFooter: [
         {
@@ -223,6 +296,30 @@ export abstract class ModbusEditorBase {
       if (result) {
         this.commands.update((list) => list.map((c, i) => (i === index ? result : c)));
       }
+    });
+  }
+
+  /**
+   * 只读查看某条功能码（非管理态的行操作「详情」）：
+   * 复用 CommandEditComponent，readOnly=true 全控件禁用、无增删，弹窗仅 关闭。
+   */
+  protected viewCommand(index: number): void {
+    const command = this.commands()[index];
+    if (!command) {
+      return;
+    }
+    const modal = this.modal.create<CommandEditComponent, ModbusCommandDialogData, ModbusCommand>({
+      nzTitle: this.translate.instant('详情'),
+      nzContent: CommandEditComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: { command, readOnly: true },
+      nzWidth: 1024,
+      nzFooter: [
+        {
+          label: this.translate.instant('关闭'),
+          onClick: (component) => component!.cancel(),
+        },
+      ],
     });
   }
 

@@ -1,0 +1,11 @@
+<!-- 功能码 -->
+<nz-form-item>
+  <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '功能码' | translate }}</nz-form-label>
+  <nz-form-control>
+    <nz-select [ngModel]="fc()" (ngModelChange)="onChange($event)" [nzDisabled]="readOnly()" style="width: 100%">
+      @for (option of options; track option.value) {
+        <nz-option [nzValue]="option.value" [nzLabel]="display(option.value)"></nz-option>
+      }
+    </nz-select>
+  </nz-form-control>
+</nz-form-item>

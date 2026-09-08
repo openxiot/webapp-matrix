@@ -1,109 +1,55 @@
-<!-- key - value 布局：一行一个字段，标签在左、控件占满右侧（对齐 MemberEdit 对话框） -->
-  <!-- 名称 -->
+<!-- 命令编辑对话框：骨架字段（名称/功能码/起始地址/逻辑地址）各自为独立组件，
+     值区按功能码组合对应的表单值组件（01/02、03/04、05、06 单值组件；0F/10 复用表格块） -->
+<modbus-command-name [(name)]="name" [readOnly]="readOnly" />
+
+<modbus-command-fc [fc]="fc()" (fcChange)="onFcChange($event)" [readOnly]="readOnly" />
+
+<modbus-command-start [(start)]="start" [readOnly]="readOnly" />
+
+<modbus-command-logical-address [fc]="fc()" [start]="start()" />
+
+<!-- 01/02 读位：数量 -->
+@if (readBitFcs.has(fc())) {
+  <modbus-command-quantity [(quantity)]="quantity"
+                           [hintKey]="'该参数占用的位/线圈个数'"
+                           [readOnly]="readOnly" />
+}
+
+<!-- 03/04 读寄存器：数量（非 string 锁为类型跨度）/ 数据格式 / 字节序 / 缩放系数 / 单位 -->
+@if (readRegFcs.has(fc())) {
+  <modbus-command-quantity [(quantity)]="quantity" [locked]="quantityLocked()" [readOnly]="readOnly" />
+  <modbus-command-data-type [dataType]="dataType()" (dataTypeChange)="onDataTypeChange($event)" [readOnly]="readOnly" />
+  <modbus-command-byte-order [(byteOrder)]="byteOrder" [options]="byteOrderOptions()" [readOnly]="readOnly" />
+  <modbus-command-scale [(scale)]="scale" [readOnly]="readOnly" />
+  <modbus-command-unit [(unit)]="unit" [readOnly]="readOnly" />
+}
+
+<!-- 05 写单个线圈：线圈状态 -->
+@if (fc() === '05') {
+  <modbus-command-coil-state [(coilState)]="coilState" [readOnly]="readOnly" />
+}
+
+<!-- 06 写单个寄存器：寄存器值 -->
+@if (fc() === '06') {
+  <modbus-command-register-value [(registerValue)]="registerValue" [readOnly]="readOnly" />
+}
+
+<!-- 0F 写多个线圈：线圈数量 + 线圈选择子表 -->
+@if (fc() === '0F') {
   <nz-form-item>
-    <nz-form-label [nzSpan]="4" nzFor="cmdName" [nzRequired]="true">{{ '名称' | translate }}</nz-form-label>
+    <nz-form-label [nzSpan]="4">{{ '线圈选择' | translate }}</nz-form-label>
     <nz-form-control>
-      <input nz-input id="cmdName" [value]="name()" (input)="onNameInput($event)"
-             placeholder="{{ '如：读蒸发器进水温度' | translate }}" />
+      <modbus-command-multi-coils [(coils)]="coils" [readOnly]="readOnly" />
     </nz-form-control>
   </nz-form-item>
+}
 
-  <!-- 功能码 -->
+<!-- 10 写多个寄存器：寄存器表格 -->
+@if (fc() === '10') {
   <nz-form-item>
-    <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '功能码' | translate }}</nz-form-label>
+    <nz-form-label [nzSpan]="4">{{ '寄存器表格' | translate }}</nz-form-label>
     <nz-form-control>
-      <nz-select [ngModel]="fc()" (ngModelChange)="onFcChange($event)" style="width: 100%">
-        @for (option of fcOptions; track option.value) {
-          <nz-option [nzValue]="option.value" [nzLabel]="fcDisplay(option.value)"></nz-option>
-        }
-      </nz-select>
+      <modbus-command-multi-registers [(registers)]="registers" [start]="start()" [readOnly]="readOnly" />
     </nz-form-control>
   </nz-form-item>
-
-  <!-- 起始地址（十进制，0 基数据地址） -->
-  <nz-form-item>
-    <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '起始地址' | translate }}</nz-form-label>
-    <nz-form-control>
-      <nz-input-number id="cmdStart" [ngModel]="start()" (ngModelChange)="onStartChange($event)"
-                       [nzMin]="0" [nzMax]="65535" [nzStep]="1" style="width: 100%"></nz-input-number>
-    </nz-form-control>
-  </nz-form-item>
-
-  <!-- 逻辑地址（只读，随功能码与起始地址联动） -->
-  <nz-form-item>
-    <nz-form-label [nzSpan]="4">{{ '逻辑地址' | translate }}</nz-form-label>
-    <nz-form-control>
-      <div class="cmd-logical-line">
-        @if (logicalAddress() != null) {
-          <span class="cmd-logical">{{ logicalAddress() }}</span>
-          <span class="cmd-value-note">（{{ '由功能码与起始地址换算' | translate }}）</span>
-        } @else {
-          <span>-</span>
-        }
-      </div>
-    </nz-form-control>
-  </nz-form-item>
-
-  <!-- 01/02 读位：数量 -->
-  @if (readBitFcs.has(fc())) {
-    <nz-form-item>
-      <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '数量' | translate }}</nz-form-label>
-      <nz-form-control>
-        <nz-input-number [ngModel]="quantity()" (ngModelChange)="onQuantityChange($event)" [nzMin]="1" [nzMax]="255"
-                         [nzStep]="1" style="width: 100%"></nz-input-number>
-        <span class="cmd-hint cmd-hint-block">{{ '该参数占用的位/线圈个数' | translate }}</span>
-      </nz-form-control>
-    </nz-form-item>
-  }
-
-  <!-- 03/04 读寄存器 -->
-  @if (readRegFcs.has(fc())) {
-    <modbus-command-read-registers [(quantity)]="quantity" [(dataType)]="dataType"
-                                   [(byteOrder)]="byteOrder" [(scale)]="scale" [(unit)]="unit" />
-  }
-
-  <!-- 05 写单个线圈：线圈状态 -->
-  @if (fc() === '05') {
-    <nz-form-item>
-      <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '线圈状态' | translate }}</nz-form-label>
-      <nz-form-control>
-        <nz-select [ngModel]="coilState()" (ngModelChange)="onCoilStateChange($event)" style="width: 100%">
-          @for (option of coilStateOptions; track option.value) {
-            <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
-          }
-        </nz-select>
-      </nz-form-control>
-    </nz-form-item>
-  }
-
-  <!-- 06 写单个寄存器：寄存器值 -->
-  @if (fc() === '06') {
-    <nz-form-item>
-      <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '寄存器值' | translate }}</nz-form-label>
-      <nz-form-control>
-        <nz-input-number [ngModel]="registerValue()" (ngModelChange)="onRegisterValueChange($event)"
-                         [nzMin]="-32768" [nzMax]="65535" [nzStep]="1" style="width: 100%"></nz-input-number>
-      </nz-form-control>
-    </nz-form-item>
-  }
-
-  <!-- 0F 写多个线圈：线圈数量 + 线圈选择子表 -->
-  @if (fc() === '0F') {
-    <nz-form-item>
-      <nz-form-label [nzSpan]="4">{{ '线圈选择' | translate }}</nz-form-label>
-      <nz-form-control>
-        <modbus-command-multi-coils [(coils)]="coils" />
-      </nz-form-control>
-    </nz-form-item>
-  }
-
-  <!-- 10 写多个寄存器：寄存器表格 -->
-  @if (fc() === '10') {
-    <nz-form-item>
-      <nz-form-label [nzSpan]="4">{{ '寄存器表格' | translate }}</nz-form-label>
-      <nz-form-control>
-        <modbus-command-multi-registers [(registers)]="registers" [start]="start()" />
-      </nz-form-control>
-    </nz-form-item>
-  }
-
+}

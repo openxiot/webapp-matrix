@@ -1,0 +1,8 @@
+<!-- 缩放系数 -->
+<nz-form-item>
+  <nz-form-label [nzSpan]="4">{{ '缩放系数' | translate }}</nz-form-label>
+  <nz-form-control>
+    <nz-input-number [ngModel]="scale()" (ngModelChange)="onChange($event)" [nzMin]="0" [nzMax]="10"
+                     [nzStep]="0.1" [nzDisabled]="readOnly()" style="width: 100%"></nz-input-number>
+  </nz-form-control>
+</nz-form-item>

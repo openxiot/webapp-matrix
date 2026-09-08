@@ -1,4 +1,4 @@
-import { Component, model } from '@angular/core';
+import { Component, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -32,6 +32,8 @@ import { COIL_STATE_OPTIONS } from '../point.options';
 export class MultiCoilsBlockComponent {
   /** 线圈编辑行（偏移由行序给定）。 */
   readonly coils = model<CoilRow[]>([]);
+  /** 只读（详情查看）：状态下拉禁用，增删行按钮隐藏。 */
+  readonly readOnly = input(false);
 
   protected readonly coilStateOptions = COIL_STATE_OPTIONS;
 
