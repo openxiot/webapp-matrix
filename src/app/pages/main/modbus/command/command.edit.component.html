@@ -1,0 +1,230 @@
+<!-- key - value 布局：一行一个字段，标签在左、控件占满右侧（对齐 MemberEdit 对话框） -->
+  <!-- 名称 -->
+  <nz-form-item>
+    <nz-form-label [nzSpan]="4" nzFor="cmdName" [nzRequired]="true">{{ '名称' | translate }}</nz-form-label>
+    <nz-form-control>
+      <input nz-input id="cmdName" [value]="name()" (input)="onNameInput($event)"
+             placeholder="{{ '如：读蒸发器进水温度' | translate }}" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <!-- 功能码 -->
+  <nz-form-item>
+    <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '功能码' | translate }}</nz-form-label>
+    <nz-form-control>
+      <nz-select [ngModel]="fc()" (ngModelChange)="onFcChange($event)" style="width: 100%">
+        @for (option of fcOptions; track option.value) {
+          <nz-option [nzValue]="option.value" [nzLabel]="fcDisplay(option.value)"></nz-option>
+        }
+      </nz-select>
+    </nz-form-control>
+  </nz-form-item>
+
+  <!-- 起始地址（16 进制，仅允许 0-9 / A-F） -->
+  <nz-form-item>
+    <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '起始地址' | translate }}</nz-form-label>
+    <nz-form-control>
+      <input nz-input id="cmdStart" [value]="startText()" (input)="onStartInput($event)"
+             placeholder="0000" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <!-- 逻辑地址（只读，随功能码与起始地址联动） -->
+  <nz-form-item>
+    <nz-form-label [nzSpan]="4">{{ '逻辑地址' | translate }}</nz-form-label>
+    <nz-form-control>
+      <div class="cmd-logical-line">
+        @if (logicalAddress() != null) {
+          <span class="cmd-logical">{{ hexText(logicalAddress()) }}</span>
+          <span class="cmd-value-note">（{{ '由功能码与起始地址换算' | translate }}）</span>
+        } @else {
+          <span>-</span>
+        }
+      </div>
+    </nz-form-control>
+  </nz-form-item>
+
+  <!-- 01/02 读位：数量 -->
+  @if (readBitFcs.has(fc())) {
+    <nz-form-item>
+      <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '数量' | translate }}</nz-form-label>
+      <nz-form-control>
+        <nz-input-number [ngModel]="quantity()" (ngModelChange)="onQuantityChange($event)" [nzMin]="1" [nzMax]="255"
+                         [nzStep]="1" style="width: 100%"></nz-input-number>
+        <span class="cmd-hint cmd-hint-block">{{ '该参数占用的位/线圈个数' | translate }}</span>
+      </nz-form-control>
+    </nz-form-item>
+  }
+
+  <!-- 03/04 读寄存器 -->
+  @if (readRegFcs.has(fc())) {
+    <nz-form-item>
+      <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '数量' | translate }}</nz-form-label>
+      <nz-form-control>
+        <nz-input-number [ngModel]="quantity()" (ngModelChange)="onQuantityChange($event)" [nzMin]="1" [nzMax]="255"
+                         [nzStep]="1" [nzDisabled]="quantityLocked()" style="width: 100%"></nz-input-number>
+      </nz-form-control>
+    </nz-form-item>
+    <nz-form-item>
+      <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '数据格式' | translate }}</nz-form-label>
+      <nz-form-control>
+        <nz-select [ngModel]="dataType()" (ngModelChange)="onDataTypeChange($event)" style="width: 100%">
+          @for (option of dataTypeOptions; track option.value) {
+            <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+          }
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+    <nz-form-item>
+      <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '字节序' | translate }}</nz-form-label>
+      <nz-form-control>
+        <nz-select [ngModel]="byteOrder()" (ngModelChange)="onByteOrderChange($event)" style="width: 100%">
+          @for (option of byteOrderOptionsFor(dataType()); track option.value) {
+            <nz-option [nzValue]="option.value" [nzLabel]="byteOrderDisplay(option.value)"></nz-option>
+          }
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+    <nz-form-item>
+      <nz-form-label [nzSpan]="4">{{ '缩放系数' | translate }}</nz-form-label>
+      <nz-form-control>
+        <nz-input-number [ngModel]="scale()" (ngModelChange)="onScaleChange($event)" [nzMin]="0" [nzMax]="10"
+                         [nzStep]="0.1" style="width: 100%"></nz-input-number>
+      </nz-form-control>
+    </nz-form-item>
+    <nz-form-item>
+      <nz-form-label [nzSpan]="4">{{ '单位' | translate }}</nz-form-label>
+      <nz-form-control>
+        <input nz-input [value]="unit()" (input)="onUnitInput($event)" placeholder="℃、kPa..." />
+      </nz-form-control>
+    </nz-form-item>
+  }
+
+  <!-- 05 写单个线圈：线圈状态 -->
+  @if (fc() === '05') {
+    <nz-form-item>
+      <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '线圈状态' | translate }}</nz-form-label>
+      <nz-form-control>
+        <nz-select [ngModel]="coilState()" (ngModelChange)="onCoilStateChange($event)" style="width: 100%">
+          @for (option of coilStateOptions; track option.value) {
+            <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+          }
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+  }
+
+  <!-- 06 写单个寄存器：寄存器值 -->
+  @if (fc() === '06') {
+    <nz-form-item>
+      <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '寄存器值' | translate }}</nz-form-label>
+      <nz-form-control>
+        <nz-input-number [ngModel]="registerValue()" (ngModelChange)="onRegisterValueChange($event)"
+                         [nzMin]="-32768" [nzMax]="65535" [nzStep]="1" style="width: 100%"></nz-input-number>
+      </nz-form-control>
+    </nz-form-item>
+  }
+
+  <!-- 0F 写多个线圈：线圈数量 + 线圈选择子表 -->
+  @if (fc() === '0F') {
+    <nz-form-item>
+      <nz-form-label [nzSpan]="4">{{ '线圈选择' | translate }}</nz-form-label>
+      <nz-form-control>
+        <div class="cmd-sublist">
+          <div class="cmd-sublist-head">
+            <span class="cmd-hint">{{ '线圈数量' | translate }}：{{ coils().length }}</span>
+            <button nz-button nzSize="small" nzType="dashed" (click)="addCoil()">
+              <nz-icon nzType="plus"></nz-icon>
+              {{ '添加线圈' | translate }}
+            </button>
+          </div>
+          <nz-table [nzData]="coils()" [nzSize]="'small'" [nzShowPagination]="false" [nzBordered]="true"
+                    [nzScroll]="{ x: '520px' }">
+            <thead>
+            <tr>
+              <th nzWidth="100px">{{ '偏移' | translate }}</th>
+              <th nzWidth="150px">{{ '线圈状态' | translate }}</th>
+              <th nzWidth="100px">{{ '操作' | translate }}</th>
+            </tr>
+            </thead>
+            <tbody>
+              @for (row of coils(); track $index) {
+                <tr>
+                  <td>{{ $index }}</td>
+                  <td>
+                    <nz-select [ngModel]="row.state" (ngModelChange)="onCoilRowStateChange($index, $event)" style="width: 100%">
+                      @for (option of coilStateOptions; track option.value) {
+                        <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+                      }
+                    </nz-select>
+                  </td>
+                  <td>
+                    <a (click)="removeCoil($index)">{{ '删除' | translate }}</a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </nz-table>
+          <div class="cmd-hint cmd-hint-block">{{ '偏移从 0 起、不可修改，与线圈一一对应' | translate }}</div>
+        </div>
+      </nz-form-control>
+    </nz-form-item>
+  }
+
+  <!-- 10 写多个寄存器：寄存器表格 -->
+  @if (fc() === '10') {
+    <nz-form-item>
+      <nz-form-label [nzSpan]="4">{{ '寄存器表格' | translate }}</nz-form-label>
+      <nz-form-control>
+        <div class="cmd-sublist">
+          <div class="cmd-sublist-head">
+            <span class="cmd-hint">{{ '寄存器地址由起始地址按类型跨度自动连续排布' | translate }}</span>
+            <button nz-button nzSize="small" nzType="dashed" (click)="addRegister()">
+              <nz-icon nzType="plus"></nz-icon>
+              {{ '添加寄存器' | translate }}
+            </button>
+          </div>
+          <nz-table [nzData]="registers()" [nzSize]="'small'" [nzShowPagination]="false" [nzBordered]="true"
+                    [nzScroll]="{ x: '520px' }">
+            <thead>
+            <tr>
+              <th nzWidth="100px">{{ '寄存器地址' | translate }}</th>
+              <th nzWidth="120px">{{ '数据类型' | translate }}</th>
+              <th nzWidth="120px">{{ '字节序' | translate }}</th>
+              <th nzWidth="120px">{{ '数值' | translate }}</th>
+              <th nzWidth="100px">{{ '操作' | translate }}</th>
+            </tr>
+            </thead>
+            <tbody>
+              @for (row of registers(); track $index) {
+                <tr>
+                  <td>{{ registerAddress($index) }}</td>
+                  <td>
+                    <nz-select [ngModel]="row.dataType" (ngModelChange)="onRegTypeChange($index, $event)" style="width: 100%">
+                      @for (option of registerTypeOptions; track option.value) {
+                        <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+                      }
+                    </nz-select>
+                  </td>
+                  <td>
+                    <nz-select [ngModel]="row.byteOrder" (ngModelChange)="onRegByteOrderChange($index, $event)" style="width: 100%">
+                      @for (option of byteOrderOptionsForRow(row); track option.value) {
+                        <nz-option [nzValue]="option.value" [nzLabel]="byteOrderDisplay(option.value)"></nz-option>
+                      }
+                    </nz-select>
+                  </td>
+                  <td>
+                    <nz-input-number [ngModel]="row.value" (ngModelChange)="onRegValueChange($index, $event)" style="width: 100%"></nz-input-number>
+                  </td>
+                  <td>
+                    <a (click)="removeRegister($index)">{{ '删除' | translate }}</a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </nz-table>
+        </div>
+      </nz-form-control>
+    </nz-form-item>
+  }
+

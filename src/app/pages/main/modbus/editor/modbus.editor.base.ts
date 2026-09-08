@@ -6,11 +6,10 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from '../../../../service/account.service';
 import { ModbusService } from '../../../../service/modbus.service';
-import { ModbusDeviceConfig, ModbusDeviceInfo, ModbusPoint } from '../../../../typedef/define/modbus/Modbus';
-import { PointAddComponent } from '../point/point.add.component';
-import { PointEditComponent } from '../point/point.edit.component';
+import { ModbusCommand, ModbusDeviceConfig, ModbusDeviceInfo } from '../../../../typedef/define/modbus/Modbus';
+import { CommandEditComponent } from '../command/command.edit.component';
 import { ModbusDeviceInfoEditComponent } from '../device-info/modbus.device.info.edit.component';
-import { areaLabelKey, rwLabelKey } from '../point/point.options';
+import { coilStateText, fcLabelKey, hexText, logicalAddressOf } from '../command/point.options';
 
 /**
  * 新建设备点表 / 编辑设备点表 两个页面共用的编辑器逻辑与视图状态。
@@ -18,15 +17,17 @@ import { areaLabelKey, rwLabelKey } from '../point/point.options';
  * - ModbusAddComponent（新建）：空表单起步，submit 走 create；
  * - ModbusDetailComponent（编辑）：按路由 id 载入既有点表，submit 走 update。
  *
- * 保存有效性：修改了设备信息、或增删改点位后，保存按钮才可点击（changed）。
+ * 保存有效性：修改了设备信息、或增删改功能码动作后，保存按钮才可点击（changed）。
  */
 export abstract class ModbusEditorBase {
   /** add：新建设备点表；detail：编辑设备点表 */
   protected abstract get kind(): 'add' | 'detail';
 
-  /** 点位枚举值 → 展示用 i18n key（模板经 translate 管道渲染） */
-  protected readonly areaLabelKey = areaLabelKey;
-  protected readonly rwLabelKey = rwLabelKey;
+  /** 功能码枚举 → 展示用 i18n key / 逻辑地址换算 / 线圈状态文案（模板经 translate 管道渲染） */
+  protected readonly fcLabelKey = fcLabelKey;
+  protected readonly logicalAddressOf = logicalAddressOf;
+  protected readonly coilStateText = coilStateText;
+  protected readonly hexText = hexText;
 
   loading = signal(false);
   submitting = signal(false);
@@ -34,13 +35,13 @@ export abstract class ModbusEditorBase {
   /** 设备信息：默认私有、空值，经对话框只读展示/编辑 */
   deviceInfo = signal<ModbusDeviceInfo>(emptyDeviceInfo());
 
-  points = signal<ModbusPoint[]>([]);
+  commands = signal<ModbusCommand[]>([]);
 
-  /** 相对初始值是否发生变化（设备信息或点位），决定「保存」是否可用 */
+  /** 相对初始值是否发生变化（设备信息或功能码动作），决定「保存」是否可用 */
   readonly changed = computed(
     () =>
       deviceInfoKey(this.deviceInfo()) !== deviceInfoKey(this.baseDeviceInfo) ||
-      pointsKey(this.points()) !== pointsKey(this.basePoints),
+      commandsKey(this.commands()) !== commandsKey(this.baseCommands),
   );
 
   /** 新建页标题用 */
@@ -50,7 +51,7 @@ export abstract class ModbusEditorBase {
 
   /** 修改判定基准：进入页面 / 载入既有点表时的快照 */
   protected baseDeviceInfo: ModbusDeviceInfo = emptyDeviceInfo();
-  protected basePoints: ModbusPoint[] = [];
+  protected baseCommands: ModbusCommand[] = [];
 
   protected location = inject(Location);
   protected account = inject(AccountService);
@@ -123,10 +124,11 @@ export abstract class ModbusEditorBase {
       visibility: config.visibility ?? 'private',
       description: config.description,
     });
-    this.points.set((config.points ?? []).map((p) => ({ ...p })));
+    // 兼容旧文档：后端启动迁移把 points[] 转成 commands[]，本地按空处理即可
+    this.commands.set((config.commands ?? []).map((c) => ({ ...c })));
     // 载入完成后再拍基准：初始状态保存按钮应为禁用
     this.baseDeviceInfo = this.deviceInfo();
-    this.basePoints = this.points();
+    this.baseCommands = this.commands();
   }
 
   /* ----------------------------------------------------------------------------------------------
@@ -164,13 +166,14 @@ export abstract class ModbusEditorBase {
   }
 
   /* ----------------------------------------------------------------------------------------------
-   * 点位编辑器：通过对话框添加/编辑（对齐组织成员 MemberAdd/MemberEdit 模式）
+   * 功能码动作：添加/编辑共用一个动态表单对话框 CommandEditComponent
    * ----------------------------------------------------------------------------------------------*/
-  protected addPoint(): void {
-    const modal = this.modal.create<PointAddComponent, void, ModbusPoint>({
-      nzTitle: this.translate.instant('添加点位'),
-      nzContent: PointAddComponent,
+  protected addCommand(): void {
+    const modal = this.modal.create<CommandEditComponent, void, ModbusCommand>({
+      nzTitle: this.translate.instant('添加功能码'),
+      nzContent: CommandEditComponent,
       nzViewContainerRef: this.viewContainerRef,
+      nzWidth: 1024,
       nzFooter: [
         {
           label: this.translate.instant('取消'),
@@ -187,21 +190,22 @@ export abstract class ModbusEditorBase {
 
     modal.afterClose.subscribe((result) => {
       if (result) {
-        this.points.update((list) => [...list, result]);
+        this.commands.update((list) => [...list, result]);
       }
     });
   }
 
-  protected editPoint(index: number): void {
-    const point = this.points()[index];
-    if (!point) {
+  protected editCommand(index: number): void {
+    const command = this.commands()[index];
+    if (!command) {
       return;
     }
-    const modal = this.modal.create<PointEditComponent, ModbusPoint, ModbusPoint>({
-      nzTitle: this.translate.instant('编辑点位'),
-      nzContent: PointEditComponent,
+    const modal = this.modal.create<CommandEditComponent, ModbusCommand, ModbusCommand>({
+      nzTitle: this.translate.instant('编辑功能码'),
+      nzContent: CommandEditComponent,
       nzViewContainerRef: this.viewContainerRef,
-      nzData: point,
+      nzData: command,
+      nzWidth: 1024,
       nzFooter: [
         {
           label: this.translate.instant('取消'),
@@ -218,17 +222,17 @@ export abstract class ModbusEditorBase {
 
     modal.afterClose.subscribe((result) => {
       if (result) {
-        this.points.update((list) => list.map((p, i) => (i === index ? result : p)));
+        this.commands.update((list) => list.map((c, i) => (i === index ? result : c)));
       }
     });
   }
 
-  protected removePoint(index: number): void {
-    this.points.update((list) => list.filter((_, i) => i !== index));
+  protected removeCommand(index: number): void {
+    this.commands.update((list) => list.filter((_, i) => i !== index));
   }
 
-  protected movePoint(index: number, delta: number): void {
-    this.points.update((list) => {
+  protected moveCommand(index: number, delta: number): void {
+    this.commands.update((list) => {
       const target = index + delta;
       if (target < 0 || target >= list.length) {
         return list;
@@ -265,9 +269,13 @@ export abstract class ModbusEditorBase {
       return;
     }
 
-    const points: ModbusPoint[] = this.points()
-      .filter((p) => p.name.trim().length > 0)
-      .map((p) => ({ ...p }));
+    const commands: ModbusCommand[] = this.commands()
+      .filter((c) => c.name.trim().length > 0)
+      .map((c) => ({
+        ...c,
+        coils: c.coils ? c.coils.map((x) => ({ ...x })) : undefined,
+        registers: c.registers ? c.registers.map((x) => ({ ...x })) : undefined,
+      }));
 
     const body: ModbusDeviceConfig = {
       orgId: this.currentOrgId,
@@ -276,7 +284,7 @@ export abstract class ModbusEditorBase {
       slaveId: info.slaveId,
       visibility: info.visibility ?? 'private',
       description: this.blankToUndefined(info.description),
-      points,
+      commands,
     };
 
     this.submitting.set(true);
@@ -334,20 +342,28 @@ function deviceInfoKey(info: ModbusDeviceInfo): string {
   ]);
 }
 
-function pointKey(point: ModbusPoint): string {
+function commandKey(command: ModbusCommand): string {
   return JSON.stringify([
-    normValue(point.name),
-    normValue(point.area),
-    normValue(point.address),
-    normValue(point.logicalAddress),
-    normValue(point.dataType),
-    normValue(point.rw),
-    normValue(point.scale),
-    normValue(point.unit),
-    normValue(point.description),
+    normValue(command.name),
+    normValue(command.fc),
+    normValue(command.start),
+    normValue(command.quantity),
+    normValue(command.dataType),
+    normValue(command.byteOrder),
+    normValue(command.scale),
+    normValue(command.unit),
+    normValue(command.coilState),
+    normValue(command.registerValue),
+    (command.coils ?? []).map((x) => [normValue(x.offset), normValue(x.on)]),
+    (command.registers ?? []).map((x) => [
+      normValue(x.address),
+      normValue(x.dataType),
+      normValue(x.byteOrder),
+      normValue(x.value),
+    ]),
   ]);
 }
 
-function pointsKey(points: ModbusPoint[]): string {
-  return (points ?? []).map((p) => pointKey(p)).join('\u0001');
+function commandsKey(commands: ModbusCommand[]): string {
+  return (commands ?? []).map((c) => commandKey(c)).join('\u0001');
 }

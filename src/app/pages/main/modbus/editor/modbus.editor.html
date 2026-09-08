@@ -47,67 +47,77 @@
       </nz-col>
 
       <nz-col nzSpan="24">
-        <button nz-button nzType="primary" (click)="addPoint()">
+        <button nz-button nzType="primary" (click)="addCommand()">
           <nz-icon nzType="plus"></nz-icon>
-          {{ '添加点位' | translate }}
+          {{ '添加功能码' | translate }}
         </button>
       </nz-col>
 
       <nz-col nzSpan="24">
         <nz-table
           [nzBordered]="true"
-          [nzData]="points()"
+          [nzData]="commands()"
           [nzShowSizeChanger]="true"
           [nzHideOnSinglePage]="true"
           [nzScroll]="{ x: '1200px' }"
         >
           <thead>
           <tr>
-            <th nzWidth="100px">{{ '名称' | translate }}</th>
-            <th nzWidth="100px">{{ '区域' | translate }}</th>
-            <th nzWidth="100px">{{ '地址' | translate }}</th>
-            <th nzWidth="100px">{{ '逻辑地址' | translate }}</th>
-            <th nzWidth="100px">{{ '数据类型' | translate }}</th>
-            <th nzWidth="60px">{{ '读写' | translate }}</th>
-            <th nzWidth="60px">{{ '比例' | translate }}</th>
+            <th nzWidth="120px">{{ '名称' | translate }}</th>
+            <th nzWidth="150px">{{ '功能码' | translate }}</th>
+            <th nzWidth="80px">{{ '起始地址' | translate }}</th>
+            <th nzWidth="80px">{{ '逻辑地址' | translate }}</th>
+            <th nzWidth="60px">{{ '数量' | translate }}</th>
+            <th nzWidth="80px">{{ '数据格式' | translate }}</th>
+            <th nzWidth="60px">{{ '字节序' | translate }}</th>
+            <th nzWidth="80px">{{ '缩放系数' | translate }}</th>
             <th nzWidth="60px">{{ '单位' | translate }}</th>
-            <th nzWidth="100px">{{ '描述' | translate }}</th>
+            <th nzWidth="140px">{{ '写内容' | translate }}</th>
             <th nzWidth="160px">{{ '操作' | translate }}</th>
           </tr>
           </thead>
           <tbody>
-            @for (point of points(); track $index) {
+            @for (command of commands(); track $index) {
               <tr>
-                <td>{{ point.name || '-' }}</td>
+                <td class="command-name">{{ command.name || '-' }}</td>
                 <td>
-                  @if (point.area) {
-                    {{ areaLabelKey(point.area) | translate }}
+                  <span class="fc-code">{{ command.fc }}</span>
+                  {{ fcLabelKey(command.fc) | translate }}
+                </td>
+                <td class="cmd-addr">{{ hexText(command.start) }}</td>
+                <td class="cmd-addr">{{ hexText(logicalAddressOf(command.fc, command.start)) }}</td>
+                <td>{{ command.quantity ?? '-' }}</td>
+                <td>{{ command.dataType || '-' }}</td>
+                <td>
+                  @if (command.byteOrder) {
+                    {{ command.byteOrder }}
                   } @else {
                     -
                   }
                 </td>
-                <td>{{ point.address ?? '-' }}</td>
-                <td>{{ point.logicalAddress ?? '-' }}</td>
-                <td>{{ point.dataType || '-' }}</td>
+                <td>{{ command.scale ?? '-' }}</td>
+                <td>{{ command.unit || '-' }}</td>
                 <td>
-                  @if (point.rw) {
-                    {{ rwLabelKey(point.rw) | translate }}
+                  @if (command.fc === '05') {
+                    {{ coilStateText(command.coilState) }}
+                  } @else if (command.fc === '06') {
+                    {{ command.registerValue ?? '-' }}
+                  } @else if (command.fc === '0F') {
+                    {{ command.coils?.length ?? 0 }} {{ '个线圈' | translate }}
+                  } @else if (command.fc === '10') {
+                    {{ command.registers?.length ?? 0 }} {{ '个寄存器' | translate }}
                   } @else {
                     -
                   }
                 </td>
-                <td>{{ point.scale ?? '-' }}</td>
-                <td>{{ point.unit || '-' }}</td>
-                <td class="point-description" [title]="point.description || undefined">{{ point.description || '-' }}
-                </td>
                 <td>
-                  <a (click)="editPoint($index)">{{ '编辑' | translate }}</a>
+                  <a (click)="editCommand($index)">{{ '编辑' | translate }}</a>
                   <nz-divider nzType="vertical"></nz-divider>
-                  <a (click)="movePoint($index, -1)">{{ '上移' | translate }}</a>
+                  <a (click)="moveCommand($index, -1)">{{ '上移' | translate }}</a>
                   <nz-divider nzType="vertical"></nz-divider>
-                  <a (click)="movePoint($index, 1)">{{ '下移' | translate }}</a>
+                  <a (click)="moveCommand($index, 1)">{{ '下移' | translate }}</a>
                   <nz-divider nzType="vertical"></nz-divider>
-                  <a class="danger-link" (click)="removePoint($index)">{{ '删除' | translate }}</a>
+                  <a class="danger-link" (click)="removeCommand($index)">{{ '删除' | translate }}</a>
                 </td>
               </tr>
             }

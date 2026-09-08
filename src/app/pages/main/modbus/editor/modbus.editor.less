@@ -2,9 +2,22 @@
   color: #ff4d4f;
 }
 
-.point-description {
-  max-width: 260px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.command-name {
+  font-weight: 500;
+}
+
+/* 十六进制地址列（起始地址 / 逻辑地址）：等宽便于对齐 */
+.cmd-addr {
+  font-family: Menlo, Consolas, monospace;
+}
+
+.fc-code {
+  display: inline-block;
+  padding: 0 6px;
+  margin-right: 6px;
+  border-radius: 4px;
+  background: #e6f4ff;
+  color: #1677ff;
+  font-weight: 600;
+  font-family: Menlo, Consolas, monospace;
 }
