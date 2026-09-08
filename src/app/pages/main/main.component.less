@@ -58,6 +58,7 @@
 .sidebar-logo h1 {
   display: inline-block;
   margin: 0 0 0 20px;
+  max-width: 170px;
   color: #fff;
   font-weight: 600;
   font-size: 14px;
@@ -67,7 +68,15 @@
     Arial,
     Helvetica,
     sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   vertical-align: middle;
+}
+
+/* 侧栏收起（只显示图标）时不再展示 logo 文字，避免长项目名在窄栏内截断出省略号 */
+:host ::ng-deep .ant-layout-sider-collapsed .sidebar-logo h1 {
+  display: none;
 }
 
 nz-header {
