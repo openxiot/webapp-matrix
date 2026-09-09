@@ -7,6 +7,7 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzTagModule } from 'ng-zorro-antd/tag';
 import { DatePipe } from '@angular/common';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -15,6 +16,7 @@ import { AccountService } from '../../../service/account.service';
 import { ModbusService } from '../../../service/modbus.service';
 import { UserOrganizationService } from '../../../service/user.organization.service';
 import { ModbusDeviceConfig } from '../../../typedef/define/modbus/Modbus';
+import { lifecycleModifiable, lifecycleStyle } from './modbus.lifecycle';
 import { ConfirmComponent } from '../../../common/dialog/confirm/confirm.component';
 import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { NzBreadCrumbComponent } from 'ng-zorro-antd/breadcrumb';
@@ -33,6 +35,7 @@ import { NzBreadCrumbComponent } from 'ng-zorro-antd/breadcrumb';
     NzEmptyModule,
     NzDividerModule,
     NzIconModule,
+    NzTagModule,
     DatePipe,
     TranslatePipe,
     BreadcrumbTranslateDirective,
@@ -41,6 +44,9 @@ import { NzBreadCrumbComponent } from 'ng-zorro-antd/breadcrumb';
   providers: [NzModalService],
 })
 export class ModbusComponent {
+  /** 生命周期存储串 → 状态文案 i18n 键 + nz-tag 颜色（模板经 translate 管道渲染） */
+  protected readonly lifecycleStyle = lifecycleStyle;
+
   loading = signal(false);
   configs = signal<ModbusDeviceConfig[]>([]);
 
@@ -183,9 +189,9 @@ export class ModbusComponent {
     return this.orgActive() && !!config.orgId && config.orgId === this.currentOrgId;
   }
 
-  /** 是否显示删除：点表归属当前组织，且当前账号是该组织管理员 */
+  /** 是否显示删除：点表归属当前组织、当前账号是该组织管理员，且仍处于开发态（后端同口径拒绝 released/preview） */
   protected canDelete(config: ModbusDeviceConfig): boolean {
-    return this.isOwn(config) && this.isCurrentOrgAdmin();
+    return this.isOwn(config) && this.isCurrentOrgAdmin() && lifecycleModifiable(config.lifecycle);
   }
 
   protected remove(config: ModbusDeviceConfig) {

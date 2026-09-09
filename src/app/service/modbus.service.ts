@@ -51,10 +51,24 @@ export class ModbusService {
       .pipe(map((r) => r.data as ModbusDeviceConfig));
   }
 
-  /** 更新设备点表 */
+  /** 更新设备点表（永不会修改 lifecycle，见 {@link #setLifecycle}） */
   update(id: string, body: ModbusDeviceConfig): Observable<ModbusDeviceConfig> {
     return this.http
       .put<OxResponse>(`${this.server}/matrix/v1/modbus/config/one/${id}`, body)
+      .pipe(map((r) => r.data as ModbusDeviceConfig));
+  }
+
+  /**
+   * 独立流转设备点表 lifecycle（PUT /one/{id}/lifecycle/{lifecycle}）。
+   * development→preview（预览）、preview→released（发布）、released/preview→development（下线）。
+   * 服务端只允许 development / preview / released 三个目标值，不校验流转，直接覆盖。
+   */
+  setLifecycle(id: string, lifecycle: string): Observable<ModbusDeviceConfig> {
+    return this.http
+      .put<OxResponse>(
+        `${this.server}/matrix/v1/modbus/config/one/${id}/lifecycle/${encodeURIComponent(lifecycle)}`,
+        {},
+      )
       .pipe(map((r) => r.data as ModbusDeviceConfig));
   }
 

@@ -34,6 +34,7 @@
           <th nzWidth="140px">{{ '型号' | translate }}</th>
           <th nzWidth="80px">{{ '从站地址' | translate }}</th>
           <th nzWidth="80px">{{ '可见度' | translate }}</th>
+          <th nzWidth="90px">{{ '状态' | translate }}</th>
           <th nzWidth="140px">{{ '描述' | translate }}</th>
           <th nzWidth="80px">{{ '创建者' | translate }}</th>
           <th nzWidth="100px">{{ '最后更新' | translate }}</th>
@@ -55,6 +56,10 @@
                 >
                   {{ (config.visibility === 'public' ? '公开' : (config.visibility === 'private' ? '私有' : '-')) | translate }}
                 </span>
+              </td>
+              <td>
+                @let st = lifecycleStyle(config.lifecycle ?? 'development');
+                <nz-tag [nzColor]="st.color">{{ st.text | translate }}</nz-tag>
               </td>
               <td class="ellipsis-cell" [title]="config.slave?.description || undefined">
                 {{ config.slave?.description || '-' }}

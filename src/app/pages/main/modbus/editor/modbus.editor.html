@@ -2,10 +2,39 @@
   <nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
     <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
     <nz-page-header-extra>
-      @if (canManage()) {
-        <button nz-button nzType="primary" [nzLoading]="submitting()" [disabled]="!changed()" (click)="submit()">
-          {{ '保存' | translate }}
-        </button>
+      @if (isAdd) {
+        @if (canManage()) {
+          <button nz-button nzType="primary" [nzLoading]="submitting()" [disabled]="!changed()" (click)="submit()">
+            {{ '保存' | translate }}
+          </button>
+        }
+      } @else {
+        @if (canChangeLifecycle()) {
+          <div class="lifecycle-actions">
+            <!-- 生命周期流转：与 webapp-product ProductBasicComponent 一致，按当前态只展示可达动作。
+                 development→预览；preview→发布 或 下线；released→下线 -->
+            @switch (lifecycle()) {
+              @case (LifeCycle.DEVELOPMENT) {
+                <button nz-button nzType="primary" [nzLoading]="submitting()" (click)="preview()">
+                  {{ '预览' | translate }}
+                </button>
+              }
+              @case (LifeCycle.PREVIEW) {
+                <button nz-button nzDanger [nzLoading]="submitting()" (click)="offline()">
+                  {{ '下线' | translate }}
+                </button>
+                <button nz-button nzType="primary" [nzLoading]="submitting()" (click)="release()">
+                  {{ '发布' | translate }}
+                </button>
+              }
+              @case (LifeCycle.RELEASED) {
+                <button nz-button nzDanger [nzLoading]="submitting()" (click)="offline()">
+                  {{ '下线' | translate }}
+                </button>
+              }
+            }
+          </div>
+        }
       }
     </nz-page-header-extra>
   </nz-page-header>
@@ -41,6 +70,13 @@
               <nz-tag nzColor="blue">{{ specLabel(deviceInfo().type) }}</nz-tag>
               <nz-tag nzColor="green">{{ typeLabel(deviceInfo().type) }}</nz-tag>
             </nz-descriptions-item>
+
+            @if (!isAdd) {
+              <nz-descriptions-item nzTitle="{{ '生命周期' | translate }}">
+                @let lc = lifecycleStyle(lifecycle());
+                <nz-tag [nzColor]="lc.color">{{ lc.text | translate }}</nz-tag>
+              </nz-descriptions-item>
+            }
           </nz-descriptions>
 
           <ng-template #deviceInfoExtra>

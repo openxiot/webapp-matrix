@@ -9,20 +9,24 @@ import { AccountService } from '../../../../service/account.service';
 import { ModbusService } from '../../../../service/modbus.service';
 import { UserOrganizationService } from '../../../../service/user.organization.service';
 import { ModbusCommand, ModbusDeviceConfig, ModbusDeviceInfo, ModbusDeviceType } from '../../../../typedef/define/modbus/Modbus';
-import { DeviceType } from '@openxiot/xiot-core-spec-ts';
+import { DeviceType, LifeCycle } from '@openxiot/xiot-core-spec-ts';
 import { CommandEditComponent, type ModbusCommandDialogData } from '../command/command.edit.component';
 import { RequestFrameDialogComponent, type RequestFrameDialogData } from './request/request.frame.dialog.component';
 import { buildRequestFrame } from './request/request.frame';
 import { ModbusDeviceInfoEditComponent, type ModbusDeviceInfoEditData, } from '../device-info/modbus.device.info.edit.component';
 import { coilStateText, fcLabelKey, isWriteFc, logicalAddressOf } from '../command/point.options';
+import { lifecycleModifiable, lifecycleStyle } from '../modbus.lifecycle';
+import { ConfirmComponent } from '../../../../common/dialog/confirm/confirm.component';
 
 /**
  * 新建设备点表 / 编辑设备点表 两个页面共用的编辑器逻辑与视图状态。
  * 页面文案、路由行为等差异由子类以 {@link kind} 区分：
- * - ModbusAddComponent（新建）：空表单起步，submit 走 create；
- * - ModbusDetailComponent（编辑）：按路由 id 载入既有点表，submit 走 update。
+ * - ModbusAddComponent（新建）：空表单起步，submit 走 create（仍保留顶部「保存」按钮）；
+ * - ModbusDetailComponent（编辑）：按路由 id 载入既有点表。**无整页「保存」**：设备信息 / 功能码
+ *   的每次变更（对话框确认、删除确认、拖拽重排）都即时 PUT 落库；顶部「保存」位置换成
+ *   按 {@link lifecycle} 状态区分的 预览 / 发布 / 下线（经专用 lifecycle 接口，普通更新不触碰）。
  *
- * 保存有效性：修改了设备信息、或增删改功能码动作后，保存按钮才可点击（changed）。
+ * 仅「开发」(development) 态可编辑内容（与后端同口径）；released / preview 内容只读，仅可 下线 / 发布。
  */
 export abstract class ModbusEditor {
   /** add：新建设备点表；detail：编辑设备点表 */
@@ -33,12 +37,19 @@ export abstract class ModbusEditor {
   protected readonly logicalAddressOf = logicalAddressOf;
   protected readonly isWriteFc = isWriteFc;
   protected readonly coilStateText = coilStateText;
+  protected readonly lifecycleStyle = lifecycleStyle;
+
+  /** 生命周期枚举值（模板 @switch 按 lifecycle() 分支渲染 header 按钮组）。 */
+  protected readonly LifeCycle = LifeCycle;
 
   loading = signal(false);
   submitting = signal(false);
 
   /** 设备信息：默认私有、空值，经对话框只读展示/编辑 */
   deviceInfo = signal<ModbusDeviceInfo>(emptyDeviceInfo());
+
+  /** 配置生命周期（config 顶层，随 applyConfig 置位；新建缺省即开发态，由服务端落库）。 */
+  lifecycle = signal('development');
 
   commands = signal<ModbusCommand[]>([]);
 
@@ -94,14 +105,13 @@ export abstract class ModbusEditor {
   private readonly selectedOrgAdmin = signal(false);
 
   /**
-   * 是否可管理（决定 保存/设备信息编辑/添加功能码/行操作 的可见性）：
-   * - add（新建）：有已选组织即可；
-   * - detail（详情/编辑）：需已选组织 + 当前载入配置属该组织 + 当前账号是该组织管理员，
-   *   否则页面退化为只读（行操作仅剩「详情」）。
+   * 是否可流转生命周期（决定 header 的 预览/发布/下线 按钮可见性）：
+   * 归属当前已选组织 + 当前账号是该组织管理员；不依赖 lifecycle——
+   * released / preview 内容虽只读，仍要能 下线 / 发布。
    */
-  protected readonly canManage = computed(() => {
+  protected readonly canChangeLifecycle = computed(() => {
     if (this.kind !== 'detail') {
-      return this.hasOrg();
+      return false;
     }
     return (
       this.hasOrg() &&
@@ -110,6 +120,22 @@ export abstract class ModbusEditor {
       this.selectedOrgAdmin()
     );
   });
+
+  /**
+   * 是否可编辑配置内容（决定 设备信息编辑/添加功能码/行操作 的可见性）：
+   * - add（新建）：有已选组织即可；
+   * - detail（详情/编辑）：需归属当前组织 + 当前账号是该组织管理员 + 仍处于开发态（后端同口径）；
+   *   released / preview 内容只读，仅保留 header 的生命周期操作（见 {@link canChangeLifecycle}）。
+   */
+  protected readonly canManage = computed(() => {
+    if (this.kind !== 'detail') {
+      return this.hasOrg();
+    }
+    return this.canChangeLifecycle() && lifecycleModifiable(this.lifecycle());
+  });
+
+  /** 详情页即时保存进行中又产生新变更时置位，待本次落库完成后用最新状态再刷一笔（串行化防丢改）。 */
+  private persistQueued = false;
 
   /** 修改判定基准：进入页面 / 载入既有点表时的快照 */
   protected baseDeviceInfo: ModbusDeviceInfo = emptyDeviceInfo();
@@ -225,6 +251,7 @@ export abstract class ModbusEditor {
 
   private applyConfig(config: ModbusDeviceConfig): void {
     this.configOrgId.set(config.orgId ?? '');
+    this.lifecycle.set(config.lifecycle ?? 'development');
     const slave = config.slave ?? {};
     this.deviceInfo.set({
       manufacturer: slave.manufacturer ?? '',
@@ -275,6 +302,7 @@ export abstract class ModbusEditor {
     modal.afterClose.subscribe((result) => {
       if (result) {
         this.deviceInfo.set(result);
+        this.persistDetail(); // 详情页：确定即保存
       }
     });
   }
@@ -305,6 +333,7 @@ export abstract class ModbusEditor {
     modal.afterClose.subscribe((result) => {
       if (result) {
         this.commands.update((list) => this.renumber([...list, result]));
+        this.persistDetail(); // 详情页：确定即保存
       }
     });
   }
@@ -339,6 +368,7 @@ export abstract class ModbusEditor {
         this.commands.update((list) =>
           this.renumber(list.map((c, i) => (i === index ? { ...result, index: i + 1 } : c))),
         );
+        this.persistDetail(); // 详情页：确定即保存
       }
     });
   }
@@ -376,8 +406,47 @@ export abstract class ModbusEditor {
     return list;
   }
 
+  /**
+   * 删除一条功能码。
+   * - add（新建页）：还没落库，直接删本地行；
+   * - detail（详情页）：先弹确认框，确认后删行并即时 PUT 保存。
+   */
   protected removeCommand(index: number): void {
-    this.commands.update((list) => this.renumber(list.filter((_, i) => i !== index)));
+    const command = this.commands()[index];
+    if (!command) {
+      return;
+    }
+    if (this.kind !== 'detail') {
+      this.commands.update((list) => this.renumber(list.filter((_, i) => i !== index)));
+      return;
+    }
+    const label =
+      (command.name ?? '').trim() || `${this.translate.instant('功能码')} ${command.fc ?? ''}`.trim();
+    const modal = this.modal.create<ConfirmComponent, string, string>({
+      nzTitle: this.translate.instant('确认删除功能码', { label }),
+      nzContent: ConfirmComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: label,
+      nzFooter: [
+        {
+          label: this.translate.instant('取消'),
+          onClick: (component) => component!.cancel(),
+        },
+        {
+          label: this.translate.instant('确认'),
+          danger: true,
+          type: 'primary',
+          onClick: (component) => component!.ok(),
+        },
+      ],
+    });
+
+    modal.afterClose.subscribe((result) => {
+      if (result) {
+        this.commands.update((list) => this.renumber(list.filter((_, i) => i !== index)));
+        this.persistDetail(); // 详情页：确认即删除并保存
+      }
+    });
   }
 
   /**
@@ -417,7 +486,7 @@ export abstract class ModbusEditor {
 
   /**
    * 拖拽行重排功能码（取代原 上移/下移 行操作）。
-   * 表格行由 cdkDropList + cdkDrag 驱动，松开时把命令移到新位置即可（changed 生效）。
+   * 表格行由 cdkDropList + cdkDrag 驱动，松开时把命令移到新位置；详情页随即即时保存。
    */
   protected onCommandDropped(event: CdkDragDrop<ModbusCommand[]>): void {
     this.commands.update((list) => {
@@ -425,6 +494,7 @@ export abstract class ModbusEditor {
       moveItemInArray(copy, event.previousIndex, event.currentIndex);
       return this.renumber(copy);
     });
+    this.persistDetail(); // 详情页：拖拽即改即存
   }
 
   /* ----------------------------------------------------------------------------------------------
@@ -458,26 +528,7 @@ export abstract class ModbusEditor {
       return;
     }
 
-    const commands: ModbusCommand[] = this.commands()
-      .filter((c) => c.name.trim().length > 0)
-      .map((c) => ({
-        ...c,
-        coils: c.coils ? c.coils.map((x) => ({ ...x })) : undefined,
-        registers: c.registers ? c.registers.map((x) => ({ ...x })) : undefined,
-      }));
-
-    const body: ModbusDeviceConfig = {
-      orgId: this.currentOrgId,
-      slave: {
-        manufacturer: info.manufacturer.trim(),
-        model: info.model.trim(),
-        type: info.type,
-        slaveId: info.slaveId,
-        description: this.blankToUndefined(info.description),
-      },
-      visibility: info.visibility ?? 'private',
-      commands,
-    };
+    const body = this.buildBody();
 
     this.submitting.set(true);
     const request =
@@ -491,6 +542,108 @@ export abstract class ModbusEditor {
           this.translate.instant(this.kind === 'detail' ? '保存成功' : '创建成功'),
         );
         void this.router.navigate(['/main/modbus']);
+      },
+      error: (error) => {
+        this.submitting.set(false);
+        this.msg.warning((error as { message?: string })?.message ?? error);
+      },
+    });
+  }
+
+  /**
+   * 组装当前完整配置为提交体（设备信息 + 可见度 + 功能码动作，深拷贝避免污染行对象）。
+   * 不含 lifecycle —— 生命周期只经 {@link changeLifecycle} 单独流转，普通更新永不触碰。
+   */
+  private buildBody(): ModbusDeviceConfig {
+    const info = this.deviceInfo();
+    const commands: ModbusCommand[] = this.commands()
+      .filter((c) => c.name.trim().length > 0)
+      .map((c) => ({
+        ...c,
+        coils: c.coils ? c.coils.map((x) => ({ ...x })) : undefined,
+        registers: c.registers ? c.registers.map((x) => ({ ...x })) : undefined,
+      }));
+    return {
+      orgId: this.currentOrgId,
+      slave: {
+        manufacturer: info.manufacturer.trim(),
+        model: info.model.trim(),
+        type: info.type,
+        slaveId: info.slaveId,
+        description: this.blankToUndefined(info.description),
+      },
+      visibility: info.visibility ?? 'private',
+      commands,
+    };
+  }
+
+  /**
+   * 详情页即时保存：任一内容变更（对话框确认 / 删除确认 / 拖拽重排）即把当前整体 PUT 落库（不含 lifecycle）。
+   * 并发保护：上一笔仍在落库时新产生的变更记入队列，等它完成后用最新状态再刷一笔，避免丢改。
+   * 成功以「服务端已接受当前内容」为基准重置脏标记；失败回读服务端权威内容，撤销本地乐观改动。
+   */
+  private persistDetail(): void {
+    if (this.kind !== 'detail' || !this.routeId) {
+      return; // 新建页仍由顶部「保存」统一 create
+    }
+    if (this.submitting()) {
+      this.persistQueued = true;
+      return;
+    }
+    this.doPersist();
+  }
+
+  private doPersist(): void {
+    this.submitting.set(true);
+    this.service.update(this.routeId, this.buildBody()).subscribe({
+      next: () => {
+        this.submitting.set(false);
+        const queued = this.persistQueued;
+        this.persistQueued = false;
+        // 与服务端一致：以当前本地内容为基准重置「相对初始值」快照（详情页不再有整页保存态）
+        this.baseDeviceInfo = this.deviceInfo();
+        this.baseCommands = this.commands().map((c) => ({ ...c }));
+        this.msg.success(this.translate.instant('保存成功'));
+        if (queued) {
+          this.doPersist(); // 期间又有新变更：用最新状态再落一笔
+        }
+      },
+      error: (error) => {
+        this.persistQueued = false;
+        this.submitting.set(false);
+        this.msg.warning((error as { message?: string })?.message ?? error);
+        this.loadConfig(); // 与后端不一致，回读服务端权威内容
+      },
+    });
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * 生命周期流转（详情页 header 的 预览 / 发布 / 下线）
+   * ----------------------------------------------------------------------------------------------*/
+  protected preview(): void {
+    this.changeLifecycle(LifeCycle.PREVIEW);
+  }
+
+  protected release(): void {
+    this.changeLifecycle(LifeCycle.RELEASED);
+  }
+
+  protected offline(): void {
+    this.changeLifecycle(LifeCycle.DEVELOPMENT);
+  }
+
+  /** 调专用 lifecycle 接口并刷新：development→preview(预览)、preview→released(发布)、…→development(下线)。 */
+  private changeLifecycle(next: string): void {
+    if (this.kind !== 'detail' || !this.routeId || this.submitting()) {
+      return;
+    }
+    this.submitting.set(true);
+    this.service.setLifecycle(this.routeId, next).subscribe({
+      next: (updated) => {
+        this.submitting.set(false);
+        if (updated) {
+          this.applyConfig(updated); // 以服务端回执刷新 lifecycle 标签 / 按钮态，并重置变更基准
+        }
       },
       error: (error) => {
         this.submitting.set(false);

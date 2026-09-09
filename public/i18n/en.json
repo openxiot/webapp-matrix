@@ -236,6 +236,9 @@
   "更新者": "Updated By",
   "开发中": "In Development",
   "预览": "Preview",
+  "发布": "Publish",
+  "下线": "Take Offline",
   "已发布": "Released",
+  "确认删除功能码": "Are you sure you want to delete function code \"{{label}}\"?",
   "未定义": "Undefined"
 }

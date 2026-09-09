@@ -112,6 +112,9 @@ export interface ModbusDeviceConfig {
   slave: ModbusSlave;
   /** 可见度：private 私有 / public 公开 */
   visibility?: 'private' | 'public';
+  /** 生命周期（服务端存储串，与 xiot-spec Lifecycle 对齐）：development 开发 / preview 预览 / released 已发布。
+   *  新建默认 development；仅 development 态允许修改，preview/released 锁定。缺省按 development 展示。 */
+  lifecycle?: string;
   /** 功能码动作列表 */
   commands: ModbusCommand[];
   /** 创建者/创建时间 */
