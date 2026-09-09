@@ -12,7 +12,7 @@
       <nz-row [nzGutter]="[16, 16]">
         @for (product of products(); track product.id) {
           <nz-col [nzSpan]="4">
-            <nz-card [nzHoverable]="true" [nzCover]="coverTemplate" [nzActions]="[detail]">
+            <nz-card [nzHoverable]="true" [nzCover]="coverTemplate" [routerLink]="['/main/product/detail', product.id]">
               <nz-card-meta [nzTitle]="title" [nzDescription]="desc"></nz-card-meta>
             </nz-card>
 
@@ -32,10 +32,6 @@
             <ng-template #desc>
               <div>{{ product.model }}</div>
               <div>{{ '组织' | translate }}: {{ product.organization }}</div>
-            </ng-template>
-
-            <ng-template #detail>
-              <a [routerLink]="['/main/product/detail', product.id]">{{ '详情' | translate }}</a>
             </ng-template>
           </nz-col>
         }

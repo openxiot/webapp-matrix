@@ -1,14 +1,90 @@
-<nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
-  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
-</nz-page-header>
+<nz-spin [nzSpinning]="loading()">
+  <nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
+    <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
 
-<ng-template #pageTitle>
-  {{ '产品详情' | translate }}
-</ng-template>
+    @if (product(); as p) {
+      <nz-page-header-content>
+        <nz-descriptions nzSize="small" [nzColumn]="4">
+          <nz-descriptions-item nzTitle="{{ '创建者' | translate }}" [nzSpan]="1">{{ actorName(p.creator) }}
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '创建时间' | translate }}" [nzSpan]="1">{{ p.creator?.timestamp ? (p.creator.timestamp | date:'yyyy-MM-dd HH:mm:ss':'GMT+00:00') : '-' }}
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '更新者' | translate }}" [nzSpan]="1">{{ actorName(p.updater) }}
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '更新时间' | translate }}" [nzSpan]="1">{{ p.updater?.timestamp ? (p.updater.timestamp | date:'yyyy-MM-dd HH:mm:ss':'GMT+00:00') : '-' }}
+          </nz-descriptions-item>
+        </nz-descriptions>
+      </nz-page-header-content>
+    }
+  </nz-page-header>
 
-<div style="padding: 20px 20px">
-  <nz-card nzSize="small">
-    <p>{{ '产品 ID' | translate }}: {{ id() }}</p>
-    <p style="color: #999">{{ '产品详情功能开发中...' | translate }}</p>
-  </nz-card>
-</div>
+  <ng-template #pageTitle>
+    @if (product(); as p) {
+      {{ productTitle(p) }}
+    } @else {
+      {{ '产品详情' | translate }}
+    }
+  </ng-template>
+
+  <div class="product-detail">
+    @if (product(); as p) {
+      <!-- 基本信息 -->
+      <nz-card nzTitle="{{ '产品信息' | translate }}">
+        <nz-descriptions nzBordered [nzColumn]="3">
+          <nz-descriptions-item nzTitle="{{ '产品 ID' | translate }}" [nzSpan]="1">{{ p.id }}</nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '型号' | translate }}" [nzSpan]="1">{{ p.model }}</nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '接入协议' | translate }}" [nzSpan]="1">{{ p.protocol || '-' }}</nz-descriptions-item>
+
+          <nz-descriptions-item nzTitle="{{ '所属组织' | translate }}" [nzSpan]="1">{{ p.organization || '-' }}</nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '生命周期' | translate }}" [nzSpan]="1">
+            <nz-tag [nzColor]="lifecycle(p).color">{{ lifecycle(p).text | translate }}</nz-tag>
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '产品图标' | translate }}" [nzSpan]="1">
+            @if (p.icon) {
+              <nz-avatar [nzSrc]="p.icon" nzShape="square" [nzSize]="40"></nz-avatar>
+            } @else {
+              <nz-avatar nzIcon="appstore" nzShape="square" [nzSize]="40"></nz-avatar>
+            }
+          </nz-descriptions-item>
+
+          <nz-descriptions-item nzTitle="{{ '物模型模板' | translate }}" [nzSpan]="3">
+            <span class="urn">{{ p.template ? p.template.toString() : '-' }}</span>
+          </nz-descriptions-item>
+        </nz-descriptions>
+      </nz-card>
+
+      <!-- 多语言名称与别名 -->
+      <nz-card nzTitle="{{ '名称与别名' | translate }}">
+        <div class="name-block">
+          <div class="name-block__label">{{ '标准名称' | translate }}</div>
+          <div class="name-lines">
+            @for (row of standardNames(); track row.lang) {
+              <div class="name-line">
+                <nz-tag class="name-line__lang">{{ row.lang }}</nz-tag>
+                <span class="name-line__value">{{ row.value }}</span>
+              </div>
+            } @empty {
+              <span class="muted">-</span>
+            }
+          </div>
+        </div>
+
+        @if (aliasNames().length > 0) {
+          <div class="name-block">
+            <div class="name-block__label">{{ '别名' | translate }}</div>
+            <div class="name-lines">
+              @for (row of aliasNames(); track $index) {
+                <div class="name-line">
+                  <nz-tag class="name-line__lang">{{ row.lang }}</nz-tag>
+                  <span class="name-line__value">{{ row.value }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </nz-card>
+    } @else if (!loading()) {
+      <nz-empty></nz-empty>
+    }
+  </div>
+</nz-spin>

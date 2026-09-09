@@ -1,3 +1,42 @@
 :host {
   display: block;
 }
+
+.product-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+/* 物模型模板 URN：等宽字体，长串自动换行 */
+.urn {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  word-break: break-all;
+}
+
+.muted {
+  color: #999;
+}
+
+/* 多语言名称行 */
+.name-block + .name-block {
+  margin-top: 16px;
+}
+
+.name-block__label {
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.name-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.name-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

@@ -224,5 +224,18 @@
   "线圈数据": "Coil data",
   "寄存器数据": "Register data",
   "CRC16": "CRC16",
-  "帧结构解析": "Frame breakdown"
+  "帧结构解析": "Frame breakdown",
+  "产品图标": "Icon",
+  "产品信息": "Product Information",
+  "接入协议": "Protocol",
+  "生命周期": "Lifecycle",
+  "物模型模板": "Thing Model Template",
+  "名称与别名": "Names & Aliases",
+  "标准名称": "Standard Name",
+  "别名": "Alias",
+  "更新者": "Updated By",
+  "开发中": "In Development",
+  "预览": "Preview",
+  "已发布": "Released",
+  "未定义": "Undefined"
 }
