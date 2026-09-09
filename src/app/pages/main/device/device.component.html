@@ -48,7 +48,7 @@
                 <td class="cell-space" [title]="spaceName(row.device)">{{ spaceName(row.device) }}</td>
                 <td class="cell-ops">
                   <a [routerLink]="['/main/device/detail', row.device.did]">{{ '详情' | translate }}</a>
-                  @if (isDtuDevice(row.device)) {
+                  @if (isDtuDevice(row.device) && account.userSettings().organizationEnabled && account.organization().id) {
                     <nz-divider nzType="vertical"></nz-divider>
                     <a [routerLink]="['/main/device/mapping', row.device.did]">{{ '映射' | translate }}</a>
                   }
