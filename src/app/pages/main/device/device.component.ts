@@ -171,6 +171,11 @@ export class DeviceComponent implements OnInit {
     return s ? s.name : '';
   }
 
+  /** 设备是否 DTU（按其类型 URN 的 name 段判断）。DTU 才能做 Modbus 映射。 */
+  isDtuDevice(device: DeviceEntity): boolean {
+    return UrnUtils.extractTypeName(device.type).toLowerCase() === 'dtu';
+  }
+
   /** nz-table 展开箭头回调：expand=true 展开子设备，false 收起（维护 collapsed 集合，供 flatten 剪枝） */
   toggleExpand(did: string, expand: boolean) {
     const next = new Set(this.collapsed());

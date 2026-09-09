@@ -132,3 +132,18 @@ export interface ModbusPerson {
   /** epoch 毫秒时间戳 */
   timestamp?: number;
 }
+
+/**
+ * Modbus 虚拟设备映射请求体（createOne）：把一条点表配置虚拟成父设备（DTU）下的子设备。
+ * siid / aiid 是父设备侧「服务 ID / 方法 ID」，仅作映射信息保留。
+ */
+export interface ModbusMapping {
+  /** 被虚拟化的点表配置 ID */
+  configId: string;
+  /** 父设备 ID（DTU，虚拟设备挂载到其下） */
+  did: string;
+  /** 父设备服务 ID（siid） */
+  siid: number;
+  /** 父设备方法 ID（aiid） */
+  aiid: number;
+}

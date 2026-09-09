@@ -1,0 +1,94 @@
+<nz-page-header (nzBack)="onBack()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
+  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+  <ng-template #pageTitle>
+    {{ 'Modbus 映射' | translate }}
+  </ng-template>
+</nz-page-header>
+
+<div style="padding: 20px 20px">
+  <nz-spin [nzSpinning]="loadingDevice() || loadingInstance() || loadingConfigs()">
+    <nz-card nzTitle="{{ '映射 Modbus 点表为虚拟子设备' | translate }}">
+      <!-- 父设备摘要 -->
+      @if (device(); as d) {
+        <div class="mapping-parent">
+          <span class="mapping-parent-label">{{ '父设备' | translate }}：</span>
+          <nz-tag [nzColor]="'blue'">{{ d.online ? ('在线' | translate) : ('离线' | translate) }}</nz-tag>
+          <code>{{ d.did }}</code>
+          <span class="mapping-parent-desc">（{{ 'Modbus 虚拟设备将挂载到该设备下' | translate }}）</span>
+        </div>
+      }
+
+      @if (services().length === 0 && !loadingInstance()) {
+        <nz-alert
+          nzType="warning"
+          [nzMessage]="'父设备没有可用的方法（Service → Action），无法进行映射' | translate"
+          style="margin-bottom: 12px"
+        ></nz-alert>
+      }
+
+      <nz-form-item>
+        <nz-form-label nzFor="mapService" [nzSpan]="5" [nzRequired]="true">{{ '服务' | translate }}</nz-form-label>
+        <nz-form-control>
+          <nz-select
+            id="mapService"
+            [ngModel]="selectedSiid()"
+            (ngModelChange)="onServiceChange($event)"
+            [nzPlaceHolder]="'选择父设备的方法所属服务' | translate"
+            [nzDisabled]="services().length === 0"
+            [nzLoading]="loadingInstance()"
+            style="width: 100%"
+          >
+            @for (s of services(); track s.iid) {
+              <nz-option [nzValue]="s.iid" [nzLabel]="serviceLabel(s)"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzFor="mapAction" [nzSpan]="5" [nzRequired]="true">{{ '方法' | translate }}</nz-form-label>
+        <nz-form-control>
+          <nz-select
+            id="mapAction"
+            [ngModel]="selectedAiid()"
+            (ngModelChange)="onActionChange($event)"
+            [nzPlaceHolder]="'选择父设备的 Action' | translate"
+            [nzDisabled]="actions().length === 0"
+            style="width: 100%"
+          >
+            @for (a of actions(); track a.iid) {
+              <nz-option [nzValue]="a.iid" [nzLabel]="actionLabel(a)"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzFor="mapConfig" [nzSpan]="5" [nzRequired]="true">{{ '设备点表' | translate }}</nz-form-label>
+        <nz-form-control>
+          <nz-select
+            id="mapConfig"
+            [ngModel]="selectedConfigId()"
+            (ngModelChange)="onConfigChange($event)"
+            [nzPlaceHolder]="'选择要虚拟化的设备点表' | translate"
+            [nzDisabled]="configs().length === 0"
+            [nzLoading]="loadingConfigs()"
+            nzShowSearch
+            style="width: 100%"
+          >
+            @for (cfg of configs(); track cfg.id) {
+              <nz-option [nzValue]="cfg.id" [nzLabel]="configLabel(cfg)"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <div class="mapping-footer">
+        <button nz-button (click)="onBack()">{{ '取消' | translate }}</button>
+        <button nz-button nzType="primary" [nzLoading]="saving()" [disabled]="!canSave()" (click)="save()">
+          {{ '保存' | translate }}
+        </button>
+      </div>
+    </nz-card>
+  </nz-spin>
+</div>

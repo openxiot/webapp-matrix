@@ -3,7 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { OxResponse } from './response/OxResponse';
-import { ModbusDeviceConfig } from '../typedef/define/modbus/Modbus';
+import { ModbusDeviceConfig, ModbusMapping } from '../typedef/define/modbus/Modbus';
+import { DeviceEntity } from '../typedef/define/device/DeviceEntity';
 
 /**
  * Modbus 设备点表服务。
@@ -77,5 +78,16 @@ export class ModbusService {
     return this.http
       .delete<OxResponse>(`${this.server}/matrix/v1/modbus/config/one/${id}`)
       .pipe(map(() => undefined));
+  }
+
+  /**
+   * 创建 Modbus 虚拟设备（POST /matrix/v1/modbus/virtual/one）：把一条点表配置虚拟成父设备
+   * （映射所选 DTU）下的子设备。组织经 X-Org-Id 携带；需为该组织管理员。
+   * 成功后返回新建的矩阵子设备（DeviceEntity），父设备下即可看到。
+   */
+  createVirtual(body: ModbusMapping): Observable<DeviceEntity> {
+    return this.http
+      .post<OxResponse>(`${this.server}/matrix/v1/modbus/virtual/one`, body)
+      .pipe(map((r) => r.data as DeviceEntity));
   }
 }
