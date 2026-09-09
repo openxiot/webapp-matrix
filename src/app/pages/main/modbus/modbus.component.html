@@ -44,9 +44,9 @@
         <tbody>
           @for (config of configs(); track config.id) {
             <tr>
-              <td>{{ config.manufacturer || '-' }}</td>
-              <td>{{ config.model || '-' }}</td>
-              <td>{{ config.slaveId ?? '-' }}</td>
+              <td>{{ config.slave?.manufacturer || '-' }}</td>
+              <td>{{ config.slave?.model || '-' }}</td>
+              <td>{{ config.slave?.slaveId ?? '-' }}</td>
               <td>
                 <span
                   class="visibility"
@@ -56,8 +56,8 @@
                   {{ (config.visibility === 'public' ? '公开' : (config.visibility === 'private' ? '私有' : '-')) | translate }}
                 </span>
               </td>
-              <td class="ellipsis-cell" [title]="config.description || undefined">
-                {{ config.description || '-' }}
+              <td class="ellipsis-cell" [title]="config.slave?.description || undefined">
+                {{ config.slave?.description || '-' }}
               </td>
               <td class="ellipsis-cell"
                   [title]="config.creator?.timestamp ? (config.creator!.timestamp | date:'yyyy-MM-dd HH:mm:ss') : undefined">

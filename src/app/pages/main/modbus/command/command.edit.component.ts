@@ -231,6 +231,8 @@ export class CommandEditComponent {
     const cmd: ModbusCommand = {
       name: this.name().trim(),
       fc: f as ModbusCommand['fc'],
+      // 行序 index 由编辑器统一重排（新增置 0 占位、编辑沿用原值，返回后 editor 再按位置覆写）
+      index: this.data?.index ?? 0,
       start: this.start(),
     };
     const start = this.start() ?? 0;

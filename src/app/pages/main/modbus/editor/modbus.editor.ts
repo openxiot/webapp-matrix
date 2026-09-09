@@ -8,7 +8,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from '../../../../service/account.service';
 import { ModbusService } from '../../../../service/modbus.service';
 import { UserOrganizationService } from '../../../../service/user.organization.service';
-import { ModbusCommand, ModbusDeviceConfig, ModbusDeviceInfo } from '../../../../typedef/define/modbus/Modbus';
+import {
+  ModbusCommand,
+  ModbusDeviceConfig,
+  ModbusDeviceInfo,
+  ModbusDeviceType,
+} from '../../../../typedef/define/modbus/Modbus';
 import { DeviceType } from '@openxiot/xiot-core-spec-ts';
 import { CommandEditComponent, type ModbusCommandDialogData } from '../command/command.edit.component';
 import {
@@ -60,17 +65,35 @@ export abstract class ModbusEditor {
     return this.kind === 'add';
   }
 
-  /** 设备类型只读展示：由完整 DeviceType 反解为「名字空间 · 设备名」。 */
-  protected deviceTypeDisplay(type: string | undefined): string {
+  /** 产品规范（名字空间）展示：优先落库的多语文案，缺省回退 URN 的 ns 段。 */
+  protected specLabel(type: ModbusDeviceType | undefined): string {
     if (!type) {
       return '-';
     }
-    try {
-      const t = DeviceType.parse(type);
-      return t.ns && t.name ? `${t.ns} · ${t.name}` : type;
-    } catch {
-      return type;
+    const localized = pickLocalized(type.specDescription);
+    if (localized) {
+      return localized;
     }
+    const ns = nsOf(type.type);
+    return ns || '-';
+  }
+
+  /** 设备类型展示：优先落库的多语文案，缺省回退 URN 的 name 段。 */
+  protected typeLabel(type: ModbusDeviceType | undefined): string {
+    if (!type) {
+      return '-';
+    }
+    const localized = pickLocalized(type.typeDescription);
+    if (localized) {
+      return localized;
+    }
+    const name = nameOf(type.type);
+    return name || '-';
+  }
+
+  /** 品类 DeviceType 原始 URN（用于 tooltip / 提交值来源）。 */
+  protected typeUrn(type: ModbusDeviceType | undefined): string | undefined {
+    return type?.type;
   }
 
   /** 是否已选择组织：未选组织时为只读浏览（隐藏 编辑/添加功能码/保存），详情仅能查看。 */
@@ -213,19 +236,23 @@ export abstract class ModbusEditor {
 
   private applyConfig(config: ModbusDeviceConfig): void {
     this.configOrgId.set(config.orgId ?? '');
+    const slave = config.slave ?? {};
     this.deviceInfo.set({
-      manufacturer: config.manufacturer ?? '',
-      model: config.model ?? '',
-      type: config.type,
-      slaveId: config.slaveId,
+      manufacturer: slave.manufacturer ?? '',
+      model: slave.model ?? '',
+      type: slave.type,
+      slaveId: slave.slaveId,
       visibility: config.visibility ?? 'private',
-      description: config.description,
+      description: slave.description,
     });
     // 兼容旧文档：后端启动迁移把 points[] 转成 commands[]，本地按空处理即可
-    this.commands.set((config.commands ?? []).map((c) => ({ ...c })));
-    // 载入完成后再拍基准：初始状态保存按钮应为禁用
+    // 排序以 index 为准（服务端也可能按数组位置返回）：先按 index 升序，再整理为连续 1..N
+    const loaded = (config.commands ?? []).map((c) => ({ ...c }));
+    loaded.sort((a, b) => (a.index ?? Number.MAX_SAFE_INTEGER) - (b.index ?? Number.MAX_SAFE_INTEGER));
+    this.commands.set(this.renumber(loaded));
+    // 载入完成后再拍基准：初始状态保存按钮应为禁用（深拷贝，后续重排不污染基准）
     this.baseDeviceInfo = this.deviceInfo();
-    this.baseCommands = this.commands();
+    this.baseCommands = this.commands().map((c) => ({ ...c }));
   }
 
   /* ----------------------------------------------------------------------------------------------
@@ -287,7 +314,7 @@ export abstract class ModbusEditor {
 
     modal.afterClose.subscribe((result) => {
       if (result) {
-        this.commands.update((list) => [...list, result]);
+        this.commands.update((list) => this.renumber([...list, result]));
       }
     });
   }
@@ -319,7 +346,9 @@ export abstract class ModbusEditor {
 
     modal.afterClose.subscribe((result) => {
       if (result) {
-        this.commands.update((list) => list.map((c, i) => (i === index ? result : c)));
+        this.commands.update((list) =>
+          this.renumber(list.map((c, i) => (i === index ? { ...result, index: i + 1 } : c))),
+        );
       }
     });
   }
@@ -348,8 +377,17 @@ export abstract class ModbusEditor {
     });
   }
 
+  /** 就地整理行序号：保持「数组序 = index 序」，逐行写 index = 位置 + 1。
+   *  不换对象引用，让 cdkDropList 仍能按命令对象身份 diff 移动表格行。 */
+  private renumber(list: ModbusCommand[]): ModbusCommand[] {
+    for (let i = 0; i < list.length; i++) {
+      list[i].index = i + 1;
+    }
+    return list;
+  }
+
   protected removeCommand(index: number): void {
-    this.commands.update((list) => list.filter((_, i) => i !== index));
+    this.commands.update((list) => this.renumber(list.filter((_, i) => i !== index)));
   }
 
   /**
@@ -395,7 +433,7 @@ export abstract class ModbusEditor {
     this.commands.update((list) => {
       const copy = [...list];
       moveItemInArray(copy, event.previousIndex, event.currentIndex);
-      return copy;
+      return this.renumber(copy);
     });
   }
 
@@ -440,12 +478,14 @@ export abstract class ModbusEditor {
 
     const body: ModbusDeviceConfig = {
       orgId: this.currentOrgId,
-      manufacturer: info.manufacturer.trim(),
-      model: info.model.trim(),
-      type: this.blankToUndefined(info.type),
-      slaveId: info.slaveId,
+      slave: {
+        manufacturer: info.manufacturer.trim(),
+        model: info.model.trim(),
+        type: info.type,
+        slaveId: info.slaveId,
+        description: this.blankToUndefined(info.description),
+      },
       visibility: info.visibility ?? 'private',
-      description: this.blankToUndefined(info.description),
       commands,
     };
 
@@ -480,6 +520,45 @@ export abstract class ModbusEditor {
 
 function emptyDeviceInfo(): ModbusDeviceInfo {
   return { manufacturer: '', model: '', visibility: 'private' };
+}
+
+/** 多语文案里挑当前优先展示的语言：zh-CN → en-US → 任意首条。 */
+function pickLocalized(map: Record<string, string> | undefined): string | undefined {
+  if (!map) {
+    return undefined;
+  }
+  if (map['zh-CN']) {
+    return map['zh-CN'];
+  }
+  if (map['en-US']) {
+    return map['en-US'];
+  }
+  const values = Object.values(map);
+  return values.length > 0 ? values[0] : undefined;
+}
+
+/** 品类 DeviceType URN → ns 段（非法返回空串）。 */
+function nsOf(type: string | undefined): string {
+  if (!type) {
+    return '';
+  }
+  try {
+    return DeviceType.parse(type).ns ?? '';
+  } catch {
+    return '';
+  }
+}
+
+/** 品类 DeviceType URN → name 段（非法返回空串）。 */
+function nameOf(type: string | undefined): string {
+  if (!type) {
+    return '';
+  }
+  try {
+    return DeviceType.parse(type).name ?? '';
+  } catch {
+    return '';
+  }
 }
 
 /** 空串/null/undefined 视作同一「空」，仅用于变更比对，不影响真实提交值 */

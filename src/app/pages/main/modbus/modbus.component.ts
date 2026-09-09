@@ -189,7 +189,8 @@ export class ModbusComponent {
   }
 
   protected remove(config: ModbusDeviceConfig) {
-    const label = `${config.manufacturer || ''} ${config.model || ''}`.trim() || config.id || '';
+    const slave = config.slave ?? {};
+    const label = `${slave.manufacturer || ''} ${slave.model || ''}`.trim() || config.id || '';
     const modal = this.modal.create<ConfirmComponent, string, string>({
       nzTitle: this.translate.instant('确认删除设备点表', { label }),
       nzContent: ConfirmComponent,

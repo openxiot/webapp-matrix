@@ -34,8 +34,11 @@
                 -
               }
             </nz-descriptions-item>
-            <nz-descriptions-item nzTitle="{{ '设备类型' | translate }}" [nzSpan]="4">
-              <span [title]="deviceInfo().type ?? undefined">{{ deviceTypeDisplay(deviceInfo().type) }}</span>
+            <nz-descriptions-item nzTitle="{{ '产品规范' | translate }}" [nzSpan]="2">
+              <span [title]="specLabel(deviceInfo().type)">{{ specLabel(deviceInfo().type) }}</span>
+            </nz-descriptions-item>
+            <nz-descriptions-item nzTitle="{{ '设备类型' | translate }}" [nzSpan]="2">
+              <span [title]="typeUrn(deviceInfo().type) ?? undefined">{{ typeLabel(deviceInfo().type) }}</span>
             </nz-descriptions-item>
             <nz-descriptions-item nzTitle="{{ '描述' | translate }}" [nzSpan]="4">
               {{ deviceInfo().description || '-' }}
@@ -73,6 +76,7 @@
         >
           <thead>
           <tr>
+            <th nzWidth="60px">{{ '序号' | translate }}</th>
             <th nzWidth="100px">{{ '功能名称' | translate }}</th>
             <th nzWidth="160px">{{ '功能码' | translate }}</th>
             <th nzWidth="80px">{{ '起始地址' | translate }}</th>
@@ -96,6 +100,7 @@
                  Angular 按对象身份做 diff 才能让 DOM 顺序与新数组一致（track $index 不会移动节点，会错位） -->
             @for (command of commands(); track command) {
               <tr cdkDrag [cdkDragDisabled]="!canManage()" [class.cmd-draggable]="canManage()">
+                <td>{{ command.index ?? $index + 1 }}</td>
                 <td class="command-name">{{ command.name || '-' }}</td>
                 <td>
                   <!-- 写功能码（05/06/0F/10）标红，读功能码（01–04）保持蓝色 -->
