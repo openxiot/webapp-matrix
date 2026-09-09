@@ -13,9 +13,10 @@
         <nz-table #devTable class="device-table" [nzData]="rows()" [nzShowPagination]="false" nzSize="middle">
           <thead>
             <tr>
+              <th class="cell-expand"></th>
+              <th nzWidth="400px">{{ '设备ID' | translate }}</th>
               <th>{{ '产品' | translate }}</th>
               <th>{{ '设备名称' | translate }}</th>
-              <th>{{ '设备ID' | translate }}</th>
               <th>{{ '状态' | translate }}</th>
               <th>{{ '所在空间' | translate }}</th>
               <th>{{ '操作' | translate }}</th>
@@ -24,14 +25,19 @@
           <tbody>
             @for (row of devTable.data; track row.device.did) {
               <tr>
-                <!-- 树形：展开箭头 + 按层缩进（nzIndentSize），落在首列（产品图标列），图标随层级右移 -->
+                <!-- 首列：专用于 展开/收起 子设备，箭头居中；仅可展开行有控制，其余留空 -->
                 <td
-                  class="cell-icon"
-                  [nzIndentSize]="row.depth * 22"
+                  class="cell-expand"
                   [nzShowExpand]="row.hasChildren"
                   [nzExpand]="!collapsed().has(row.device.did)"
                   (nzExpandChange)="toggleExpand(row.device.did, $event)"
-                >
+                ></td>
+                <!-- 设备ID：第 2 列，树形层级缩进只落在这一列 -->
+                <td class="cell-did" [title]="row.device.did">
+                  <span class="cell-indent" [style.margin-left.px]="row.depth * 22">{{ row.device.did }}</span>
+                </td>
+                <!-- 产品图标列：不参与缩进，与层级无关，图标统一左对齐 -->
+                <td class="cell-icon">
                   @if (deviceIcon(row.device); as icon) {
                     <nz-avatar [nzSrc]="icon" [nzSize]="48"></nz-avatar>
                   } @else {
@@ -39,7 +45,6 @@
                   }
                 </td>
                 <td class="cell-name-text" [title]="deviceName(row.device)">{{ deviceName(row.device) }}</td>
-                <td class="cell-did" [title]="row.device.did">{{ row.device.did }}</td>
                 <td>
                   <nz-tag [nzColor]="row.device.online ? 'success' : 'default'">
                     {{ row.device.online ? ('在线' | translate) : ('离线' | translate) }}

@@ -2,7 +2,19 @@
   /* 行高 / hover 交回 ng-zorro nz-table 默认，只补单元格内容排版 */
 }
 
-/* 产品图标：首列树形列，图标随缩进右移 */
+/* 首列：专用于 展开/收起，箭头水平居中 */
+.cell-expand {
+  width: 48px;
+  text-align: center;
+}
+
+/* 树形缩进的承载元素：放在 设备ID 列内，按层级左移，其余列不随层级移动 */
+.cell-indent {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* 产品图标列：不参与缩进，与层级无关 */
 .cell-icon {
   white-space: nowrap;
 }
@@ -21,6 +33,7 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
   color: #595959;
+  white-space: nowrap;
 }
 
 /* 所在空间：弱化处理 */
