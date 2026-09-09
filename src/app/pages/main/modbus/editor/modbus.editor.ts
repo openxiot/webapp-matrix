@@ -9,13 +9,17 @@ import { AccountService } from '../../../../service/account.service';
 import { ModbusService } from '../../../../service/modbus.service';
 import { UserOrganizationService } from '../../../../service/user.organization.service';
 import { ModbusCommand, ModbusDeviceConfig, ModbusDeviceInfo } from '../../../../typedef/define/modbus/Modbus';
+import { DeviceType } from '@openxiot/xiot-core-spec-ts';
 import { CommandEditComponent, type ModbusCommandDialogData } from '../command/command.edit.component';
 import {
   RequestFrameDialogComponent,
   type RequestFrameDialogData,
 } from './request/request.frame.dialog.component';
 import { buildRequestFrame } from './request/request.frame';
-import { ModbusDeviceInfoEditComponent } from '../device-info/modbus.device.info.edit.component';
+import {
+  ModbusDeviceInfoEditComponent,
+  type ModbusDeviceInfoEditData,
+} from '../device-info/modbus.device.info.edit.component';
 import { coilStateText, fcLabelKey, isWriteFc, logicalAddressOf } from '../command/point.options';
 
 /**
@@ -54,6 +58,19 @@ export abstract class ModbusEditor {
   /** 新建页标题用 */
   protected get isAdd(): boolean {
     return this.kind === 'add';
+  }
+
+  /** 设备类型只读展示：由完整 DeviceType 反解为「名字空间 · 设备名」。 */
+  protected deviceTypeDisplay(type: string | undefined): string {
+    if (!type) {
+      return '-';
+    }
+    try {
+      const t = DeviceType.parse(type);
+      return t.ns && t.name ? `${t.ns} · ${t.name}` : type;
+    } catch {
+      return type;
+    }
   }
 
   /** 是否已选择组织：未选组织时为只读浏览（隐藏 编辑/添加功能码/保存），详情仅能查看。 */
@@ -199,6 +216,7 @@ export abstract class ModbusEditor {
     this.deviceInfo.set({
       manufacturer: config.manufacturer ?? '',
       model: config.model ?? '',
+      type: config.type,
       slaveId: config.slaveId,
       visibility: config.visibility ?? 'private',
       description: config.description,
@@ -216,13 +234,13 @@ export abstract class ModbusEditor {
   protected editDeviceInfo(): void {
     const modal = this.modal.create<
       ModbusDeviceInfoEditComponent,
-      ModbusDeviceInfo,
+      ModbusDeviceInfoEditData,
       ModbusDeviceInfo
     >({
       nzTitle: this.translate.instant('编辑设备信息'),
       nzContent: ModbusDeviceInfoEditComponent,
       nzViewContainerRef: this.viewContainerRef,
-      nzData: this.deviceInfo(),
+      nzData: { ...this.deviceInfo(), isAdd: this.isAdd },
       nzFooter: [
         {
           label: this.translate.instant('取消'),
@@ -401,6 +419,12 @@ export abstract class ModbusEditor {
       this.editDeviceInfo();
       return;
     }
+    if (this.isAdd && !info.type) {
+      // 新建必选设备类型（服务端 create 也强制 type）；编辑存量旧配置允许暂缺（后端保留原值）
+      this.msg.warning(this.translate.instant('请选择设备类型'));
+      this.editDeviceInfo();
+      return;
+    }
     if (!this.currentOrgId) {
       this.msg.warning(this.translate.instant('请先选择组织'));
       return;
@@ -418,6 +442,7 @@ export abstract class ModbusEditor {
       orgId: this.currentOrgId,
       manufacturer: info.manufacturer.trim(),
       model: info.model.trim(),
+      type: this.blankToUndefined(info.type),
       slaveId: info.slaveId,
       visibility: info.visibility ?? 'private',
       description: this.blankToUndefined(info.description),
@@ -473,6 +498,7 @@ function deviceInfoKey(info: ModbusDeviceInfo): string {
   return JSON.stringify([
     normValue(info.manufacturer),
     normValue(info.model),
+    normValue(info.type),
     normValue(info.slaveId),
     normValue(info.visibility),
     normValue(info.description),

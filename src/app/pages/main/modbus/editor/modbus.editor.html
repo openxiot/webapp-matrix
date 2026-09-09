@@ -34,6 +34,9 @@
                 -
               }
             </nz-descriptions-item>
+            <nz-descriptions-item nzTitle="{{ '设备类型' | translate }}" [nzSpan]="4">
+              <span [title]="deviceInfo().type ?? undefined">{{ deviceTypeDisplay(deviceInfo().type) }}</span>
+            </nz-descriptions-item>
             <nz-descriptions-item nzTitle="{{ '描述' | translate }}" [nzSpan]="4">
               {{ deviceInfo().description || '-' }}
             </nz-descriptions-item>

@@ -23,6 +23,42 @@
   <div nz-row [nzGutter]="16">
     <div nz-col [nzSpan]="12">
       <nz-form-item>
+        <nz-form-label>{{ '名字空间' | translate }}</nz-form-label>
+        <nz-form-control>
+          <nz-select [ngModel]="selectedNamespace()" (ngModelChange)="onNamespaceChange($event)"
+                     [nzLoading]="namespaceLoading()" nzPlaceHolder="{{ '选择名字空间' | translate }}"
+                     nzShowSearch nzAllowClear style="width: 100%">
+            @for (ns of namespaces(); track ns.namespace) {
+              <nz-option [nzValue]="ns.namespace" [nzLabel]="ns.namespace"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+    <div nz-col [nzSpan]="12">
+      <nz-form-item>
+        <nz-form-label [nzRequired]="isAdd">
+          {{ '设备类型' | translate }}
+          @if (!isAdd) {
+            <span class="modbus-type-optional">（可选）</span>
+          }
+        </nz-form-label>
+        <nz-form-control>
+          <nz-select [ngModel]="selectedType()" (ngModelChange)="onDeviceTypeChange($event)"
+                     [nzLoading]="deviceLoading()" nzPlaceHolder="{{ '选择设备类型' | translate }}"
+                     nzShowSearch nzAllowClear style="width: 100%">
+            @for (device of devices(); track device.type.toString()) {
+              <nz-option [nzValue]="device.type.toString()" [nzLabel]="deviceLabel(device)"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+  </div>
+
+  <div nz-row [nzGutter]="16">
+    <div nz-col [nzSpan]="12">
+      <nz-form-item>
         <nz-form-label nzFor="deviceInfoSlaveId" [nzRequired]="true">{{ '从站地址' | translate }}</nz-form-label>
         <nz-form-control>
           <nz-input-number id="deviceInfoSlaveId" [ngModel]="slaveId()" (ngModelChange)="onSlaveIdChange($event)"

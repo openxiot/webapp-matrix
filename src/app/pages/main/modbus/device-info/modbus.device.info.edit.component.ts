@@ -5,19 +5,42 @@ import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
+import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { TranslatePipe } from '@ngx-translate/core';
+import { DeviceDefinition, DeviceType, NamespaceDefinition } from '@openxiot/xiot-core-spec-ts';
+import { ProductService } from '../../../../service/product.service';
 import { ModbusDeviceInfo } from '../../../../typedef/define/modbus/Modbus';
+
+/**
+ * 设备信息编辑对话框的数据：ModbusDeviceInfo 外加新建/编辑标记（新建必选设备类型）。
+ */
+export interface ModbusDeviceInfoEditData extends ModbusDeviceInfo {
+  /** true=新建设备点表（设备类型必选）；编辑存量配置可选（后端保留旧值） */
+  isAdd?: boolean;
+}
 
 @Component({
   selector: 'modbus-device-info-edit',
   standalone: true,
   templateUrl: './modbus.device.info.edit.component.html',
-  imports: [FormsModule, NzFormModule, NzInputModule, NzInputNumberModule, NzRadioModule, NzGridModule, TranslatePipe],
+  imports: [
+    FormsModule,
+    NzFormModule,
+    NzInputModule,
+    NzInputNumberModule,
+    NzRadioModule,
+    NzSelectModule,
+    NzGridModule,
+    TranslatePipe,
+  ],
 })
 export class ModbusDeviceInfoEditComponent {
   readonly #modal = inject(NzModalRef);
-  readonly data: ModbusDeviceInfo = inject(NZ_MODAL_DATA);
+  readonly data: ModbusDeviceInfoEditData = inject(NZ_MODAL_DATA);
+  private readonly product = inject(ProductService);
+
+  protected readonly isAdd = this.data.isAdd === true;
 
   protected readonly manufacturer = signal(this.data.manufacturer ?? '');
   protected readonly model = signal(this.data.model ?? '');
@@ -25,12 +48,21 @@ export class ModbusDeviceInfoEditComponent {
   protected readonly visibility = signal<string>(this.data.visibility ?? 'private');
   protected readonly description = signal(this.data.description ?? '');
 
-  /** 厂家/型号/从站地址必填（服务端校验） */
+  /** 设备类型两级选择：名字空间 → 设备类型（value 均存完整 URN） */
+  protected readonly namespaces = signal<NamespaceDefinition[]>([]);
+  protected readonly namespaceLoading = signal(false);
+  protected readonly selectedNamespace = signal('');
+  protected readonly devices = signal<DeviceDefinition[]>([]);
+  protected readonly deviceLoading = signal(false);
+  protected readonly selectedType = signal<string | undefined>(this.data.type);
+
+  /** 厂家/型号/从站地址必填（服务端校验）；新建时设备类型也必选 */
   readonly valid = computed(
     () =>
       this.manufacturer().trim().length > 0 &&
       this.model().trim().length > 0 &&
-      this.slaveId() != null,
+      this.slaveId() != null &&
+      (!this.isAdd || !!this.selectedType()),
   );
 
   /** 相对原值有变化才允许确认 */
@@ -40,8 +72,84 @@ export class ModbusDeviceInfoEditComponent {
       this.model().trim() !== (this.data.model ?? '').trim() ||
       (this.slaveId() ?? undefined) !== (this.data.slaveId ?? undefined) ||
       this.visibility() !== (this.data.visibility ?? 'private') ||
+      (this.selectedType() ?? undefined) !== (this.data.type ?? undefined) ||
       this.description().trim() !== (this.data.description ?? '').trim(),
   );
+
+  constructor() {
+    this.loadNamespaces();
+  }
+
+  private loadNamespaces(): void {
+    this.namespaceLoading.set(true);
+    this.product.listSpecNamespaces().subscribe({
+      next: (namespaces) => {
+        this.namespaceLoading.set(false);
+        this.namespaces.set(namespaces ?? []);
+        // 已有设备类型时反解出名字空间，并预载设备目录
+        if (this.data.type) {
+          try {
+            const type = DeviceType.parse(this.data.type);
+            if (type.ns) {
+              this.selectedNamespace.set(type.ns);
+              this.loadDevices(type.ns, this.data.type);
+            }
+          } catch {
+            // type 无法解析（非法），保持未选状态
+          }
+        }
+      },
+      error: () => this.namespaceLoading.set(false),
+    });
+  }
+
+  /** 名字空间切换：重载设备类型目录并清空已选类型。 */
+  protected onNamespaceChange(namespace: string): void {
+    if (!namespace) {
+      this.selectedNamespace.set('');
+      this.devices.set([]);
+      this.selectedType.set(undefined);
+      return;
+    }
+    this.selectedNamespace.set(namespace);
+    this.selectedType.set(undefined);
+    this.loadDevices(namespace);
+  }
+
+  private loadDevices(namespace: string, keepType?: string): void {
+    this.deviceLoading.set(true);
+    this.product.listSpecDevices(namespace).subscribe({
+      next: (devices) => {
+        if (namespace !== this.selectedNamespace()) {
+          return; // 期间已切换名字空间，丢弃过期结果
+        }
+        this.devices.set(devices ?? []);
+        const keep = keepType ?? this.selectedType();
+        const stillThere = !!keep && (devices ?? []).some((d) => d.type.toString() === keep);
+        this.selectedType.set(stillThere ? keep : undefined);
+        this.deviceLoading.set(false);
+      },
+      error: () => {
+        if (namespace === this.selectedNamespace()) {
+          this.devices.set([]);
+          this.deviceLoading.set(false);
+        }
+      },
+    });
+  }
+
+  protected onDeviceTypeChange(type: string): void {
+    this.selectedType.set(type || undefined);
+  }
+
+  /** 设备类型下拉文案：优先中文描述，其次 type.name。 */
+  protected deviceLabel(device: DeviceDefinition): string {
+    const zh = device.description?.get('zh-CN');
+    if (zh) {
+      return zh;
+    }
+    return device.type?.name ?? device.type.toString();
+  }
 
   cancel(): void {
     this.#modal.destroy(undefined);
@@ -54,6 +162,7 @@ export class ModbusDeviceInfoEditComponent {
     const info: ModbusDeviceInfo = {
       manufacturer: this.manufacturer().trim(),
       model: this.model().trim(),
+      type: this.selectedType(),
       slaveId: this.slaveId(),
       visibility: this.visibility() === 'public' ? 'public' : 'private',
       description: this.emptyToUndefined(this.description()),

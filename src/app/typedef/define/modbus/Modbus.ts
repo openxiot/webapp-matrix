@@ -59,14 +59,19 @@ export interface ModbusCommand {
 }
 
 /**
- * 设备点表的基础信息（厂家/型号/从站地址/可见度/描述）。
- * 与 ModbusDeviceConfig 前 5 个字段一致，供「设备信息」只读展示与编辑对话框共用。
+ * 设备点表的基础信息（厂家/型号/设备类型/从站地址/可见度/描述）。
+ * 与 ModbusDeviceConfig 字段一致，供「设备信息」只读展示与编辑对话框共用。
  */
 export interface ModbusDeviceInfo {
   /** 厂家/品牌，如 特灵/开利/麦克维尔 */
   manufacturer: string;
   /** 设备型号，如 19XRV/CVHG */
   model: string;
+  /**
+   * 设备类型 = 完整品类 DeviceType（产品规范里两级选择：名字空间 → 设备类型），
+   * 如 urn:xiot-spec:device:chiller:0000A005；虚拟设备 DeviceType 由此继承追加 vendor/model。
+   */
+  type?: string;
   /** Modbus 从站地址 0-247 */
   slaveId?: number;
   /** 可见度：private 私有 / public 公开 */
@@ -75,7 +80,7 @@ export interface ModbusDeviceInfo {
 }
 
 /**
- * 设备点表配置（厂家 + 型号 + 描述 + 功能码动作列表；服务端 Java 公有字段，可选字段后端可能缺省）
+ * 设备点表配置（厂家 + 型号 + 设备类型 + 描述 + 功能码动作列表；服务端 Java 公有字段，可选字段后端可能缺省）
  */
 export interface ModbusDeviceConfig {
   id?: string;
@@ -84,6 +89,8 @@ export interface ModbusDeviceConfig {
   manufacturer: string;
   /** 设备型号，如 19XRV/CVHG */
   model: string;
+  /** 设备类型（品类 DeviceType URN，由名字空间→设备类型两级选择写入；新建必填） */
+  type?: string;
   /** Modbus 从站地址 0-247 */
   slaveId?: number;
   /** 可见度：private 私有 / public 公开 */

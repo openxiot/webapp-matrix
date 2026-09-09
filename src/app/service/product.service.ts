@@ -3,7 +3,16 @@ import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { OxResponse } from './response/OxResponse';
-import { ProductBasic, ProductBasicCodec, DeviceInstance, DeviceInstanceCodec } from '@openxiot/xiot-core-spec-ts';
+import {
+  ProductBasic,
+  ProductBasicCodec,
+  DeviceInstance,
+  DeviceInstanceCodec,
+  NamespaceDefinition,
+  NamespaceDefinitionCodec,
+  DeviceDefinition,
+  DeviceDefinitionCodec,
+} from '@openxiot/xiot-core-spec-ts';
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {
@@ -41,5 +50,19 @@ export class ProductService {
     return this.http
       .get<OxResponse>(`${this.product}/v1/product/instance/one/${type}`)
       .pipe(map((r) => DeviceInstanceCodec.decode(r.data)));
+  }
+
+  /** 产品规范名字空间目录（两级选择器第一级）。 */
+  listSpecNamespaces(): Observable<NamespaceDefinition[]> {
+    return this.http
+      .get<OxResponse>(`${this.product}/v1/spec/namespace/all`)
+      .pipe(map((r) => NamespaceDefinitionCodec.decodeArray(r.data)));
+  }
+
+  /** 某个名字空间下的设备类型目录（两级选择器第二级）。 */
+  listSpecDevices(namespace: string): Observable<DeviceDefinition[]> {
+    return this.http
+      .get<OxResponse>(`${this.product}/v1/spec/device/many/${namespace}`)
+      .pipe(map((r) => DeviceDefinitionCodec.decodeArray(r.data)));
   }
 }
