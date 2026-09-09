@@ -8,23 +8,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from '../../../../service/account.service';
 import { ModbusService } from '../../../../service/modbus.service';
 import { UserOrganizationService } from '../../../../service/user.organization.service';
-import {
-  ModbusCommand,
-  ModbusDeviceConfig,
-  ModbusDeviceInfo,
-  ModbusDeviceType,
-} from '../../../../typedef/define/modbus/Modbus';
+import { ModbusCommand, ModbusDeviceConfig, ModbusDeviceInfo, ModbusDeviceType } from '../../../../typedef/define/modbus/Modbus';
 import { DeviceType } from '@openxiot/xiot-core-spec-ts';
 import { CommandEditComponent, type ModbusCommandDialogData } from '../command/command.edit.component';
-import {
-  RequestFrameDialogComponent,
-  type RequestFrameDialogData,
-} from './request/request.frame.dialog.component';
+import { RequestFrameDialogComponent, type RequestFrameDialogData } from './request/request.frame.dialog.component';
 import { buildRequestFrame } from './request/request.frame';
-import {
-  ModbusDeviceInfoEditComponent,
-  type ModbusDeviceInfoEditData,
-} from '../device-info/modbus.device.info.edit.component';
+import { ModbusDeviceInfoEditComponent, type ModbusDeviceInfoEditData, } from '../device-info/modbus.device.info.edit.component';
 import { coilStateText, fcLabelKey, isWriteFc, logicalAddressOf } from '../command/point.options';
 
 /**
@@ -266,6 +255,7 @@ export abstract class ModbusEditor {
     >({
       nzTitle: this.translate.instant('编辑设备信息'),
       nzContent: ModbusDeviceInfoEditComponent,
+      nzWidth: 640,
       nzViewContainerRef: this.viewContainerRef,
       nzData: { ...this.deviceInfo(), isAdd: this.isAdd },
       nzFooter: [

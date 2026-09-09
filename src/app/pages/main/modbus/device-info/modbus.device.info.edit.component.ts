@@ -5,8 +5,7 @@ import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
-import { NzSelectModule } from 'ng-zorro-antd/select';
-import { NzGridModule } from 'ng-zorro-antd/grid';
+import { NzCascaderModule, type NzCascaderOption } from 'ng-zorro-antd/cascader';
 import { TranslatePipe } from '@ngx-translate/core';
 import { DeviceDefinition, DeviceType, NamespaceDefinition } from '@openxiot/xiot-core-spec-ts';
 import { ProductService } from '../../../../service/product.service';
@@ -30,8 +29,7 @@ export interface ModbusDeviceInfoEditData extends ModbusDeviceInfo {
     NzInputModule,
     NzInputNumberModule,
     NzRadioModule,
-    NzSelectModule,
-    NzGridModule,
+    NzCascaderModule,
     TranslatePipe,
   ],
 })
@@ -48,13 +46,17 @@ export class ModbusDeviceInfoEditComponent {
   protected readonly visibility = signal<string>(this.data.visibility ?? 'private');
   protected readonly description = signal(this.data.description ?? '');
 
-  /** 设备类型两级选择：名字空间 → 设备类型（value 均存完整 URN） */
-  protected readonly namespaces = signal<NamespaceDefinition[]>([]);
-  protected readonly namespaceLoading = signal(false);
-  protected readonly selectedNamespace = signal('');
-  protected readonly devices = signal<DeviceDefinition[]>([]);
-  protected readonly deviceLoading = signal(false);
+  /** 设备类型 = 级联「名字空间 → 设备类型」：一级为名字空间、二级为品类 URN */
+  protected readonly cascaderOptions = signal<NzCascaderOption[]>([]);
+  /** Cascader 选中路径 [名字空间, 品类 URN]，空 = 未选/已清除 */
+  protected readonly cascaderPath = signal<(string | number)[]>([]);
+  /** 当前选中的设备类型品类 URN（级联叶子值，即后端落库的 type.type） */
   protected readonly selectedType = signal<string | undefined>(this.data.type?.type);
+
+  /** 已展开/预载过的「名字空间 → 设备目录」，供快照落库时取产品类型文案。 */
+  private readonly catalog = new Map<string, DeviceDefinition[]>();
+  /** 名字空间目录（含产品规范多语文案），供快照落库时取产品规范文案。 */
+  private namespaces: NamespaceDefinition[] = [];
 
   /** 厂家/型号/从站地址必填（服务端校验）；新建时设备类型也必选 */
   readonly valid = computed(
@@ -80,66 +82,95 @@ export class ModbusDeviceInfoEditComponent {
     this.loadNamespaces();
   }
 
+  /** Cascader 子级懒加载：展开某个名字空间时拉取其设备类型目录（结果按 ns 缓存）。 */
+  protected loadCascaderChildren = (node: NzCascaderOption | null): Promise<void> => {
+    if (!node) {
+      return Promise.resolve();
+    }
+    const ns = String(node.value ?? '');
+    if (!ns) {
+      return Promise.resolve();
+    }
+    return this.fetchDevices(ns).then((devices) => {
+      node.children = devices.map((d) => this.deviceOption(d));
+      node.isLeaf = true;
+    });
+  };
+
   private loadNamespaces(): void {
-    this.namespaceLoading.set(true);
     this.product.listSpecNamespaces().subscribe({
       next: (namespaces) => {
-        this.namespaceLoading.set(false);
-        this.namespaces.set(namespaces ?? []);
-        // 已有设备类型时反解出名字空间，并预载设备目录
-        if (this.data.type?.type) {
+        this.namespaces = namespaces ?? [];
+        this.cascaderOptions.set(this.namespaces.map((ns) => this.namespaceOption(ns)));
+        // 编辑存量配置：已有设备类型时反解出名字空间，并预载其设备目录，让路径文案回显得出
+        const urn = this.data.type?.type;
+        if (urn) {
           try {
-            const type = DeviceType.parse(this.data.type.type);
-            if (type.ns) {
-              this.selectedNamespace.set(type.ns);
-              this.loadDevices(type.ns, this.data.type.type);
+            const ns = DeviceType.parse(urn).ns;
+            if (ns) {
+              this.preloadBranch(ns, urn);
             }
           } catch {
-            // type 无法解析（非法），保持未选状态
+            // type 无法解析（非法），保持未选
           }
         }
       },
-      error: () => this.namespaceLoading.set(false),
-    });
-  }
-
-  /** 名字空间切换：重载设备类型目录并清空已选类型。 */
-  protected onNamespaceChange(namespace: string): void {
-    if (!namespace) {
-      this.selectedNamespace.set('');
-      this.devices.set([]);
-      this.selectedType.set(undefined);
-      return;
-    }
-    this.selectedNamespace.set(namespace);
-    this.selectedType.set(undefined);
-    this.loadDevices(namespace);
-  }
-
-  private loadDevices(namespace: string, keepType?: string): void {
-    this.deviceLoading.set(true);
-    this.product.listSpecDevices(namespace).subscribe({
-      next: (devices) => {
-        if (namespace !== this.selectedNamespace()) {
-          return; // 期间已切换名字空间，丢弃过期结果
-        }
-        this.devices.set(devices ?? []);
-        const keep = keepType ?? this.selectedType();
-        const stillThere = !!keep && (devices ?? []).some((d) => d.type.toString() === keep);
-        this.selectedType.set(stillThere ? keep : undefined);
-        this.deviceLoading.set(false);
-      },
       error: () => {
-        if (namespace === this.selectedNamespace()) {
-          this.devices.set([]);
-          this.deviceLoading.set(false);
-        }
+        // 产品规范目录加载失败：级联留空，仅其它基础字段可编辑
       },
     });
   }
 
-  protected onDeviceTypeChange(type: string): void {
-    this.selectedType.set(type || undefined);
+  private namespaceOption(ns: NamespaceDefinition): NzCascaderOption {
+    return { value: ns.namespace, label: this.namespaceLabel(ns), isLeaf: false };
+  }
+
+  private deviceOption(device: DeviceDefinition): NzCascaderOption {
+    return { value: device.type.toString(), label: this.deviceLabel(device), isLeaf: true };
+  }
+
+  /** 编辑回显：预载已有 type 所在名字空间的设备目录，命中则把路径填回级联。 */
+  private preloadBranch(namespace: string, keepUrn: string): void {
+    this.fetchDevices(namespace).then((devices) => {
+      const root = this.cascaderOptions().find((o) => o.value === namespace);
+      if (root) {
+        root.children = devices.map((d) => this.deviceOption(d));
+        root.isLeaf = true;
+      }
+      if (devices.some((d) => d.type.toString() === keepUrn)) {
+        this.selectedType.set(keepUrn);
+        this.cascaderPath.set([namespace, keepUrn]);
+      } else {
+        this.selectedType.set(undefined); // 旧 type 已不在目录
+      }
+    });
+  }
+
+  private fetchDevices(namespace: string): Promise<DeviceDefinition[]> {
+    const cached = this.catalog.get(namespace);
+    if (cached) {
+      return Promise.resolve(cached);
+    }
+    return new Promise((resolve) => {
+      this.product.listSpecDevices(namespace).subscribe({
+        next: (devices) => {
+          const list = devices ?? [];
+          this.catalog.set(namespace, list);
+          resolve(list);
+        },
+        error: () => {
+          this.catalog.set(namespace, []);
+          resolve([]);
+        },
+      });
+    });
+  }
+
+  protected onCascaderPathChange(values: (string | number)[] | null): void {
+    this.cascaderPath.set(values ?? []);
+    this.selectedType.set(
+      values && values.length >= 2 ? String(values[values.length - 1]) : undefined,
+    );
   }
 
   /** 设备类型下拉文案：优先中文描述，其次 type.name。 */
@@ -149,6 +180,11 @@ export class ModbusDeviceInfoEditComponent {
       return zh;
     }
     return device.type?.name ?? device.type.toString();
+  }
+
+  /** 名字空间一级文案：优先多语文案（同编辑器 specLabel 取文顺序），缺省回退标识符。 */
+  protected namespaceLabel(ns: NamespaceDefinition): string {
+    return pickLocalizedMap(ns.description) ?? ns.namespace;
   }
 
   cancel(): void {
@@ -172,19 +208,19 @@ export class ModbusDeviceInfoEditComponent {
   }
 
   /**
-   * 由「名字空间 + 设备类型」两级选择结果快照出一个 ModbusDeviceType：
+   * 由「名字空间 + 设备类型」级联选择结果快照出一个 ModbusDeviceType：
    * 存品类 DeviceType URN，并把产品规范（名字空间）/产品类型的多语文案一并带上，
    * 供后端落库后前端直接展示（无需回产品目录查询）。
    */
   private snapshotType(urn: string): ModbusDeviceType {
-    const device = this.devices().find((d) => d.type.toString() === urn);
     let ns = '';
     try {
       ns = DeviceType.parse(urn).ns ?? '';
     } catch {
       // urn 非法：仅保留原值
     }
-    const namespace = this.namespaces().find((n) => n.namespace === ns);
+    const device = (this.catalog.get(ns) ?? []).find((d) => d.type.toString() === urn);
+    const namespace = this.namespaces.find((n) => n.namespace === ns);
     return {
       type: urn,
       specDescription: mapToRecord(namespace?.description),
@@ -224,4 +260,20 @@ function mapToRecord(map: Map<string, string> | undefined): Record<string, strin
     return undefined;
   }
   return Object.fromEntries(map.entries());
+}
+
+/** 多语文案 Map 里挑当前优先展示的语言：zh-CN → en-US → 任意首条。 */
+function pickLocalizedMap(map: Map<string, string> | undefined): string | undefined {
+  if (!map || map.size === 0) {
+    return undefined;
+  }
+  const zh = map.get('zh-CN');
+  if (zh) {
+    return zh;
+  }
+  const en = map.get('en-US');
+  if (en) {
+    return en;
+  }
+  return map.values().next().value;
 }

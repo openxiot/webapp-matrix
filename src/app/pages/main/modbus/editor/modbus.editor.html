@@ -18,30 +18,28 @@
     <nz-row [nzGutter]="[8, 8]">
       <nz-col nzSpan="24">
         <nz-card [nzTitle]="'设备信息' | translate" [nzExtra]="deviceInfoExtra">
-          <nz-descriptions nzSize="small" [nzColumn]="4">
+          <nz-descriptions nzSize="small" [nzColumn]="3">
             <nz-descriptions-item nzTitle="{{ '厂家' | translate }}">{{ deviceInfo().manufacturer || '-' }}
             </nz-descriptions-item>
             <nz-descriptions-item nzTitle="{{ '型号' | translate }}">{{ deviceInfo().model || '-' }}
             </nz-descriptions-item>
             <nz-descriptions-item nzTitle="{{ '从站地址' | translate }}">{{ deviceInfo().slaveId ?? '-' }}
             </nz-descriptions-item>
+            <nz-descriptions-item nzTitle="{{ '描述' | translate }}" [nzSpan]="1">
+              {{ deviceInfo().description || '-' }}
+            </nz-descriptions-item>
             <nz-descriptions-item nzTitle="{{ '可见度' | translate }}">
               @if (deviceInfo().visibility === 'public') {
-                {{ '公开' | translate }}
+                <nz-tag nzColor="blue">{{ '公开' | translate }}</nz-tag>
               } @else if (deviceInfo().visibility === 'private') {
-                {{ '私有' | translate }}
+                <nz-tag nzColor="green">{{ '私有' | translate }}</nz-tag>
               } @else {
                 -
               }
             </nz-descriptions-item>
-            <nz-descriptions-item nzTitle="{{ '产品规范' | translate }}" [nzSpan]="2">
-              <span [title]="specLabel(deviceInfo().type)">{{ specLabel(deviceInfo().type) }}</span>
-            </nz-descriptions-item>
-            <nz-descriptions-item nzTitle="{{ '设备类型' | translate }}" [nzSpan]="2">
-              <span [title]="typeUrn(deviceInfo().type) ?? undefined">{{ typeLabel(deviceInfo().type) }}</span>
-            </nz-descriptions-item>
-            <nz-descriptions-item nzTitle="{{ '描述' | translate }}" [nzSpan]="4">
-              {{ deviceInfo().description || '-' }}
+            <nz-descriptions-item nzTitle="{{ '设备类型' | translate }}" [nzSpan]="1">
+              <nz-tag nzColor="blue">{{ specLabel(deviceInfo().type) }}</nz-tag>
+              <nz-tag nzColor="green">{{ typeLabel(deviceInfo().type) }}</nz-tag>
             </nz-descriptions-item>
           </nz-descriptions>
 
@@ -72,7 +70,7 @@
           [nzData]="commands()"
           [nzShowSizeChanger]="true"
           [nzHideOnSinglePage]="true"
-          [nzScroll]="{ x: '1000px' }"
+          [nzScroll]="{ x: '1060px' }"
         >
           <thead>
           <tr>

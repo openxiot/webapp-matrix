@@ -1,88 +1,61 @@
-<div class="ant-form-vertical">
-  <div nz-row [nzGutter]="16">
-    <div nz-col [nzSpan]="12">
-      <nz-form-item>
-        <nz-form-label nzFor="deviceInfoManufacturer" [nzRequired]="true">{{ '厂家' | translate }}</nz-form-label>
-        <nz-form-control>
-          <input nz-input id="deviceInfoManufacturer" [value]="manufacturer()" (input)="onManufacturerInput($event)"
-                 placeholder="{{ '例如：特灵 / 开利 / 麦克维尔' | translate }}" />
-        </nz-form-control>
-      </nz-form-item>
-    </div>
-    <div nz-col [nzSpan]="12">
-      <nz-form-item>
-        <nz-form-label nzFor="deviceInfoModel" [nzRequired]="true">{{ '型号' | translate }}</nz-form-label>
-        <nz-form-control>
-          <input nz-input id="deviceInfoModel" [value]="model()" (input)="onModelInput($event)"
-                 placeholder="{{ '例如：19XRV / CVHG' | translate }}" />
-        </nz-form-control>
-      </nz-form-item>
-    </div>
-  </div>
-
-  <div nz-row [nzGutter]="16">
-    <div nz-col [nzSpan]="12">
-      <nz-form-item>
-        <nz-form-label>{{ '名字空间' | translate }}</nz-form-label>
-        <nz-form-control>
-          <nz-select [ngModel]="selectedNamespace()" (ngModelChange)="onNamespaceChange($event)"
-                     [nzLoading]="namespaceLoading()" nzPlaceHolder="{{ '选择名字空间' | translate }}"
-                     nzShowSearch nzAllowClear style="width: 100%">
-            @for (ns of namespaces(); track ns.namespace) {
-              <nz-option [nzValue]="ns.namespace" [nzLabel]="ns.namespace"></nz-option>
-            }
-          </nz-select>
-        </nz-form-control>
-      </nz-form-item>
-    </div>
-    <div nz-col [nzSpan]="12">
-      <nz-form-item>
-        <nz-form-label [nzRequired]="isAdd">
-          {{ '设备类型' | translate }}
-          @if (!isAdd) {
-            <span class="modbus-type-optional">（可选）</span>
-          }
-        </nz-form-label>
-        <nz-form-control>
-          <nz-select [ngModel]="selectedType()" (ngModelChange)="onDeviceTypeChange($event)"
-                     [nzLoading]="deviceLoading()" nzPlaceHolder="{{ '选择设备类型' | translate }}"
-                     nzShowSearch nzAllowClear style="width: 100%">
-            @for (device of devices(); track device.type.toString()) {
-              <nz-option [nzValue]="device.type.toString()" [nzLabel]="deviceLabel(device)"></nz-option>
-            }
-          </nz-select>
-        </nz-form-control>
-      </nz-form-item>
-    </div>
-  </div>
-
-  <div nz-row [nzGutter]="16">
-    <div nz-col [nzSpan]="12">
-      <nz-form-item>
-        <nz-form-label nzFor="deviceInfoSlaveId" [nzRequired]="true">{{ '从站地址' | translate }}</nz-form-label>
-        <nz-form-control>
-          <nz-input-number id="deviceInfoSlaveId" [ngModel]="slaveId()" (ngModelChange)="onSlaveIdChange($event)"
-                           [nzMin]="0" [nzMax]="247" [nzStep]="1" style="width: 100%"></nz-input-number>
-        </nz-form-control>
-      </nz-form-item>
-    </div>
-    <div nz-col [nzSpan]="12">
-      <nz-form-item>
-        <nz-form-label [nzRequired]="true">{{ '可见度' | translate }}</nz-form-label>
-        <nz-form-control>
-          <nz-radio-group [ngModel]="visibility()" nzButtonStyle="solid" (ngModelChange)="onVisibilityChange($event)">
-            <label nz-radio-button nzValue="private">{{ '私有' | translate }}</label>
-            <label nz-radio-button nzValue="public">{{ '公开' | translate }}</label>
-          </nz-radio-group>
-        </nz-form-control>
-      </nz-form-item>
-    </div>
-  </div>
+<!-- 设备信息编辑：每个表单项独立成一行 —— 与功能码 CommandEditComponent 同构：
+     label 居左固定 nzSpan=4，值控件占该行余宽；不再两列并排。
+     设备类型 = 名字空间 → 设备类型的级联选择（NzCascader），一个表单项完成两级选择。 -->
+<div>
+  <nz-form-item>
+    <nz-form-label nzFor="deviceInfoManufacturer" [nzSpan]="4" [nzRequired]="true">{{ '厂家' | translate }}</nz-form-label>
+    <nz-form-control>
+      <input nz-input id="deviceInfoManufacturer" [value]="manufacturer()" (input)="onManufacturerInput($event)"
+             placeholder="{{ '例如：特灵 / 开利 / 麦克维尔' | translate }}" />
+    </nz-form-control>
+  </nz-form-item>
 
   <nz-form-item>
-    <nz-form-label nzFor="deviceInfoDescription">{{ '描述' | translate }}</nz-form-label>
+    <nz-form-label nzFor="deviceInfoModel" [nzSpan]="4" [nzRequired]="true">{{ '型号' | translate }}</nz-form-label>
+    <nz-form-control>
+      <input nz-input id="deviceInfoModel" [value]="model()" (input)="onModelInput($event)"
+             placeholder="{{ '例如：19XRV / CVHG' | translate }}" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label nzFor="deviceInfoSlaveId" [nzSpan]="4" [nzRequired]="true">{{ '从站地址' | translate }}</nz-form-label>
+    <nz-form-control>
+      <nz-input-number id="deviceInfoSlaveId" [ngModel]="slaveId()" (ngModelChange)="onSlaveIdChange($event)"
+                       [nzMin]="0" [nzMax]="247" [nzStep]="1" style="width: 100%"></nz-input-number>
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '可见度' | translate }}</nz-form-label>
+    <nz-form-control>
+      <nz-radio-group [ngModel]="visibility()" nzButtonStyle="solid" (ngModelChange)="onVisibilityChange($event)">
+        <label nz-radio-button nzValue="private">{{ '私有' | translate }}</label>
+        <label nz-radio-button nzValue="public">{{ '公开' | translate }}</label>
+      </nz-radio-group>
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label nzFor="deviceInfoDescription" [nzSpan]="4">{{ '描述' | translate }}</nz-form-label>
     <nz-form-control>
       <input nz-input id="deviceInfoDescription" [value]="description()" (input)="onDescriptionInput($event)" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label [nzSpan]="4" [nzRequired]="isAdd">{{ '设备类型' | translate }}</nz-form-label>
+    <nz-form-control>
+      <nz-cascader
+        [nzOptions]="cascaderOptions()"
+        [nzLoadData]="loadCascaderChildren"
+        [ngModel]="cascaderPath()"
+        (ngModelChange)="onCascaderPathChange($event)"
+        [nzShowSearch]="true"
+        [nzAllowClear]="true"
+        nzPlaceHolder="{{ '名字空间 / 设备类型' | translate }}"
+        style="width: 100%">
+      </nz-cascader>
     </nz-form-control>
   </nz-form-item>
 </div>

@@ -14,6 +14,7 @@ import { BreadcrumbTranslateDirective } from '../../../../common/components/brea
 import { NzBreadCrumbComponent } from 'ng-zorro-antd/breadcrumb';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { ModbusEditor } from '../editor/modbus.editor';
+import { NzTagComponent, NzTagModule } from 'ng-zorro-antd/tag';
 
 @Component({
   selector: 'main-modbus-detail',
@@ -35,6 +36,8 @@ import { ModbusEditor } from '../editor/modbus.editor';
     NzBreadCrumbComponent,
     NzRowDirective,
     NzColDirective,
+    NzTagComponent,
+    NzTagModule,
   ],
   providers: [NzModalService],
 })
