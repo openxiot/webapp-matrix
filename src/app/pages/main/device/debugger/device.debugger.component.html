@@ -9,6 +9,11 @@
                         {{ device()!.did }}
                     }
                 </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="设备类型" [nzSpan]="1">
+                    @if (device() && device()!.type && instance()) {
+                        <a (click)="onViewJson()" [title]="device()!.type">查看</a>
+                    }
+                </nz-descriptions-item>
                 <nz-descriptions-item nzTitle="产品名称" [nzSpan]="1">
                     @if (instance()) {
                         {{ instance()!.description.get(i18n.getCurrentLang()) || instance()!.type.name }}

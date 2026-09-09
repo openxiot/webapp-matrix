@@ -1,4 +1,4 @@
-import {Component, OnInit, ChangeDetectionStrategy, signal} from '@angular/core';
+import {Component, OnInit, ChangeDetectionStrategy, signal, ViewContainerRef} from '@angular/core';
 import {NzPageHeaderModule} from 'ng-zorro-antd/page-header';
 import {NzBreadCrumbModule} from 'ng-zorro-antd/breadcrumb';
 import {NzSpinModule} from 'ng-zorro-antd/spin';
@@ -13,10 +13,13 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {NzTabsModule} from 'ng-zorro-antd/tabs';
 import {NzSpaceModule} from 'ng-zorro-antd/space';
 import {NzTagModule} from 'ng-zorro-antd/tag';
+import {NzModalService} from 'ng-zorro-antd/modal';
 import {MatrixService} from '../../../../service/matrix.service';
 import {AccountService} from '../../../../service/account.service';
 import {ProductService} from '../../../../service/product.service';
-import {DeviceInstance} from '@openxiot/xiot-core-spec-ts';
+import {ModbusService} from '../../../../service/modbus.service';
+import {DeviceInstance, DeviceInstanceCodec} from '@openxiot/xiot-core-spec-ts';
+import {DeviceInstanceViewJsonComponent} from './dialog/device.instance.view.json.component';
 import {DeviceEntity} from '../../../../typedef/define/device/DeviceEntity';
 import {NzDescriptionsModule} from 'ng-zorro-antd/descriptions';
 import {NzSegmentedModule} from 'ng-zorro-antd/segmented';
@@ -51,6 +54,9 @@ import {BreadcrumbTranslateDirective} from '../../../../common/components/breadc
         DebuggerWaterfallComponent,
         DebuggerTabsComponent,
         BreadcrumbTranslateDirective,
+    ],
+    providers: [
+        NzModalService
     ]
 })
 export class DeviceDebuggerComponent implements OnInit {
@@ -85,7 +91,10 @@ export class DeviceDebuggerComponent implements OnInit {
         private router: Router,
         private matrix: MatrixService,
         private product: ProductService,
+        private modbus: ModbusService,
         private account: AccountService,
+        private modal: NzModalService,
+        private viewContainerRef: ViewContainerRef,
     ) {
     }
 
@@ -103,9 +112,8 @@ export class DeviceDebuggerComponent implements OnInit {
                 next: data => {
                     this.device.set(data);
                     this.loadingDetail.set(false);
-
-                    if (this.device()?.type) {
-                        this.loadInstance(this.device()!.type);
+                    if (data?.type) {
+                        this.loadInstance(data);
                     }
                 },
                 error: error => {
@@ -115,9 +123,16 @@ export class DeviceDebuggerComponent implements OnInit {
             });
     }
 
-    private loadInstance(type: string): void {
+    /**
+     * 取设备实例定义：Modbus 虚拟子设备（protocol=modbus 且挂在父设备下）的实例定义由 service-matrix
+     * 按派生 DeviceType 保存（ModbusVirtualDeviceResource.getInstance）；其余设备沿用 product 服务的实例定义。
+     */
+    private loadInstance(device: DeviceEntity): void {
         this.loadingInstance.set(true);
-        this.product.getProductInstance(type).subscribe({
+        const type = device.type;
+        const virtual = device.protocol === 'modbus' && !!device.parentId;
+        const source = virtual ? this.modbus.getInstance(type) : this.product.getProductInstance(type);
+        source.subscribe({
             next: data => {
                 this.instance.set(data);
                 this.loadingInstance.set(false);
@@ -132,5 +147,55 @@ export class DeviceDebuggerComponent implements OnInit {
     protected onBack() {
         this.router.navigate(['/main/device']).then(() => {
         });
+    }
+
+    /**
+     * 页头「设备类型: 查看」：弹出设备实例定义 JSON 对话框，底部有「下载 / 关闭」。
+     * 实现与用法参考 webapp-product 的 ProductInstanceViewJsonComponent。
+     */
+    protected onViewJson(): void {
+        const instance = this.instance();
+        if (!instance) {
+            return;
+        }
+        const modal = this.modal.create<DeviceInstanceViewJsonComponent, any, any>({
+            nzWidth: 1024,
+            nzTitle: this.i18n.translate.instant('设备实例定义'),
+            nzContent: DeviceInstanceViewJsonComponent,
+            nzViewContainerRef: this.viewContainerRef,
+            nzData: DeviceInstanceCodec.encode(instance),
+            nzFooter: [
+                {
+                    label: this.i18n.translate.instant('下载'),
+                    onClick: component => component!.ok()
+                },
+                {
+                    label: this.i18n.translate.instant('关闭'),
+                    type: 'primary',
+                    onClick: component => component!.cancel()
+                }
+            ],
+        });
+
+        modal.afterClose.subscribe(result => {
+            if (result) {
+                this.onDownload(result, instance.type.version || 0);
+            }
+        });
+    }
+
+    /**
+     * 下载：把设备实例定义 JSON 对象格式化为缩进字符串并以 JSON 文件下载。
+     */
+    protected onDownload(data: any, version: number): void {
+        const jsonString = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonString], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        // did 为 设备ID（hex/UUID），type model 提供版本区分
+        link.download = `device-instance-${this.did}-${version}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
     }
 }

@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 import { OxResponse } from './response/OxResponse';
 import { ModbusDeviceConfig, ModbusMapping } from '../typedef/define/modbus/Modbus';
 import { DeviceEntity } from '../typedef/define/device/DeviceEntity';
+import { DeviceInstance, DeviceInstanceCodec } from '@openxiot/xiot-core-spec-ts';
 
 /**
  * Modbus 设备点表服务。
@@ -89,5 +90,16 @@ export class ModbusService {
     return this.http
       .post<OxResponse>(`${this.server}/matrix/v1/modbus/virtual/one`, body)
       .pipe(map((r) => r.data as DeviceEntity));
+  }
+
+  /**
+   * 取一个 Modbus 虚拟设备的设备实例定义（GET /matrix/v1/modbus/virtual/instance/{type}）。
+   * 服务端按派生的实例 DeviceType 精确匹配 virtual-devices 定义文档并解码回环；
+   * 调用方仅持类型（虚拟子设备 protocol=modbus），供设备调试等页面复用其挂载的 Service → Action 结构。
+   */
+  getInstance(type: string): Observable<DeviceInstance> {
+    return this.http
+      .get<OxResponse>(`${this.server}/matrix/v1/modbus/virtual/instance/${encodeURIComponent(type)}`)
+      .pipe(map((r) => DeviceInstanceCodec.decode(r.data)));
   }
 }
