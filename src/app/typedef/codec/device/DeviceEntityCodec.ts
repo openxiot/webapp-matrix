@@ -8,6 +8,8 @@ export class DeviceEntityCodec {
     x.type = o.type || '';
     x.online = !!o.online;
     x.protocol = o.protocol || '';
+    x.parentId = o.parentId || '';
+    x.rootId = o.rootId || '';
     x.lastOnline = o.lastOnline || '';
     x.lastOffline = o.lastOffline || '';
 
@@ -25,6 +27,8 @@ export class DeviceEntityCodec {
       type: x.type,
       online: x.online,
       protocol: x.protocol,
+      parentId: x.parentId,
+      rootId: x.rootId,
       lastOnline: x.lastOnline,
       lastOffline: x.lastOffline,
       space: {

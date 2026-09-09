@@ -1,52 +1,71 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzTableModule } from 'ng-zorro-antd/table';
+import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { AccountService } from '../../../service/account.service';
 import { ProductService } from '../../../service/product.service';
 import { MatrixService } from '../../../service/matrix.service';
-import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
 import { DeviceEntity } from '../../../typedef/define/device/DeviceEntity';
+import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
 import { UrnUtils } from '../../../typedef/utils/UrnUtils';
 import { ProductBasic } from '@openxiot/xiot-core-spec-ts';
-
-/** 从扁平空间列表构建嵌套树（parentId 关系，首元素为根） */
-function buildTree(spaces: SpaceEntity[]): SpaceEntity | null {
-  if (!spaces || spaces.length === 0) return null;
-
-  const byParentId = new Map<string, SpaceEntity[]>();
-  for (const s of spaces) {
-    const list = byParentId.get(s.parentId) || [];
-    list.push(s);
-    byParentId.set(s.parentId, list);
-  }
-
-  const buildChildren = (parentId: string): SpaceEntity[] => {
-    const children = byParentId.get(parentId) || [];
-    return children.map((c) => {
-      const copy = Object.assign(new SpaceEntity(), c);
-      copy.children = buildChildren(c.id);
-      return copy;
-    });
-  };
-
-  const root = Object.assign(new SpaceEntity(), spaces[0]);
-  root.children = buildChildren(root.id);
-  return root;
-}
 
 /** 产品显示名：中文名 -> model -> id */
 function productDisplayName(p: ProductBasic, unknown: string): string {
   return p.name?.value?.get('zh-CN') || p.model || p.id || unknown;
+}
+
+/** 树形缩进列表的一行：设备 + 在设备树里的层级（0 = 顶层/父设备，>=1 = 子设备）。 */
+export interface DeviceRow {
+  device: DeviceEntity;
+  depth: number;
+  hasChildren: boolean;
+}
+
+/**
+ * 把扁平设备列表按 parentId 还原成设备森林，DFS 拍平为缩进行。
+ * 根 = 无父设备（或父设备不在当前集合 / 指向自身，断链当根展示，避免丢设备）；
+ * 子设备按来源顺序紧跟父设备。collapsed 集合里 did 的父设备不展开其子级。
+ */
+function flattenDeviceRows(devices: DeviceEntity[], collapsed: ReadonlySet<string>): DeviceRow[] {
+  const rows: DeviceRow[] = [];
+  const byId = new Map<string, DeviceEntity>();
+  const byParent = new Map<string, DeviceEntity[]>();
+  for (const d of devices) {
+    byId.set(d.did, d);
+    if (d.parentId && d.parentId !== d.did) {
+      const list = byParent.get(d.parentId) || [];
+      list.push(d);
+      byParent.set(d.parentId, list);
+    }
+  }
+
+  const isRoot = (d: DeviceEntity) =>
+    !d.parentId || d.parentId === d.did || !byId.has(d.parentId);
+
+  const push = (did: string, depth: number) => {
+    const d = byId.get(did);
+    if (!d) return;
+    const kids = byParent.get(did) || [];
+    rows.push({ device: d, depth, hasChildren: kids.length > 0 });
+    if (kids.length > 0 && !collapsed.has(did)) {
+      for (const c of kids) push(c.did, depth + 1);
+    }
+  };
+
+  for (const d of devices) {
+    if (isRoot(d)) push(d.did, 0);
+  }
+  return rows;
 }
 
 @Component({
@@ -59,21 +78,30 @@ function productDisplayName(p: ProductBasic, unknown: string): string {
     NzBreadCrumbModule,
     BreadcrumbTranslateDirective,
     NzSpinModule,
-    NzCardModule,
     NzAvatarModule,
     NzTagModule,
+    NzTableModule,
+    NzDividerModule,
     NzEmptyModule,
     RouterLink,
     TranslatePipe,
-    NzColDirective,
-    NzRowDirective,
   ],
 })
 export class DeviceComponent implements OnInit {
-  /** 嵌套的根空间树 */
-  rootSpace = signal<SpaceEntity | null>(null);
-  /** 当前项目全部设备（扁平） */
+  /** 当前项目全部设备（扁平，按 parentId 可还原设备树） */
   devices = signal<DeviceEntity[]>([]);
+  /** 已折叠（收起子级）的父设备 did 集合 */
+  collapsed = signal<Set<string>>(new Set());
+  /** 设备树缩进行（派生自 devices + 折叠集合） */
+  readonly rows = computed(() => flattenDeviceRows(this.devices(), this.collapsed()));
+  /** 空间图返回的扁平空间列表（含名称），用于给每台设备标注所在空间 */
+  spaces = signal<SpaceEntity[]>([]);
+  /** 空间 ID -> 空间 */
+  readonly spaceById = computed(() => {
+    const map = new Map<string, SpaceEntity>();
+    for (const s of this.spaces()) map.set(s.id, s);
+    return map;
+  });
   /** model -> 产品显示名 */
   productNames = signal<Map<string, string>>(new Map());
   /** model -> 产品图标 URL */
@@ -105,7 +133,7 @@ export class DeviceComponent implements OnInit {
 
     this.matrix.getSpaceGraph(rootId).subscribe({
       next: (graph) => {
-        this.rootSpace.set(buildTree(graph.spaces));
+        this.spaces.set(graph.spaces);
         this.devices.set(graph.devices);
         this.loading.set(false);
         this.resolveProductNames(graph.devices);
@@ -135,26 +163,20 @@ export class DeviceComponent implements OnInit {
     return this.productIcons().get(this.deviceModel(device)) || '';
   }
 
-  /** 空间 ID -> 可读名称 */
-  spaceName(spaceId: string): string {
-    const root = this.rootSpace();
-    if (!root) return spaceId;
-    let found = '';
-    const walk = (s: SpaceEntity) => {
-      if (found) return;
-      if (s.id === spaceId) {
-        found = s.name;
-        return;
-      }
-      for (const c of s.children) walk(c);
-    };
-    walk(root);
-    return found || spaceId;
+  /** 设备所在空间的可读名称；无归属（spaceId 为空/不在图里）返回空串 */
+  spaceName(device: DeviceEntity): string {
+    const spaceId = device.space?.spaceId;
+    if (!spaceId) return '';
+    const s = this.spaceById().get(spaceId);
+    return s ? s.name : '';
   }
 
-  /** 设备类型显示名（URN 类型段） */
-  deviceTypeLabel(device: DeviceEntity): string {
-    return UrnUtils.extractTypeName(device.type) || device.type || '-';
+  /** nz-table 展开箭头回调：expand=true 展开子设备，false 收起（维护 collapsed 集合，供 flatten 剪枝） */
+  toggleExpand(did: string, expand: boolean) {
+    const next = new Set(this.collapsed());
+    if (expand) next.delete(did);
+    else next.add(did);
+    this.collapsed.set(next);
   }
 
   private resolveProductNames(devices: DeviceEntity[]) {

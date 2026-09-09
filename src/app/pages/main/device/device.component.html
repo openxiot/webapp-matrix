@@ -10,42 +10,51 @@
   <div style="padding: 20px 20px">
     @if (account.space().id) {
       @if (devices().length > 0) {
-        <nz-row [nzGutter]="[16, 16]">
-          @for (device of devices(); track device.did) {
-            <nz-col [nzSpan]="6">
-              <nz-card [nzHoverable]="true" [nzActions]="[detail, debug]">
-                <nz-card-meta [nzTitle]="title" [nzDescription]="desc" [nzAvatar]="avatar"></nz-card-meta>
-              </nz-card>
-
-              <ng-template #avatar>
-                @if (deviceIcon(device); as icon) {
-                  <nz-avatar [nzSrc]="icon" [nzSize]="40"></nz-avatar>
-                } @else {
-                  <nz-avatar [nzSize]="40" nzIcon="hdd"></nz-avatar>
-                }
-              </ng-template>
-
-              <ng-template #title>
-                {{ deviceName(device) }}
-              </ng-template>
-
-              <ng-template #desc>
-                <nz-tag [nzColor]="device.online ? 'success' : 'default'">{{ device.online ? ('在线' | translate) : ('离线' | translate) }}</nz-tag>
-                <div>{{ device.did }}</div>
-                <div>{{ deviceTypeLabel(device) }}</div>
-                <div>{{ '所在空间' | translate }}: {{ spaceName(device.space.spaceId) }}</div>
-              </ng-template>
-
-              <ng-template #detail>
-                <a [routerLink]="['/main/device/detail', device.did]">{{ '详情' | translate }}</a>
-              </ng-template>
-
-              <ng-template #debug>
-                <a [routerLink]="['/main/device/debugger', device.did]">{{ '调试' | translate }}</a>
-              </ng-template>
-            </nz-col>
-          }
-        </nz-row>
+        <nz-table #devTable class="device-table" [nzData]="rows()" [nzShowPagination]="false" nzSize="middle">
+          <thead>
+            <tr>
+              <th>{{ '产品' | translate }}</th>
+              <th>{{ '设备名称' | translate }}</th>
+              <th>{{ '设备ID' | translate }}</th>
+              <th>{{ '状态' | translate }}</th>
+              <th>{{ '所在空间' | translate }}</th>
+              <th>{{ '操作' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of devTable.data; track row.device.did) {
+              <tr>
+                <!-- 树形：展开箭头 + 按层缩进（nzIndentSize），落在首列（产品图标列），图标随层级右移 -->
+                <td
+                  class="cell-icon"
+                  [nzIndentSize]="row.depth * 22"
+                  [nzShowExpand]="row.hasChildren"
+                  [nzExpand]="!collapsed().has(row.device.did)"
+                  (nzExpandChange)="toggleExpand(row.device.did, $event)"
+                >
+                  @if (deviceIcon(row.device); as icon) {
+                    <nz-avatar [nzSrc]="icon" [nzSize]="48"></nz-avatar>
+                  } @else {
+                    <nz-avatar [nzSize]="48" nzIcon="hdd"></nz-avatar>
+                  }
+                </td>
+                <td class="cell-name-text" [title]="deviceName(row.device)">{{ deviceName(row.device) }}</td>
+                <td class="cell-did" [title]="row.device.did">{{ row.device.did }}</td>
+                <td>
+                  <nz-tag [nzColor]="row.device.online ? 'success' : 'default'">
+                    {{ row.device.online ? ('在线' | translate) : ('离线' | translate) }}
+                  </nz-tag>
+                </td>
+                <td class="cell-space" [title]="spaceName(row.device)">{{ spaceName(row.device) }}</td>
+                <td class="cell-ops">
+                  <a [routerLink]="['/main/device/detail', row.device.did]">{{ '详情' | translate }}</a>
+                  <nz-divider nzType="vertical"></nz-divider>
+                  <a [routerLink]="['/main/device/debugger', row.device.did]">{{ '调试' | translate }}</a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </nz-table>
       } @else if (!loading()) {
         <nz-empty></nz-empty>
       }
