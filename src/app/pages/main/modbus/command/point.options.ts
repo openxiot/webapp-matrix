@@ -12,10 +12,10 @@ interface PointSelectOption {
 
 /** 8 个功能码（十六进制大写）。 */
 export const FC_OPTIONS: PointSelectOption[] = [
-  { value: '01', label: '读取线圈状态' },
-  { value: '02', label: '读取离散输入状态' },
-  { value: '03', label: '读取保持寄存器' },
-  { value: '04', label: '读取输入寄存器' },
+  { value: '01', label: '读线圈' },
+  { value: '02', label: '读离散输入' },
+  { value: '03', label: '读保持寄存器' },
+  { value: '04', label: '读输入寄存器' },
   { value: '05', label: '写单个线圈' },
   { value: '06', label: '写单个寄存器' },
   { value: '0F', label: '写多个线圈' },
