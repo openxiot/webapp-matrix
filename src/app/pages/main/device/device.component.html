@@ -61,7 +61,7 @@
                   <a [routerLink]="['/main/device/detail', row.device.did]">{{ '详情' | translate }}</a>
                   @if (isDtuDevice(row.device) && account.userSettings().organizationEnabled && account.organization().id) {
                     <nz-divider nzType="vertical"></nz-divider>
-                    <a [routerLink]="['/main/device/mapping', row.device.did]">{{ '映射' | translate }}</a>
+                    <a [routerLink]="['/main/device/services', row.device.did]">{{ '服务' | translate }}</a>
                   }
                   <nz-divider nzType="vertical"></nz-divider>
                   <a [routerLink]="['/main/device/debugger', row.device.did]">{{ '调试' | translate }}</a>

@@ -1,0 +1,122 @@
+<nz-page-header (nzBack)="back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
+  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+
+  <nz-page-header-extra>
+    <button nz-button [routerLink]="editLink()">
+      <span nz-icon nzType="edit"></span>
+      {{ '编辑' | translate }}
+    </button>
+  </nz-page-header-extra>
+
+  <nz-page-header-content>
+    @if (service(); as s) {
+      <nz-descriptions nzSize="small" [nzColumn]="3">
+        <nz-descriptions-item nzTitle="{{ '源点表' | translate }}" [nzSpan]="1">
+          {{ configLabel(s.configId) }}
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="{{ '调用坐标' | translate }}" [nzSpan]="1">
+          {{ coordinateLabel(s) }}
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="{{ '方法数' | translate }}" [nzSpan]="1">
+          {{ functions().length }}
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="{{ '依赖设备' | translate }}" [nzSpan]="1">
+          <code>{{ did() }}</code>
+          @if (device(); as d) {
+            <nz-tag [nzColor]="d.online ? 'success' : 'default'">
+              {{ d.online ? ('在线' | translate) : ('离线' | translate) }}
+            </nz-tag>
+          }
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="{{ '定义版本' | translate }}" [nzSpan]="1">
+          {{ s.version ?? '-' }}
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="{{ '更新时间' | translate }}" [nzSpan]="1">
+          {{ updateTime(s) ? (updateTime(s) | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
+        </nz-descriptions-item>
+      </nz-descriptions>
+    }
+  </nz-page-header-content>
+
+  <ng-template #pageTitle>
+    {{ service()?.name || ('服务详情' | translate) }}
+  </ng-template>
+</nz-page-header>
+
+<div class="service-detail">
+  <nz-spin [nzSpinning]="loading()">
+    <nz-card nzTitle="{{ '方法列表' | translate }}">
+      @if (functions().length === 0 && !loading()) {
+        <nz-empty [nzNotFoundContent]="'这份服务里还没有方法' | translate"></nz-empty>
+      } @else {
+        <nz-table [nzData]="functions()" [nzFrontPagination]="false" [nzShowPagination]="false">
+          <thead>
+            <tr>
+              <th nzWidth="80px">{{ '序号' | translate }}</th>
+              <th nzWidth="200px">{{ '方法名称' | translate }}</th>
+              <th>{{ '请求帧' | translate }}</th>
+              <th nzWidth="320px">{{ '应答字段' | translate }}</th>
+              <th nzWidth="100px">{{ '操作' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (func of functions(); track func.index) {
+              <tr>
+                <td>{{ func.index }}</td>
+                <td>{{ func.name }}</td>
+                <td><code class="service-detail-frame">{{ func.request }}</code></td>
+                <td>{{ responseText(func) }}</td>
+                <td>
+                  <button
+                    nz-button
+                    nzType="link"
+                    nzSize="small"
+                    [nzLoading]="invoking() === func.index"
+                    [disabled]="invoking() !== null"
+                    (click)="invoke(func)"
+                  >
+                    {{ '调用' | translate }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </nz-table>
+      }
+    </nz-card>
+
+    @if (result(); as r) {
+      <nz-card nzTitle="{{ '调用结果' | translate }}" style="margin-top: 16px">
+        <div class="service-detail-result-head">
+          #{{ r.func.index }} · {{ r.func.name }}
+        </div>
+        @if (resultRows().length === 0) {
+          <nz-alert
+            nzType="info"
+            [nzMessage]="'写方法：应答为请求回显，没有返回字段（设备已收到该帧）' | translate"
+          ></nz-alert>
+        } @else {
+          <nz-table [nzData]="resultRows()" [nzFrontPagination]="false" [nzShowPagination]="false">
+            <thead>
+              <tr>
+                <th nzWidth="240px">{{ '字段' | translate }}</th>
+                <th>{{ '值' | translate }}</th>
+                <th nzWidth="120px">{{ '单位' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of resultRows(); track row.field) {
+                <tr>
+                  <td>{{ row.field }}</td>
+                  <td>{{ row.value }}</td>
+                  <td>{{ row.unit || '-' }}</td>
+                </tr>
+              }
+            </tbody>
+          </nz-table>
+        }
+        <pre class="service-detail-raw">{{ rawJson() }}</pre>
+      </nz-card>
+    }
+  </nz-spin>
+</div>

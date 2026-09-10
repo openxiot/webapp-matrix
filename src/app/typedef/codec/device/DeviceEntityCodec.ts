@@ -1,4 +1,5 @@
-import { DeviceEntity, DeviceSpaceRef } from '../../define/device/DeviceEntity';
+import { DeviceEntity } from '../../define/device/DeviceEntity';
+import { SpaceRefCodec } from '../space/SpaceRefCodec';
 
 export class DeviceEntityCodec {
   static decode(o: any): DeviceEntity {
@@ -13,10 +14,7 @@ export class DeviceEntityCodec {
     x.lastOnline = o.lastOnline || '';
     x.lastOffline = o.lastOffline || '';
 
-    if (o.space) {
-      x.space.spaceId = o.space.spaceId || '';
-      x.space.rootId = o.space.rootId || '';
-    }
+    x.space = SpaceRefCodec.decode(o.space);
 
     return x;
   }
@@ -31,10 +29,7 @@ export class DeviceEntityCodec {
       rootId: x.rootId,
       lastOnline: x.lastOnline,
       lastOffline: x.lastOffline,
-      space: {
-        spaceId: x.space.spaceId,
-        rootId: x.space.rootId,
-      } as DeviceSpaceRef,
+      space: SpaceRefCodec.encode(x.space),
     };
   }
 

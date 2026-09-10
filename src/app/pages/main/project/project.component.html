@@ -9,6 +9,7 @@
           <nz-descriptions-item nzTitle="{{ '空间名称' | translate }}" [nzSpan]="1">{{ root.name }}</nz-descriptions-item>
           <nz-descriptions-item nzTitle="{{ '空间类型' | translate }}" [nzSpan]="1">{{ typeLabel(root) | translate }}</nz-descriptions-item>
           <nz-descriptions-item nzTitle="{{ '设备数量' | translate }}" [nzSpan]="1">{{ devices().length }}</nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '服务数量' | translate }}" [nzSpan]="1">{{ services().length }}</nz-descriptions-item>
         </nz-descriptions>
       }
     </nz-page-header-content>
@@ -35,63 +36,96 @@
             <td
               [nzIndentSize]="row.level * 20"
               [nzShowExpand]="row.hasChildren"
-              [nzExpand]="row.kind === 'space' && row.space !== null && expandedIds().has(row.space.id)"
+              [nzExpand]="isExpanded(row)"
               (nzExpandChange)="onExpandChange(row, $event)"
             >
-              @if (row.kind === 'space') {
-                <span nz-icon [nzType]="iconOf(row.space!)"></span>&nbsp;{{ row.space!.name }}
-              } @else {
-                @if (deviceIcon(row.device!); as icon) {
-                  <nz-avatar [nzSrc]="icon" [nzSize]="32"></nz-avatar>
-                } @else {
-                  <nz-avatar [nzSize]="32" nzIcon="hdd"></nz-avatar>
+              @switch (row.kind) {
+                @case ('space') {
+                  <span nz-icon [nzType]="iconOf(row.space!)"></span>&nbsp;{{ row.space!.name }}
                 }
-                {{ deviceName(row.device!) }}
-              }
-            </td>
-            <td>
-              @if (row.kind === 'space') {
-                <nz-tag>{{ typeLabel(row.space!) | translate }}</nz-tag>
-              } @else {
-                {{ deviceTypeLabel(row.device!) }}
-              }
-            </td>
-            <td>
-              @if (row.kind === 'space') {
-                {{ deviceCount(row.space!.id) }} {{ '设备' | translate }}
-              } @else {
-                <nz-tag [nzColor]="row.device!.online ? 'success' : 'default'">
-                  {{ row.device!.online ? ('在线' | translate) : ('离线' | translate) }}
-                </nz-tag>
-              }
-            </td>
-            <td>
-              @if (row.kind === 'space') {
-                {{ row.space!.updateTime ? (row.space!.updateTime | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
-              } @else {
-                {{ (row.device!.lastOnline || row.device!.lastOffline) ? ((row.device!.lastOnline || row.device!.lastOffline) | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
-              }
-            </td>
-            <td>
-              @if (row.kind === 'space') {
-                @if (isAdmin()) {
-                  <a (click)="addDevice(row.space!)">{{ '添加设备' | translate }}</a>
-                  <nz-divider nzType="vertical"></nz-divider>
+                @case ('service') {
+                  <span nz-icon nzType="api"></span>&nbsp;{{ row.service!.name }}
                 }
-                <a (click)="addChildSpace(row.space!)">{{ '添加子空间' | translate }}</a>
-                <nz-divider nzType="vertical"></nz-divider>
-                <a (click)="removeSpace(row.space!)">{{ '删除' | translate }}</a>
-              } @else {
-                <a [routerLink]="['/main/device/detail', row.device!.did]">{{ '详情' | translate }}</a>
-                @if (showMapping(row.device!)) {
-                  <nz-divider nzType="vertical"></nz-divider>
-                  <a [routerLink]="['/main/device/mapping', row.device!.did]">{{ '映射' | translate }}</a>
+                @default {
+                  @if (deviceIcon(row.device!); as icon) {
+                    <nz-avatar [nzSrc]="icon" [nzSize]="32"></nz-avatar>
+                  } @else {
+                    <nz-avatar [nzSize]="32" nzIcon="hdd"></nz-avatar>
+                  }
+                  {{ deviceName(row.device!) }}
                 }
-                <nz-divider nzType="vertical"></nz-divider>
-                <a [routerLink]="['/main/device/debugger', row.device!.did]">{{ '调试' | translate }}</a>
-                @if (isAdmin()) {
+              }
+            </td>
+            <td>
+              @switch (row.kind) {
+                @case ('space') {
+                  <nz-tag>{{ typeLabel(row.space!) | translate }}</nz-tag>
+                }
+                @case ('service') {
+                  <nz-tag nzColor="blue">{{ 'Modbus 服务' | translate }}</nz-tag>
+                }
+                @default {
+                  {{ deviceTypeLabel(row.device!) }}
+                }
+              }
+            </td>
+            <td>
+              @switch (row.kind) {
+                @case ('space') {
+                  {{ deviceCount(row.space!.id) }} {{ '设备' | translate }}
+                  @if (serviceCount(row.space!.id) > 0) {
+                    · {{ serviceCount(row.space!.id) }} {{ '服务' | translate }}
+                  }
+                }
+                @case ('service') {
+                  {{ '依赖设备' | translate }} <code>{{ row.service!.did }}</code>
+                }
+                @default {
+                  <nz-tag [nzColor]="row.device!.online ? 'success' : 'default'">
+                    {{ row.device!.online ? ('在线' | translate) : ('离线' | translate) }}
+                  </nz-tag>
+                }
+              }
+            </td>
+            <td>
+              @switch (row.kind) {
+                @case ('space') {
+                  {{ row.space!.updateTime ? (row.space!.updateTime | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
+                }
+                @case ('service') {
+                  {{ '-' }}
+                }
+                @default {
+                  {{ (row.device!.lastOnline || row.device!.lastOffline) ? ((row.device!.lastOnline || row.device!.lastOffline) | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
+                }
+              }
+            </td>
+            <td>
+              @switch (row.kind) {
+                @case ('space') {
+                  @if (isAdmin()) {
+                    <a (click)="addDevice(row.space!)">{{ '添加设备' | translate }}</a>
+                    <nz-divider nzType="vertical"></nz-divider>
+                  }
+                  <a (click)="addChildSpace(row.space!)">{{ '添加子空间' | translate }}</a>
                   <nz-divider nzType="vertical"></nz-divider>
-                  <a (click)="removeDevice(row.device!)">{{ '删除' | translate }}</a>
+                  <a (click)="removeSpace(row.space!)">{{ '删除' | translate }}</a>
+                }
+                @case ('service') {
+                  <a [routerLink]="serviceDetailLink(row.service!)">{{ '详情' | translate }}</a>
+                }
+                @default {
+                  <a [routerLink]="['/main/device/detail', row.device!.did]">{{ '详情' | translate }}</a>
+                  @if (showMapping(row.device!)) {
+                    <nz-divider nzType="vertical"></nz-divider>
+                    <a [routerLink]="['/main/device/services', row.device!.did]">{{ '映射' | translate }}</a>
+                  }
+                  <nz-divider nzType="vertical"></nz-divider>
+                  <a [routerLink]="['/main/device/debugger', row.device!.did]">{{ '调试' | translate }}</a>
+                  @if (isAdmin()) {
+                    <nz-divider nzType="vertical"></nz-divider>
+                    <a (click)="removeDevice(row.device!)">{{ '删除' | translate }}</a>
+                  }
                 }
               }
             </td>

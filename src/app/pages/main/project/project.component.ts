@@ -27,6 +27,7 @@ import { SpaceAddComponent, SpaceAddResult } from '../../../common/dialog/space/
 import { DeviceAddComponent } from '../../../common/dialog/device/add/device.add.component';
 import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
 import { DeviceEntity } from '../../../typedef/define/device/DeviceEntity';
+import { GenericService } from '../../../typedef/define/service/GenericService';
 import { OrganizationMember } from '../../../typedef/define/user/UserOrganization';
 import { UrnUtils } from '../../../typedef/utils/UrnUtils';
 import { ProductBasic } from '@openxiot/xiot-core-spec-ts';
@@ -89,14 +90,25 @@ function productDisplayName(p: ProductBasic, unknown: string): string {
   return p.name?.value?.get('zh-CN') || p.model || p.id || unknown;
 }
 
-/** 表格中的一行：空间节点或设备节点 */
+/** 表格中的一行：空间节点、设备节点或服务节点 */
 interface TreeNode {
   key: string;
-  kind: 'space' | 'device';
+  kind: 'space' | 'device' | 'service';
   level: number;
   space: SpaceEntity | null;
   device: DeviceEntity | null;
+  /** 服务行（挂在它依赖的设备行下，见 rows） */
+  service: GenericService | null;
   hasChildren: boolean;
+}
+
+/** 展开状态用的行键：空间按 id、设备按 did，加前缀以免两类 id 混在一个集合里 */
+function spaceKey(spaceId: string): string {
+  return `space:${spaceId}`;
+}
+
+function deviceKey(did: string): string {
+  return `device:${did}`;
 }
 
 @Component({
@@ -133,6 +145,8 @@ export class ProjectComponent implements OnInit {
   rootSpace = signal<SpaceEntity | null>(null);
   /** 当前项目全部设备（扁平） */
   devices = signal<DeviceEntity[]>([]);
+  /** 当前项目全部服务（精简视图，见 GenericService）：挂在各自依赖的设备行下 */
+  services = signal<GenericService[]>([]);
   /** model -> 产品显示名 */
   productNames = signal<Map<string, string>>(new Map());
   /** model -> 产品图标 URL */
@@ -190,7 +204,7 @@ export class ProjectComponent implements OnInit {
       const id = params['id'] || this.account.space().id || '';
       this.rootId.set(id);
       if (id) {
-        this.expandedIds.set(new Set([id]));
+        this.expandedIds.set(new Set([spaceKey(id)]));
         this.loadSpaceGraph(id);
         this.loadAdminContext(id);
       }
@@ -206,6 +220,7 @@ export class ProjectComponent implements OnInit {
       next: (graph) => {
         this.rootSpace.set(buildTree(graph.spaces));
         this.devices.set(graph.devices);
+        this.services.set(graph.services);
         this.loading.set(false);
         this.resolveProductNames(graph.devices);
         this.resolveDeviceDescriptions(graph.devices);
@@ -315,7 +330,12 @@ export class ProjectComponent implements OnInit {
     }
   }
 
-  /** 展平后的可见行（展开状态由 expandedIds 决定） */
+  /**
+   * 展平后的可见行（展开状态由 expandedIds 决定）。
+   *
+   * 层级：空间 →（子空间 | 本空间设备）→ 该设备依赖的服务。服务由后端空间图按空间带出，
+   * 每项带 did（挂在谁下面）与 spaceId（兜底：设备被移走时挂到空间下，不至于整条丢失）。
+   */
   readonly rows = computed<TreeNode[]>(() => {
     const root = this.rootSpace();
     if (!root) {
@@ -324,32 +344,61 @@ export class ProjectComponent implements OnInit {
     const expanded = this.expandedIds();
     const list: TreeNode[] = [];
     const devices = this.devices();
+    const services = this.services();
+
+    const pushService = (service: GenericService, level: number) => {
+      list.push({
+        key: `service:${service.id}`,
+        kind: 'service',
+        level,
+        space: null,
+        device: null,
+        service,
+        hasChildren: false,
+      });
+    };
 
     const appendSpace = (space: SpaceEntity, level: number) => {
       const spaceDevices = devices.filter((d) => d.space?.spaceId === space.id);
-      const isExpanded = expanded.has(space.id);
+      const spaceServices = services.filter((s) => s.spaceId === space.id);
       list.push({
-        key: `space:${space.id}`,
+        key: spaceKey(space.id),
         kind: 'space',
         level,
         space,
         device: null,
-        hasChildren: space.children.length > 0 || spaceDevices.length > 0,
+        service: null,
+        hasChildren:
+          space.children.length > 0 || spaceDevices.length > 0 || spaceServices.length > 0,
       });
-      if (isExpanded) {
-        for (const child of space.children) {
-          appendSpace(child, level + 1);
+      if (!expanded.has(spaceKey(space.id))) {
+        return;
+      }
+      for (const child of space.children) {
+        appendSpace(child, level + 1);
+      }
+      const attached = new Set<string>();
+      for (const device of spaceDevices) {
+        const own = spaceServices.filter((s) => s.did === device.did);
+        own.forEach((s) => attached.add(s.id));
+        list.push({
+          key: deviceKey(device.did),
+          kind: 'device',
+          level: level + 1,
+          space: null,
+          device,
+          service: null,
+          hasChildren: own.length > 0,
+        });
+        if (expanded.has(deviceKey(device.did))) {
+          for (const service of own) {
+            pushService(service, level + 2);
+          }
         }
-        for (const device of spaceDevices) {
-          list.push({
-            key: `device:${device.did}`,
-            kind: 'device',
-            level: level + 1,
-            space: null,
-            device,
-            hasChildren: false,
-          });
-        }
+      }
+      // 依赖设备不在本空间（设备已移走 / 已删除）的服务兜底挂在空间下
+      for (const service of spaceServices.filter((s) => !attached.has(s.id))) {
+        pushService(service, level + 1);
       }
     };
 
@@ -377,6 +426,16 @@ export class ProjectComponent implements OnInit {
     return this.devices().filter((d) => d.space?.spaceId === spaceId).length;
   }
 
+  /** 某空间下的服务数量（含挂在空间内设备下的） */
+  serviceCount(spaceId: string): number {
+    return this.services().filter((s) => s.spaceId === spaceId).length;
+  }
+
+  /** 服务详情页路径：挂在设备映射下（did 从服务自身取，与列表入口一致） */
+  protected serviceDetailLink(service: GenericService): string[] {
+    return ['/main/device/services', service.did, 'service', 'detail', service.id];
+  }
+
   /** 设备图标：按型号（URN 第 7 段）命中产品图标；未命中返回空串，由模板回退默认图标 */
   deviceIcon(device: DeviceEntity): string {
     return this.productIcons().get(this.deviceModel(device)) || '';
@@ -401,20 +460,38 @@ export class ProjectComponent implements OnInit {
     return this.devices().some((d) => d.parentId === device.did && d.did !== device.did);
   }
 
-  /** 行展开/收起（仅空间行有展开图标） */
+  /** 行展开/收起（空间行与设备行有展开图标） */
   protected onExpandChange(row: TreeNode, _expanded: boolean): void {
-    if (row.kind === 'space' && row.space) {
-      this.toggleExpand(row.space.id);
+    const key = this.rowKey(row);
+    if (key) {
+      this.toggleExpand(key);
     }
   }
 
-  private toggleExpand(spaceId: string): void {
+  /** 行的展开键：空间行与设备行可展开，服务行是叶子 */
+  private rowKey(row: TreeNode): string | null {
+    if (row.kind === 'space' && row.space) {
+      return spaceKey(row.space.id);
+    }
+    if (row.kind === 'device' && row.device) {
+      return deviceKey(row.device.did);
+    }
+    return null;
+  }
+
+  /** 行是否展开（模板用） */
+  protected isExpanded(row: TreeNode): boolean {
+    const key = this.rowKey(row);
+    return key != null && this.expandedIds().has(key);
+  }
+
+  private toggleExpand(key: string): void {
     this.expandedIds.update((set) => {
       const next = new Set(set);
-      if (next.has(spaceId)) {
-        next.delete(spaceId);
+      if (next.has(key)) {
+        next.delete(key);
       } else {
-        next.add(spaceId);
+        next.add(key);
       }
       return next;
     });

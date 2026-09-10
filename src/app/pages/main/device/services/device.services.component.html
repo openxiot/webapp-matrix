@@ -1,0 +1,68 @@
+<nz-page-header (nzBack)="onBack()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
+  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+
+  <nz-page-header-extra>
+    <button nz-button nzType="primary" (click)="add()">
+      <span nz-icon nzType="plus"></span>
+      {{ '添加' | translate }}
+    </button>
+  </nz-page-header-extra>
+
+  <nz-page-header-content>
+    @if (device(); as d) {
+      <nz-descriptions nzSize="small" [nzColumn]="3">
+        <nz-descriptions-item nzTitle="{{ '设备' | translate }}" [nzSpan]="1">
+          <code>{{ d.did }}</code>
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="{{ '状态' | translate }}" [nzSpan]="1">
+          <nz-tag [nzColor]="d.online ? 'success' : 'default'">
+            {{ d.online ? ('在线' | translate) : ('离线' | translate) }}
+          </nz-tag>
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="{{ '服务数量' | translate }}" [nzSpan]="1">{{ services().length }}
+        </nz-descriptions-item>
+      </nz-descriptions>
+    }
+  </nz-page-header-content>
+
+  <ng-template #pageTitle>
+    {{ '服务' | translate }}
+  </ng-template>
+</nz-page-header>
+
+<div style="padding: 20px 20px">
+  <nz-spin [nzSpinning]="loadingServices()">
+    @if (services().length === 0 && !loadingServices()) {
+      <nz-empty [nzNotFoundContent]="'该设备下还没有映射的服务' | translate"></nz-empty>
+    } @else {
+      <nz-table [nzData]="services()" [nzFrontPagination]="false" [nzShowPagination]="false">
+        <thead>
+        <tr>
+          <th>{{ '服务名称' | translate }}</th>
+          <th>{{ '设备点表' | translate }}</th>
+          <th>{{ '方法数' | translate }}</th>
+          <th>{{ '更新时间' | translate }}</th>
+          <th>{{ '操作' | translate }}</th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (service of services(); track service.id) {
+            <tr>
+              <td>{{ service.name }}</td>
+              <td>{{ configLabel(service.configId) }}</td>
+              <td>{{ service.functions?.length ?? 0 }}</td>
+              <td>
+                {{ updateTime(service) ? (updateTime(service) | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
+              </td>
+              <td>
+                <a [routerLink]="detailLink(service)">{{ '详情' | translate }}</a>
+                <nz-divider nzType="vertical"></nz-divider>
+                <a (click)="remove(service)">{{ '删除' | translate }}</a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+    }
+  </nz-spin>
+</div>

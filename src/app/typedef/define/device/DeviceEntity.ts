@@ -1,7 +1,4 @@
-export class DeviceSpaceRef {
-  spaceId: string = '';
-  rootId: string = '';
-}
+import { SpaceRef } from '../space/SpaceRef';
 
 export class DeviceEntity {
   did: string = '';
@@ -14,5 +11,6 @@ export class DeviceEntity {
   rootId: string = '';
   lastOnline: string = '';
   lastOffline: string = '';
-  space: DeviceSpaceRef = new DeviceSpaceRef();
+  /** 设备所在的空间（与 Modbus 服务的 SpaceRef 同一个类，见 define/space/SpaceRef） */
+  space: SpaceRef = new SpaceRef();
 }

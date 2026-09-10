@@ -1,0 +1,176 @@
+<nz-page-header (nzBack)="back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
+  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+  <ng-template #pageTitle>
+    {{ (isCreate ? '添加 Modbus 服务' : '编辑 Modbus 服务') | translate }}
+  </ng-template>
+</nz-page-header>
+
+<div class="service-editor">
+  <nz-spin [nzSpinning]="loadingDevice() || loadingInstance() || loadingConfigs() || loadingService()">
+    <nz-card nzTitle="{{ '服务定义' | translate }}">
+      <!-- 依赖设备摘要：坐标落在哪台设备上 -->
+      @if (device(); as d) {
+        <div class="service-editor-device">
+          <span class="service-editor-device-label">{{ '依赖设备' | translate }}：</span>
+          <nz-tag [nzColor]="d.online ? 'success' : 'default'">
+            {{ d.online ? ('在线' | translate) : ('离线' | translate) }}
+          </nz-tag>
+          <code>{{ d.did }}</code>
+          <span class="service-editor-device-desc">（{{ '请求帧将由该设备发出' | translate }}）</span>
+        </div>
+      }
+
+      <nz-form-item>
+        <nz-form-label nzFor="serviceName" [nzSpan]="4" [nzRequired]="true">
+          {{ '服务名称' | translate }}
+        </nz-form-label>
+        <nz-form-control>
+          <input
+            id="serviceName"
+            nz-input
+            [ngModel]="name()"
+            (ngModelChange)="name.set($event)"
+            maxlength="64"
+            placeholder="{{ '如：1 号冷水机组' | translate }}"
+          />
+          <div class="service-editor-hint">{{ '默认取所选点表的描述，可修改' | translate }}</div>
+        </nz-form-control>
+      </nz-form-item>
+
+      @if (services().length === 0 && !loadingInstance() && !loadingDevice()) {
+        <nz-alert
+          nzType="warning"
+          [nzMessage]="'依赖设备没有可用的方法（Service → Action），无法定义服务' | translate"
+          style="margin-bottom: 12px"
+        ></nz-alert>
+      }
+
+      <nz-form-item>
+        <nz-form-label nzFor="serviceSiid" [nzSpan]="4" [nzRequired]="true">
+          {{ '依赖服务' | translate }}
+        </nz-form-label>
+        <nz-form-control>
+          <nz-select
+            id="serviceSiid"
+            [ngModel]="selectedSiid()"
+            (ngModelChange)="onServiceChange($event)"
+            [nzPlaceHolder]="'选择依赖设备上承载数据的服务' | translate"
+            [nzDisabled]="services().length === 0"
+            [nzLoading]="loadingInstance()"
+            style="width: 100%"
+          >
+            @for (s of services(); track s.iid) {
+              <nz-option [nzValue]="s.iid" [nzLabel]="serviceLabel(s)"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzFor="serviceAiid" [nzSpan]="4" [nzRequired]="true">
+          {{ '依赖方法' | translate }}
+        </nz-form-label>
+        <nz-form-control>
+          <nz-select
+            id="serviceAiid"
+            [ngModel]="selectedAiid()"
+            (ngModelChange)="onActionChange($event)"
+            [nzPlaceHolder]="'选择承载请求帧的方法' | translate"
+            [nzDisabled]="actions().length === 0"
+            style="width: 100%"
+          >
+            @for (a of actions(); track a.iid) {
+              <nz-option [nzValue]="a.iid" [nzLabel]="actionLabel(a)"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="4">{{ '入参' | translate }}</nz-form-label>
+        <nz-form-control>
+          <nz-tag>{{ argument() }}</nz-tag>
+          <span class="service-editor-hint">
+            {{ '自动取所选方法的唯一入参，取不到按 0 落库，不可填写' | translate }}
+          </span>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzFor="serviceConfig" [nzSpan]="4" [nzRequired]="true">
+          {{ '设备点表' | translate }}
+        </nz-form-label>
+        <nz-form-control>
+          <nz-select
+            id="serviceConfig"
+            [ngModel]="selectedConfigId()"
+            (ngModelChange)="onConfigChange($event)"
+            [nzPlaceHolder]="'选择要映射成方法的设备点表' | translate"
+            [nzDisabled]="configs().length === 0"
+            [nzLoading]="loadingConfigs()"
+            nzShowSearch
+            style="width: 100%"
+          >
+            @for (cfg of configs(); track cfg.id) {
+              <nz-option [nzValue]="cfg.id" [nzLabel]="configLabel(cfg)"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+    </nz-card>
+
+    <nz-card nzTitle="{{ '方法预览' | translate }}" style="margin-top: 16px">
+      @if (configMissing()) {
+        <nz-alert
+          nzType="warning"
+          [nzMessage]="'取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们' | translate"
+          style="margin-bottom: 12px"
+        ></nz-alert>
+      }
+      @if (skipped().length > 0) {
+        <nz-alert
+          nzType="warning"
+          [nzMessage]="('下列动作数据不完整，已跳过：' | translate) + skipped().join('、')"
+          style="margin-bottom: 12px"
+        ></nz-alert>
+      }
+
+      @if (functions().length === 0) {
+        <nz-empty
+          [nzNotFoundContent]="'选择源点表后，这里按功能码逐个列出将要生成的只读方法' | translate"
+        ></nz-empty>
+      } @else {
+        <nz-table [nzData]="functions()" [nzFrontPagination]="false" [nzShowPagination]="false">
+          <thead>
+            <tr>
+              <th nzWidth="80px">{{ '序号' | translate }}</th>
+              <th nzWidth="200px">{{ '方法名称' | translate }}</th>
+              <th>{{ '请求帧' | translate }}</th>
+              <th nzWidth="320px">{{ '应答字段' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (func of functions(); track func.index) {
+              <tr>
+                <td>{{ func.index }}</td>
+                <td>{{ func.name }}</td>
+                <td><code class="service-editor-frame">{{ func.request }}</code></td>
+                <td>{{ responseText(func) }}</td>
+              </tr>
+            }
+          </tbody>
+        </nz-table>
+        <div class="service-editor-hint">
+          {{ '方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改' | translate }}
+        </div>
+      }
+    </nz-card>
+
+    <div class="service-editor-footer">
+      <button nz-button (click)="back()">{{ '取消' | translate }}</button>
+      <button nz-button nzType="primary" [nzLoading]="saving()" [disabled]="!canSave()" (click)="save()">
+        {{ '保存' | translate }}
+      </button>
+    </div>
+  </nz-spin>
+</div>

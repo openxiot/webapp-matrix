@@ -3,7 +3,10 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { OxResponse } from './response/OxResponse';
-import { ModbusDeviceConfig, ModbusMapping } from '../typedef/define/modbus/Modbus';
+import { ModbusDeviceConfig } from '../typedef/define/modbus/Modbus';
+// 实体类与下面的本服务类同名（后端都叫 ModbusService），此处按「实体加 Def 后缀」的约定别名引入
+import { ModbusService as ModbusServiceDef } from '../typedef/define/modbus/ModbusService';
+import { ModbusServiceCodec } from '../typedef/codec/modbus/ModbusServiceCodec';
 import { DeviceEntity } from '../typedef/define/device/DeviceEntity';
 import { DeviceInstance, DeviceInstanceCodec } from '@openxiot/xiot-core-spec-ts';
 
@@ -12,6 +15,10 @@ import { DeviceInstance, DeviceInstanceCodec } from '@openxiot/xiot-core-spec-ts
  *
  * 目标 service-matrix 后端，端点统一为 /matrix/v1/modbus/config；
  * 组织通过拦截器附加的 X-Org-Id 请求头携带，方法不再传 orgId。
+ *
+ * 另一半是 Modbus 服务（方案二：点表映射成可调用的方法，ModbusServiceResource），
+ * 端点 /matrix/v1/modbus/service，方法名统一带 Service 后缀以便与点表那批区分：
+ * 点表侧是 create/update/remove，服务侧是 createService/updateService/removeService。
  */
 @Injectable({ providedIn: 'root' })
 export class ModbusService {
@@ -82,20 +89,11 @@ export class ModbusService {
   }
 
   /**
-   * 创建 Modbus 虚拟设备（POST /matrix/v1/modbus/virtual/one）：把一条点表配置虚拟成父设备
-   * （映射所选 DTU）下的子设备。组织经 X-Org-Id 携带；需为该组织管理员。
-   * 成功后返回新建的矩阵子设备（DeviceEntity），父设备下即可看到。
-   */
-  createVirtual(body: ModbusMapping): Observable<DeviceEntity> {
-    return this.http
-      .post<OxResponse>(`${this.server}/matrix/v1/modbus/virtual/one`, body)
-      .pipe(map((r) => r.data as DeviceEntity));
-  }
-
-  /**
-   * 删除 Modbus 虚拟设备（DELETE /matrix/v1/modbus/virtual/one?did=..）：反向清理 createVirtual，
-   * 删除归属当前组织的虚拟设备定义文档并连同删除同 did 的矩阵 DeviceEntity。组织经 X-Org-Id 携带；
+   * 删除 Modbus 虚拟设备（DELETE /matrix/v1/modbus/virtual/one?did=..）：删除归属当前组织的
+   * 虚拟设备定义文档并连同删除同 did 的矩阵 DeviceEntity。组织经 X-Org-Id 携带；
    * 需为该组织管理员。
+   *
+   * 方案一（点表 → 虚拟子设备）的创建入口已撤，只留这个删除用于清理既有的虚拟子设备。
    */
   removeVirtual(did: string): Observable<void> {
     const params = new HttpParams().set('did', did);
@@ -113,5 +111,67 @@ export class ModbusService {
     return this.http
       .get<OxResponse>(`${this.server}/matrix/v1/modbus/virtual/instance/${encodeURIComponent(type)}`)
       .pipe(map((r) => DeviceInstanceCodec.decode(r.data)));
+  }
+
+  /**------------------------------------------------------------------------------------------------
+   * Modbus 服务（方案二：点表映射成一组可调用的方法，ModbusServiceResource）
+   * 查询需组织成员、增删改需组织管理员；组织均经 X-Org-Id 携带。
+   *------------------------------------------------------------------------------------------------*/
+
+  /** 按组织列出全部服务（GET /service/many） */
+  listServices(): Observable<ModbusServiceDef[]> {
+    return this.http
+      .get<OxResponse>(`${this.server}/matrix/v1/modbus/service/many`)
+      .pipe(map((r) => ModbusServiceCodec.decodeArray(r.data)));
+  }
+
+  /** 按依赖设备 did 列出该设备下挂的全部服务（GET /service/parent/{did}） */
+  listServicesByDevice(did: string): Observable<ModbusServiceDef[]> {
+    return this.http
+      .get<OxResponse>(`${this.server}/matrix/v1/modbus/service/parent/${encodeURIComponent(did)}`)
+      .pipe(map((r) => ModbusServiceCodec.decodeArray(r.data)));
+  }
+
+  /** 查单个服务（GET /service/one/{id}，含完整 functions 定义） */
+  getService(id: string): Observable<ModbusServiceDef> {
+    return this.http
+      .get<OxResponse>(`${this.server}/matrix/v1/modbus/service/one/${encodeURIComponent(id)}`)
+      .pipe(map((r) => ModbusServiceCodec.decode(r.data)));
+  }
+
+  /** 新建服务（POST /service/one，body = 完整定义，org 与人员由后端补） */
+  createService(body: ModbusServiceDef): Observable<ModbusServiceDef> {
+    return this.http
+      .post<OxResponse>(`${this.server}/matrix/v1/modbus/service/one`, ModbusServiceCodec.encode(body))
+      .pipe(map((r) => ModbusServiceCodec.decode(r.data)));
+  }
+
+  /** 修改服务（PUT /service/one/{id}，请求体里缺省的字段保留既有值） */
+  updateService(id: string, body: ModbusServiceDef): Observable<ModbusServiceDef> {
+    return this.http
+      .put<OxResponse>(
+        `${this.server}/matrix/v1/modbus/service/one/${encodeURIComponent(id)}`,
+        ModbusServiceCodec.encode(body),
+      )
+      .pipe(map((r) => ModbusServiceCodec.decode(r.data)));
+  }
+
+  /** 删除服务（DELETE /service/one/{id}） */
+  removeService(id: string): Observable<void> {
+    return this.http
+      .delete<OxResponse>(`${this.server}/matrix/v1/modbus/service/one/${encodeURIComponent(id)}`)
+      .pipe(map(() => undefined));
+  }
+
+  /**
+   * 调用服务的一个方法（POST /service/invoke，body {service, function}）：
+   * 服务端把请求帧发给依赖设备，再把应答按 response 规则解成「字段 → 值」。
+   * 写方法（无 response）的应答是请求回显，返回空对象。
+   */
+  invokeService(serviceId: string, functionIndex: number): Observable<Record<string, unknown>> {
+    const body = { service: serviceId, function: functionIndex };
+    return this.http
+      .post<OxResponse>(`${this.server}/matrix/v1/modbus/service/invoke`, body)
+      .pipe(map((r) => (r.data ?? {}) as Record<string, unknown>));
   }
 }
