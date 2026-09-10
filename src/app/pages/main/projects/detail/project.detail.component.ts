@@ -93,7 +93,7 @@ interface TreeNode {
 }
 
 @Component({
-  selector: 'project-detail',
+  selector: 'projects-detail',
   standalone: true,
   templateUrl: './project.detail.component.html',
   styleUrl: './project.detail.component.less',
@@ -389,7 +389,7 @@ export class ProjectDetailComponent implements OnInit {
         if (space.id === this.rootId()) {
           // 删除的是项目本身（根空间），项目已不存在，清除当前项目并返回列表
           this.account.clearCurrentRootSpace();
-          this.router.navigate(['/main/project']).then(() => {});
+          this.router.navigate(['/main/projects']).then(() => {});
         } else {
           this.loadSpaceGraph(this.rootId());
         }

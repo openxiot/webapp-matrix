@@ -128,7 +128,7 @@ export class DeviceComponent implements OnInit {
    * 当前账号是否为项目管理员（决定「添加/删除」是否可见）：
    * 1. 自己在项目成员（user 访问条目）中 role=admin；
    * 2. 组织兜底：当前组织命中项目根空间的 organization 访问条目，且自己为该组织管理员。
-   * 口径与 project.member.component 的 isAdmin 一致。
+   * 口径与 projects.member.component 的 isAdmin 一致。
    */
   readonly isAdmin = computed(() => {
     const me = this.account.user();

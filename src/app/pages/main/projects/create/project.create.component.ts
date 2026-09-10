@@ -27,7 +27,7 @@ import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
 import { MatrixService } from '../../../../service/matrix.service';
 
 @Component({
-  selector: 'project-create',
+  selector: 'projects-create',
   standalone: true,
   templateUrl: './project.create.component.html',
   styleUrl: './project.create.component.less',
@@ -91,7 +91,7 @@ export class ProjectCreateComponent implements OnInit {
         this.loading.set(false);
         this.account.setCurrentProject(created);
         this.msg.success(this.translate.instant('创建项目成功'));
-        this.router.navigate(['/main/project']).then(() => {});
+        this.router.navigate(['/main/projects']).then(() => {});
       },
       error: (error) => {
         this.msg.warning(error);

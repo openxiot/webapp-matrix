@@ -1,14 +1,112 @@
-<nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
-  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
-</nz-page-header>
+<nz-spin [nzSpinning]="loading()">
+  <nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzSubtitle]="deviceOnline" [nzGhost]="false">
+    <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
 
-<ng-template #pageTitle>
-  {{ '设备详情' | translate }}
+    <nz-page-header-extra>
+      <div class="header-actions">
+        @if (showMapping()) {
+          <button nz-button [routerLink]="['/main/device/mapping', did()]">{{ '映射' | translate }}</button>
+        }
+        <button nz-button nzType="primary" [routerLink]="['/main/device/debugger', did()]">{{ '调试' | translate }}</button>
+      </div>
+    </nz-page-header-extra>
+
+    <nz-page-header-content>
+      @if (device(); as d) {
+        <nz-descriptions nzSize="small" [nzColumn]="3">
+          <nz-descriptions-item nzTitle="{{ '设备ID' | translate }}" [nzSpan]="1">
+            <span class="id-text" [title]="d.did">{{ d.did }}</span>
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '产品名称' | translate }}" [nzSpan]="1">{{ deviceName() }}</nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '产品型号' | translate }}" [nzSpan]="1">{{ productModel() || '-' }}</nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '功能版本' | translate }}" [nzSpan]="1">{{ productVersion() || '-' }}</nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '状态' | translate }}" [nzSpan]="1">
+            <nz-tag [nzColor]="d.online ? 'success' : 'default'">
+              {{ d.online ? ('在线' | translate) : ('离线' | translate) }}
+            </nz-tag>
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '协议' | translate }}" [nzSpan]="1">{{ d.protocol || '-' }}</nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '所在空间' | translate }}" [nzSpan]="1">{{ spaceName() || '-' }}</nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '设备类型' | translate }}" [nzSpan]="1">
+            <span class="id-text" [title]="d.type">{{ typeName() || '-' }}</span>
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '父设备' | translate }}" [nzSpan]="1">
+            @if (d.parentId && d.parentId !== d.did) {
+              <a class="id-text" [routerLink]="['/main/device/detail', d.parentId]" [title]="d.parentId">{{ d.parentId }}</a>
+            } @else {
+              -
+            }
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '根设备' | translate }}" [nzSpan]="1">
+            @if (d.rootId && d.rootId !== d.did) {
+              <a class="id-text" [routerLink]="['/main/device/detail', d.rootId]" [title]="d.rootId">{{ d.rootId }}</a>
+            } @else {
+              -
+            }
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '最后在线' | translate }}" [nzSpan]="1">
+            {{ d.lastOnline ? (d.lastOnline | date: 'yyyy-MM-dd HH:mm:ss') : '-' }}
+          </nz-descriptions-item>
+          <nz-descriptions-item nzTitle="{{ '最后离线' | translate }}" [nzSpan]="1">
+            {{ d.lastOffline ? (d.lastOffline | date: 'yyyy-MM-dd HH:mm:ss') : '-' }}
+          </nz-descriptions-item>
+        </nz-descriptions>
+      }
+    </nz-page-header-content>
+  </nz-page-header>
+
+  <ng-template #pageTitle>
+    {{ device() ? deviceName() : ('设备详情' | translate) }}
+  </ng-template>
+
+  <ng-template #deviceOnline>
+    @if (device(); as d) {
+      <nz-tag [nzColor]="d.online ? 'success' : 'default'">
+        {{ d.online ? ('在线' | translate) : ('离线' | translate) }}
+      </nz-tag>
+    }
+  </ng-template>
+
+  <div style="padding: 20px 20px">
+    @if (device()) {
+      <nz-card [nzTitle]="childrenTitle">
+        @if (children().length > 0) {
+          <nz-table #childTable [nzData]="children()" [nzShowPagination]="false" nzSize="middle">
+            <thead>
+              <tr>
+                <th nzWidth="400px">{{ '设备ID' | translate }}</th>
+                <th>{{ '状态' | translate }}</th>
+                <th>{{ '操作' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (child of childTable.data; track child.did) {
+                <tr>
+                  <td class="id-text" [title]="child.did">{{ child.did }}</td>
+                  <td>
+                    <nz-tag [nzColor]="child.online ? 'success' : 'default'">
+                      {{ child.online ? ('在线' | translate) : ('离线' | translate) }}
+                    </nz-tag>
+                  </td>
+                  <td>
+                    <a [routerLink]="['/main/device/detail', child.did]">{{ '详情' | translate }}</a>
+                    <nz-divider nzType="vertical"></nz-divider>
+                    <a [routerLink]="['/main/device/debugger', child.did]">{{ '调试' | translate }}</a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </nz-table>
+        } @else {
+          <nz-empty [nzNotFoundContent]="'无子设备' | translate"></nz-empty>
+        }
+      </nz-card>
+    } @else if (!loading()) {
+      <nz-empty [nzNotFoundContent]="'设备不存在或无权访问' | translate"></nz-empty>
+    }
+  </div>
+</nz-spin>
+
+<ng-template #childrenTitle>
+  {{ '子设备' | translate }} ({{ children().length }})
 </ng-template>
-
-<div style="padding: 20px 20px">
-  <nz-card nzSize="small">
-    <p>{{ '设备 ID' | translate }}: {{ id() }}</p>
-    <p style="color: #999">{{ '设备详情功能开发中...' | translate }}</p>
-  </nz-card>
-</div>

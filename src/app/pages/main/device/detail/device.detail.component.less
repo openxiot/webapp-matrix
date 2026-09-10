@@ -1,3 +1,14 @@
 :host {
   display: block;
 }
+
+// 页头右侧动作按钮（映射 / 调试）
+.header-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+// 设备ID / did 是长串无空格文本：允许在任意位置断行，避免撑破描述列
+.id-text {
+  word-break: break-all;
+}

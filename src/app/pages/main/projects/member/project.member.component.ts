@@ -30,7 +30,7 @@ import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
  * 可添加 / 移除其他成员、调整角色；所有成员可退出项目（最后一个管理员不可退出）。
  */
 @Component({
-  selector: 'project-member',
+  selector: 'projects-member',
   standalone: true,
   templateUrl: './project.member.component.html',
   styleUrl: './project.member.component.less',

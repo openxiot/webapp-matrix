@@ -20,10 +20,10 @@ export const routes: Routes = [
     loadChildren: () => import('./organization/organization.routes').then((m) => m.ORGANIZATION_ROUTES),
   },
   {
-    path: 'project',
+    path: 'projects',
     canActivate: [authGuard],
-    data: { breadcrumb: '项目' },
-    loadChildren: () => import('./project/project.routes').then((m) => m.PROJECT_ROUTES),
+    data: { breadcrumb: '所有项目' },
+    loadChildren: () => import('./projects/projects.routes').then((m) => m.PROJECT_ROUTES),
   },
   {
     path: 'device',

@@ -8,7 +8,7 @@ import { OrganizationMember } from '../../../../../typedef/define/user/UserOrgan
 
 /** 编辑项目成员备注对话框：textarea 输入，返回新备注 */
 @Component({
-  selector: 'project-member-remark',
+  selector: 'projects-member-remark',
   templateUrl: './project.member.remark.component.html',
   imports: [FormsModule, NzInputModule, NzFormModule, TranslatePipe],
 })

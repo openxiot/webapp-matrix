@@ -5,14 +5,14 @@
 
     @if (account.login()) {
       <nz-page-header-extra>
-        <button nz-button nzType="primary" [nzDanger]="true" [routerLink]="['/main/project/create']">{{ '创建' | translate }}
+        <button nz-button nzType="primary" [nzDanger]="true" [routerLink]="['/main/projects/create']">{{ '创建' | translate }}
         </button>
       </nz-page-header-extra>
     }
   </nz-page-header>
 
   <ng-template #pageTitle>
-    {{ '项目' | translate }}
+    {{ '所有项目' | translate }}
   </ng-template>
 
   <div style="padding: 20px 20px">
@@ -42,11 +42,11 @@
         </ng-template>
 
         <ng-template #detail>
-          <a [routerLink]="['/main/project/detail', space.id]">{{ "详情" | translate }}</a>
+          <a [routerLink]="['/main/projects/detail', space.id]">{{ "详情" | translate }}</a>
         </ng-template>
 
         <ng-template #user>
-          <a [routerLink]="['/main/project/member', space.id]">{{ "成员" | translate }}</a>
+          <a [routerLink]="['/main/projects/member', space.id]">{{ "成员" | translate }}</a>
         </ng-template>
       }
     </nz-row>

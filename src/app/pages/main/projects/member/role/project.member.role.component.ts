@@ -8,7 +8,7 @@ import { OrganizationMember } from '../../../../../typedef/define/user/UserOrgan
 
 /** 调整项目成员角色对话框：选择 admin / member */
 @Component({
-  selector: 'project-member-role',
+  selector: 'projects-member-role',
   templateUrl: './project.member.role.component.html',
   imports: [FormsModule, NzRadioModule, NzFormModule, TranslatePipe],
 })

@@ -7,7 +7,7 @@
     [nzTrigger]="null"
   >
     <div class="sidebar-logo">
-      <a target="_blank">
+      <a routerLink="/main/projects">
         <img src="logo_256x256_white.svg" alt="logo" />
         <h1>{{ currentTitle() }}</h1>
       </a>
@@ -17,10 +17,10 @@
         <nz-icon nzType="dashboard" nzTheme="outline" />
         <span>{{ '首页' | translate }}</span>
       </li>
-      <li nz-menu-item routerLink="/main/project" [nzMatchRouter]="true">
-        <nz-icon nzType="project" nzTheme="outline" />
-        <span>{{ '项目' | translate }}</span>
-      </li>
+<!--      <li nz-menu-item routerLink="/main/projects" [nzMatchRouter]="true">-->
+<!--        <nz-icon nzType="project" nzTheme="outline" />-->
+<!--        <span>{{ '所有项目' | translate }}</span>-->
+<!--      </li>-->
       <li nz-menu-item routerLink="/main/device" [nzMatchRouter]="true">
         <nz-icon nzType="bulb" nzTheme="outline" />
         <span>{{ '设备' | translate }}</span>
@@ -95,7 +95,7 @@
 
             @if (account.login()) {
               @if (account.space().id) {
-                <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/project" style="float: right">
+                <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/projects" style="float: right">
                   <nz-spin [nzSpinning]="account.loading()">
                     <nz-space>
                       <div *nzSpaceItem>
@@ -108,7 +108,7 @@
                   </nz-spin>
                 </li>
               } @else {
-                <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/project/create" style="float: right">
+                <li nz-menu-item [nzMatchRouter]="true" routerLink="/main/projects/create" style="float: right">
                   <span nz-icon nzType="plus-circle" nzTheme="outline"></span>
                   <span>{{ '创建项目' | translate }}</span>
                 </li>

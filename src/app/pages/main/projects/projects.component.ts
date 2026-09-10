@@ -20,10 +20,10 @@ import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
 import { MatrixService } from '../../../service/matrix.service';
 
 @Component({
-  selector: 'main-project',
+  selector: 'main-projects',
   standalone: true,
-  templateUrl: './project.component.html',
-  styleUrl: './project.component.less',
+  templateUrl: './projects.component.html',
+  styleUrl: './projects.component.less',
   imports: [
     FormsModule,
     NzPageHeaderModule,
@@ -44,7 +44,7 @@ import { MatrixService } from '../../../service/matrix.service';
     NzSpinModule,
   ],
 })
-export class ProjectComponent implements OnInit {
+export class ProjectsComponent implements OnInit {
   loading = signal(true);
   spaces = signal<SpaceEntity[]>([]);
 

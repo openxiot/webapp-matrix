@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { ProjectComponent } from './project.component';
+import { ProjectsComponent } from './projects.component';
 import { ProjectCreateComponent } from './create/project.create.component';
 import { ProjectDetailComponent } from './detail/project.detail.component';
 import { ProjectMemberComponent } from './member/project.member.component';
@@ -7,7 +7,7 @@ import { ProjectMemberComponent } from './member/project.member.component';
 export const PROJECT_ROUTES: Routes = [
   {
     path: '',
-    component: ProjectComponent,
+    component: ProjectsComponent,
   },
   {
     path: 'create',

@@ -14,7 +14,7 @@ export interface ProjectMemberAddResult {
 
 /** 添加项目成员对话框：用户 ID + 角色，名称/邮箱由后端按账号解析 */
 @Component({
-  selector: 'project-member-add',
+  selector: 'projects-member-add',
   templateUrl: './project.member.add.component.html',
   styleUrl: './project.member.add.component.less',
   imports: [FormsModule, NzInputModule, NzRadioModule, NzFormModule, TranslatePipe],
