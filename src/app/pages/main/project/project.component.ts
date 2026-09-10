@@ -17,7 +17,6 @@ import { concatMap } from 'rxjs/operators';
 import { AccountService } from '../../../service/account.service';
 import { ProductService } from '../../../service/product.service';
 import { MatrixService } from '../../../service/matrix.service';
-import { ModbusService } from '../../../service/modbus.service';
 import { DtuService } from '../../../service/dtu.service';
 import { MainI18nService } from '../../../service/i18n.service';
 import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
@@ -195,7 +194,6 @@ export class ProjectComponent implements OnInit {
     private product: ProductService,
     private msg: NzMessageService,
     private matrix: MatrixService,
-    private modbus: ModbusService,
     private dtu: DtuService,
   ) {}
 
@@ -252,8 +250,7 @@ export class ProjectComponent implements OnInit {
 
   /**
    * 解析设备实例描述（产品名缺失时的兜底显示名）：实例定义按 DeviceType 保存，故按类型逐个取回，
-   * 同类型只取一次。Modbus 虚拟子设备（protocol=modbus 且挂在父设备下）的实例定义在 service-matrix
-   * （ModbusVirtualDeviceResource.getInstance），其余设备沿用 product 服务的实例定义——口径同设备列表页。
+   * 同类型只取一次，实例定义沿用 product 服务的口径——同设备列表页。
    * 当前语言无文案时回退中文；取不到就交给 类型名 兜底，失败静默（不影响列表展示）。
    */
   private resolveDeviceDescriptions(devices: DeviceEntity[]): void {
@@ -264,12 +261,7 @@ export class ProjectComponent implements OnInit {
       if (!type || requested.has(type)) continue;
       requested.add(type);
 
-      const virtual = device.protocol === 'modbus' && !!device.parentId;
-      const source$ = virtual
-        ? this.modbus.getInstance(type)
-        : this.product.getProductInstance(type);
-
-      source$.subscribe({
+      this.product.getProductInstance(type).subscribe({
         next: (instance) => {
           const description =
             instance.description?.get(lang) || instance.description?.get('zh-CN') || '';
@@ -455,7 +447,7 @@ export class ProjectComponent implements OnInit {
     );
   }
 
-  /** 设备是否有子设备（同项目内 parentId = 本设备 did，如挂在 DTU 下的 Modbus 虚拟子设备） */
+  /** 设备是否有子设备（同项目内 parentId = 本设备 did，如挂在 DTU 下的子设备） */
   deviceHasChildren(device: DeviceEntity): boolean {
     return this.devices().some((d) => d.parentId === device.did && d.did !== device.did);
   }
@@ -637,9 +629,8 @@ export class ProjectComponent implements OnInit {
 
   /**
    * 删除设备（项目管理员可见，同设备列表页）：
-   * - 有子设备（如挂了 modbus 虚拟子的 DTU）前端守卫，提示先删子设备，不调后端；
-   * - 叶子设备确认后按协议分流：modbus → ModbusVirtualDeviceResource.deleteOne（删定义 + 矩阵实体）；
-   *   其余 → DeviceResource.removeOne。
+   * - 有子设备（如挂了子设备的 DTU）前端守卫，提示先删子设备，不调后端；
+   * - 确认后走 DeviceResource.removeOne（删 manipulation 注册 + 矩阵实体）。
    * spaceId 用项目根空间 id：授权口径与 isAdmin 门一致；删除按 did，落点空间无关。
    */
   protected removeDevice(device: DeviceEntity): void {
@@ -680,12 +671,7 @@ export class ProjectComponent implements OnInit {
       return;
     }
     const did = device.did;
-    const source$ =
-      device.protocol === 'modbus'
-        ? this.modbus.removeVirtual(did)
-        : this.matrix.removeDevice(rootId, did);
-
-    source$.subscribe({
+    this.matrix.removeDevice(rootId, did).subscribe({
       next: () => {
         this.msg.success(this.i18n.translate.instant('删除成功'));
         this.loadSpaceGraph(rootId);

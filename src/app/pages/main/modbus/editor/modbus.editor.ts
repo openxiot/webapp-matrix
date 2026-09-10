@@ -8,8 +8,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from '../../../../service/account.service';
 import { ModbusService } from '../../../../service/modbus.service';
 import { UserOrganizationService } from '../../../../service/user.organization.service';
-import { ModbusCommand, ModbusDeviceConfig, ModbusDeviceInfo, ModbusDeviceType } from '../../../../typedef/define/modbus/Modbus';
-import { DeviceType, LifeCycle } from '@openxiot/xiot-core-spec-ts';
+import { ModbusCommand, ModbusConfig, ModbusDeviceInfo } from '../../../../typedef/define/modbus/Modbus';
+import { LifeCycle } from '@openxiot/xiot-core-spec-ts';
 import { CommandEditComponent, type ModbusCommandDialogData } from '../command/command.edit.component';
 import { RequestFrameDialogComponent, type RequestFrameDialogData } from './request/request.frame.dialog.component';
 import { buildRequestFrame } from './request/request.frame';
@@ -63,37 +63,6 @@ export abstract class ModbusEditor {
   /** 新建页标题用 */
   protected get isAdd(): boolean {
     return this.kind === 'add';
-  }
-
-  /** 产品规范（名字空间）展示：优先落库的多语文案，缺省回退 URN 的 ns 段。 */
-  protected specLabel(type: ModbusDeviceType | undefined): string {
-    if (!type) {
-      return '-';
-    }
-    const localized = pickLocalized(type.specDescription);
-    if (localized) {
-      return localized;
-    }
-    const ns = nsOf(type.type);
-    return ns || '-';
-  }
-
-  /** 设备类型展示：优先落库的多语文案，缺省回退 URN 的 name 段。 */
-  protected typeLabel(type: ModbusDeviceType | undefined): string {
-    if (!type) {
-      return '-';
-    }
-    const localized = pickLocalized(type.typeDescription);
-    if (localized) {
-      return localized;
-    }
-    const name = nameOf(type.type);
-    return name || '-';
-  }
-
-  /** 品类 DeviceType 原始 URN（用于 tooltip / 提交值来源）。 */
-  protected typeUrn(type: ModbusDeviceType | undefined): string | undefined {
-    return type?.type;
   }
 
   /** 是否已选择组织：未选组织时为只读浏览（隐藏 编辑/添加功能码/保存），详情仅能查看。 */
@@ -249,14 +218,13 @@ export abstract class ModbusEditor {
     });
   }
 
-  private applyConfig(config: ModbusDeviceConfig): void {
+  private applyConfig(config: ModbusConfig): void {
     this.configOrgId.set(config.orgId ?? '');
     this.lifecycle.set(config.lifecycle ?? 'development');
     const slave = config.slave ?? {};
     this.deviceInfo.set({
       manufacturer: slave.manufacturer ?? '',
       model: slave.model ?? '',
-      type: slave.type,
       slaveId: slave.slaveId,
       visibility: config.visibility ?? 'private',
       description: slave.description,
@@ -284,7 +252,7 @@ export abstract class ModbusEditor {
       nzContent: ModbusDeviceInfoEditComponent,
       nzWidth: 640,
       nzViewContainerRef: this.viewContainerRef,
-      nzData: { ...this.deviceInfo(), isAdd: this.isAdd },
+      nzData: { ...this.deviceInfo() },
       nzFooter: [
         {
           label: this.translate.instant('取消'),
@@ -517,12 +485,6 @@ export abstract class ModbusEditor {
       this.editDeviceInfo();
       return;
     }
-    if (this.isAdd && !info.type) {
-      // 新建必选设备类型（服务端 create 也强制 type）；编辑存量旧配置允许暂缺（后端保留原值）
-      this.msg.warning(this.translate.instant('请选择设备类型'));
-      this.editDeviceInfo();
-      return;
-    }
     if (!this.currentOrgId) {
       this.msg.warning(this.translate.instant('请先选择组织'));
       return;
@@ -554,7 +516,7 @@ export abstract class ModbusEditor {
    * 组装当前完整配置为提交体（设备信息 + 可见度 + 功能码动作，深拷贝避免污染行对象）。
    * 不含 lifecycle —— 生命周期只经 {@link changeLifecycle} 单独流转，普通更新永不触碰。
    */
-  private buildBody(): ModbusDeviceConfig {
+  private buildBody(): ModbusConfig {
     const info = this.deviceInfo();
     const commands: ModbusCommand[] = this.commands()
       .filter((c) => c.name.trim().length > 0)
@@ -568,7 +530,6 @@ export abstract class ModbusEditor {
       slave: {
         manufacturer: info.manufacturer.trim(),
         model: info.model.trim(),
-        type: info.type,
         slaveId: info.slaveId,
         description: this.blankToUndefined(info.description),
       },
@@ -665,45 +626,6 @@ function emptyDeviceInfo(): ModbusDeviceInfo {
   return { manufacturer: '', model: '', visibility: 'private' };
 }
 
-/** 多语文案里挑当前优先展示的语言：zh-CN → en-US → 任意首条。 */
-function pickLocalized(map: Record<string, string> | undefined): string | undefined {
-  if (!map) {
-    return undefined;
-  }
-  if (map['zh-CN']) {
-    return map['zh-CN'];
-  }
-  if (map['en-US']) {
-    return map['en-US'];
-  }
-  const values = Object.values(map);
-  return values.length > 0 ? values[0] : undefined;
-}
-
-/** 品类 DeviceType URN → ns 段（非法返回空串）。 */
-function nsOf(type: string | undefined): string {
-  if (!type) {
-    return '';
-  }
-  try {
-    return DeviceType.parse(type).ns ?? '';
-  } catch {
-    return '';
-  }
-}
-
-/** 品类 DeviceType URN → name 段（非法返回空串）。 */
-function nameOf(type: string | undefined): string {
-  if (!type) {
-    return '';
-  }
-  try {
-    return DeviceType.parse(type).name ?? '';
-  } catch {
-    return '';
-  }
-}
-
 /** 空串/null/undefined 视作同一「空」，仅用于变更比对，不影响真实提交值 */
 function normValue(value: unknown): unknown {
   if (value === null || value === undefined) {
@@ -720,7 +642,6 @@ function deviceInfoKey(info: ModbusDeviceInfo): string {
   return JSON.stringify([
     normValue(info.manufacturer),
     normValue(info.model),
-    normValue(info.type),
     normValue(info.slaveId),
     normValue(info.visibility),
     normValue(info.description),

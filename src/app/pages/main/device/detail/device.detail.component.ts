@@ -16,7 +16,6 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { AccountService } from '../../../../service/account.service';
 import { MatrixService } from '../../../../service/matrix.service';
-import { ModbusService } from '../../../../service/modbus.service';
 import { ProductService } from '../../../../service/product.service';
 import { MainI18nService } from '../../../../service/i18n.service';
 import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
@@ -27,7 +26,7 @@ import { UrnUtils } from '../../../../typedef/utils/UrnUtils';
  * 设备详情页（/main/device/detail/:id，路由参数 id = 设备 did）。
  *
  * 只读展示一台设备的注册资料：设备ID / 产品 / 型号与版本 / 设备类型 / 状态 / 协议 / 所在空间 /
- * 父设备 / 根设备 / 最后在线离线，并列出其子设备（如挂在 DTU 下的 Modbus 虚拟子设备）。
+ * 父设备 / 根设备 / 最后在线离线，并列出其子设备（同一项目内 parentId = 本设备 did 的设备）。
  * 页头提供「映射」（仅 DTU，且账号启用组织时才显示——映射本质是一次组织管理员操作）与「调试」入口，
  * 展示口径与设备列表页一致。
  *
@@ -109,7 +108,7 @@ export class DeviceDetailComponent implements OnInit {
     return this.spaceById().get(spaceId)?.name ?? '';
   });
 
-  /** 子设备：同一项目内 parentId = 本设备 did 的设备（如挂在本 DTU 下的 Modbus 虚拟子设备） */
+  /** 子设备：同一项目内 parentId = 本设备 did 的设备（如挂在本 DTU 下的子设备） */
   readonly children = computed(() => {
     const device = this.device();
     if (!device) return [] as DeviceEntity[];
@@ -133,7 +132,6 @@ export class DeviceDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private account: AccountService,
     private matrix: MatrixService,
-    private modbus: ModbusService,
     private product: ProductService,
     private msg: NzMessageService,
   ) {}
@@ -203,8 +201,8 @@ export class DeviceDetailComponent implements OnInit {
   }
 
   /**
-   * 设备实例描述（产品名缺失时的兜底显示名）：实例定义按 DeviceType 取，Modbus 虚拟子设备走
-   * service-matrix 的虚拟实例定义、其余走 product 服务的实例定义——口径同调试页与设备列表页。
+   * 设备实例描述（产品名缺失时的兜底显示名）：实例定义按 DeviceType 取，走 product 服务的
+   * 实例定义——口径同调试页与设备列表页。
    * 当前语言无文案时回退中文；取不到就沿用类型名兜底，失败静默。
    */
   private resolveInstance(device: DeviceEntity): void {
@@ -212,12 +210,7 @@ export class DeviceDetailComponent implements OnInit {
     if (!type) {
       return;
     }
-    const virtual = device.protocol === 'modbus' && !!device.parentId;
-    const source$ = virtual
-      ? this.modbus.getInstance(type)
-      : this.product.getProductInstance(type);
-
-    source$.subscribe({
+    this.product.getProductInstance(type).subscribe({
       next: (instance) => {
         const lang = this.i18n.getCurrentLang();
         this.deviceDescription.set(

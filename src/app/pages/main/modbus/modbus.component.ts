@@ -15,7 +15,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountService } from '../../../service/account.service';
 import { ModbusService } from '../../../service/modbus.service';
 import { UserOrganizationService } from '../../../service/user.organization.service';
-import { ModbusDeviceConfig } from '../../../typedef/define/modbus/Modbus';
+import { ModbusConfig } from '../../../typedef/define/modbus/Modbus';
 import { lifecycleModifiable, lifecycleStyle } from './modbus.lifecycle';
 import { ConfirmComponent } from '../../../common/dialog/confirm/confirm.component';
 import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
@@ -48,7 +48,7 @@ export class ModbusComponent {
   protected readonly lifecycleStyle = lifecycleStyle;
 
   loading = signal(false);
-  configs = signal<ModbusDeviceConfig[]>([]);
+  configs = signal<ModbusConfig[]>([]);
 
   /** 组织编码 → 组织名称（当前账号所加入的组织），用于「所属组织」列解析 */
   orgNames = signal<Map<string, string>>(new Map());
@@ -185,16 +185,16 @@ export class ModbusComponent {
   }
 
   /** 点表是否归属当前组织且组织可用（归属他组织 / 浏览模式的公开点表均不可操作） */
-  protected isOwn(config: ModbusDeviceConfig): boolean {
+  protected isOwn(config: ModbusConfig): boolean {
     return this.orgActive() && !!config.orgId && config.orgId === this.currentOrgId;
   }
 
   /** 是否显示删除：点表归属当前组织、当前账号是该组织管理员，且仍处于开发态（后端同口径拒绝 released/preview） */
-  protected canDelete(config: ModbusDeviceConfig): boolean {
+  protected canDelete(config: ModbusConfig): boolean {
     return this.isOwn(config) && this.isCurrentOrgAdmin() && lifecycleModifiable(config.lifecycle);
   }
 
-  protected remove(config: ModbusDeviceConfig) {
+  protected remove(config: ModbusConfig) {
     const slave = config.slave ?? {};
     const label = `${slave.manufacturer || ''} ${slave.model || ''}`.trim() || config.id || '';
     const modal = this.modal.create<ConfirmComponent, string, string>({
@@ -223,7 +223,7 @@ export class ModbusComponent {
     });
   }
 
-  private doRemove(config: ModbusDeviceConfig) {
+  private doRemove(config: ModbusConfig) {
     const id = config.id;
     if (!id) {
       return;

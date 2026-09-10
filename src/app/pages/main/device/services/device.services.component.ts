@@ -22,12 +22,12 @@ import { MatrixService } from '../../../../service/matrix.service';
 import { ModbusService } from '../../../../service/modbus.service';
 import { ModbusService as ModbusServiceDef } from '../../../../typedef/define/modbus/ModbusService';
 import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
-import { ModbusDeviceConfig } from '../../../../typedef/define/modbus/Modbus';
+import { ModbusConfig } from '../../../../typedef/define/modbus/Modbus';
 
 /**
  * 设备映射页：列出挂在这台设备（DTU）下的 Modbus 服务，并可新建 / 查看详情 / 删除。
  *
- * 服务＝把一条点表映射成一组可调用的方法（MODBUS2.md 的方案二，后端 ModbusServiceResource）。
+ * 服务＝把一条点表映射成一组可调用的方法（见 service-matrix 的 MODBUS.md，后端 ModbusServiceResource）。
  * 两件事都在服务端按 X-Org-Id 组织隔离：查询需组织成员，增删改需该组织管理员。
  * 依赖设备的调用坐标（siid / aiid / 入参 piid）在新建页选，本页只做清单。
  */
@@ -65,7 +65,7 @@ export class DeviceServicesComponent implements OnInit {
   services = signal<ModbusServiceDef[]>([]);
 
   /** 可见点表（用于把服务的 configId 解析成「厂家 型号」） */
-  configs = signal<ModbusDeviceConfig[]>([]);
+  configs = signal<ModbusConfig[]>([]);
 
   constructor(
     private route: ActivatedRoute,

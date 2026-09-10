@@ -11,7 +11,7 @@
  */
 import {
   ModbusCommand,
-  ModbusDeviceConfig,
+  ModbusConfig,
 } from '../../../../../typedef/define/modbus/Modbus';
 import {
   ModbusServiceField,
@@ -43,7 +43,7 @@ export interface ServiceFunctionBuild {
 /**
  * 点表 → 方法列表。点表为空（未选择 / 取不到）时返回空结果。
  */
-export function buildServiceFunctions(config: ModbusDeviceConfig | undefined): ServiceFunctionBuild {
+export function buildServiceFunctions(config: ModbusConfig | undefined): ServiceFunctionBuild {
   const functions: ModbusServiceFunction[] = [];
   const skipped: string[] = [];
   if (!config) {

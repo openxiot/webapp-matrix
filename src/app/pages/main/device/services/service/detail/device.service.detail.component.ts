@@ -19,7 +19,7 @@ import { AccountService } from '../../../../../../service/account.service';
 import { MatrixService } from '../../../../../../service/matrix.service';
 import { ModbusService } from '../../../../../../service/modbus.service';
 import { DeviceEntity } from '../../../../../../typedef/define/device/DeviceEntity';
-import { ModbusDeviceConfig } from '../../../../../../typedef/define/modbus/Modbus';
+import { ModbusConfig } from '../../../../../../typedef/define/modbus/Modbus';
 import {
   ModbusService as ModbusServiceDef,
   ModbusServiceFunction,
@@ -86,7 +86,7 @@ export class DeviceServiceDetailComponent implements OnInit {
   readonly device = signal<DeviceEntity | undefined>(undefined);
 
   /** 可见点表：把服务的 configId 解析成「厂家 型号」 */
-  readonly configs = signal<ModbusDeviceConfig[]>([]);
+  readonly configs = signal<ModbusConfig[]>([]);
 
   /** 正在调用的方法序号（按钮 loading） */
   readonly invoking = signal<number | null>(null);

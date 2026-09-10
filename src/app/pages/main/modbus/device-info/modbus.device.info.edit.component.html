@@ -1,6 +1,5 @@
 <!-- 设备信息编辑：每个表单项独立成一行 —— 与功能码 CommandEditComponent 同构：
-     label 居左固定 nzSpan=4，值控件占该行余宽；不再两列并排。
-     设备类型 = 名字空间 → 设备类型的级联选择（NzCascader），一个表单项完成两级选择。 -->
+     label 居左固定 nzSpan=4，值控件占该行余宽；不再两列并排。 -->
 <div>
   <nz-form-item>
     <nz-form-label nzFor="deviceInfoManufacturer" [nzSpan]="4" [nzRequired]="true">{{ '厂家' | translate }}</nz-form-label>
@@ -40,22 +39,6 @@
     <nz-form-label nzFor="deviceInfoDescription" [nzSpan]="4">{{ '描述' | translate }}</nz-form-label>
     <nz-form-control>
       <input nz-input id="deviceInfoDescription" [value]="description()" (input)="onDescriptionInput($event)" />
-    </nz-form-control>
-  </nz-form-item>
-
-  <nz-form-item>
-    <nz-form-label [nzSpan]="4" [nzRequired]="isAdd">{{ '设备类型' | translate }}</nz-form-label>
-    <nz-form-control>
-      <nz-cascader
-        [nzOptions]="cascaderOptions()"
-        [nzLoadData]="loadCascaderChildren"
-        [ngModel]="cascaderPath()"
-        (ngModelChange)="onCascaderPathChange($event)"
-        [nzShowSearch]="true"
-        [nzAllowClear]="true"
-        nzPlaceHolder="{{ '名字空间 / 设备类型' | translate }}"
-        style="width: 100%">
-      </nz-cascader>
     </nz-form-control>
   </nz-form-item>
 </div>

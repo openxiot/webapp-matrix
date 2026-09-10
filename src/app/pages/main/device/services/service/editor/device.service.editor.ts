@@ -8,7 +8,7 @@ import { MatrixService } from '../../../../../../service/matrix.service';
 import { ModbusService } from '../../../../../../service/modbus.service';
 import { ProductService } from '../../../../../../service/product.service';
 import { DeviceEntity } from '../../../../../../typedef/define/device/DeviceEntity';
-import { ModbusDeviceConfig } from '../../../../../../typedef/define/modbus/Modbus';
+import { ModbusConfig } from '../../../../../../typedef/define/modbus/Modbus';
 import {
   ModbusService as ModbusServiceDef,
   ModbusServiceFunction,
@@ -59,7 +59,7 @@ export abstract class DeviceServiceEditor implements OnInit {
   readonly instance = signal<DeviceInstance | undefined>(undefined);
 
   readonly loadingConfigs = signal(true);
-  readonly configs = signal<ModbusDeviceConfig[]>([]);
+  readonly configs = signal<ModbusConfig[]>([]);
 
   readonly loadingService = signal(false);
   /** 编辑页：源点表取不到时，按服务里存的原样展示的方法 */
@@ -115,7 +115,7 @@ export abstract class DeviceServiceEditor implements OnInit {
   });
 
   /** 选中的源点表 */
-  readonly selectedConfig = computed<ModbusDeviceConfig | undefined>(() =>
+  readonly selectedConfig = computed<ModbusConfig | undefined>(() =>
     this.configs().find((c) => c.id === this.selectedConfigId()),
   );
 
@@ -360,7 +360,7 @@ export abstract class DeviceServiceEditor implements OnInit {
   }
 
   /** 源点表选项文案：厂家 型号 · (id) */
-  protected configLabel(cfg: ModbusDeviceConfig): string {
+  protected configLabel(cfg: ModbusConfig): string {
     const base = `${cfg.slave?.manufacturer?.trim() ?? ''} ${cfg.slave?.model?.trim() ?? ''}`.trim();
     if (base) {
       return cfg.id ? `${base} (${cfg.id})` : base;

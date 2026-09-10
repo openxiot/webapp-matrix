@@ -61,23 +61,7 @@ export interface ModbusCommand {
 }
 
 /**
- * 设备类型：品类 DeviceType + 产品规范/产品类型的多语文案快照。
- *
- * 与后端 {@code ModbusDeviceType} 对齐：选择设备类型时把「产品规范（名字空间）」与「产品类型」的
- * 多语文案一并随 {@code type} 落库，详情/列表直接展示文案，无需再回产品服务目录查询。
- * 存量旧配置仅迁出 {@code type} URN，两个描述 Map 可能为空（展示回退到按 URN 解析）。
- */
-export interface ModbusDeviceType {
-  /** 品类 DeviceType（完整 URN），如 urn:xiot-spec:device:chiller:0000A005 */
-  type: string;
-  /** 产品规范（名字空间）多语文案，如 { 'zh-CN': '智能楼宇', 'en-US': 'Smart Building' } */
-  specDescription?: Record<string, string>;
-  /** 产品类型多语文案，如 { 'zh-CN': '冷水机组', 'en-US': 'Chiller' } */
-  typeDescription?: Record<string, string>;
-}
-
-/**
- * 从站设备信息（厂家/型号/设备类型/描述）——Modbus 点表配置在服务端统一收拢为 slave 子对象
+ * 从站设备信息（厂家/型号/从站地址/描述）——Modbus 点表配置在服务端统一收拢为 slave 子对象
  * （`ModbusConfig#slave` / 请求体 `slave` / 响应 `slave` 回显同一形状），与线上 JSON 对齐。
  */
 export interface ModbusSlave {
@@ -85,15 +69,13 @@ export interface ModbusSlave {
   manufacturer: string;
   /** 设备型号，如 19XRV/CVHG */
   model: string;
-  /** 设备类型：品类 DeviceType + 多语文案快照（产品规范两级选择写入；新建必填） */
-  type?: ModbusDeviceType;
   /** Modbus 从站地址 0-247 */
   slaveId?: number;
   description?: string;
 }
 
 /**
- * 设备点表的基础信息：= slave 子对象（厂家/型号/设备类型/从站地址/描述）+ 顶层可见度。
+ * 设备点表的基础信息：= slave 子对象（厂家/型号/从站地址/描述）+ 顶层可见度。
  * 供「设备信息」只读展示与编辑对话框共用的界面内部形状（非线上 JSON）。
  */
 export interface ModbusDeviceInfo extends ModbusSlave {
@@ -105,10 +87,10 @@ export interface ModbusDeviceInfo extends ModbusSlave {
  * 设备点表配置（服务端 Java 公有字段，可选字段后端可能缺省）：
  * 从站信息收拢在 slave 子对象下，可见度与功能码动作与 slave 平级。
  */
-export interface ModbusDeviceConfig {
+export interface ModbusConfig {
   id?: string;
   orgId?: string;
-  /** 从站设备信息（厂家/型号/设备类型/从站地址/描述） */
+  /** 从站设备信息（厂家/型号/从站地址/描述） */
   slave: ModbusSlave;
   /** 可见度：private 私有 / public 公开 */
   visibility?: 'private' | 'public';
@@ -131,19 +113,4 @@ export interface ModbusPerson {
   name?: string;
   /** epoch 毫秒时间戳 */
   timestamp?: number;
-}
-
-/**
- * Modbus 虚拟设备映射请求体（createOne）：把一条点表配置虚拟成父设备（DTU）下的子设备。
- * siid / aiid 是父设备侧「服务 ID / 方法 ID」，仅作映射信息保留。
- */
-export interface ModbusMapping {
-  /** 被虚拟化的点表配置 ID */
-  configId: string;
-  /** 父设备 ID（DTU，虚拟设备挂载到其下） */
-  did: string;
-  /** 父设备服务 ID（siid） */
-  siid: number;
-  /** 父设备方法 ID（aiid） */
-  aiid: number;
 }

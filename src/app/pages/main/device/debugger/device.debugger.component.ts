@@ -17,7 +17,6 @@ import {NzModalService} from 'ng-zorro-antd/modal';
 import {MatrixService} from '../../../../service/matrix.service';
 import {AccountService} from '../../../../service/account.service';
 import {ProductService} from '../../../../service/product.service';
-import {ModbusService} from '../../../../service/modbus.service';
 import {DeviceInstance, DeviceInstanceCodec} from '@openxiot/xiot-core-spec-ts';
 import {DeviceInstanceViewJsonComponent} from './dialog/device.instance.view.json.component';
 import {DeviceEntity} from '../../../../typedef/define/device/DeviceEntity';
@@ -91,7 +90,6 @@ export class DeviceDebuggerComponent implements OnInit {
         private router: Router,
         private matrix: MatrixService,
         private product: ProductService,
-        private modbus: ModbusService,
         private account: AccountService,
         private modal: NzModalService,
         private viewContainerRef: ViewContainerRef,
@@ -123,16 +121,11 @@ export class DeviceDebuggerComponent implements OnInit {
             });
     }
 
-    /**
-     * 取设备实例定义：Modbus 虚拟子设备（protocol=modbus 且挂在父设备下）的实例定义由 service-matrix
-     * 按派生 DeviceType 保存（ModbusVirtualDeviceResource.getInstance）；其余设备沿用 product 服务的实例定义。
-     */
+    /** 取设备实例定义：按 DeviceType 走 product 服务的实例定义。 */
     private loadInstance(device: DeviceEntity): void {
         this.loadingInstance.set(true);
         const type = device.type;
-        const virtual = device.protocol === 'modbus' && !!device.parentId;
-        const source = virtual ? this.modbus.getInstance(type) : this.product.getProductInstance(type);
-        source.subscribe({
+        this.product.getProductInstance(type).subscribe({
             next: data => {
                 this.instance.set(data);
                 this.loadingInstance.set(false);

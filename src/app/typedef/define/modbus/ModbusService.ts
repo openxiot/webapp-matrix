@@ -1,7 +1,6 @@
 /**
- * Modbus 服务：把一条 Modbus 点表映射成一组可直接调用的「方法」（MODBUS2.md 的方案二）。
+ * Modbus 服务：把一条 Modbus 点表映射成一组可直接调用的「方法」（见 service-matrix 的 MODBUS.md）。
  *
- * 与方案一（点表 → 虚拟子设备，见 Modbus.ts 的 ModbusMapping）并存：
  * 本形状对应后端 `cc.openxiot.matrix.db.modbus.service.ModbusService`（集合 `modbus`/`services`），
  * 主键对外一律十六进制字符串。整份定义在**创建时**一次性展开落库（依赖设备坐标 + 请求帧 + 应答解析规则），
  * 调用时只读这一条记录即可，不再回点表 / 父设备 / 产品实例定义。
