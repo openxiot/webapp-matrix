@@ -59,13 +59,13 @@
             <td>
               @switch (row.kind) {
                 @case ('space') {
-                  <nz-tag>{{ typeLabel(row.space!) | translate }}</nz-tag>
+                  <nz-tag nzColor="cyan">{{ typeLabel(row.space!) | translate }}</nz-tag>
                 }
                 @case ('service') {
-                  <nz-tag nzColor="blue">{{ 'Modbus 服务' | translate }}</nz-tag>
+                  <nz-tag nzColor="blue">{{ '服务' | translate }}</nz-tag>
                 }
                 @default {
-                  {{ deviceTypeLabel(row.device!) }}
+                  <nz-tag nzColor="green">{{ '设备' | translate }}</nz-tag>
                 }
               }
             </td>
@@ -77,10 +77,7 @@
                     · {{ serviceCount(row.space!.id) }} {{ '服务' | translate }}
                   }
                 }
-                @case ('service') {
-                  {{ '依赖设备' | translate }} <code>{{ row.service!.did }}</code>
-                }
-                @default {
+                @case ('device') {
                   <nz-tag [nzColor]="row.device!.online ? 'success' : 'default'">
                     {{ row.device!.online ? ('在线' | translate) : ('离线' | translate) }}
                   </nz-tag>
@@ -92,10 +89,7 @@
                 @case ('space') {
                   {{ row.space!.updateTime ? (row.space!.updateTime | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
                 }
-                @case ('service') {
-                  {{ '-' }}
-                }
-                @default {
+                @case ('device') {
                   {{ (row.device!.lastOnline || row.device!.lastOffline) ? ((row.device!.lastOnline || row.device!.lastOffline) | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
                 }
               }
