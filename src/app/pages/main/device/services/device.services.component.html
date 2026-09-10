@@ -2,10 +2,12 @@
   <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
 
   <nz-page-header-extra>
-    <button nz-button nzType="primary" (click)="add()">
-      <span nz-icon nzType="plus"></span>
-      {{ '添加' | translate }}
-    </button>
+    @if (isAdmin()) {
+      <button nz-button nzType="primary" (click)="add()">
+        <span nz-icon nzType="plus"></span>
+        {{ '添加' | translate }}
+      </button>
+    }
   </nz-page-header-extra>
 
   <nz-page-header-content>
@@ -33,7 +35,7 @@
 <div style="padding: 20px 20px">
   <nz-spin [nzSpinning]="loadingServices()">
     @if (services().length === 0 && !loadingServices()) {
-      <nz-empty [nzNotFoundContent]="'该设备下还没有映射的服务' | translate"></nz-empty>
+      <nz-empty [nzNotFoundContent]="'该设备下还没有服务' | translate"></nz-empty>
     } @else {
       <nz-table [nzData]="services()" [nzFrontPagination]="false" [nzShowPagination]="false">
         <thead>
@@ -56,8 +58,10 @@
               </td>
               <td>
                 <a [routerLink]="detailLink(service)">{{ '详情' | translate }}</a>
-                <nz-divider nzType="vertical"></nz-divider>
-                <a (click)="remove(service)">{{ '删除' | translate }}</a>
+                @if (isAdmin()) {
+                  <nz-divider nzType="vertical"></nz-divider>
+                  <a (click)="remove(service)">{{ '删除' | translate }}</a>
+                }
               </td>
             </tr>
           }

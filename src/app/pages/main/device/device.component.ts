@@ -9,6 +9,7 @@ import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -19,10 +20,12 @@ import { ConfirmComponent } from '../../../common/dialog/confirm/confirm.compone
 import { AccountService } from '../../../service/account.service';
 import { ProductService } from '../../../service/product.service';
 import { MatrixService } from '../../../service/matrix.service';
+import { ModbusService } from '../../../service/modbus.service';
 import { DtuService } from '../../../service/dtu.service';
 import { MainI18nService } from '../../../service/i18n.service';
 import { DeviceEntity } from '../../../typedef/define/device/DeviceEntity';
 import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
+import { GenericService } from '../../../typedef/define/service/GenericService';
 import { OrganizationMember } from '../../../typedef/define/user/UserOrganization';
 import { DeviceAddComponent } from '../../../common/dialog/device/add/device.add.component';
 import { UrnUtils } from '../../../typedef/utils/UrnUtils';
@@ -33,19 +36,41 @@ function productDisplayName(p: ProductBasic, unknown: string): string {
   return p.name?.value?.get('zh-CN') || p.model || p.id || unknown;
 }
 
-/** 树形缩进列表的一行：设备 + 在设备树里的层级（0 = 顶层/父设备，>=1 = 子设备）。 */
+/**
+ * 树形缩进列表的一行：设备行（depth 0 = 顶层/父设备，>=1 = 子设备），
+ * 或挂在设备下、由首列展开方框展开出来的 Modbus 服务行（depth = 设备行 depth + 1）。
+ * 两个引用字段各自只在一类行上有值（同 project.component 的 TreeNode 口径，便于模板里按 kind 取用）。
+ */
 export interface DeviceRow {
-  device: DeviceEntity;
+  kind: 'device' | 'service';
+  /** 设备行：设备本身；服务行为 null */
+  device: DeviceEntity | null;
+  /** 服务行：空间图精简视图的服务；设备行为 null */
+  service: GenericService | null;
   depth: number;
+  /** 是否有子设备（服务行恒 false）。删除设备时用它拦「先删子设备」 */
   hasChildren: boolean;
+  /** 该设备行展开后是否有内容（子设备或 Modbus 服务）——首列那一处方框据此决定要不要出现 */
+  hasNested: boolean;
+  /** 该设备行当前是否展开；服务行恒 false */
+  expanded: boolean;
 }
 
 /**
  * 把扁平设备列表按 parentId 还原成设备森林，DFS 拍平为缩进行。
  * 根 = 无父设备（或父设备不在当前集合 / 指向自身，断链当根展示，避免丢设备）；
- * 子设备按来源顺序紧跟父设备。collapsed 集合里 did 的父设备不展开其子级。
+ * 子设备按来源顺序紧跟父设备。
+ *
+ * <p>展开只有一个维度（一行一处方框，同项目页）：设备行展开后先列出它下面的 Modbus 服务
+ * （servicesByDid，来自空间图），再排子设备。默认展开与否由「有没有子设备」决定
+ * （与改动前的设备树默认一致：有子设备就展开、没有就收起），用户点过的行记在
+ * expandedOverrides 里，覆盖默认。</p>
  */
-function flattenDeviceRows(devices: DeviceEntity[], collapsed: ReadonlySet<string>): DeviceRow[] {
+function flattenDeviceRows(
+  devices: DeviceEntity[],
+  expandedOverrides: ReadonlyMap<string, boolean>,
+  servicesByDid: ReadonlyMap<string, GenericService[]>,
+): DeviceRow[] {
   const rows: DeviceRow[] = [];
   const byId = new Map<string, DeviceEntity>();
   const byParent = new Map<string, DeviceEntity[]>();
@@ -65,10 +90,30 @@ function flattenDeviceRows(devices: DeviceEntity[], collapsed: ReadonlySet<strin
     const d = byId.get(did);
     if (!d) return;
     const kids = byParent.get(did) || [];
-    rows.push({ device: d, depth, hasChildren: kids.length > 0 });
-    if (kids.length > 0 && !collapsed.has(did)) {
-      for (const c of kids) push(c.did, depth + 1);
+    const services = servicesByDid.get(did) || [];
+    const expanded = expandedOverrides.get(did) ?? kids.length > 0;
+    rows.push({
+      kind: 'device',
+      device: d,
+      service: null,
+      depth,
+      hasChildren: kids.length > 0,
+      hasNested: kids.length > 0 || services.length > 0,
+      expanded,
+    });
+    if (!expanded) return;
+    for (const s of services) {
+      rows.push({
+        kind: 'service',
+        device: null,
+        service: s,
+        depth: depth + 1,
+        hasChildren: false,
+        hasNested: false,
+        expanded: false,
+      });
     }
+    for (const c of kids) push(c.did, depth + 1);
   };
 
   for (const d of devices) {
@@ -93,6 +138,7 @@ function flattenDeviceRows(devices: DeviceEntity[], collapsed: ReadonlySet<strin
     NzDividerModule,
     NzEmptyModule,
     NzButtonModule,
+    NzIconModule,
     RouterLink,
     TranslatePipe,
   ],
@@ -101,10 +147,25 @@ function flattenDeviceRows(devices: DeviceEntity[], collapsed: ReadonlySet<strin
 export class DeviceComponent implements OnInit {
   /** 当前项目全部设备（扁平，按 parentId 可还原设备树） */
   devices = signal<DeviceEntity[]>([]);
-  /** 已折叠（收起子级）的父设备 did 集合 */
-  collapsed = signal<Set<string>>(new Set());
-  /** 设备树缩进行（派生自 devices + 折叠集合） */
-  readonly rows = computed(() => flattenDeviceRows(this.devices(), this.collapsed()));
+  /** 当前项目的全部 Modbus 服务（空间图精简视图：id/name/type/did/spaceId） */
+  services = signal<GenericService[]>([]);
+  /** 用户点过的展开/收起（did -> 是否展开）；没点过的行按「有没有子设备」取默认（见 flattenDeviceRows） */
+  expandedOverrides = signal<Map<string, boolean>>(new Map());
+  /** 设备 did -> 该设备下的 Modbus 服务 */
+  readonly servicesByDid = computed(() => {
+    const map = new Map<string, GenericService[]>();
+    for (const s of this.services()) {
+      if (!s.did) continue;
+      const list = map.get(s.did) || [];
+      list.push(s);
+      map.set(s.did, list);
+    }
+    return map;
+  });
+  /** 设备树 + 服务子行的缩进行（派生自 devices + 展开覆盖 + 服务） */
+  readonly rows = computed(() =>
+    flattenDeviceRows(this.devices(), this.expandedOverrides(), this.servicesByDid()),
+  );
   /** 空间图返回的扁平空间列表（含名称），用于给每台设备标注所在空间 */
   spaces = signal<SpaceEntity[]>([]);
   /** 空间 ID -> 空间 */
@@ -152,6 +213,7 @@ export class DeviceComponent implements OnInit {
     public account: AccountService,
     private product: ProductService,
     private matrix: MatrixService,
+    private modbus: ModbusService,
     private dtu: DtuService,
     private msg: NzMessageService,
     private translate: TranslateService,
@@ -217,20 +279,23 @@ export class DeviceComponent implements OnInit {
   /**
    * 删除设备（项目管理员可见）：
    * - 有子设备（如挂了子设备的 DTU）前端守卫，提示先删子设备，不调后端；
-   * - 确认后走 DeviceResource.removeOne（删 manipulation 注册 + 矩阵实体）。
+   * - 确认后走 DeviceResource.removeOne（删 manipulation 注册 + 矩阵实体 + 该设备下的 Modbus 服务）。
    */
   protected removeDevice(row: DeviceRow): void {
+    const device = row.device;
+    if (!device) {
+      return;
+    }
     if (row.hasChildren) {
       this.msg.warning(this.translate.instant('请先删除其子设备'));
       return;
     }
 
-    const did = row.device.did;
     const modal = this.modal.create<ConfirmComponent, string, string>({
       nzTitle: this.translate.instant('您真的要删除这个设备吗？'),
       nzContent: ConfirmComponent,
       nzViewContainerRef: this.viewContainerRef,
-      nzData: did,
+      nzData: device.did,
       nzFooter: [
         { label: this.translate.instant('取消'), onClick: (component) => component!.cancel() },
         {
@@ -244,18 +309,59 @@ export class DeviceComponent implements OnInit {
 
     modal.afterClose.subscribe((result) => {
       if (result) {
-        this.doRemoveDevice(row);
+        this.doRemoveDevice(device.did);
       }
     });
   }
 
-  private doRemoveDevice(row: DeviceRow): void {
+  private doRemoveDevice(did: string): void {
     const rootId = this.account.space().id;
     if (!rootId) {
       return;
     }
-    const did = row.device.did;
     this.matrix.removeDevice(rootId, did).subscribe({
+      next: () => {
+        this.msg.success(this.translate.instant('删除成功'));
+        this.loadSpaceGraph(rootId);
+      },
+      error: (e) => this.msg.warning(e?.message ?? e),
+    });
+  }
+
+  /**
+   * 删除服务（项目管理员可见，同项目页）：确认后走 ModbusServiceResource.deleteOne
+   * （后端按空间判：当前项目空间的管理员即可）。
+   */
+  protected removeService(service: GenericService): void {
+    const modal = this.modal.create<ConfirmComponent, string, string>({
+      nzTitle: this.translate.instant('您真的要删除这个服务吗？'),
+      nzContent: ConfirmComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: service.name,
+      nzFooter: [
+        { label: this.translate.instant('取消'), onClick: (component) => component!.cancel() },
+        {
+          label: this.translate.instant('确认'),
+          danger: true,
+          type: 'primary',
+          onClick: (component) => component!.ok(),
+        },
+      ],
+    });
+
+    modal.afterClose.subscribe((result) => {
+      if (result) {
+        this.doRemoveService(service);
+      }
+    });
+  }
+
+  private doRemoveService(service: GenericService): void {
+    const rootId = this.account.space().id;
+    if (!rootId) {
+      return;
+    }
+    this.modbus.removeService(rootId, service.id).subscribe({
       next: () => {
         this.msg.success(this.translate.instant('删除成功'));
         this.loadSpaceGraph(rootId);
@@ -287,6 +393,8 @@ export class DeviceComponent implements OnInit {
       next: (graph) => {
         this.spaces.set(graph.spaces);
         this.devices.set(graph.devices);
+        // 服务（精简视图）用于首列的服务展开：按 did 分组后挂在对应设备行下
+        this.services.set(graph.services ?? []);
         this.loading.set(false);
         this.resolveProductNames(graph.devices);
         this.resolveDeviceDescriptions(graph.devices);
@@ -334,12 +442,30 @@ export class DeviceComponent implements OnInit {
     return UrnUtils.extractTypeName(device.type).toLowerCase() === 'dtu';
   }
 
-  /** nz-table 展开箭头回调：expand=true 展开子设备，false 收起（维护 collapsed 集合，供 flatten 剪枝） */
-  toggleExpand(did: string, expand: boolean) {
-    const next = new Set(this.collapsed());
-    if (expand) next.delete(did);
-    else next.add(did);
-    this.collapsed.set(next);
+  /** 服务行/设备行的 track 键：did 与服务 id 可能撞车，加前缀区分 */
+  rowKey(row: DeviceRow): string {
+    return row.kind === 'device' ? `d:${row.device!.did}` : `s:${row.service!.id}`;
+  }
+
+  /**
+   * nz-table 展开方框回调：一行只有一个方框，展开即同时显示该设备下的
+   * Modbus 服务行与子设备（服务在前），收起则两者一起隐藏。
+   */
+  onExpandChange(row: DeviceRow, expand: boolean) {
+    if (row.kind !== 'device') return;
+    const did = row.device!.did;
+    this.expandedOverrides.update((overrides) => new Map(overrides).set(did, expand));
+  }
+
+  /** 服务详情页链接（路由见 device.routes.ts） */
+  serviceDetailLink(service: GenericService): string[] {
+    return ['/main/device/services', service.did, 'service', 'detail', service.id];
+  }
+
+  /** 服务所在空间的可读名称；service.spaceId 缺失/不在图里返回 '-' */
+  serviceSpaceName(service: GenericService): string {
+    const s = service.spaceId ? this.spaceById().get(service.spaceId) : undefined;
+    return s ? s.name : '-';
   }
 
   /**

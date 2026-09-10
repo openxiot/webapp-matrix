@@ -105,7 +105,7 @@
             id="serviceConfig"
             [ngModel]="selectedConfigId()"
             (ngModelChange)="onConfigChange($event)"
-            [nzPlaceHolder]="'选择要映射成方法的设备点表' | translate"
+            [nzPlaceHolder]="'选择要映射的设备点表' | translate"
             [nzDisabled]="configs().length === 0"
             [nzLoading]="loadingConfigs()"
             nzShowSearch

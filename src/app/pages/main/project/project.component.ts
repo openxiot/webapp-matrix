@@ -17,6 +17,7 @@ import { concatMap } from 'rxjs/operators';
 import { AccountService } from '../../../service/account.service';
 import { ProductService } from '../../../service/product.service';
 import { MatrixService } from '../../../service/matrix.service';
+import { ModbusService } from '../../../service/modbus.service';
 import { DtuService } from '../../../service/dtu.service';
 import { MainI18nService } from '../../../service/i18n.service';
 import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
@@ -194,6 +195,7 @@ export class ProjectComponent implements OnInit {
     private product: ProductService,
     private msg: NzMessageService,
     private matrix: MatrixService,
+    private modbus: ModbusService,
     private dtu: DtuService,
   ) {}
 
@@ -438,13 +440,12 @@ export class ProjectComponent implements OnInit {
     return UrnUtils.extractTypeName(device.type).toLowerCase() === 'dtu';
   }
 
-  /** 是否展示「映射」入口：DTU 且账号已启用组织（映射需组织管理员，口径同设备列表） */
+  /**
+   * 是否展示「映射」入口：DTU 且自己为项目空间管理员。
+   * Modbus 服务（映射）已按**空间**鉴权，与账号有没有组织无关，故不再要求「已启用组织」。
+   */
   showMapping(device: DeviceEntity): boolean {
-    return (
-      this.isDtuDevice(device) &&
-      this.account.userSettings().organizationEnabled &&
-      !!this.account.organization().id
-    );
+    return this.isDtuDevice(device) && this.isAdmin();
   }
 
   /** 设备是否有子设备（同项目内 parentId = 本设备 did，如挂在 DTU 下的子设备） */
@@ -672,6 +673,51 @@ export class ProjectComponent implements OnInit {
     }
     const did = device.did;
     this.matrix.removeDevice(rootId, did).subscribe({
+      next: () => {
+        this.msg.success(this.i18n.translate.instant('删除成功'));
+        this.loadSpaceGraph(rootId);
+      },
+      error: (e) => this.msg.warning(e?.message ?? e),
+    });
+  }
+
+  /**
+   * 删除服务（项目管理员可见，同设备页展开后的服务行）：
+   * 确认后走 ModbusServiceResource.deleteOne（后端按空间判：当前项目空间的管理员即可）。
+   */
+  protected removeService(service: GenericService): void {
+    const modal = this.modal.create<ConfirmComponent, string, string>({
+      nzTitle: this.i18n.translate.instant('您真的要删除这个服务吗？'),
+      nzContent: ConfirmComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: service.name,
+      nzFooter: [
+        {
+          label: this.i18n.translate.instant('取消'),
+          onClick: (component) => component!.cancel(),
+        },
+        {
+          label: this.i18n.translate.instant('确认'),
+          danger: true,
+          type: 'primary',
+          onClick: (component) => component!.ok(),
+        },
+      ],
+    });
+
+    modal.afterClose.subscribe((result) => {
+      if (result) {
+        this.doRemoveService(service);
+      }
+    });
+  }
+
+  private doRemoveService(service: GenericService): void {
+    const rootId = this.rootId();
+    if (!rootId) {
+      return;
+    }
+    this.modbus.removeService(rootId, service.id).subscribe({
       next: () => {
         this.msg.success(this.i18n.translate.instant('删除成功'));
         this.loadSpaceGraph(rootId);

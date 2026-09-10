@@ -2,19 +2,7 @@
   /* 行高 / hover 交回 ng-zorro nz-table 默认，只补单元格内容排版 */
 }
 
-/* 首列：专用于 展开/收起，箭头水平居中 */
-.cell-expand {
-  width: 48px;
-  text-align: center;
-}
-
-/* 树形缩进的承载元素：放在 设备ID 列内，按层级左移，其余列不随层级移动 */
-.cell-indent {
-  display: inline-block;
-  vertical-align: middle;
-}
-
-/* 产品图标列：不参与缩进，与层级无关 */
+/* 产品图标列：不与首列一起缩进 */
 .cell-icon {
   white-space: nowrap;
 }
@@ -28,7 +16,7 @@
   text-overflow: ellipsis;
 }
 
-/* 设备DID：等宽小字，一眼区别于名称 */
+/* 设备DID：首列，承载树形展开方框与层级缩进（缩进由 nzIndentSize 出）；等宽小字，一眼区别于名称 */
 .cell-did {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;

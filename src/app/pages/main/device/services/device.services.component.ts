@@ -1,6 +1,14 @@
-import { Component, OnInit, ChangeDetectionStrategy, signal, ViewContainerRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ChangeDetectionStrategy,
+  computed,
+  signal,
+  ViewContainerRef,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
@@ -23,12 +31,15 @@ import { ModbusService } from '../../../../service/modbus.service';
 import { ModbusService as ModbusServiceDef } from '../../../../typedef/define/modbus/ModbusService';
 import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
 import { ModbusConfig } from '../../../../typedef/define/modbus/Modbus';
+import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
+import { OrganizationMember } from '../../../../typedef/define/user/UserOrganization';
 
 /**
  * 设备映射页：列出挂在这台设备（DTU）下的 Modbus 服务，并可新建 / 查看详情 / 删除。
  *
  * 服务＝把一条点表映射成一组可调用的方法（见 service-matrix 的 MODBUS.md，后端 ModbusServiceResource）。
- * 两件事都在服务端按 X-Org-Id 组织隔离：查询需组织成员，增删改需该组织管理员。
+ * 服务端按**空间**鉴权：查询需空间成员，增删改需空间管理员；空间 ID 在 Path 上，
+ * 统一传当前项目根空间（account.space().id），与设备接口同口径。
  * 依赖设备的调用坐标（siid / aiid / 入参 piid）在新建页选，本页只做清单。
  */
 @Component({
@@ -67,6 +78,32 @@ export class DeviceServicesComponent implements OnInit {
   /** 可见点表（用于把服务的 configId 解析成「厂家 型号」） */
   configs = signal<ModbusConfig[]>([]);
 
+  /** 当前项目根空间与成员（user 访问条目），用于计算项目管理员（isAdmin）。 */
+  rootSpace = signal<SpaceEntity | null>(null);
+  members = signal<OrganizationMember[]>([]);
+
+  /**
+   * 当前账号是否为项目管理员（决定「添加 / 删除」是否可见 —— 服务增删改只要求空间管理员）：
+   * 1. 自己在项目成员（user 访问条目）中 role=admin；
+   * 2. 组织兜底：当前组织命中根空间的 organization 访问条目，且自己为该组织管理员。
+   * 口径与 device.component / project.component 的 isAdmin 一致。
+   */
+  readonly isAdmin = computed(() => {
+    const me = this.account.user();
+    if (!me?.id) return false;
+
+    const selfEntry = this.members().find((m) => m.userId === me.id);
+    if (selfEntry?.role === 'admin') return true;
+
+    const org = this.account.organization();
+    const orgEntry = this.rootSpace()?.accesses?.find((a) => a.type === 'organization' && a.id === org.id);
+    if (orgEntry) {
+      const meInOrg = org.members.find((m) => m.userId === me.id);
+      return meInOrg !== undefined && meInOrg.role === 'admin';
+    }
+    return false;
+  });
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -85,6 +122,25 @@ export class DeviceServicesComponent implements OnInit {
       this.loadServices(params['did']);
     });
     this.loadConfigs();
+    this.loadAdminContext();
+  }
+
+  /** 加载项目根空间 + 成员，供 isAdmin 判定；非管理员无需展示按钮，失败静默即可。 */
+  private loadAdminContext(): void {
+    const rootId = this.account.space().id;
+    if (!rootId) {
+      return;
+    }
+    forkJoin({
+      space: this.matrix.getSpace(rootId),
+      members: this.matrix.listAccesses(rootId),
+    }).subscribe({
+      next: ({ space, members }) => {
+        this.rootSpace.set(space);
+        this.members.set(members);
+      },
+      error: () => {},
+    });
   }
 
   private loadDevice(did: string): void {
@@ -108,8 +164,14 @@ export class DeviceServicesComponent implements OnInit {
   }
 
   private loadServices(did: string): void {
+    const spaceId = this.account.space().id;
+    if (!spaceId) {
+      this.loadingServices.set(false);
+      this.msg.warning('请先在项目列表中选择一个项目');
+      return;
+    }
     this.loadingServices.set(true);
-    this.modbus.listServicesByDevice(did).subscribe({
+    this.modbus.listServicesByDevice(spaceId, did).subscribe({
       next: (services) => {
         this.services.set(services);
         this.loadingServices.set(false);
@@ -139,8 +201,13 @@ export class DeviceServicesComponent implements OnInit {
     return ['/main/device/services', this.did(), 'service', 'detail', service.id ?? ''];
   }
 
-  /** 删除服务：需组织管理员，后端按 org 校验，失败按报错提示 */
+  /** 删除服务：需当前项目空间的管理员，失败按报错提示 */
   protected remove(service: ModbusServiceDef): void {
+    const spaceId = this.account.space().id;
+    if (!spaceId) {
+      this.msg.warning('请先在项目列表中选择一个项目');
+      return;
+    }
     const modal = this.modal.create<ConfirmComponent, string, string>({
       nzTitle: '您真的要删除这个服务吗？',
       nzContent: ConfirmComponent,
@@ -162,7 +229,7 @@ export class DeviceServicesComponent implements OnInit {
 
     modal.afterClose.subscribe((result) => {
       if (result && service.id) {
-        this.modbus.removeService(service.id).subscribe({
+        this.modbus.removeService(spaceId, service.id).subscribe({
           next: () => {
             this.msg.success('删除成功');
             this.loadServices(this.did());

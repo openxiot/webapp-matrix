@@ -19,7 +19,6 @@
         <nz-table #devTable class="device-table" [nzData]="rows()" [nzShowPagination]="false" nzSize="middle">
           <thead>
             <tr>
-              <th class="cell-expand"></th>
               <th nzWidth="400px">{{ '设备ID' | translate }}</th>
               <th>{{ '产品' | translate }}</th>
               <th>{{ '设备名称' | translate }}</th>
@@ -29,45 +28,71 @@
             </tr>
           </thead>
           <tbody>
-            @for (row of devTable.data; track row.device.did) {
+            @for (row of devTable.data; track rowKey(row)) {
               <tr>
-                <!-- 首列：专用于 展开/收起 子设备，箭头居中；仅可展开行有控制，其余留空 -->
+                <!-- 首列：树形展开方框 + 层级缩进都交给 nz-td（口径同 project.component 第一列） -->
                 <td
-                  class="cell-expand"
-                  [nzShowExpand]="row.hasChildren"
-                  [nzExpand]="!collapsed().has(row.device.did)"
-                  (nzExpandChange)="toggleExpand(row.device.did, $event)"
-                ></td>
-                <!-- 设备ID：第 2 列，树形层级缩进只落在这一列 -->
-                <td class="cell-did" [title]="row.device.did">
-                  <span class="cell-indent" [style.margin-left.px]="row.depth * 22">{{ row.device.did }}</span>
+                  class="cell-did"
+                  [nzIndentSize]="row.depth * 20"
+                  [nzShowExpand]="row.hasNested"
+                  [nzExpand]="row.expanded"
+                  (nzExpandChange)="onExpandChange(row, $event)"
+                  [title]="row.kind === 'device' ? row.device!.did : row.service!.id"
+                >
+                  {{ row.kind === 'device' ? row.device!.did : row.service!.id }}
                 </td>
-                <!-- 产品图标列：不参与缩进，与层级无关，图标统一左对齐 -->
+                <!-- 图标列：不参与缩进，与层级无关，图标统一左对齐 -->
                 <td class="cell-icon">
-                  @if (deviceIcon(row.device); as icon) {
-                    <nz-avatar [nzSrc]="icon" [nzSize]="48"></nz-avatar>
+                  @if (row.kind === 'device') {
+                    @if (deviceIcon(row.device!); as icon) {
+                      <nz-avatar [nzSrc]="icon" [nzSize]="48"></nz-avatar>
+                    } @else {
+                      <nz-avatar [nzSize]="48" nzIcon="hdd"></nz-avatar>
+                    }
                   } @else {
-                    <nz-avatar [nzSize]="48" nzIcon="hdd"></nz-avatar>
+                    <nz-avatar [nzSize]="48" nzIcon="api"></nz-avatar>
                   }
                 </td>
-                <td class="cell-name-text" [title]="deviceName(row.device)">{{ deviceName(row.device) }}</td>
+                <td class="cell-name-text" [title]="row.kind === 'device' ? deviceName(row.device!) : row.service!.name">
+                  @if (row.kind === 'device') {
+                    {{ deviceName(row.device!) }}
+                  } @else {
+                    {{ row.service!.name }}
+                    <nz-tag nzColor="blue">{{ '服务' | translate }}</nz-tag>
+                  }
+                </td>
                 <td>
-                  <nz-tag [nzColor]="row.device.online ? 'success' : 'default'">
-                    {{ row.device.online ? ('在线' | translate) : ('离线' | translate) }}
-                  </nz-tag>
-                </td>
-                <td class="cell-space" [title]="spaceName(row.device)">{{ spaceName(row.device) }}</td>
-                <td class="cell-ops">
-                  <a [routerLink]="['/main/device/detail', row.device.did]">{{ '详情' | translate }}</a>
-                  @if (isDtuDevice(row.device) && account.userSettings().organizationEnabled && account.organization().id) {
-                    <nz-divider nzType="vertical"></nz-divider>
-                    <a [routerLink]="['/main/device/services', row.device.did]">{{ '服务' | translate }}</a>
+                  @if (row.kind === 'device') {
+                    <nz-tag [nzColor]="row.device!.online ? 'success' : 'default'">
+                      {{ row.device!.online ? ('在线' | translate) : ('离线' | translate) }}
+                    </nz-tag>
                   }
-                  <nz-divider nzType="vertical"></nz-divider>
-                  <a [routerLink]="['/main/device/debugger', row.device.did]">{{ '调试' | translate }}</a>
-                  @if (isAdmin()) {
+                </td>
+                <td
+                  class="cell-space"
+                  [title]="row.kind === 'device' ? spaceName(row.device!) : serviceSpaceName(row.service!)"
+                >
+                  {{ row.kind === 'device' ? spaceName(row.device!) : serviceSpaceName(row.service!) }}
+                </td>
+                <td class="cell-ops">
+                  @if (row.kind === 'device') {
+                    <a [routerLink]="['/main/device/detail', row.device!.did]">{{ '详情' | translate }}</a>
+                    @if (isDtuDevice(row.device!) && isAdmin()) {
+                      <nz-divider nzType="vertical"></nz-divider>
+                      <a [routerLink]="['/main/device/services', row.device!.did]">{{ '服务' | translate }}</a>
+                    }
                     <nz-divider nzType="vertical"></nz-divider>
-                    <a (click)="removeDevice(row)">{{ '删除' | translate }}</a>
+                    <a [routerLink]="['/main/device/debugger', row.device!.did]">{{ '调试' | translate }}</a>
+                    @if (isAdmin()) {
+                      <nz-divider nzType="vertical"></nz-divider>
+                      <a (click)="removeDevice(row)">{{ '删除' | translate }}</a>
+                    }
+                  } @else {
+                    <a [routerLink]="serviceDetailLink(row.service!)">{{ '详情' | translate }}</a>
+                    @if (isAdmin()) {
+                      <nz-divider nzType="vertical"></nz-divider>
+                      <a (click)="removeService(row.service!)">{{ '删除' | translate }}</a>
+                    }
                   }
                 </td>
               </tr>

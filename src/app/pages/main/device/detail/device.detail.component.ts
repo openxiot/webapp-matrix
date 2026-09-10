@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { DatePipe, Location } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
@@ -20,6 +21,7 @@ import { ProductService } from '../../../../service/product.service';
 import { MainI18nService } from '../../../../service/i18n.service';
 import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
 import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
+import { OrganizationMember } from '../../../../typedef/define/user/UserOrganization';
 import { UrnUtils } from '../../../../typedef/utils/UrnUtils';
 
 /**
@@ -27,7 +29,7 @@ import { UrnUtils } from '../../../../typedef/utils/UrnUtils';
  *
  * 只读展示一台设备的注册资料：设备ID / 产品 / 型号与版本 / 设备类型 / 状态 / 协议 / 所在空间 /
  * 父设备 / 根设备 / 最后在线离线，并列出其子设备（同一项目内 parentId = 本设备 did 的设备）。
- * 页头提供「映射」（仅 DTU，且账号启用组织时才显示——映射本质是一次组织管理员操作）与「调试」入口，
+ * 页头提供「映射」（仅 DTU，且自己为项目空间管理员时才显示——Modbus 服务按空间鉴权）与「调试」入口，
  * 展示口径与设备列表页一致。
  *
  * 数据来源：设备本体取 GET /matrix/v1/device/one/{spaceId}/{did}（spaceId 用当前项目根空间，同调试页）；
@@ -118,13 +120,37 @@ export class DeviceDetailComponent implements OnInit {
   /** 是否 DTU：只有 DTU 能做设备点表映射（口径同设备列表） */
   readonly isDtu = computed(() => this.typeName().toLowerCase() === 'dtu');
 
-  /** 是否展示「映射」入口：DTU 且账号已启用组织（映射需组织管理员，口径同设备列表） */
-  readonly showMapping = computed(
-    () =>
-      this.isDtu() &&
-      this.account.userSettings().organizationEnabled &&
-      !!this.account.organization().id,
-  );
+  /** 当前项目根空间与成员（user 访问条目），用于计算项目管理员（isAdmin）。 */
+  rootSpace = signal<SpaceEntity | null>(null);
+  members = signal<OrganizationMember[]>([]);
+
+  /**
+   * 当前账号是否为项目管理员（决定「映射」是否可见）：
+   * 1. 自己在项目成员（user 访问条目）中 role=admin；
+   * 2. 组织兜底：当前组织命中根空间的 organization 访问条目，且自己为该组织管理员。
+   * 口径与 device.component / project.component 的 isAdmin 一致。
+   */
+  readonly isAdmin = computed(() => {
+    const me = this.account.user();
+    if (!me?.id) return false;
+
+    const selfEntry = this.members().find((m) => m.userId === me.id);
+    if (selfEntry?.role === 'admin') return true;
+
+    const org = this.account.organization();
+    const orgEntry = this.rootSpace()?.accesses?.find((a) => a.type === 'organization' && a.id === org.id);
+    if (orgEntry) {
+      const meInOrg = org.members.find((m) => m.userId === me.id);
+      return meInOrg !== undefined && meInOrg.role === 'admin';
+    }
+    return false;
+  });
+
+  /**
+   * 是否展示「映射」入口：DTU 且自己为项目空间管理员。
+   * Modbus 服务（映射）已按**空间**鉴权，与账号有没有组织无关，故不再要求「已启用组织」。
+   */
+  readonly showMapping = computed(() => this.isDtu() && this.isAdmin());
 
   constructor(
     protected location: Location,
@@ -178,6 +204,22 @@ export class DeviceDetailComponent implements OnInit {
       next: (graph) => {
         this.projectSpaces.set(graph.spaces);
         this.projectDevices.set(graph.devices);
+      },
+      error: () => {},
+    });
+
+    this.loadAdminContext(spaceId);
+  }
+
+  /** 加载项目根空间 + 成员，供 isAdmin 判定；非管理员无需展示入口，失败静默即可。 */
+  private loadAdminContext(rootId: string): void {
+    forkJoin({
+      space: this.matrix.getSpace(rootId),
+      members: this.matrix.listAccesses(rootId),
+    }).subscribe({
+      next: ({ space, members }) => {
+        this.rootSpace.set(space);
+        this.members.set(members);
       },
       error: () => {},
     });

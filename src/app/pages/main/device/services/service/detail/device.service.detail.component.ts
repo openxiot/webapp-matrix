@@ -108,9 +108,15 @@ export class DeviceServiceDetailComponent implements OnInit {
     if (!id) {
       return;
     }
+    const spaceId = this.account.space().id;
+    if (!spaceId) {
+      this.loading.set(false);
+      this.msg.warning('请先在项目列表中选择一个项目');
+      return;
+    }
     this.loading.set(true);
     this.result.set(null);
-    this.modbus.getService(id).subscribe({
+    this.modbus.getService(spaceId, id).subscribe({
       next: (service) => {
         this.service.set(service);
         this.loading.set(false);
@@ -150,8 +156,14 @@ export class DeviceServiceDetailComponent implements OnInit {
     if (!id) {
       return;
     }
+    // 调用要空间成员：空间 ID 取当前项目根空间，与查询同源
+    const spaceId = this.account.space().id;
+    if (!spaceId) {
+      this.msg.warning('请先在项目列表中选择一个项目');
+      return;
+    }
     this.invoking.set(func.index);
-    this.modbus.invokeService(id, func.index).subscribe({
+    this.modbus.invokeService(spaceId, id, func.index).subscribe({
       next: (data) => {
         this.invoking.set(null);
         this.result.set({ func, data });

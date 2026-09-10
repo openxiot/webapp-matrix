@@ -89,63 +89,78 @@ export class ModbusService {
 
   /**------------------------------------------------------------------------------------------------
    * Modbus 服务（点表映射成一组可调用的方法，ModbusServiceResource）
-   * 查询需组织成员、增删改需组织管理员；组织均经 X-Org-Id 携带。
+   * 权限按**空间**判（与设备接口同一口径）：查询与 invoke 需空间成员，增删改需空间管理员；
+   * 空间 ID 在 Path 上，统一传当前项目根空间（account.space().id）。组织经 X-Org-Id 携带，
+   * 只在空间 accesses 里的组织条目命中时起作用。
    *------------------------------------------------------------------------------------------------*/
 
-  /** 按组织列出全部服务（GET /service/many） */
-  listServices(): Observable<ModbusServiceDef[]> {
+  /** 按空间列出服务（GET /service/many/{spaceId}，筛的是服务里记的设备落点） */
+  listServices(spaceId: string): Observable<ModbusServiceDef[]> {
     return this.http
-      .get<OxResponse>(`${this.server}/matrix/v1/modbus/service/many`)
+      .get<OxResponse>(`${this.server}/matrix/v1/modbus/service/many/${encodeURIComponent(spaceId)}`)
       .pipe(map((r) => ModbusServiceCodec.decodeArray(r.data)));
   }
 
-  /** 按依赖设备 did 列出该设备下挂的全部服务（GET /service/parent/{did}） */
-  listServicesByDevice(did: string): Observable<ModbusServiceDef[]> {
+  /** 按依赖设备 did 列出该设备下挂的全部服务（GET /service/parent/{spaceId}/{did}） */
+  listServicesByDevice(spaceId: string, did: string): Observable<ModbusServiceDef[]> {
     return this.http
-      .get<OxResponse>(`${this.server}/matrix/v1/modbus/service/parent/${encodeURIComponent(did)}`)
+      .get<OxResponse>(
+        `${this.server}/matrix/v1/modbus/service/parent/${encodeURIComponent(spaceId)}/${encodeURIComponent(did)}`,
+      )
       .pipe(map((r) => ModbusServiceCodec.decodeArray(r.data)));
   }
 
-  /** 查单个服务（GET /service/one/{id}，含完整 functions 定义） */
-  getService(id: string): Observable<ModbusServiceDef> {
+  /** 查单个服务（GET /service/one/{spaceId}/{id}，含完整 functions 定义） */
+  getService(spaceId: string, id: string): Observable<ModbusServiceDef> {
     return this.http
-      .get<OxResponse>(`${this.server}/matrix/v1/modbus/service/one/${encodeURIComponent(id)}`)
+      .get<OxResponse>(
+        `${this.server}/matrix/v1/modbus/service/one/${encodeURIComponent(spaceId)}/${encodeURIComponent(id)}`,
+      )
       .pipe(map((r) => ModbusServiceCodec.decode(r.data)));
   }
 
-  /** 新建服务（POST /service/one，body = 完整定义，org 与人员由后端补） */
-  createService(body: ModbusServiceDef): Observable<ModbusServiceDef> {
+  /** 新建服务（POST /service/one/{spaceId}，body = 完整定义，人员由后端补） */
+  createService(spaceId: string, body: ModbusServiceDef): Observable<ModbusServiceDef> {
     return this.http
-      .post<OxResponse>(`${this.server}/matrix/v1/modbus/service/one`, ModbusServiceCodec.encode(body))
-      .pipe(map((r) => ModbusServiceCodec.decode(r.data)));
-  }
-
-  /** 修改服务（PUT /service/one/{id}，请求体里缺省的字段保留既有值） */
-  updateService(id: string, body: ModbusServiceDef): Observable<ModbusServiceDef> {
-    return this.http
-      .put<OxResponse>(
-        `${this.server}/matrix/v1/modbus/service/one/${encodeURIComponent(id)}`,
+      .post<OxResponse>(
+        `${this.server}/matrix/v1/modbus/service/one/${encodeURIComponent(spaceId)}`,
         ModbusServiceCodec.encode(body),
       )
       .pipe(map((r) => ModbusServiceCodec.decode(r.data)));
   }
 
-  /** 删除服务（DELETE /service/one/{id}） */
-  removeService(id: string): Observable<void> {
+  /** 修改服务（PUT /service/one/{spaceId}/{id}，请求体里缺省的字段保留既有值） */
+  updateService(spaceId: string, id: string, body: ModbusServiceDef): Observable<ModbusServiceDef> {
     return this.http
-      .delete<OxResponse>(`${this.server}/matrix/v1/modbus/service/one/${encodeURIComponent(id)}`)
+      .put<OxResponse>(
+        `${this.server}/matrix/v1/modbus/service/one/${encodeURIComponent(spaceId)}/${encodeURIComponent(id)}`,
+        ModbusServiceCodec.encode(body),
+      )
+      .pipe(map((r) => ModbusServiceCodec.decode(r.data)));
+  }
+
+  /** 删除服务（DELETE /service/one/{spaceId}/{id}） */
+  removeService(spaceId: string, id: string): Observable<void> {
+    return this.http
+      .delete<OxResponse>(
+        `${this.server}/matrix/v1/modbus/service/one/${encodeURIComponent(spaceId)}/${encodeURIComponent(id)}`,
+      )
       .pipe(map(() => undefined));
   }
 
   /**
-   * 调用服务的一个方法（POST /service/invoke，body {service, function}）：
+   * 调用服务的一个方法（POST /service/invoke/{spaceId}，body {service, function}）：
    * 服务端把请求帧发给依赖设备，再把应答按 response 规则解成「字段 → 值」。
    * 写方法（无 response）的应答是请求回显，返回空对象。
    */
-  invokeService(serviceId: string, functionIndex: number): Observable<Record<string, unknown>> {
+  invokeService(
+    spaceId: string,
+    serviceId: string,
+    functionIndex: number,
+  ): Observable<Record<string, unknown>> {
     const body = { service: serviceId, function: functionIndex };
     return this.http
-      .post<OxResponse>(`${this.server}/matrix/v1/modbus/service/invoke`, body)
+      .post<OxResponse>(`${this.server}/matrix/v1/modbus/service/invoke/${encodeURIComponent(spaceId)}`, body)
       .pipe(map((r) => (r.data ?? {}) as Record<string, unknown>));
   }
 }

@@ -215,8 +215,14 @@ export abstract class DeviceServiceEditor implements OnInit {
   }
 
   private loadService(id: string): void {
+    const spaceId = this.account.space().id;
+    if (!spaceId) {
+      this.loadingService.set(false);
+      this.msg.warning('请先在项目列表中选择一个项目');
+      return;
+    }
     this.loadingService.set(true);
-    this.modbus.getService(id).subscribe({
+    this.modbus.getService(spaceId, id).subscribe({
       next: (service) => {
         this.name.set(service.name ?? '');
         this.selectedConfigId.set(service.configId ?? null);
@@ -296,6 +302,12 @@ export abstract class DeviceServiceEditor implements OnInit {
       this.msg.warning('源点表里没有可用的功能码动作，生成不出方法');
       return;
     }
+    // 增删改要空间管理员：空间 ID 取当前项目根空间（与查询同源），不是设备落点的那个空间
+    const spaceId = this.account.space().id;
+    if (!spaceId) {
+      this.msg.warning('请先在项目列表中选择一个项目');
+      return;
+    }
 
     const body = new ModbusServiceDef();
     body.name = this.name().trim();
@@ -306,14 +318,15 @@ export abstract class DeviceServiceEditor implements OnInit {
     body.device.siid = siid;
     body.device.aiid = aiid;
     body.device.argument = this.argument();
+    // 注意：这里记的是**设备落点**的空间副本，不是路径上那个鉴权用的根空间 —— 空间图按这个字段反查服务
     body.device.space = this.device()?.space ?? this.storedSpace ?? new SpaceRef();
     body.functions = functions;
 
     this.saving.set(true);
     const request$ =
       this.kind === 'edit'
-        ? this.modbus.updateService(this.id(), body)
-        : this.modbus.createService(body);
+        ? this.modbus.updateService(spaceId, this.id(), body)
+        : this.modbus.createService(spaceId, body);
     request$.subscribe({
       next: () => {
         this.saving.set(false);
