@@ -23,7 +23,7 @@ import { ModbusDeviceConfig } from '../../../../typedef/define/modbus/Modbus';
 import { Action, DeviceInstance, Service } from '@openxiot/xiot-core-spec-ts';
 
 /**
- * Modbus 映射页：把一条 Modbus 点表配置映射成选中的 DTU 设备下的虚拟子设备。
+ * 设备点表映射页：把一条 Modbus 点表配置映射成选中的 DTU 设备下的虚拟子设备。
  *
  * 用户指定三件事：父 DTU 设备的（Service → Action 挂载点）、要虚拟化的 Modbus 点表配置；
  * 保存调用 service-matrix ModbusVirtualDeviceResource.createOne（POST /matrix/v1/modbus/virtual/one，

@@ -1,20 +1,20 @@
 <nz-page-header (nzBack)="onBack()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
   <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
   <ng-template #pageTitle>
-    {{ 'Modbus 映射' | translate }}
+    {{ '设备点表映射' | translate }}
   </ng-template>
 </nz-page-header>
 
 <div style="padding: 20px 20px">
   <nz-spin [nzSpinning]="loadingDevice() || loadingInstance() || loadingConfigs()">
-    <nz-card nzTitle="{{ '映射 Modbus 点表为虚拟子设备' | translate }}">
+    <nz-card nzTitle="{{ '将设备点表映射为子设备' | translate }}">
       <!-- 父设备摘要 -->
       @if (device(); as d) {
         <div class="mapping-parent">
           <span class="mapping-parent-label">{{ '父设备' | translate }}：</span>
           <nz-tag [nzColor]="'blue'">{{ d.online ? ('在线' | translate) : ('离线' | translate) }}</nz-tag>
           <code>{{ d.did }}</code>
-          <span class="mapping-parent-desc">（{{ 'Modbus 虚拟设备将挂载到该设备下' | translate }}）</span>
+          <span class="mapping-parent-desc">（{{ '子设备将挂载到该设备下' | translate }}）</span>
         </div>
       }
 
