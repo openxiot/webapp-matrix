@@ -1,0 +1,7 @@
+<nz-form-item>
+  <nz-form-label [nzSpan]="6" [nzRequired]="true">{{ '设备IMEI' | translate }}</nz-form-label>
+  <nz-form-control>
+    <input nz-input [value]="imei()" (input)="onImeiInput($event)" type="text" maxlength="15"
+           placeholder="{{ '输入 DTU 的 15 位 IMEI，解析后添加到当前项目' | translate }}"/>
+  </nz-form-control>
+</nz-form-item>

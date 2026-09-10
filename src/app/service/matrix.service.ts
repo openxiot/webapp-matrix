@@ -93,6 +93,13 @@ export class MatrixService {
       .pipe(map(() => undefined));
   }
 
+  /** 删除单个设备：注销 manipulation 注册并删除矩阵 DeviceEntity（spaceId 仅用于管理员鉴权，按 did 删除）。 */
+  removeDevice(spaceId: string, did: string): Observable<void> {
+    return this.http
+      .delete<OxResponse>(`${this.server}/matrix/v1/device/one/${spaceId}/${did}`)
+      .pipe(map(() => undefined));
+  }
+
   moveDevices(req: MoveDeviceRequest): Observable<void> {
     return this.http
       .put<OxResponse>(`${this.server}/matrix/v1/device/many/space`, req)

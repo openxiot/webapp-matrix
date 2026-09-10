@@ -1,6 +1,12 @@
 <nz-spin [nzSpinning]="loading()">
   <nz-page-header [nzTitle]="pageTitle" [nzGhost]="false">
     <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+
+    <nz-page-header-extra>
+      @if (isAdmin()) {
+        <button nz-button nzType="primary" (click)="addDevice()">{{ '添加' | translate }}</button>
+      }
+    </nz-page-header-extra>
   </nz-page-header>
 
   <ng-template #pageTitle>
@@ -59,6 +65,10 @@
                   }
                   <nz-divider nzType="vertical"></nz-divider>
                   <a [routerLink]="['/main/device/debugger', row.device.did]">{{ '调试' | translate }}</a>
+                  @if (isAdmin()) {
+                    <nz-divider nzType="vertical"></nz-divider>
+                    <a (click)="removeDevice(row)">{{ '删除' | translate }}</a>
+                  }
                 </td>
               </tr>
             }

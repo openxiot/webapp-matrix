@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, ViewContainerRef, computed, signal } from '@angular/core';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
@@ -8,14 +8,23 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzModalService } from 'ng-zorro-antd/modal';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { forkJoin } from 'rxjs';
+import { concatMap } from 'rxjs/operators';
 import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import { ConfirmComponent } from '../../../common/dialog/confirm/confirm.component';
 import { AccountService } from '../../../service/account.service';
 import { ProductService } from '../../../service/product.service';
 import { MatrixService } from '../../../service/matrix.service';
+import { ModbusService } from '../../../service/modbus.service';
+import { DtuService } from '../../../service/dtu.service';
 import { DeviceEntity } from '../../../typedef/define/device/DeviceEntity';
 import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
+import { OrganizationMember } from '../../../typedef/define/user/UserOrganization';
+import { DeviceAddComponent } from './add/device.add.component';
 import { UrnUtils } from '../../../typedef/utils/UrnUtils';
 import { ProductBasic } from '@openxiot/xiot-core-spec-ts';
 
@@ -83,9 +92,11 @@ function flattenDeviceRows(devices: DeviceEntity[], collapsed: ReadonlySet<strin
     NzTableModule,
     NzDividerModule,
     NzEmptyModule,
+    NzButtonModule,
     RouterLink,
     TranslatePipe,
   ],
+  providers: [NzModalService],
 })
 export class DeviceComponent implements OnInit {
   /** 当前项目全部设备（扁平，按 parentId 可还原设备树） */
@@ -109,12 +120,42 @@ export class DeviceComponent implements OnInit {
   loading = signal(false);
   error = signal<string | null>(null);
 
+  /** 当前项目根空间与成员（user 访问条目），用于计算项目管理员（isAdmin）。 */
+  rootSpace = signal<SpaceEntity | null>(null);
+  members = signal<OrganizationMember[]>([]);
+
+  /**
+   * 当前账号是否为项目管理员（决定「添加/删除」是否可见）：
+   * 1. 自己在项目成员（user 访问条目）中 role=admin；
+   * 2. 组织兜底：当前组织命中项目根空间的 organization 访问条目，且自己为该组织管理员。
+   * 口径与 project.member.component 的 isAdmin 一致。
+   */
+  readonly isAdmin = computed(() => {
+    const me = this.account.user();
+    if (!me?.id) return false;
+
+    const selfEntry = this.members().find((m) => m.userId === me.id);
+    if (selfEntry?.role === 'admin') return true;
+
+    const org = this.account.organization();
+    const orgEntry = this.rootSpace()?.accesses?.find((a) => a.type === 'organization' && a.id === org.id);
+    if (orgEntry) {
+      const meInOrg = org.members.find((m) => m.userId === me.id);
+      return meInOrg !== undefined && meInOrg.role === 'admin';
+    }
+    return false;
+  });
+
   constructor(
     public account: AccountService,
     private product: ProductService,
     private matrix: MatrixService,
+    private modbus: ModbusService,
+    private dtu: DtuService,
     private msg: NzMessageService,
     private translate: TranslateService,
+    private modal: NzModalService,
+    private viewContainerRef: ViewContainerRef,
   ) {}
 
   ngOnInit() {
@@ -124,6 +165,121 @@ export class DeviceComponent implements OnInit {
       return;
     }
     this.loadSpaceGraph(rootId);
+    this.loadAdminContext(rootId);
+  }
+
+  /**
+   * 添加设备（输入 IMEI）：弹 IMEI 对话框，确认后先经 DTU 网关按 IMEI 解析 DID，
+   * 再以 { did, key: imei } 登记到当前项目根空间（复用 DeviceResource.addOne）。
+   */
+  protected addDevice(): void {
+    const modal = this.modal.create<DeviceAddComponent, void, string>({
+      nzTitle: this.translate.instant('添加设备'),
+      nzContent: DeviceAddComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzFooter: [
+        { label: this.translate.instant('取消'), onClick: (component) => component!.cancel() },
+        {
+          label: this.translate.instant('确认'),
+          type: 'primary',
+          disabled: (component) => !component!.valid(),
+          onClick: (component) => component!.ok(),
+        },
+      ],
+    });
+
+    modal.afterClose.subscribe((imei) => {
+      if (imei) {
+        this.doAddByImei(imei);
+      }
+    });
+  }
+
+  private doAddByImei(imei: string): void {
+    const rootId = this.account.space().id;
+    if (!rootId) {
+      return;
+    }
+    this.dtu
+      .getDidByImei(imei)
+      .pipe(concatMap((did) => this.matrix.addDeviceByQr(rootId, { did, key: imei })))
+      .subscribe({
+        next: () => {
+          this.msg.success(this.translate.instant('添加设备成功'));
+          this.loadSpaceGraph(rootId);
+        },
+        error: (e) => this.msg.warning(e?.message ?? e),
+      });
+  }
+
+  /**
+   * 删除设备（项目管理员可见）：
+   * - 有子设备（如挂了 modbus 虚拟子的 DTU）前端守卫，提示先删子设备，不调后端；
+   * - 叶子设备确认后按协议分流：modbus → ModbusVirtualDeviceResource.deleteOne（删定义 + 矩阵实体）；
+   *   其余 → DeviceResource.removeOne。
+   */
+  protected removeDevice(row: DeviceRow): void {
+    if (row.hasChildren) {
+      this.msg.warning(this.translate.instant('请先删除其子设备'));
+      return;
+    }
+
+    const did = row.device.did;
+    const modal = this.modal.create<ConfirmComponent, string, string>({
+      nzTitle: this.translate.instant('您真的要删除这个设备吗？'),
+      nzContent: ConfirmComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: did,
+      nzFooter: [
+        { label: this.translate.instant('取消'), onClick: (component) => component!.cancel() },
+        {
+          label: this.translate.instant('确认'),
+          danger: true,
+          type: 'primary',
+          onClick: (component) => component!.ok(),
+        },
+      ],
+    });
+
+    modal.afterClose.subscribe((result) => {
+      if (result) {
+        this.doRemoveDevice(row);
+      }
+    });
+  }
+
+  private doRemoveDevice(row: DeviceRow): void {
+    const rootId = this.account.space().id;
+    if (!rootId) {
+      return;
+    }
+    const did = row.device.did;
+    const isModbus = row.device.protocol === 'modbus';
+    const source$ = isModbus
+      ? this.modbus.removeVirtual(did)
+      : this.matrix.removeDevice(rootId, did);
+
+    source$.subscribe({
+      next: () => {
+        this.msg.success(this.translate.instant('删除成功'));
+        this.loadSpaceGraph(rootId);
+      },
+      error: (e) => this.msg.warning(e?.message ?? e),
+    });
+  }
+
+  /** 加载项目根空间 + 成员，供 isAdmin 判定；非管理员无需展示按钮，失败静默即可。 */
+  private loadAdminContext(rootId: string): void {
+    forkJoin({
+      space: this.matrix.getSpace(rootId),
+      members: this.matrix.listAccesses(rootId),
+    }).subscribe({
+      next: ({ space, members }) => {
+        this.rootSpace.set(space);
+        this.members.set(members);
+      },
+      error: () => {},
+    });
   }
 
   /** 加载空间图（嵌套树 + 设备），成功后解析产品名 */
@@ -171,7 +327,7 @@ export class DeviceComponent implements OnInit {
     return s ? s.name : '';
   }
 
-  /** 设备是否 DTU（按其类型 URN 的 name 段判断）。DTU 才能做 Modbus 映射。 */
+  /** 设备是否 DTU（按其类型 URN 的 name 段判断）。DTU 才能做 设备点表映射。 */
   isDtuDevice(device: DeviceEntity): boolean {
     return UrnUtils.extractTypeName(device.type).toLowerCase() === 'dtu';
   }

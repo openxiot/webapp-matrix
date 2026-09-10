@@ -3,4 +3,5 @@ export const environment = {
   server: 'https://matrix.openxiot.cn',
   account: 'https://account.openxiot.cn',
   product: 'https://product.openxiot.cn',
+  dtu: 'https://ws.dtu.ap.openxiot.cn',
 };

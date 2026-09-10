@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { OxResponse } from './response/OxResponse';
@@ -90,6 +90,18 @@ export class ModbusService {
     return this.http
       .post<OxResponse>(`${this.server}/matrix/v1/modbus/virtual/one`, body)
       .pipe(map((r) => r.data as DeviceEntity));
+  }
+
+  /**
+   * 删除 Modbus 虚拟设备（DELETE /matrix/v1/modbus/virtual/one?did=..）：反向清理 createVirtual，
+   * 删除归属当前组织的虚拟设备定义文档并连同删除同 did 的矩阵 DeviceEntity。组织经 X-Org-Id 携带；
+   * 需为该组织管理员。
+   */
+  removeVirtual(did: string): Observable<void> {
+    const params = new HttpParams().set('did', did);
+    return this.http
+      .delete<OxResponse>(`${this.server}/matrix/v1/modbus/virtual/one`, { params })
+      .pipe(map(() => undefined));
   }
 
   /**
