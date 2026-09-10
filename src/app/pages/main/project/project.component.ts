@@ -8,22 +8,29 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { DatePipe, Location } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
-import { AccountService } from '../../../../service/account.service';
-import { ProductService } from '../../../../service/product.service';
-import { MatrixService } from '../../../../service/matrix.service';
-import { MainI18nService } from '../../../../service/i18n.service';
-import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import { forkJoin } from 'rxjs';
+import { concatMap } from 'rxjs/operators';
+import { AccountService } from '../../../service/account.service';
+import { ProductService } from '../../../service/product.service';
+import { MatrixService } from '../../../service/matrix.service';
+import { ModbusService } from '../../../service/modbus.service';
+import { DtuService } from '../../../service/dtu.service';
+import { MainI18nService } from '../../../service/i18n.service';
+import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { ConfirmComponent } from '../../../../common/dialog/confirm/confirm.component';
-import { SpaceAddComponent, SpaceAddResult } from '../../../../common/dialog/space/space.add.component';
-import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
-import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
-import { UrnUtils } from '../../../../typedef/utils/UrnUtils';
+import { ConfirmComponent } from '../../../common/dialog/confirm/confirm.component';
+import { SpaceAddComponent, SpaceAddResult } from '../../../common/dialog/space/space.add.component';
+import { DeviceAddComponent } from '../../../common/dialog/device/add/device.add.component';
+import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
+import { DeviceEntity } from '../../../typedef/define/device/DeviceEntity';
+import { OrganizationMember } from '../../../typedef/define/user/UserOrganization';
+import { UrnUtils } from '../../../typedef/utils/UrnUtils';
 import { ProductBasic } from '@openxiot/xiot-core-spec-ts';
+import { NzAvatarComponent } from 'ng-zorro-antd/avatar';
 
 /** 空间类型 -> 中文名 */
 const SPACE_TYPE_LABELS: Record<string, string> = {
@@ -95,8 +102,8 @@ interface TreeNode {
 @Component({
   selector: 'projects-detail',
   standalone: true,
-  templateUrl: './project.detail.component.html',
-  styleUrl: './project.detail.component.less',
+  templateUrl: './project.component.html',
+  styleUrl: './project.component.less',
   imports: [
     NzPageHeaderModule,
     NzBreadCrumbModule,
@@ -110,10 +117,12 @@ interface TreeNode {
     TranslatePipe,
     BreadcrumbTranslateDirective,
     DatePipe,
+    NzAvatarComponent,
+    RouterLink,
   ],
   providers: [NzModalService],
 })
-export class ProjectDetailComponent implements OnInit {
+export class ProjectComponent implements OnInit {
   /** 根空间（项目）id */
   rootId = signal('');
 
@@ -126,8 +135,38 @@ export class ProjectDetailComponent implements OnInit {
   devices = signal<DeviceEntity[]>([]);
   /** model -> 产品显示名 */
   productNames = signal<Map<string, string>>(new Map());
+  /** model -> 产品图标 URL */
+  productIcons = signal<Map<string, string>>(new Map());
   loading = signal(false);
   error = signal<string | null>(null);
+
+  /** 项目根空间（扁平，含 accesses）与成员（user 访问条目），用于计算项目管理员（isAdmin） */
+  adminSpace = signal<SpaceEntity | null>(null);
+  members = signal<OrganizationMember[]>([]);
+
+  /**
+   * 当前账号是否为项目管理员（决定「添加设备 / 删除设备」是否可见）：
+   * 1. 自己在项目成员（user 访问条目）中 role=admin；
+   * 2. 组织兜底：当前组织命中项目根空间的 organization 访问条目，且自己为该组织管理员。
+   * 口径与 projects.member.component / device.component 的 isAdmin 一致。
+   */
+  readonly isAdmin = computed(() => {
+    const me = this.account.user();
+    if (!me?.id) return false;
+
+    const selfEntry = this.members().find((m) => m.userId === me.id);
+    if (selfEntry?.role === 'admin') return true;
+
+    const org = this.account.organization();
+    const orgEntry = this.adminSpace()?.accesses?.find(
+      (a) => a.type === 'organization' && a.id === org.id,
+    );
+    if (orgEntry) {
+      const meInOrg = org.members.find((m) => m.userId === me.id);
+      return meInOrg !== undefined && meInOrg.role === 'admin';
+    }
+    return false;
+  });
 
   constructor(
     public i18n: MainI18nService,
@@ -140,6 +179,8 @@ export class ProjectDetailComponent implements OnInit {
     private product: ProductService,
     private msg: NzMessageService,
     private matrix: MatrixService,
+    private modbus: ModbusService,
+    private dtu: DtuService,
   ) {}
 
   ngOnInit() {
@@ -149,6 +190,7 @@ export class ProjectDetailComponent implements OnInit {
       if (id) {
         this.expandedIds.set(new Set([id]));
         this.loadSpaceGraph(id);
+        this.loadAdminContext(id);
       }
     });
   }
@@ -189,15 +231,18 @@ export class ProjectDetailComponent implements OnInit {
   private resolveProductNames(devices: DeviceEntity[]) {
     const orgId = this.account.organization().id;
 
-    // 宽泛兜底：拉取组织可见的全部产品建立 model -> 名称 映射
+    // 宽泛兜底：拉取组织可见的全部产品建立 model -> 名称/图标 映射
     if (orgId) {
       this.product.getVisibleProducts(orgId).subscribe({
         next: (products) => {
           const names = new Map<string, string>();
+          const icons = new Map<string, string>();
           for (const p of products) {
             names.set(p.model, productDisplayName(p, this.i18n.translate.instant('未知产品')));
+            icons.set(p.model, p.icon ?? '');
           }
           this.productNames.set(names);
+          this.productIcons.set(icons);
         },
         error: () => {},
       });
@@ -217,6 +262,10 @@ export class ProjectDetailComponent implements OnInit {
         next: (p) => {
           this.productNames.update((m) => {
             m.set(model, productDisplayName(p, this.i18n.translate.instant('未知产品')));
+            return new Map(m);
+          });
+          this.productIcons.update((m) => {
+            m.set(model, p.icon ?? '');
             return new Map(m);
           });
         },
@@ -285,6 +334,30 @@ export class ProjectDetailComponent implements OnInit {
   /** 某空间下的设备数量 */
   deviceCount(spaceId: string): number {
     return this.devices().filter((d) => d.space?.spaceId === spaceId).length;
+  }
+
+  /** 设备图标：按型号（URN 第 7 段）命中产品图标；未命中返回空串，由模板回退默认图标 */
+  deviceIcon(device: DeviceEntity): string {
+    return this.productIcons().get(this.deviceModel(device)) || '';
+  }
+
+  /** 是否 DTU：只有 DTU 能做设备点表映射（口径同设备列表） */
+  isDtuDevice(device: DeviceEntity): boolean {
+    return UrnUtils.extractTypeName(device.type).toLowerCase() === 'dtu';
+  }
+
+  /** 是否展示「映射」入口：DTU 且账号已启用组织（映射需组织管理员，口径同设备列表） */
+  showMapping(device: DeviceEntity): boolean {
+    return (
+      this.isDtuDevice(device) &&
+      this.account.userSettings().organizationEnabled &&
+      !!this.account.organization().id
+    );
+  }
+
+  /** 设备是否有子设备（同项目内 parentId = 本设备 did，如挂在 DTU 下的 Modbus 虚拟子设备） */
+  deviceHasChildren(device: DeviceEntity): boolean {
+    return this.devices().some((d) => d.parentId === device.did && d.did !== device.did);
   }
 
   /** 行展开/收起（仅空间行有展开图标） */
@@ -397,6 +470,123 @@ export class ProjectDetailComponent implements OnInit {
       error: (error) => {
         this.msg.warning(error);
       },
+    });
+  }
+
+  /**
+   * 添加设备（输入 IMEI）：弹 IMEI 对话框，确认后先经 DTU 网关按 IMEI 解析 DID，
+   * 再以 { did, key: imei } 登记到点击行所在的空间（复用 DeviceResource.addOne，同设备列表页）。
+   * 目标空间取行上的空间即为其自身：子空间的 accesses 继承自根空间，授权口径与 isAdmin 一致。
+   */
+  protected addDevice(space: SpaceEntity) {
+    const modal = this.modal.create<DeviceAddComponent, void, string>({
+      nzTitle: this.i18n.translate.instant('添加设备'),
+      nzContent: DeviceAddComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzFooter: [
+        {
+          label: this.i18n.translate.instant('取消'),
+          onClick: (component) => component!.cancel(),
+        },
+        {
+          label: this.i18n.translate.instant('确认'),
+          type: 'primary',
+          disabled: (component) => !component!.valid(),
+          onClick: (component) => component!.ok(),
+        },
+      ],
+    });
+
+    modal.afterClose.subscribe((imei) => {
+      if (imei) {
+        this.doAddByImei(space.id, imei);
+      }
+    });
+  }
+
+  private doAddByImei(spaceId: string, imei: string): void {
+    this.dtu
+      .getDidByImei(imei)
+      .pipe(concatMap((did) => this.matrix.addDeviceByQr(spaceId, { did, key: imei })))
+      .subscribe({
+        next: () => {
+          this.msg.success(this.i18n.translate.instant('添加设备成功'));
+          this.loadSpaceGraph(this.rootId());
+        },
+        error: (e) => this.msg.warning(e?.message ?? e),
+      });
+  }
+
+  /**
+   * 删除设备（项目管理员可见，同设备列表页）：
+   * - 有子设备（如挂了 modbus 虚拟子的 DTU）前端守卫，提示先删子设备，不调后端；
+   * - 叶子设备确认后按协议分流：modbus → ModbusVirtualDeviceResource.deleteOne（删定义 + 矩阵实体）；
+   *   其余 → DeviceResource.removeOne。
+   * spaceId 用项目根空间 id：授权口径与 isAdmin 门一致；删除按 did，落点空间无关。
+   */
+  protected removeDevice(device: DeviceEntity): void {
+    if (this.deviceHasChildren(device)) {
+      this.msg.warning(this.i18n.translate.instant('请先删除其子设备'));
+      return;
+    }
+
+    const modal = this.modal.create<ConfirmComponent, string, string>({
+      nzTitle: this.i18n.translate.instant('您真的要删除这个设备吗？'),
+      nzContent: ConfirmComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: device.did,
+      nzFooter: [
+        {
+          label: this.i18n.translate.instant('取消'),
+          onClick: (component) => component!.cancel(),
+        },
+        {
+          label: this.i18n.translate.instant('确认'),
+          danger: true,
+          type: 'primary',
+          onClick: (component) => component!.ok(),
+        },
+      ],
+    });
+
+    modal.afterClose.subscribe((result) => {
+      if (result) {
+        this.doRemoveDevice(device);
+      }
+    });
+  }
+
+  private doRemoveDevice(device: DeviceEntity): void {
+    const rootId = this.rootId();
+    if (!rootId) {
+      return;
+    }
+    const did = device.did;
+    const source$ =
+      device.protocol === 'modbus'
+        ? this.modbus.removeVirtual(did)
+        : this.matrix.removeDevice(rootId, did);
+
+    source$.subscribe({
+      next: () => {
+        this.msg.success(this.i18n.translate.instant('删除成功'));
+        this.loadSpaceGraph(rootId);
+      },
+      error: (e) => this.msg.warning(e?.message ?? e),
+    });
+  }
+
+  /** 加载项目根空间 + 成员，供 isAdmin 判定；非管理员无需展示按钮，失败静默即可。 */
+  private loadAdminContext(rootId: string): void {
+    forkJoin({
+      space: this.matrix.getSpace(rootId),
+      members: this.matrix.listAccesses(rootId),
+    }).subscribe({
+      next: ({ space, members }) => {
+        this.adminSpace.set(space);
+        this.members.set(members);
+      },
+      error: () => {},
     });
   }
 }

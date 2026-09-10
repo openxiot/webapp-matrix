@@ -17,13 +17,20 @@ export const routes: Routes = [
     path: 'organization',
     canActivate: [authGuard],
     data: { breadcrumb: '组织' },
-    loadChildren: () => import('./organization/organization.routes').then((m) => m.ORGANIZATION_ROUTES),
+    loadChildren: () =>
+      import('./organization/organization.routes').then((m) => m.ORGANIZATION_ROUTES),
   },
   {
     path: 'projects',
     canActivate: [authGuard],
     data: { breadcrumb: '所有项目' },
-    loadChildren: () => import('./projects/projects.routes').then((m) => m.PROJECT_ROUTES),
+    loadChildren: () => import('./projects/projects.routes').then((m) => m.PROJECTS_ROUTES),
+  },
+  {
+    path: 'project',
+    canActivate: [authGuard],
+    data: { breadcrumb: '项目' },
+    loadChildren: () => import('./project/project.routes').then((m) => m.PROJECT_ROUTES),
   },
   {
     path: 'device',

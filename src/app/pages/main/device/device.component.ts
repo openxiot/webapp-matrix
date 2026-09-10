@@ -24,7 +24,7 @@ import { DtuService } from '../../../service/dtu.service';
 import { DeviceEntity } from '../../../typedef/define/device/DeviceEntity';
 import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
 import { OrganizationMember } from '../../../typedef/define/user/UserOrganization';
-import { DeviceAddComponent } from './add/device.add.component';
+import { DeviceAddComponent } from '../../../common/dialog/device/add/device.add.component';
 import { UrnUtils } from '../../../typedef/utils/UrnUtils';
 import { ProductBasic } from '@openxiot/xiot-core-spec-ts';
 

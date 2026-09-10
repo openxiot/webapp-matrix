@@ -1,10 +1,10 @@
 import { Routes } from '@angular/router';
 import { ProjectsComponent } from './projects.component';
 import { ProjectCreateComponent } from './create/project.create.component';
-import { ProjectDetailComponent } from './detail/project.detail.component';
 import { ProjectMemberComponent } from './member/project.member.component';
+import { ProjectComponent } from '../project/project.component';
 
-export const PROJECT_ROUTES: Routes = [
+export const PROJECTS_ROUTES: Routes = [
   {
     path: '',
     component: ProjectsComponent,
@@ -17,7 +17,7 @@ export const PROJECT_ROUTES: Routes = [
   {
     path: 'detail/:id',
     data: { breadcrumb: '详情' },
-    component: ProjectDetailComponent,
+    component: ProjectComponent,
   },
   {
     path: 'member/:id',
