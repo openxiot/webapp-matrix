@@ -21,6 +21,7 @@ import { ProductService } from '../../../service/product.service';
 import { MatrixService } from '../../../service/matrix.service';
 import { ModbusService } from '../../../service/modbus.service';
 import { DtuService } from '../../../service/dtu.service';
+import { MainI18nService } from '../../../service/i18n.service';
 import { DeviceEntity } from '../../../typedef/define/device/DeviceEntity';
 import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
 import { OrganizationMember } from '../../../typedef/define/user/UserOrganization';
@@ -117,6 +118,8 @@ export class DeviceComponent implements OnInit {
   productNames = signal<Map<string, string>>(new Map());
   /** model -> 产品图标 URL */
   productIcons = signal<Map<string, string>>(new Map());
+  /** 设备实例描述：设备类型 URN -> 当前语言描述文案（产品名缺失时的兜底，见 deviceName） */
+  deviceDescriptions = signal<Map<string, string>>(new Map());
   loading = signal(false);
   error = signal<string | null>(null);
 
@@ -154,6 +157,7 @@ export class DeviceComponent implements OnInit {
     private dtu: DtuService,
     private msg: NzMessageService,
     private translate: TranslateService,
+    private i18n: MainI18nService,
     private modal: NzModalService,
     private viewContainerRef: ViewContainerRef,
   ) {}
@@ -293,6 +297,7 @@ export class DeviceComponent implements OnInit {
         this.devices.set(graph.devices);
         this.loading.set(false);
         this.resolveProductNames(graph.devices);
+        this.resolveDeviceDescriptions(graph.devices);
       },
       error: (e) => {
         this.loading.set(false);
@@ -302,11 +307,16 @@ export class DeviceComponent implements OnInit {
     });
   }
 
-  /** 设备显示名：产品名 -> URN 类型名 -> did */
+  /**
+   * 设备显示名，优先级：产品名称 -> 设备实例描述 -> 设备 DeviceType（URN）的 type 段 -> did。
+   * 实例描述即该 DeviceType 实例定义里的 description（多语言，见 resolveDeviceDescriptions）：
+   * Modbus 虚拟子设备的实例描述来自点表配置的 slave 描述；产品名缺失时用它兜底。
+   */
   deviceName(device: DeviceEntity): string {
-    const model = this.deviceModel(device);
-    const name = this.productNames().get(model);
+    const name = this.productNames().get(this.deviceModel(device));
     if (name) return name;
+    const description = this.deviceDescriptions().get(device.type);
+    if (description) return description;
     const typeName = UrnUtils.extractTypeName(device.type);
     return typeName || device.did;
   }
@@ -338,6 +348,41 @@ export class DeviceComponent implements OnInit {
     if (expand) next.delete(did);
     else next.add(did);
     this.collapsed.set(next);
+  }
+
+  /**
+   * 解析设备实例描述（产品名缺失时的兜底显示名）：实例定义按 DeviceType 保存，故按类型逐个取回，
+   * 同类型只取一次。
+   * Modbus 虚拟子设备（protocol=modbus 且挂在父设备下）的实例定义在 service-matrix
+   * （ModbusVirtualDeviceResource.getInstance），其余设备沿用 product 服务的实例定义——口径同调试页。
+   * 当前语言无文案时回退中文；取不到就交给 产品名称/类型名 兜底，失败静默（不影响列表展示）。
+   */
+  private resolveDeviceDescriptions(devices: DeviceEntity[]): void {
+    const lang = this.i18n.getCurrentLang();
+    const requested = new Set<string>();
+    for (const device of devices) {
+      const type = device.type;
+      if (!type || requested.has(type)) continue;
+      requested.add(type);
+
+      const virtual = device.protocol === 'modbus' && !!device.parentId;
+      const source$ = virtual
+        ? this.modbus.getInstance(type)
+        : this.product.getProductInstance(type);
+
+      source$.subscribe({
+        next: (instance) => {
+          const description =
+            instance.description?.get(lang) || instance.description?.get('zh-CN') || '';
+          if (!description) return;
+          this.deviceDescriptions.update((m) => {
+            m.set(type, description);
+            return new Map(m);
+          });
+        },
+        error: () => {},
+      });
+    }
   }
 
   private resolveProductNames(devices: DeviceEntity[]) {

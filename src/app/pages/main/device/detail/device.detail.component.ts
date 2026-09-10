@@ -16,6 +16,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { AccountService } from '../../../../service/account.service';
 import { MatrixService } from '../../../../service/matrix.service';
+import { ModbusService } from '../../../../service/modbus.service';
 import { ProductService } from '../../../../service/product.service';
 import { MainI18nService } from '../../../../service/i18n.service';
 import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
@@ -71,6 +72,9 @@ export class DeviceDetailComponent implements OnInit {
   /** 产品显示名（按 URN 的 org:model 查询，未命中回退类型名） */
   productName = signal('');
 
+  /** 设备实例描述（多语言文案，产品名缺失时的兜底，见 deviceName） */
+  deviceDescription = signal('');
+
   /** 空间 ID -> 空间 */
   readonly spaceById = computed(() => {
     const map = new Map<string, SpaceEntity>();
@@ -88,11 +92,14 @@ export class DeviceDetailComponent implements OnInit {
     return parts.length > 7 ? parts[7] : '';
   });
 
-  /** 设备显示名：产品名 -> 类型名 -> did */
+  /**
+   * 设备显示名（页头标题与「产品名称」项都用它），优先级同设备列表页：
+   * 产品名称 -> 设备实例描述 -> 设备 DeviceType（URN）的 type 段 -> did。
+   */
   readonly deviceName = computed(() => {
     const device = this.device();
     if (!device) return '';
-    return this.productName() || this.typeName() || device.did;
+    return this.productName() || this.deviceDescription() || this.typeName() || device.did;
   });
 
   /** 所在空间名（设备的 space.spaceId 命中空间图；无归属或不在图里为空） */
@@ -126,6 +133,7 @@ export class DeviceDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private account: AccountService,
     private matrix: MatrixService,
+    private modbus: ModbusService,
     private product: ProductService,
     private msg: NzMessageService,
   ) {}
@@ -151,12 +159,14 @@ export class DeviceDetailComponent implements OnInit {
     this.loading.set(true);
     this.device.set(null);
     this.productName.set('');
+    this.deviceDescription.set('');
 
     this.matrix.getDevice(spaceId, did).subscribe({
       next: (device) => {
         this.device.set(device);
         this.loading.set(false);
         this.resolveProduct(device);
+        this.resolveInstance(device);
       },
       error: (e) => {
         this.loading.set(false);
@@ -186,6 +196,32 @@ export class DeviceDetailComponent implements OnInit {
         const lang = this.i18n.getCurrentLang();
         this.productName.set(
           p.name?.value?.get(lang) || p.name?.value?.get('zh-CN') || p.model || '',
+        );
+      },
+      error: () => {},
+    });
+  }
+
+  /**
+   * 设备实例描述（产品名缺失时的兜底显示名）：实例定义按 DeviceType 取，Modbus 虚拟子设备走
+   * service-matrix 的虚拟实例定义、其余走 product 服务的实例定义——口径同调试页与设备列表页。
+   * 当前语言无文案时回退中文；取不到就沿用类型名兜底，失败静默。
+   */
+  private resolveInstance(device: DeviceEntity): void {
+    const type = device.type;
+    if (!type) {
+      return;
+    }
+    const virtual = device.protocol === 'modbus' && !!device.parentId;
+    const source$ = virtual
+      ? this.modbus.getInstance(type)
+      : this.product.getProductInstance(type);
+
+    source$.subscribe({
+      next: (instance) => {
+        const lang = this.i18n.getCurrentLang();
+        this.deviceDescription.set(
+          instance.description?.get(lang) || instance.description?.get('zh-CN') || '',
         );
       },
       error: () => {},
