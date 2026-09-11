@@ -17,12 +17,14 @@ import {PropertyReadValueComponent} from './value/property.read.value.component'
 import {NzMessageService} from 'ng-zorro-antd/message';
 import {MatrixService} from '../../../../../../../../../service/matrix.service';
 import {AccountService} from '../../../../../../../../../service/account.service';
+import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({
     selector: 'property-reader',
     templateUrl: './property.reader.component.html',
     styleUrls: ['./property.reader.component.less'],
     imports: [
+        TranslatePipe,
         ReactiveFormsModule,
         NzButtonModule,
         NzFormModule,

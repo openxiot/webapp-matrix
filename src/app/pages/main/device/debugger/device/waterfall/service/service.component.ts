@@ -9,12 +9,14 @@ import {ActionsControllerComponent} from '../../common/tables/actions/actions.co
 import {EventsControllerComponent} from '../../common/tables/events/events.component';
 import {NzIconDirective} from 'ng-zorro-antd/icon';
 import {NzDividerComponent} from 'ng-zorro-antd/divider';
+import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({
     selector: 'debugger-service-controller',
     templateUrl: './service.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     imports: [
+        TranslatePipe,
         NzCardComponent,
         NzTagComponent,
         PropertiesControllerComponent,

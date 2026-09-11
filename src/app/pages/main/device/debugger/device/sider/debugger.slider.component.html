@@ -6,7 +6,7 @@
           <li nz-menu-item (click)="onClickService(s)">
             <nz-tag [nzColor]="'blue'">{{ s.iid }}</nz-tag>
             <span>{{ s.description.get(i18n.getCurrentLang()) }}</span>
-            <span style="float: right"><nz-tag nzColor="blue">版本 {{ s.type.version }}</nz-tag></span>
+            <span style="float: right"><nz-tag nzColor="blue">{{ '版本 {{version}}' | translate: { version: s.type.version } }}</nz-tag></span>
           </li>
         }
       </ul>

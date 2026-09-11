@@ -32,7 +32,6 @@
               <tr>
                 <!-- 首列：树形展开方框 + 层级缩进都交给 nz-td（口径同 project.component 第一列） -->
                 <td
-                  class="cell-did"
                   [nzIndentSize]="row.depth * 20"
                   [nzShowExpand]="row.hasNested"
                   [nzExpand]="row.expanded"

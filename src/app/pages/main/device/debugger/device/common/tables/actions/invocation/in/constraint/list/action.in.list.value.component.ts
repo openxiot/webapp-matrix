@@ -3,12 +3,14 @@ import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {NzSelectModule} from 'ng-zorro-antd/select';
 import {Property} from '@openxiot/xiot-core-spec-ts';
 import {MainI18nService} from '../../../../../../../../../../../../service/i18n.service';
+import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({
     selector: 'action-in-list-value',
     templateUrl: './action.in.list.value.component.html',
     styleUrls: ['./action.in.list.value.component.less'],
     imports: [
+        TranslatePipe,
         NzSelectModule,
         ReactiveFormsModule,
         FormsModule,

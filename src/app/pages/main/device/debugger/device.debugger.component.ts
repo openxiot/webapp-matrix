@@ -1,4 +1,13 @@
-import {Component, OnInit, ChangeDetectionStrategy, signal, ViewContainerRef} from '@angular/core';
+import {
+    Component,
+    OnInit,
+    ChangeDetectionStrategy,
+    computed,
+    inject,
+    signal,
+    ViewContainerRef
+} from '@angular/core';
+import {toSignal} from '@angular/core/rxjs-interop';
 import {NzPageHeaderModule} from 'ng-zorro-antd/page-header';
 import {NzBreadCrumbModule} from 'ng-zorro-antd/breadcrumb';
 import {NzSpinModule} from 'ng-zorro-antd/spin';
@@ -25,8 +34,10 @@ import {NzSegmentedModule} from 'ng-zorro-antd/segmented';
 import {DebuggerSliderComponent} from './device/sider/debugger.slider.component';
 import {DebuggerWaterfallComponent} from './device/waterfall/debugger.waterfall.component';
 import {DebuggerTabsComponent} from './device/tabs/debugger.tabs.component';
+import {TranslateService} from '@ngx-translate/core';
 import {MainI18nService} from '../../../../service/i18n.service';
 import {BreadcrumbTranslateDirective} from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({
     selector: 'device-debugger',
@@ -34,6 +45,7 @@ import {BreadcrumbTranslateDirective} from '../../../../common/components/breadc
     styleUrls: ['./device.debugger.component.less'],
     changeDetection: ChangeDetectionStrategy.Eager,
     imports: [
+        TranslatePipe,
         ReactiveFormsModule,
         NzPageHeaderModule,
         NzBreadCrumbModule,
@@ -60,19 +72,30 @@ import {BreadcrumbTranslateDirective} from '../../../../common/components/breadc
 })
 export class DeviceDebuggerComponent implements OnInit {
 
+    /** 语言切换信号：nz-segmented 的选项文案只能在 TS 里翻，靠它驱动重算。 */
+    private langChange = toSignal(inject(TranslateService).onLangChange);
+
     // 设备展现风格：nz-segmented 的 ngModel 绑定的是 option 的 value(非下标)，故选项需显式给出数值 value
-    deviceDisplayOptions = [
-        {label: '分栏', value: 0},
-        {label: '瀑布', value: 1},
-        {label: '标签页', value: 2},
-    ];
+    deviceDisplayOptions = computed(() => {
+        this.langChange();
+        const t = this.i18n.translate;
+        return [
+            {label: t.instant('分栏'), value: 0},
+            {label: t.instant('瀑布'), value: 1},
+            {label: t.instant('标签页'), value: 2},
+        ];
+    });
     deviceDisplayStyle: number = 0;
 
     // 服务展现风格（设备展现风格为'分栏'时有效）
-    serviceDisplayOptions = [
-        {label: '标签页', value: 0},
-        {label: '瀑布', value: 1},
-    ];
+    serviceDisplayOptions = computed(() => {
+        this.langChange();
+        const t = this.i18n.translate;
+        return [
+            {label: t.instant('标签页'), value: 0},
+            {label: t.instant('瀑布'), value: 1},
+        ];
+    });
     serviceDisplayStyle: number = 0;
 
     did: string = '';

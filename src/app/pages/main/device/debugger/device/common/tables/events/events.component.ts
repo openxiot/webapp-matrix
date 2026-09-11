@@ -6,10 +6,12 @@ import {NzTagModule} from 'ng-zorro-antd/tag';
 import {NzTooltipDirective} from 'ng-zorro-antd/tooltip';
 import {NzIconModule} from 'ng-zorro-antd/icon';
 import {NzSpaceModule} from 'ng-zorro-antd/space';
+import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({
     selector: 'debugger-events-controller',
     imports: [
+        TranslatePipe,
         NzTableModule,
         NzTableComponent,
         NzTagModule,

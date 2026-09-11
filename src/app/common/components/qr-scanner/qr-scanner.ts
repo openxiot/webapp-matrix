@@ -1,4 +1,5 @@
-import { AfterViewInit, Component, ElementRef, output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, output } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { Html5Qrcode } from 'html5-qrcode';
 
 @Component({
@@ -12,6 +13,8 @@ export class QrScanner implements AfterViewInit {
   error = output<string>();
 
   private codeReader: Html5Qrcode | null = null;
+
+  private readonly translate = inject(TranslateService);
 
   constructor(private el: ElementRef) {}
 
@@ -33,7 +36,7 @@ export class QrScanner implements AfterViewInit {
         () => {},
       );
     } catch {
-      this.error.emit('无法访问摄像头，请使用手动添加');
+      this.error.emit(this.translate.instant('无法访问摄像头，请使用手动添加'));
     }
   }
 

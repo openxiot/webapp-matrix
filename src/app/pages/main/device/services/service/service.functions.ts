@@ -149,10 +149,13 @@ export function describeServiceField(field: ModbusServiceField): string {
   return parts.join(' ');
 }
 
-/** 一个方法的应答字段文案；写方法（无 response）返回提示文案 */
-export function describeFunctionResponse(func: ModbusServiceFunction): string {
+/** 写方法（无 response）的提示文案 i18n key —— 页面自写文案，由调用方走翻译；响应的字段文案来自点表数据，不翻译。 */
+export const WRITE_METHOD_REPLY_KEY = '写方法（应答为请求回显，无返回字段）';
+
+/** 一个方法的应答字段文案；写方法（无 response）没有返回字段，返回 null 交给调用方给提示文案 */
+export function describeFunctionResponse(func: ModbusServiceFunction): string | null {
   if (!func.response || func.response.length === 0) {
-    return '写方法（应答为请求回显，无返回字段）';
+    return null;
   }
   return func.response.map(describeServiceField).join('，');
 }

@@ -17,12 +17,14 @@ import {PropertyWriteValueComponent} from './value/property.write.value.componen
 import {NzMessageService} from 'ng-zorro-antd/message';
 import {MatrixService} from '../../../../../../../../../service/matrix.service';
 import {AccountService} from '../../../../../../../../../service/account.service';
+import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({
     selector: 'property-writer',
     templateUrl: './property.writer.component.html',
     styleUrls: ['./property.writer.component.less'],
     imports: [
+        TranslatePipe,
         ReactiveFormsModule,
         NzButtonModule,
         NzFormModule,

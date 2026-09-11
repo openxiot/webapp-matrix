@@ -15,10 +15,10 @@
           <th>
             <nz-space>
               <span *nzSpaceItem nz-icon nzType="fire" nzTheme="outline"></span>
-              <span *nzSpaceItem>事件</span>
+              <span *nzSpaceItem>{{ '事件' | translate }}</span>
             </nz-space>
           </th>
-          <th>参数</th>
+          <th>{{ '参数' | translate }}</th>
         </tr>
         </thead>
         <tbody>
@@ -30,7 +30,7 @@
               </td>
               <td>
                 @for (arg of p.getArguments(); track arg) {
-                  <span nz-tooltip nzTooltipTitle="最少{{arg.minRepeat}}个，最多{{arg.maxRepeat}}个">
+                  <span nz-tooltip [nzTooltipTitle]="'最少{{min}}个，最多{{max}}个' | translate: { min: arg.minRepeat, max: arg.maxRepeat }">
                     <nz-tag>{{ getProperty(arg.piid)?.description!.get(i18n.getCurrentLang()) }}</nz-tag>
                   </span>
                 }

@@ -15,13 +15,13 @@
           <th>
             <nz-space>
               <span *nzSpaceItem nz-icon nzType="setting" nzTheme="outline"></span>
-              <span *nzSpaceItem>属性</span>
+              <span *nzSpaceItem>{{ '属性' | translate }}</span>
             </nz-space>
           </th>
-          <th>缺省值</th>
-          <th>格式</th>
-          <th>访问方式</th>
-          <th>操作</th>
+          <th>{{ '缺省值' | translate }}</th>
+          <th>{{ '格式' | translate }}</th>
+          <th>{{ '访问方式' | translate }}</th>
+          <th>{{ '操作' | translate }}</th>
           <!--        <th>操作结果</th>-->
         </tr>
         </thead>
@@ -40,20 +40,20 @@
               </td>
               <td>
                 @if (p.access.isWritable) {
-                  <nz-tag [nzColor]="'red'">可写</nz-tag>
+                  <nz-tag [nzColor]="'red'">{{ '可写' | translate }}</nz-tag>
                 }
 
                 @if (p.access.isReadable) {
-                  <nz-tag [nzColor]="'blue'">可读</nz-tag>
+                  <nz-tag [nzColor]="'blue'">{{ '可读' | translate }}</nz-tag>
                 }
 
                 @if (p.access.isNotifiable) {
-                  <nz-tag [nzColor]="'green'">可通知</nz-tag>
+                  <nz-tag [nzColor]="'green'">{{ '可通知' | translate }}</nz-tag>
                 }
               </td>
               <td>
                 @if (p.access.isWritable) {
-                  <a (click)="setProperty(p)">写入</a>
+                  <a (click)="setProperty(p)">{{ '写入' | translate }}</a>
                 }
 
                 @if (p.access.isWritable && p.access.isReadable) {
@@ -61,7 +61,7 @@
                 }
 
                 @if (p.access.isReadable) {
-                  <a (click)="getProperty(p)">读取</a>
+                  <a (click)="getProperty(p)">{{ '读取' | translate }}</a>
                 }
               </td>
             </tr>

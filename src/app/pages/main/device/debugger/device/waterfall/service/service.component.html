@@ -21,11 +21,11 @@
       ></debugger-events-controller>
     }
   } @else {
-    <span>属性: {{ service.properties.size }}</span>
+    <span>{{ '属性' | translate }}: {{ service.properties.size }}</span>
     <nz-divider nzType="vertical"></nz-divider>
-    <span>方法: {{ service.actions.size }}</span>
+    <span>{{ '方法' | translate }}: {{ service.actions.size }}</span>
     <nz-divider nzType="vertical"></nz-divider>
-    <span>事件: {{ service.events.size }}</span>
+    <span>{{ '事件' | translate }}: {{ service.events.size }}</span>
   }
 </nz-card>
 
@@ -44,7 +44,7 @@
     <span>{{ service.description.get(i18n.getCurrentLang()) }}</span>
 
     <span style="float: right">
-      <nz-tag nzColor="blue">版本 {{ service.type.version }}</nz-tag>
+      <nz-tag nzColor="blue">{{ '版本 {{version}}' | translate: { version: service.type.version } }}</nz-tag>
     </span>
   </span>
 </ng-template>

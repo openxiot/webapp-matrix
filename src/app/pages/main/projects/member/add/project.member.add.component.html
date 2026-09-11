@@ -9,7 +9,7 @@
   <nz-form-control>
     <nz-radio-group nzButtonStyle="solid" [ngModel]="role()" (ngModelChange)="role.set($event)">
       @for (option of roleOptions; track option.value) {
-        <label nz-radio-button [nzValue]="option.value">{{ option.label }}</label>
+        <label nz-radio-button [nzValue]="option.value">{{ option.label | translate }}</label>
       }
     </nz-radio-group>
   </nz-form-control>

@@ -18,13 +18,14 @@ import { BreadcrumbTranslateDirective } from '../../../../../../common/component
 import { AccountService } from '../../../../../../service/account.service';
 import { MatrixService } from '../../../../../../service/matrix.service';
 import { ModbusService } from '../../../../../../service/modbus.service';
+import { MainI18nService } from '../../../../../../service/i18n.service';
 import { DeviceEntity } from '../../../../../../typedef/define/device/DeviceEntity';
 import { ModbusConfig } from '../../../../../../typedef/define/modbus/Modbus';
 import {
   ModbusService as ModbusServiceDef,
   ModbusServiceFunction,
 } from '../../../../../../typedef/define/modbus/ModbusService';
-import { describeFunctionResponse } from '../service.functions';
+import { WRITE_METHOD_REPLY_KEY, describeFunctionResponse } from '../service.functions';
 
 /** 一次调用的结果：调的是哪个方法、返回了什么 */
 interface InvokeResult {
@@ -75,6 +76,7 @@ export class DeviceServiceDetailComponent implements OnInit {
   private readonly account = inject(AccountService);
   private readonly matrix = inject(MatrixService);
   private readonly modbus = inject(ModbusService);
+  protected readonly i18n = inject(MainI18nService);
 
   /** 依赖设备（DTU）did */
   readonly did = signal('');
@@ -111,7 +113,7 @@ export class DeviceServiceDetailComponent implements OnInit {
     const spaceId = this.account.space().id;
     if (!spaceId) {
       this.loading.set(false);
-      this.msg.warning('请先在项目列表中选择一个项目');
+      this.msg.warning(this.i18n.translate.instant('请先在项目列表中选择一个项目'));
       return;
     }
     this.loading.set(true);
@@ -159,7 +161,7 @@ export class DeviceServiceDetailComponent implements OnInit {
     // 调用要空间成员：空间 ID 取当前项目根空间，与查询同源
     const spaceId = this.account.space().id;
     if (!spaceId) {
-      this.msg.warning('请先在项目列表中选择一个项目');
+      this.msg.warning(this.i18n.translate.instant('请先在项目列表中选择一个项目'));
       return;
     }
     this.invoking.set(func.index);
@@ -167,7 +169,7 @@ export class DeviceServiceDetailComponent implements OnInit {
       next: (data) => {
         this.invoking.set(null);
         this.result.set({ func, data });
-        this.msg.success('调用成功');
+        this.msg.success(this.i18n.translate.instant('调用成功'));
       },
       error: (e) => {
         this.invoking.set(null);
@@ -230,7 +232,7 @@ export class DeviceServiceDetailComponent implements OnInit {
   }
 
   protected responseText(func: ModbusServiceFunction): string {
-    return describeFunctionResponse(func);
+    return describeFunctionResponse(func) ?? this.i18n.translate.instant(WRITE_METHOD_REPLY_KEY);
   }
 
   protected updateTime(service: ModbusServiceDef): string | number | null {

@@ -1,4 +1,5 @@
-import { Component, OnInit, ViewContainerRef, computed, effect } from '@angular/core';
+import { Component, OnInit, ViewContainerRef, computed, effect, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -8,7 +9,7 @@ import { AccountService } from '../../service/account.service';
 import pkg from '../../../../package.json';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MainI18nService } from '../../service/i18n.service';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { LanguageChangeComponent } from '../../common/dialog/language/change/language.change.component';
@@ -37,13 +38,17 @@ export class MainComponent implements OnInit {
   isCollapsed = true;
   version: string = pkg.version;
 
-  /** 品牌默认名：未选项目时 logo 与浏览器标题回退该值（与 index.html <title> 一致）。 */
-  private static readonly BRAND = '矩阵';
+  /** 品牌默认名的 i18n key：未选项目时 logo 与浏览器标题回退该值。 */
+  private static readonly BRAND_KEY = '矩阵';
+
+  /** 语言切换信号：品牌名走翻译，切语言时要重算标题。 */
+  private readonly langChange = toSignal(inject(TranslateService).onLangChange);
 
   /** 当前标题：已选项目显示项目名，否则显示品牌名。侧栏 logo 与浏览器标题共用。 */
   protected readonly currentTitle = computed(() => {
+    this.langChange();
     const space = this.account.space();
-    return space.id ? space.name : MainComponent.BRAND;
+    return space.id ? space.name : this.i18n.translate.instant(MainComponent.BRAND_KEY);
   });
 
   constructor(

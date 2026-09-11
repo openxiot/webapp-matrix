@@ -3,12 +3,14 @@ import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Property} from '@openxiot/xiot-core-spec-ts';
 import {MainI18nService} from '../../../../../../../../../../../../service/i18n.service';
 import {NzOptionComponent, NzSelectComponent} from 'ng-zorro-antd/select';
+import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({
     selector: 'property-write-list-value',
     templateUrl: './property.write.list.value.component.html',
     styleUrls: ['./property.write.list.value.component.less'],
     imports: [
+        TranslatePipe,
         ReactiveFormsModule,
         FormsModule,
         NzOptionComponent,

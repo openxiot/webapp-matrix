@@ -11,11 +11,13 @@ import {NzModalService} from 'ng-zorro-antd/modal';
 import {PropertyReaderComponent} from './read/property.reader.component';
 import {NzDividerComponent} from 'ng-zorro-antd/divider';
 import {MainI18nService} from '../../../../../../../../service/i18n.service';
+import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({
     selector: 'debugger-properties-controller',
     templateUrl: './properties.component.html',
     imports: [
+        TranslatePipe,
         NzIconModule,
         NzSpaceModule,
         NzTableModule,
@@ -55,11 +57,11 @@ export class PropertiesControllerComponent {
       },
       nzFooter: [
         {
-          label: '取消',
+          label: this.i18n.translate.instant('取消'),
           onClick: component => component!.destroyModal()
         },
         {
-          label: '写属性',
+          label: this.i18n.translate.instant('写属性'),
           danger: true,
           type: 'primary',
           disabled: component => component!.invalid(),
@@ -84,11 +86,11 @@ export class PropertiesControllerComponent {
       },
       nzFooter: [
         {
-          label: '取消',
+          label: this.i18n.translate.instant('取消'),
           onClick: component => component!.destroyModal()
         },
         {
-          label: '读属性',
+          label: this.i18n.translate.instant('读属性'),
           danger: true,
           type: 'primary',
           loading: component => component!.loading(),

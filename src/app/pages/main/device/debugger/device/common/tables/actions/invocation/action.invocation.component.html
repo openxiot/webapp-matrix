@@ -16,7 +16,7 @@
                     @for (arg of inTable.data; track arg) {
                         <tr>
                             <td>
-                        <span nz-tooltip nzTooltipTitle="属性IID: {{arg.piid}}">
+                        <span nz-tooltip nzTooltipTitle="{{ '属性IID' | translate }}: {{arg.piid}}">
                             {{ getArgumentName(arg) }}
                         </span>
                             </td>
@@ -68,7 +68,7 @@
                 @case (0) {
                     @if (operation()!.out.size == 0) {
                         <div class="results">
-                            <nz-result nzStatus="success" nzTitle="方法调用成功！"></nz-result>
+                            <nz-result nzStatus="success" [nzTitle]="'方法调用成功！' | translate"></nz-result>
                         </div>
                     } @else if (operation()!.out.size > 0) {
                         <nz-table
@@ -84,7 +84,7 @@
                                 @for (arg of outTable.data; track arg) {
                                     <tr>
                                         <td>
-                                    <span nz-tooltip nzTooltipTitle="属性IID: {{arg.piid}}">
+                                    <span nz-tooltip nzTooltipTitle="{{ '属性IID' | translate }}: {{arg.piid}}">
                                         {{ getArgumentName(arg) }}
                                     </span>
                                         </td>
@@ -106,10 +106,10 @@
                     }
                 }
                 @default {
-                    <nz-descriptions nzBordered nzTitle="方法调用失败" [nzSize]="'small'" nzLayout="horizontal"
+                    <nz-descriptions nzBordered [nzTitle]="'方法调用失败' | translate" [nzSize]="'small'" nzLayout="horizontal"
                                      [nzColumn]="1">
-                        <nz-descriptions-item nzTitle="状态码">{{ operation()!.status }}</nz-descriptions-item>
-                        <nz-descriptions-item nzTitle="描述">{{ operation()!.description }}</nz-descriptions-item>
+                        <nz-descriptions-item [nzTitle]="'状态码' | translate">{{ operation()!.status }}</nz-descriptions-item>
+                        <nz-descriptions-item [nzTitle]="'描述' | translate">{{ operation()!.description }}</nz-descriptions-item>
                     </nz-descriptions>
                 }
             }

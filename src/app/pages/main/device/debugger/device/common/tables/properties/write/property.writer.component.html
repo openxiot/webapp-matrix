@@ -6,12 +6,12 @@
   <div class="results">
     @switch (operation()!.status) {
       @case (0) {
-        <nz-result nzStatus="success" nzTitle="写属性成功！"></nz-result>
+        <nz-result nzStatus="success" [nzTitle]="'写属性成功！' | translate"></nz-result>
       }
       @default {
-        <nz-descriptions nzBordered nzTitle="写属失败" [nzSize]="'small'" nzLayout="horizontal" [nzColumn]="1">
-          <nz-descriptions-item nzTitle="状态码">{{operation()!.status}}</nz-descriptions-item>
-          <nz-descriptions-item nzTitle="描述">{{operation()!.description}}</nz-descriptions-item>
+        <nz-descriptions nzBordered [nzTitle]="'写属性失败' | translate" [nzSize]="'small'" nzLayout="horizontal" [nzColumn]="1">
+          <nz-descriptions-item [nzTitle]="'状态码' | translate">{{operation()!.status}}</nz-descriptions-item>
+          <nz-descriptions-item [nzTitle]="'描述' | translate">{{operation()!.description}}</nz-descriptions-item>
         </nz-descriptions>
       }
     }

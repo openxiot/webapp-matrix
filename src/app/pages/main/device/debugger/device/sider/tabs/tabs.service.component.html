@@ -1,6 +1,6 @@
 <nz-tabs nzSize="small">
   @if (service.properties.size > 0) {
-    <nz-tab nzTitle="属性({{service.properties.size}})">
+    <nz-tab [nzTitle]="'属性({{count}})' | translate: { count: service.properties.size }">
       <debugger-properties-controller
         [did]="did"
         [service]="service"
@@ -9,7 +9,7 @@
   }
 
   @if (service.actions.size > 0) {
-    <nz-tab nzTitle="方法({{service.actions.size}})">
+    <nz-tab [nzTitle]="'方法({{count}})' | translate: { count: service.actions.size }">
         <debugger-actions-controller
           [did]="did"
           [service]="service"
@@ -18,7 +18,7 @@
   }
 
   @if (service.events.size > 0) {
-    <nz-tab nzTitle="事件({{service.events.size}})">
+    <nz-tab [nzTitle]="'事件({{count}})' | translate: { count: service.events.size }">
       <debugger-events-controller
         [did]="did"
         [service]="service"

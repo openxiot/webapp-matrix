@@ -28,6 +28,7 @@ import { ConfirmComponent } from '../../../../common/dialog/confirm/confirm.comp
 import { AccountService } from '../../../../service/account.service';
 import { MatrixService } from '../../../../service/matrix.service';
 import { ModbusService } from '../../../../service/modbus.service';
+import { MainI18nService } from '../../../../service/i18n.service';
 import { ModbusService as ModbusServiceDef } from '../../../../typedef/define/modbus/ModbusService';
 import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
 import { ModbusConfig } from '../../../../typedef/define/modbus/Modbus';
@@ -113,6 +114,7 @@ export class DeviceServicesComponent implements OnInit {
     private matrix: MatrixService,
     private modbus: ModbusService,
     public account: AccountService,
+    public i18n: MainI18nService,
   ) {}
 
   ngOnInit() {
@@ -147,7 +149,7 @@ export class DeviceServicesComponent implements OnInit {
     const spaceId = this.account.space().id;
     if (!spaceId) {
       this.loadingDevice.set(false);
-      this.msg.warning('请先在项目列表中选择一个项目');
+      this.msg.warning(this.i18n.translate.instant('请先在项目列表中选择一个项目'));
       return;
     }
     this.loadingDevice.set(true);
@@ -167,7 +169,7 @@ export class DeviceServicesComponent implements OnInit {
     const spaceId = this.account.space().id;
     if (!spaceId) {
       this.loadingServices.set(false);
-      this.msg.warning('请先在项目列表中选择一个项目');
+      this.msg.warning(this.i18n.translate.instant('请先在项目列表中选择一个项目'));
       return;
     }
     this.loadingServices.set(true);
@@ -205,21 +207,21 @@ export class DeviceServicesComponent implements OnInit {
   protected remove(service: ModbusServiceDef): void {
     const spaceId = this.account.space().id;
     if (!spaceId) {
-      this.msg.warning('请先在项目列表中选择一个项目');
+      this.msg.warning(this.i18n.translate.instant('请先在项目列表中选择一个项目'));
       return;
     }
     const modal = this.modal.create<ConfirmComponent, string, string>({
-      nzTitle: '您真的要删除这个服务吗？',
+      nzTitle: this.i18n.translate.instant('您真的要删除这个服务吗？'),
       nzContent: ConfirmComponent,
       nzViewContainerRef: this.viewContainerRef,
       nzData: service.name,
       nzFooter: [
         {
-          label: '取消',
+          label: this.i18n.translate.instant('取消'),
           onClick: (component) => component!.cancel(),
         },
         {
-          label: '确认',
+          label: this.i18n.translate.instant('确认'),
           danger: true,
           type: 'primary',
           onClick: (component) => component!.ok(),
@@ -231,7 +233,7 @@ export class DeviceServicesComponent implements OnInit {
       if (result && service.id) {
         this.modbus.removeService(spaceId, service.id).subscribe({
           next: () => {
-            this.msg.success('删除成功');
+            this.msg.success(this.i18n.translate.instant('删除成功'));
             this.loadServices(this.did());
           },
           error: (e) => this.msg.warning(e?.message ?? e),

@@ -4,42 +4,42 @@
 
         <nz-page-header-content>
             <nz-descriptions nzSize="small" [nzColumn]="3">
-                <nz-descriptions-item nzTitle="设备ID" [nzSpan]="1">
+                <nz-descriptions-item [nzTitle]="'设备ID' | translate" [nzSpan]="1">
                     @if (device()) {
                         {{ device()!.did }}
                     }
                 </nz-descriptions-item>
-                <nz-descriptions-item nzTitle="设备类型" [nzSpan]="1">
+                <nz-descriptions-item [nzTitle]="'设备类型' | translate" [nzSpan]="1">
                     @if (device() && device()!.type && instance()) {
-                        <a (click)="onViewJson()" [title]="device()!.type">查看</a>
+                        <a (click)="onViewJson()" [title]="device()!.type">{{ '查看' | translate }}</a>
                     }
                 </nz-descriptions-item>
-                <nz-descriptions-item nzTitle="产品名称" [nzSpan]="1">
+                <nz-descriptions-item [nzTitle]="'产品名称' | translate" [nzSpan]="1">
                     @if (instance()) {
                         {{ instance()!.description.get(i18n.getCurrentLang()) || instance()!.type.name }}
                     }
                 </nz-descriptions-item>
-                <nz-descriptions-item nzTitle="产品型号" [nzSpan]="1">
+                <nz-descriptions-item [nzTitle]="'产品型号' | translate" [nzSpan]="1">
                     @if (instance()) {
                         @if (instance()!.type) {
                             {{ instance()!.type.model }}
                         }
                     }
                 </nz-descriptions-item>
-                <nz-descriptions-item nzTitle="功能版本" [nzSpan]="1">
+                <nz-descriptions-item [nzTitle]="'功能版本' | translate" [nzSpan]="1">
                     @if (instance()) {
                         @if (instance()!.type) {
                             {{ instance()!.type.version }}
                         }
                     }
                 </nz-descriptions-item>
-                <nz-descriptions-item nzTitle="功能列表" [nzSpan]="1">
-                    <nz-segmented [nzSize]="'small'" [nzOptions]="deviceDisplayOptions"
+                <nz-descriptions-item [nzTitle]="'功能列表' | translate" [nzSpan]="1">
+                    <nz-segmented [nzSize]="'small'" [nzOptions]="deviceDisplayOptions()"
                                   [(ngModel)]="deviceDisplayStyle"></nz-segmented>
                 </nz-descriptions-item>
                 @if (deviceDisplayStyle === 0) {
-                    <nz-descriptions-item nzTitle="功能内容" [nzSpan]="1">
-                        <nz-segmented [nzSize]="'small'" [nzOptions]="serviceDisplayOptions"
+                    <nz-descriptions-item [nzTitle]="'功能内容' | translate" [nzSpan]="1">
+                        <nz-segmented [nzSize]="'small'" [nzOptions]="serviceDisplayOptions()"
                                       [(ngModel)]="serviceDisplayStyle"></nz-segmented>
                     </nz-descriptions-item>
                 }
@@ -56,9 +56,9 @@
     <ng-template #deviceOnline>
         @if (device()) {
             @if (device()!.online) {
-                <nz-tag nzColor="blue">在线</nz-tag>
+                <nz-tag nzColor="blue">{{ '在线' | translate }}</nz-tag>
             } @else {
-                <nz-tag nzColor="red">离线</nz-tag>
+                <nz-tag nzColor="red">{{ '离线' | translate }}</nz-tag>
             }
         }
     </ng-template>

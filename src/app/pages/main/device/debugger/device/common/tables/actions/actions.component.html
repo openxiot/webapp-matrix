@@ -15,12 +15,12 @@
           <th>
             <nz-space>
               <span *nzSpaceItem nz-icon nzType="thunderbolt" nzTheme="outline"></span>
-              <span *nzSpaceItem>方法</span>
+              <span *nzSpaceItem>{{ '方法' | translate }}</span>
             </nz-space>
           </th>
-          <th>参数</th>
-          <th>返回值</th>
-          <th>操作</th>
+          <th>{{ '参数' | translate }}</th>
+          <th>{{ '返回值' | translate }}</th>
+          <th>{{ '操作' | translate }}</th>
         </tr>
         </thead>
         <tbody>
@@ -32,7 +32,7 @@
             </td>
             <td>
               @for (arg of p.getArgumentsIn(); track arg) {
-                <span nz-tooltip nzTooltipTitle="最少{{arg.minRepeat}}个，最多{{arg.maxRepeat}}个">
+                <span nz-tooltip [nzTooltipTitle]="'最少{{min}}个，最多{{max}}个' | translate: { min: arg.minRepeat, max: arg.maxRepeat }">
                   @switch (getProperty(arg.piid)?.format) {
                     @case (DataFormat.COMBINATION) {
                       <nz-tag nzColor="red">{{ getProperty(arg.piid)?.description!.get(i18n.getCurrentLang()) }}</nz-tag>
@@ -46,7 +46,7 @@
             </td>
             <td>
               @for (arg of p.getArgumentsOut(); track arg) {
-                <span nz-tooltip nzTooltipTitle="最少{{arg.minRepeat}}个，最多{{arg.maxRepeat}}个">
+                <span nz-tooltip [nzTooltipTitle]="'最少{{min}}个，最多{{max}}个' | translate: { min: arg.minRepeat, max: arg.maxRepeat }">
                   @switch (getProperty(arg.piid)?.format) {
                     @case(DataFormat.COMBINATION) {
                       <nz-tag nzColor="red">{{ getProperty(arg.piid)?.description!.get(i18n.getCurrentLang()) }}</nz-tag>
@@ -59,7 +59,7 @@
               }
             </td>
             <td>
-              <a (click)="doInvocation(p)">调用方法</a>
+              <a (click)="doInvocation(p)">{{ '调用方法' | translate }}</a>
               <!--          <button nz-button nzType="dashed" (click)="doInvocation(p)">调用方法</button>-->
             </td>
           </tr>

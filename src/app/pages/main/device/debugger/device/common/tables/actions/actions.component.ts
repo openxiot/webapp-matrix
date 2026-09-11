@@ -9,11 +9,13 @@ import {NzModalService} from 'ng-zorro-antd/modal';
 import {IActionData} from './IActionData';
 import {ActionInvocationComponent} from './invocation/action.invocation.component';
 import {MainI18nService} from '../../../../../../../../service/i18n.service';
+import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({
     selector: 'debugger-actions-controller',
     templateUrl: './actions.component.html',
     imports: [
+        TranslatePipe,
         NzTableModule,
         NzTableComponent,
         NzTagModule,
@@ -59,11 +61,11 @@ export class ActionsControllerComponent {
       // },
       nzFooter: [
         {
-          label: '取消',
+          label: this.i18n.translate.instant('取消'),
           onClick: component => component!.destroyModal()
         },
         {
-          label: '调用',
+          label: this.i18n.translate.instant('调用'),
           danger: true,
           type: 'primary',
           disabled: component => (action.in.size > 0 && component!.invalid()),

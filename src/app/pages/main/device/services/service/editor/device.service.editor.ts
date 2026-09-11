@@ -14,7 +14,7 @@ import {
   ModbusServiceFunction,
 } from '../../../../../../typedef/define/modbus/ModbusService';
 import { SpaceRef } from '../../../../../../typedef/define/space/SpaceRef';
-import { buildServiceFunctions, describeFunctionResponse } from '../service.functions';
+import { WRITE_METHOD_REPLY_KEY, buildServiceFunctions, describeFunctionResponse } from '../service.functions';
 
 /**
  * 「添加 Modbus 服务」/「编辑 Modbus 服务」两个页面共用的编辑器逻辑与视图。
@@ -159,7 +159,7 @@ export abstract class DeviceServiceEditor implements OnInit {
     if (!spaceId) {
       this.loadingDevice.set(false);
       this.loadingInstance.set(false);
-      this.msg.warning('请先在项目列表中选择一个项目');
+      this.msg.warning(this.i18n.translate.instant('请先在项目列表中选择一个项目'));
       return;
     }
     this.loadingDevice.set(true);
@@ -218,7 +218,7 @@ export abstract class DeviceServiceEditor implements OnInit {
     const spaceId = this.account.space().id;
     if (!spaceId) {
       this.loadingService.set(false);
-      this.msg.warning('请先在项目列表中选择一个项目');
+      this.msg.warning(this.i18n.translate.instant('请先在项目列表中选择一个项目'));
       return;
     }
     this.loadingService.set(true);
@@ -294,18 +294,18 @@ export abstract class DeviceServiceEditor implements OnInit {
     const aiid = this.selectedAiid();
     const configId = this.selectedConfigId();
     if (!this.name().trim() || siid === null || aiid === null || !configId) {
-      this.msg.warning('请填写服务名称，并选择依赖设备的方法与源点表');
+      this.msg.warning(this.i18n.translate.instant('请填写服务名称，并选择依赖设备的方法与源点表'));
       return;
     }
     const functions = this.functions();
     if (functions.length === 0) {
-      this.msg.warning('源点表里没有可用的功能码动作，生成不出方法');
+      this.msg.warning(this.i18n.translate.instant('源点表里没有可用的功能码动作，生成不出方法'));
       return;
     }
     // 增删改要空间管理员：空间 ID 取当前项目根空间（与查询同源），不是设备落点的那个空间
     const spaceId = this.account.space().id;
     if (!spaceId) {
-      this.msg.warning('请先在项目列表中选择一个项目');
+      this.msg.warning(this.i18n.translate.instant('请先在项目列表中选择一个项目'));
       return;
     }
 
@@ -330,7 +330,7 @@ export abstract class DeviceServiceEditor implements OnInit {
     request$.subscribe({
       next: () => {
         this.saving.set(false);
-        this.msg.success(this.kind === 'edit' ? '保存成功' : '添加成功');
+        this.msg.success(this.i18n.translate.instant(this.kind === 'edit' ? '保存成功' : '添加成功'));
         this.back();
       },
       error: (e) => {
@@ -383,6 +383,6 @@ export abstract class DeviceServiceEditor implements OnInit {
 
   /** 一个方法的应答字段文案（模板用；写方法返回提示文案） */
   protected responseText(func: ModbusServiceFunction): string {
-    return describeFunctionResponse(func);
+    return describeFunctionResponse(func) ?? this.i18n.translate.instant(WRITE_METHOD_REPLY_KEY);
   }
 }

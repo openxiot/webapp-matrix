@@ -5,6 +5,7 @@ import {PropertiesControllerComponent} from '../../common/tables/properties/prop
 import {ActionsControllerComponent} from '../../common/tables/actions/actions.component';
 import {EventsControllerComponent} from '../../common/tables/events/events.component';
 import {NzTabsModule} from 'ng-zorro-antd/tabs';
+import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({
     selector: 'debugger-tabs-service',
@@ -12,6 +13,7 @@ import {NzTabsModule} from 'ng-zorro-antd/tabs';
     styleUrls: ['./tabs.service.component.less'],
     changeDetection: ChangeDetectionStrategy.Eager,
     imports: [
+        TranslatePipe,
         NzTabsModule,
         PropertiesControllerComponent,
         ActionsControllerComponent,

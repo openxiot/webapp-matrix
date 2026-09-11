@@ -1,5 +1,11 @@
 .device-table {
   /* 行高 / hover 交回 ng-zorro nz-table 默认，只补单元格内容排版 */
+
+  /* 单元格垂直居中：原先靠浏览器 UA 样式表的 tbody{vertical-align:middle} 继承而来，
+     这里显式写死，不依赖 UA 默认值 —— 行高由 48px 图标的单元格撑起，其余列是单行小字 */
+  tbody > tr > td {
+    vertical-align: middle;
+  }
 }
 
 /* 产品图标列：不与首列一起缩进 */
@@ -16,13 +22,6 @@
   text-overflow: ellipsis;
 }
 
-/* 设备DID：首列，承载树形展开方框与层级缩进（缩进由 nzIndentSize 出）；等宽小字，一眼区别于名称 */
-.cell-did {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12px;
-  color: #595959;
-  white-space: nowrap;
-}
 
 /* 所在空间：弱化处理 */
 .cell-space {
