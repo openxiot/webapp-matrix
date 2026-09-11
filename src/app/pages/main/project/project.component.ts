@@ -8,6 +8,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
+import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { DatePipe, Location } from '@angular/common';
@@ -126,6 +127,7 @@ function deviceKey(did: string): string {
     NzDescriptionsModule,
     NzDividerModule,
     NzIconDirective,
+    NzSpaceModule,
     TranslatePipe,
     BreadcrumbTranslateDirective,
     DatePipe,
@@ -204,7 +206,7 @@ export class ProjectComponent implements OnInit {
       const id = params['id'] || this.account.space().id || '';
       this.rootId.set(id);
       if (id) {
-        this.expandedIds.set(new Set([spaceKey(id)]));
+        // 根空间不再占一行（见 rows），它的展开状态也就无从设置：内容始终铺在第 0 层
         this.loadSpaceGraph(id);
         this.loadAdminContext(id);
       }
@@ -329,6 +331,9 @@ export class ProjectComponent implements OnInit {
    *
    * 层级：空间 →（子空间 | 本空间设备）→ 该设备依赖的服务。服务由后端空间图按空间带出，
    * 每项带 did（挂在谁下面）与 spaceId（兜底：设备被移走时挂到空间下，不至于整条丢失）。
+   *
+   * 根空间本身不出行：它就是当前项目，信息已在页头 nz-descriptions 里展示，
+   * 列表直接从根空间的下一层（子空间 / 设备）开始。
    */
   readonly rows = computed<TreeNode[]>(() => {
     const root = this.rootSpace();
@@ -352,6 +357,42 @@ export class ProjectComponent implements OnInit {
       });
     };
 
+    /**
+     * 铺开一个空间的内容（不出空间行本身）：子空间行、本空间设备行（展开后再带出它的服务）、
+     * 以及依赖设备已不在本空间的服务兜底行。contentLevel 是这些行所处的层级。
+     */
+    const appendContents = (space: SpaceEntity, contentLevel: number) => {
+      for (const child of space.children) {
+        appendSpace(child, contentLevel);
+      }
+      const spaceDevices = devices.filter((d) => d.space?.spaceId === space.id);
+      const spaceServices = services.filter((s) => s.spaceId === space.id);
+      const attached = new Set<string>();
+      for (const device of spaceDevices) {
+        const own = spaceServices.filter((s) => s.did === device.did);
+        own.forEach((s) => attached.add(s.id));
+        list.push({
+          key: deviceKey(device.did),
+          kind: 'device',
+          level: contentLevel,
+          space: null,
+          device,
+          service: null,
+          hasChildren: own.length > 0,
+        });
+        if (expanded.has(deviceKey(device.did))) {
+          for (const service of own) {
+            pushService(service, contentLevel + 1);
+          }
+        }
+      }
+      // 依赖设备不在本空间（设备已移走 / 已删除）的服务兜底挂在空间下
+      for (const service of spaceServices.filter((s) => !attached.has(s.id))) {
+        pushService(service, contentLevel);
+      }
+    };
+
+    /** 空间行；展开后再铺它的内容（层级 +1） */
     const appendSpace = (space: SpaceEntity, level: number) => {
       const spaceDevices = devices.filter((d) => d.space?.spaceId === space.id);
       const spaceServices = services.filter((s) => s.spaceId === space.id);
@@ -365,38 +406,14 @@ export class ProjectComponent implements OnInit {
         hasChildren:
           space.children.length > 0 || spaceDevices.length > 0 || spaceServices.length > 0,
       });
-      if (!expanded.has(spaceKey(space.id))) {
-        return;
-      }
-      for (const child of space.children) {
-        appendSpace(child, level + 1);
-      }
-      const attached = new Set<string>();
-      for (const device of spaceDevices) {
-        const own = spaceServices.filter((s) => s.did === device.did);
-        own.forEach((s) => attached.add(s.id));
-        list.push({
-          key: deviceKey(device.did),
-          kind: 'device',
-          level: level + 1,
-          space: null,
-          device,
-          service: null,
-          hasChildren: own.length > 0,
-        });
-        if (expanded.has(deviceKey(device.did))) {
-          for (const service of own) {
-            pushService(service, level + 2);
-          }
-        }
-      }
-      // 依赖设备不在本空间（设备已移走 / 已删除）的服务兜底挂在空间下
-      for (const service of spaceServices.filter((s) => !attached.has(s.id))) {
-        pushService(service, level + 1);
+      if (expanded.has(spaceKey(space.id))) {
+        appendContents(space, level + 1);
       }
     };
 
-    appendSpace(root, 0);
+    // 根空间不出现在列表里（它的代码 / 名称 / 类型 / 设备数 / 服务数已在页头 nz-descriptions
+    // 展示过），直接把它的内容铺在第 0 层，不再多一层缩进
+    appendContents(root, 0);
     return list;
   });
 

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
@@ -21,6 +22,8 @@ import { ModbusService } from '../../../../../../service/modbus.service';
 import { MainI18nService } from '../../../../../../service/i18n.service';
 import { DeviceEntity } from '../../../../../../typedef/define/device/DeviceEntity';
 import { ModbusConfig } from '../../../../../../typedef/define/modbus/Modbus';
+import { SpaceEntity } from '../../../../../../typedef/define/space/SpaceEntity';
+import { OrganizationMember } from '../../../../../../typedef/define/user/UserOrganization';
 import {
   ModbusService as ModbusServiceDef,
   ModbusServiceFunction,
@@ -96,6 +99,30 @@ export class DeviceServiceDetailComponent implements OnInit {
 
   readonly functions = computed<ModbusServiceFunction[]>(() => this.service()?.functions ?? []);
 
+  /* ----------------------------------------------------------------------------------------------
+   * 权限：编辑入口只给空间管理员（与列表页、设备页同一口径）
+   * ----------------------------------------------------------------------------------------------*/
+
+  /** 项目根空间，权限判定用 */
+  readonly rootSpace = signal<SpaceEntity | null>(null);
+  /** 项目根空间的访问条目 */
+  readonly members = signal<OrganizationMember[]>([]);
+
+  /** 当前用户是不是这个项目的空间管理员：先看自己在根空间上的直接角色，再看所属组织的角色 */
+  readonly isAdmin = computed(() => {
+    const me = this.account.user();
+    if (!me?.id) return false;
+    const selfEntry = this.members().find((m) => m.userId === me.id);
+    if (selfEntry?.role === 'admin') return true;
+    const org = this.account.organization();
+    const orgEntry = this.rootSpace()?.accesses?.find((a) => a.type === 'organization' && a.id === org.id);
+    if (orgEntry) {
+      const meInOrg = org.members.find((m) => m.userId === me.id);
+      return meInOrg !== undefined && meInOrg.role === 'admin';
+    }
+    return false;
+  });
+
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
       this.did.set(params['did'] ?? '');
@@ -104,6 +131,23 @@ export class DeviceServiceDetailComponent implements OnInit {
       this.loadService(this.id());
     });
     this.loadConfigs();
+    this.loadAdminContext();
+  }
+
+  /** 加载项目根空间 + 成员，供 isAdmin 判定；非管理员无需展示按钮，失败静默即可。 */
+  private loadAdminContext(): void {
+    const rootId = this.account.space().id;
+    if (!rootId) return;
+    forkJoin({
+      space: this.matrix.getSpace(rootId),
+      members: this.matrix.listAccesses(rootId),
+    }).subscribe({
+      next: ({ space, members }) => {
+        this.rootSpace.set(space);
+        this.members.set(members);
+      },
+      error: () => {},
+    });
   }
 
   private loadService(id: string): void {

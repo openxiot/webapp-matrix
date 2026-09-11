@@ -2,9 +2,27 @@
   <nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
     <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
 
+    <!-- 根空间已不出现在列表里（见 rows），它的「添加子空间 / 添加设备」入口挪到页头，仅管理员可见 -->
+    <nz-page-header-extra>
+      @if (rootSpace(); as root) {
+        @if (isAdmin()) {
+          <nz-space>
+            <button *nzSpaceItem nz-button (click)="addChildSpace(root)">
+              <span nz-icon nzType="plus"></span>
+              {{ '添加子空间' | translate }}
+            </button>
+            <button *nzSpaceItem nz-button nzType="primary" (click)="addDevice(root)">
+              <span nz-icon nzType="plus"></span>
+              {{ '添加设备' | translate }}
+            </button>
+          </nz-space>
+        }
+      }
+    </nz-page-header-extra>
+
     <nz-page-header-content>
       @if (rootSpace(); as root) {
-        <nz-descriptions nzSize="small" [nzColumn]="4">
+        <nz-descriptions nzSize="small" [nzColumn]="3">
           <nz-descriptions-item nzTitle="{{ '空间代码' | translate }}" [nzSpan]="1">{{ root.id }}</nz-descriptions-item>
           <nz-descriptions-item nzTitle="{{ '空间名称' | translate }}" [nzSpan]="1">{{ root.name }}</nz-descriptions-item>
           <nz-descriptions-item nzTitle="{{ '空间类型' | translate }}" [nzSpan]="1">{{ typeLabel(root) | translate }}</nz-descriptions-item>
@@ -97,13 +115,14 @@
             <td>
               @switch (row.kind) {
                 @case ('space') {
+                  <!-- 空间行的三个操作都要空间管理员：非管理员这一格是空的 -->
                   @if (isAdmin()) {
                     <a (click)="addDevice(row.space!)">{{ '添加设备' | translate }}</a>
                     <nz-divider nzType="vertical"></nz-divider>
+                    <a (click)="addChildSpace(row.space!)">{{ '添加子空间' | translate }}</a>
+                    <nz-divider nzType="vertical"></nz-divider>
+                    <a (click)="removeSpace(row.space!)">{{ '删除' | translate }}</a>
                   }
-                  <a (click)="addChildSpace(row.space!)">{{ '添加子空间' | translate }}</a>
-                  <nz-divider nzType="vertical"></nz-divider>
-                  <a (click)="removeSpace(row.space!)">{{ '删除' | translate }}</a>
                 }
                 @case ('service') {
                   <a [routerLink]="serviceDetailLink(row.service!)">{{ '详情' | translate }}</a>
@@ -118,9 +137,10 @@
                     <nz-divider nzType="vertical"></nz-divider>
                     <a [routerLink]="['/main/device/services', row.device!.did]">{{ '服务' | translate }}</a>
                   }
-                  <nz-divider nzType="vertical"></nz-divider>
-                  <a [routerLink]="['/main/device/debugger', row.device!.did]">{{ '调试' | translate }}</a>
+                  <!-- 调试 / 删除都要空间管理员；详情、服务对空间成员开放 -->
                   @if (isAdmin()) {
+                    <nz-divider nzType="vertical"></nz-divider>
+                    <a [routerLink]="['/main/device/debugger', row.device!.did]">{{ '调试' | translate }}</a>
                     <nz-divider nzType="vertical"></nz-divider>
                     <a (click)="removeDevice(row.device!)">{{ '删除' | translate }}</a>
                   }

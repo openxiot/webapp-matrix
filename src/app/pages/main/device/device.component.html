@@ -4,7 +4,10 @@
 
     <nz-page-header-extra>
       @if (isAdmin()) {
-        <button nz-button nzType="primary" (click)="addDevice()">{{ '添加' | translate }}</button>
+        <button nz-button nzType="primary" (click)="addDevice()">
+          <span nz-icon nzType="plus"></span>
+          {{ '添加' | translate }}
+        </button>
       }
     </nz-page-header-extra>
   </nz-page-header>
@@ -80,9 +83,10 @@
                       <nz-divider nzType="vertical"></nz-divider>
                       <a [routerLink]="['/main/device/services', row.device!.did]">{{ '服务' | translate }}</a>
                     }
-                    <nz-divider nzType="vertical"></nz-divider>
-                    <a [routerLink]="['/main/device/debugger', row.device!.did]">{{ '调试' | translate }}</a>
+                    <!-- 调试 / 删除都要空间管理员；详情、服务对空间成员开放 -->
                     @if (isAdmin()) {
+                      <nz-divider nzType="vertical"></nz-divider>
+                      <a [routerLink]="['/main/device/debugger', row.device!.did]">{{ '调试' | translate }}</a>
                       <nz-divider nzType="vertical"></nz-divider>
                       <a (click)="removeDevice(row)">{{ '删除' | translate }}</a>
                     }

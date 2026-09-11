@@ -2,10 +2,13 @@
   <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
 
   <nz-page-header-extra>
-    <button nz-button [routerLink]="editLink()">
-      <span nz-icon nzType="edit"></span>
-      {{ '编辑' | translate }}
-    </button>
+    <!-- 编辑入口只给空间管理员；调用（方法列表里的按钮）仍是空间成员即可 -->
+    @if (isAdmin()) {
+      <button nz-button nzType="primary" [routerLink]="editLink()">
+        <span nz-icon nzType="edit"></span>
+        {{ '编辑' | translate }}
+      </button>
+    }
   </nz-page-header-extra>
 
   <nz-page-header-content>
@@ -45,45 +48,43 @@
 
 <div class="service-detail">
   <nz-spin [nzSpinning]="loading()">
-    <nz-card nzTitle="{{ '方法列表' | translate }}">
-      @if (functions().length === 0 && !loading()) {
-        <nz-empty [nzNotFoundContent]="'这份服务里还没有方法' | translate"></nz-empty>
-      } @else {
-        <nz-table [nzData]="functions()" [nzFrontPagination]="false" [nzShowPagination]="false">
-          <thead>
+    @if (functions().length === 0 && !loading()) {
+      <nz-empty [nzNotFoundContent]="'这份服务里还没有方法' | translate"></nz-empty>
+    } @else {
+      <nz-table [nzData]="functions()" [nzFrontPagination]="false" [nzShowPagination]="false">
+        <thead>
+        <tr>
+          <th nzWidth="80px">{{ '序号' | translate }}</th>
+          <th nzWidth="200px">{{ '方法名称' | translate }}</th>
+          <th>{{ '请求帧' | translate }}</th>
+          <th nzWidth="320px">{{ '应答字段' | translate }}</th>
+          <th nzWidth="100px">{{ '操作' | translate }}</th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (func of functions(); track func.index) {
             <tr>
-              <th nzWidth="80px">{{ '序号' | translate }}</th>
-              <th nzWidth="200px">{{ '方法名称' | translate }}</th>
-              <th>{{ '请求帧' | translate }}</th>
-              <th nzWidth="320px">{{ '应答字段' | translate }}</th>
-              <th nzWidth="100px">{{ '操作' | translate }}</th>
+              <td>{{ func.index }}</td>
+              <td>{{ func.name }}</td>
+              <td><code class="service-detail-frame">{{ func.request }}</code></td>
+              <td>{{ responseText(func) }}</td>
+              <td>
+                <button
+                  nz-button
+                  nzType="link"
+                  nzSize="small"
+                  [nzLoading]="invoking() === func.index"
+                  [disabled]="invoking() !== null"
+                  (click)="invoke(func)"
+                >
+                  {{ '调用' | translate }}
+                </button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            @for (func of functions(); track func.index) {
-              <tr>
-                <td>{{ func.index }}</td>
-                <td>{{ func.name }}</td>
-                <td><code class="service-detail-frame">{{ func.request }}</code></td>
-                <td>{{ responseText(func) }}</td>
-                <td>
-                  <button
-                    nz-button
-                    nzType="link"
-                    nzSize="small"
-                    [nzLoading]="invoking() === func.index"
-                    [disabled]="invoking() !== null"
-                    (click)="invoke(func)"
-                  >
-                    {{ '调用' | translate }}
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </nz-table>
-      }
-    </nz-card>
+          }
+        </tbody>
+      </nz-table>
+    }
 
     @if (result(); as r) {
       <nz-card nzTitle="{{ '调用结果' | translate }}" style="margin-top: 16px">
@@ -98,11 +99,11 @@
         } @else {
           <nz-table [nzData]="resultRows()" [nzFrontPagination]="false" [nzShowPagination]="false">
             <thead>
-              <tr>
-                <th nzWidth="240px">{{ '字段' | translate }}</th>
-                <th>{{ '值' | translate }}</th>
-                <th nzWidth="120px">{{ '单位' | translate }}</th>
-              </tr>
+            <tr>
+              <th nzWidth="240px">{{ '字段' | translate }}</th>
+              <th>{{ '值' | translate }}</th>
+              <th nzWidth="120px">{{ '单位' | translate }}</th>
+            </tr>
             </thead>
             <tbody>
               @for (row of resultRows(); track row.field) {

@@ -5,11 +5,19 @@
 
     <nz-page-header-extra>
       <div class="header-actions">
+        <!-- 服务仅 DTU + 管理员可见（showMapping），调试仅管理员可见 -->
         @if (showMapping()) {
-          <button nz-button [routerLink]="['/main/device/services', did()]">{{ '服务' | translate }}</button>
+          <button nz-button [routerLink]="['/main/device/services', did()]">
+            <span nz-icon nzType="fire"></span>
+            {{ '服务' | translate }}
+          </button>
         }
-        <button nz-button nzType="primary" [routerLink]="['/main/device/debugger', did()]">{{ '调试' | translate }}
-        </button>
+        @if (isAdmin()) {
+          <button nz-button nzType="primary" [routerLink]="['/main/device/debugger', did()]">
+            <span nz-icon nzType="bug"></span>
+            {{ '调试' | translate }}
+          </button>
+        }
       </div>
     </nz-page-header-extra>
 

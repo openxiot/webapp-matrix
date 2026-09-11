@@ -23,6 +23,7 @@ import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
 import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
 import { OrganizationMember } from '../../../../typedef/define/user/UserOrganization';
 import { UrnUtils } from '../../../../typedef/utils/UrnUtils';
+import { NzIconDirective } from 'ng-zorro-antd/icon';
 
 /**
  * 设备详情页（/main/device/detail/:id，路由参数 id = 设备 did）。
@@ -56,6 +57,7 @@ import { UrnUtils } from '../../../../typedef/utils/UrnUtils';
     TranslatePipe,
     BreadcrumbTranslateDirective,
     DatePipe,
+    NzIconDirective,
   ],
 })
 export class DeviceDetailComponent implements OnInit {
@@ -138,7 +140,9 @@ export class DeviceDetailComponent implements OnInit {
     if (selfEntry?.role === 'admin') return true;
 
     const org = this.account.organization();
-    const orgEntry = this.rootSpace()?.accesses?.find((a) => a.type === 'organization' && a.id === org.id);
+    const orgEntry = this.rootSpace()?.accesses?.find(
+      (a) => a.type === 'organization' && a.id === org.id,
+    );
     if (orgEntry) {
       const meInOrg = org.members.find((m) => m.userId === me.id);
       return meInOrg !== undefined && meInOrg.role === 'admin';
