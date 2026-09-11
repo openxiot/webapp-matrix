@@ -52,7 +52,7 @@
                       <nz-avatar [nzSize]="48" nzIcon="hdd"></nz-avatar>
                     }
                   } @else {
-                    <nz-avatar [nzSize]="48" nzIcon="api"></nz-avatar>
+                    <nz-icon nzType="api" nzTheme="outline" />
                   }
                 </td>
                 <td class="cell-name-text" [title]="row.kind === 'device' ? deviceName(row.device!) : row.service!.name">
