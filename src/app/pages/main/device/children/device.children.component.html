@@ -1,0 +1,58 @@
+<nz-spin [nzSpinning]="loading()">
+  <nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzSubtitle]="deviceSubtitle"
+                  [nzGhost]="false">
+    <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+  </nz-page-header>
+
+  <ng-template #pageTitle>
+    {{ '子设备' | translate }}
+  </ng-template>
+
+  <!-- 副标题写明这是「谁的」子设备：本页只按 parentId 过滤空间图，不查父设备本体 -->
+  <ng-template #deviceSubtitle>
+    <nz-tag>{{ '父设备' | translate }}</nz-tag>
+    <span class="id-text" [title]="did()">{{ did() }}</span>
+  </ng-template>
+
+  <div style="padding: 20px 20px">
+    @if (!hasSpace()) {
+      <nz-empty [nzNotFoundContent]="'请先在项目列表中选择一个项目' | translate"></nz-empty>
+    } @else if (children().length > 0) {
+      <nz-table #childTable [nzData]="children()" [nzShowPagination]="false">
+        <thead>
+        <tr>
+          <th nzWidth="400px">{{ '设备ID' | translate }}</th>
+          <th>{{ '状态' | translate }}</th>
+          <th>{{ '最后在线' | translate }}</th>
+          <th>{{ '操作' | translate }}</th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (child of childTable.data; track child.did) {
+            <tr>
+              <td class="id-text" [title]="child.did">{{ child.did }}</td>
+              <td>
+                <nz-tag [nzColor]="child.online ? 'success' : 'default'">
+                  {{ child.online ? ('在线' | translate) : ('离线' | translate) }}
+                </nz-tag>
+              </td>
+              <td>
+                {{ child.lastOnline ? (child.lastOnline | date: 'yyyy-MM-dd HH:mm:ss') : '-' }}
+              </td>
+              <td>
+                <!-- 详情对空间成员开放；调试仅空间管理员（口径同设备列表页） -->
+                <a [routerLink]="['/main/device/detail', child.did]">{{ '详情' | translate }}</a>
+                @if (isAdmin()) {
+                  <nz-divider nzType="vertical"></nz-divider>
+                  <a [routerLink]="['/main/device/debugger', child.did]">{{ '调试' | translate }}</a>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+    } @else if (!loading()) {
+      <nz-empty [nzNotFoundContent]="'无子设备' | translate"></nz-empty>
+    }
+  </div>
+</nz-spin>

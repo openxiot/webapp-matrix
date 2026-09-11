@@ -5,6 +5,11 @@
 
     <nz-page-header-extra>
       <div class="header-actions">
+        <!-- 子设备列表已独立成页（/main/device/children/:id），这里只留入口，对全部空间成员开放 -->
+        <button nz-button [routerLink]="['/main/device/children', did()]">
+          <span nz-icon nzType="apartment"></span>
+          {{ '子设备' | translate }}
+        </button>
         <!-- 服务仅 DTU + 管理员可见（showMapping），调试仅管理员可见 -->
         @if (showMapping()) {
           <button nz-button [routerLink]="['/main/device/services', did()]">
@@ -84,39 +89,19 @@
   </ng-template>
 
   <div style="padding: 20px 20px">
-    @if (device()) {
-      @if (children().length > 0) {
-        <nz-table #childTable [nzData]="children()" [nzShowPagination]="false">
-          <thead>
-          <tr>
-            <th nzWidth="400px">{{ '子设备ID' | translate }}</th>
-            <th>{{ '状态' | translate }}</th>
-            <th>{{ '操作' | translate }}</th>
-          </tr>
-          </thead>
-          <tbody>
-            @for (child of childTable.data; track child.did) {
-              <tr>
-                <td class="id-text" [title]="child.did">{{ child.did }}</td>
-                <td>
-                  <nz-tag [nzColor]="child.online ? 'success' : 'default'">
-                    {{ child.online ? ('在线' | translate) : ('离线' | translate) }}
-                  </nz-tag>
-                </td>
-                <td>
-                  <a [routerLink]="['/main/device/detail', child.did]">{{ '详情' | translate }}</a>
-                  <nz-divider nzType="vertical"></nz-divider>
-                  <a [routerLink]="['/main/device/debugger', child.did]">{{ '调试' | translate }}</a>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </nz-table>
-      } @else {
-        <nz-empty [nzNotFoundContent]="'无子设备' | translate"></nz-empty>
-      }
-    } @else if (!loading()) {
+    <!-- 子设备列表已搬到独立页面（页头「子设备」按钮），这里只剩设备取不到时的空态 -->
+    @if (!device() && !loading()) {
       <nz-empty [nzNotFoundContent]="'设备不存在或无权访问' | translate"></nz-empty>
+    } @else {
+      <!-- 第三方设备页面：高度由它自己 postMessage 上报（跨域量不了），撑到内容高度内部就不会再
+           出现自己的滚动条，由本页滚动条统管。刻意不设 scrolling / overflow，理由见 .less -->
+      <iframe
+        #deviceFrame
+        class="device-frame"
+        [src]="frameSrc | safe"
+        [style.height.px]="frameHeight()"
+        width="100%">
+      </iframe>
     }
   </div>
 </nz-spin>

@@ -236,6 +236,7 @@
   "根设备": "Root Device",
   "最后在线": "Last Online",
   "最后离线": "Last Offline",
+  "子设备": "Child device",
   "子设备ID": "Child Device ID",
   "无子设备": "No child devices",
   "设备不存在或无权访问": "Device not found or access denied",

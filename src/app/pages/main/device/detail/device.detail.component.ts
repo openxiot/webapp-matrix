@@ -1,4 +1,12 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  OnInit,
+  computed,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { DatePipe, Location } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -7,10 +15,8 @@ import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
-import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -24,6 +30,14 @@ import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
 import { OrganizationMember } from '../../../../typedef/define/user/UserOrganization';
 import { UrnUtils } from '../../../../typedef/utils/UrnUtils';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
+import { SafePipe } from '../../../../common/pipe/safe/SafePipe';
+
+/**
+ * 内嵌的第三方设备页面地址（自行开发、自行部署，宿主只负责嵌进来）。
+ * 与它约定两条 postMessage：`iframe-height` 上报内容高度、`toast` 请求宿主弹提示 ——
+ * 完整契约与注意事项见工程根目录的《跨域加载设备页面.md》。
+ */
+const DEVICE_FRAME_SRC = 'http://127.0.0.1:8000/air-conditioner-tablet.html';
 
 /**
  * 设备详情页（/main/device/detail/:id，路由参数 id = 设备 did）。
@@ -48,16 +62,15 @@ import { NzIconDirective } from 'ng-zorro-antd/icon';
     NzSpinModule,
     NzCardModule,
     NzDescriptionsModule,
-    NzTableModule,
     NzTagModule,
     NzButtonModule,
-    NzDividerModule,
     NzEmptyModule,
     RouterLink,
     TranslatePipe,
     BreadcrumbTranslateDirective,
     DatePipe,
     NzIconDirective,
+    SafePipe,
   ],
 })
 export class DeviceDetailComponent implements OnInit {
@@ -68,7 +81,7 @@ export class DeviceDetailComponent implements OnInit {
   /** 设备本体（GET /matrix/v1/device/one/{spaceId}/{did}） */
   device = signal<DeviceEntity | null>(null);
 
-  /** 当前项目空间图里的空间与设备：解析所在空间名、父设备与子设备 */
+  /** 当前项目空间图里的空间与设备：解析所在空间名（子设备列表已独立成页，见 children/） */
   projectSpaces = signal<SpaceEntity[]>([]);
   projectDevices = signal<DeviceEntity[]>([]);
 
@@ -155,6 +168,45 @@ export class DeviceDetailComponent implements OnInit {
    * Modbus 服务（映射）已按**空间**鉴权，与账号有没有组织无关，故不再要求「已启用组织」。
    */
   readonly showMapping = computed(() => this.isDtu() && this.isAdmin());
+
+  // ---- 第三方设备页面（跨域 iframe）----
+
+  /** 第三方设备页面地址（模板里直接绑） */
+  readonly frameSrc = DEVICE_FRAME_SRC;
+
+  /** 该页面的来源，校验 postMessage 用 */
+  private readonly frameOrigin = new URL(DEVICE_FRAME_SRC).origin;
+
+  /** iframe 的高度：由第三方页面 postMessage 上报（跨域下宿主读不到它的文档，量不了） */
+  readonly frameHeight = signal(600);
+
+  /** 模板里的 iframe 引用，用来确认消息确实是它发来的 */
+  private readonly frameRef = viewChild<ElementRef<HTMLIFrameElement>>('deviceFrame');
+
+  /**
+   * 第三方页面的 postMessage。两种消息：
+   * - `iframe-height`：上报内容高度。宿主把 iframe 撑到内容高度，页面内部就不会有自己的滚动条，
+   *   由宿主页面的滚动条统管——否则内外两条滚动条。
+   * - `toast`：它要弹提示。iframe 是"内容全高"的、固定定位会落到用户视口外，所以交给宿主用 message 弹。
+   *
+   * 消息必须是**这一个 iframe** 发来的：只比对 origin 的话，同源的其它窗口也能改我们的布局。
+   */
+  @HostListener('window:message', ['$event'])
+  onFrameMessage(e: MessageEvent) {
+    const frame = this.frameRef()?.nativeElement;
+    if (!frame || e.source !== frame.contentWindow || e.origin !== this.frameOrigin) {
+      return;
+    }
+
+    if (e.data?.type === 'iframe-height') {
+      const height = Number(e.data.height);
+      if (Number.isFinite(height) && height > 0) {
+        this.frameHeight.set(height);
+      }
+    } else if (e.data?.type === 'toast' && typeof e.data.message === 'string') {
+      this.msg.info(e.data.message);
+    }
+  }
 
   constructor(
     protected location: Location,

@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { DeviceComponent } from './device.component';
 import { DeviceDetailComponent } from './detail/device.detail.component';
+import { DeviceChildrenComponent } from './children/device.children.component';
 import { DeviceDebuggerComponent } from './debugger/device.debugger.component';
 import { DeviceServicesComponent } from './services/device.services.component';
 import { DeviceServiceCreateComponent } from './services/service/create/device.service.create.component';
@@ -16,6 +17,11 @@ export const DEVICE_ROUTES: Routes = [
     path: 'detail/:id',
     data: { breadcrumb: '详情' },
     component: DeviceDetailComponent,
+  },
+  {
+    path: 'children/:id',
+    data: { breadcrumb: '子设备' },
+    component: DeviceChildrenComponent,
   },
   {
     path: 'debugger/:did',

@@ -12,3 +12,14 @@
 .id-text {
   word-break: break-all;
 }
+
+// 第三方设备页面。边框用 CSS 关掉：frameborder 属性已被 HTML5 列为过时（IDE 会划线），
+// 而光删属性不补样式的话，浏览器的 UA 样式表会给 iframe 补一条 2px inset 边框。
+.device-frame {
+  border: none;
+}
+
+// 这里刻意**不**设 overflow: hidden（scrolling="no" 的等价写法），也不设 scrolling 属性：
+// 两者都只是「把内部滚动条藏掉」。第三方页面一旦漏了高度上报，iframe 就停在初始高度，
+// 下面的内容既看不见也滚不到 —— 静默丢内容。不设的话它会退化成「自己有一条滚动条」：
+// 虽然正是要消灭的东西，但看得见、能滚、好排查。完整说明见《跨域加载设备页面.md》。

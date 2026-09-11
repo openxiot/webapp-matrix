@@ -42,6 +42,7 @@ import {
   AlertOutline,
   FireOutline,
   BugOutline,
+  ApartmentOutline,
 } from '@ant-design/icons-angular/icons';
 
 export const icons = [
@@ -88,4 +89,5 @@ export const icons = [
   AlertOutline,
   FireOutline,
   BugOutline,
+  ApartmentOutline,
 ];
