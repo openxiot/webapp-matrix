@@ -330,5 +330,15 @@
   "添加成功": "Thêm thành công",
   "矩阵": "Ma trận",
   "功能列表": "Danh sách chức năng",
-  "功能内容": "Nội dung chức năng"
+  "功能内容": "Nội dung chức năng",
+  "应答帧": "Khung phản hồi",
+  "完整应答帧，含从站地址与 CRC16": "Khung phản hồi đầy đủ, gồm địa chỉ slave và CRC16",
+  "数据区": "Vùng dữ liệu",
+  "数据区为示例值，真实数据由设备返回": "Vùng dữ liệu hiển thị giá trị mẫu; dữ liệu thực do thiết bị trả về",
+  "异常应答": "Phản hồi ngoại lệ",
+  "异常码": "Mã ngoại lệ",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Bit cao nhất của mã chức năng bằng 1 nghĩa là ngoại lệ; mã ngoại lệ và CRC16 do thiết bị trả về, ở đây hiển thị là ??",
+  "异常": "Ngoại lệ",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Mã chức năng không hợp lệ / 02 Địa chỉ dữ liệu không hợp lệ / 03 Giá trị dữ liệu không hợp lệ / 04 Lỗi thiết bị slave",
+  "待设备返回": "Đang chờ thiết bị"
 }

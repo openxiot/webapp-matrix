@@ -5,19 +5,9 @@
   {{ fcLabelKey(data.command.fc) | translate }}
 </div>
 
-<div class="req-frame">{{ data.frame.hex }}</div>
-
-<div class="req-meta">
-  <span class="req-note">{{ '完整请求帧，含从站地址与 CRC16' | translate }}</span>
-  <span class="req-note">{{ '共 {{count}} 字节' | translate: { count: data.frame.count } }}</span>
-  <button nz-button nzType="link" nzSize="small" (click)="copy()">
-    {{ copied() ? ('已复制' | translate) : ('复制' | translate) }}
-  </button>
-</div>
-
-<div class="req-parse">
-  <div class="req-parse-title">{{ '帧结构解析' | translate }}</div>
-  @for (part of parts; track $index) {
+<!-- 帧结构解析的行：请求帧 / 应答帧 / 异常应答共用一套渲染 -->
+<ng-template #parseRows let-list="parts">
+  @for (part of list; track $index) {
     <div class="req-parse-row">
       <span class="req-parse-label">{{ part.labelKey | translate }}</span>
       <code class="req-parse-hex">{{ part.hex }}</code>
@@ -38,4 +28,59 @@
       </span>
     </div>
   }
+</ng-template>
+
+<div class="req-section">{{ '请求帧' | translate }}</div>
+
+<div class="req-frame">{{ data.frame.hex }}</div>
+
+<div class="req-meta">
+  <span class="req-note">{{ '完整请求帧，含从站地址与 CRC16' | translate }}</span>
+  <span class="req-note">{{ '共 {{count}} 字节' | translate: { count: data.frame.count } }}</span>
+  <button nz-button nzType="link" nzSize="small" (click)="copy(data.frame.hex, 'request')">
+    {{ copied() === 'request' ? ('已复制' | translate) : ('复制' | translate) }}
+  </button>
+</div>
+
+<div class="req-parse">
+  <div class="req-parse-title">{{ '帧结构解析' | translate }}</div>
+  <ng-container [ngTemplateOutlet]="parseRows" [ngTemplateOutletContext]="{ parts: parts }" />
+</div>
+
+<div class="req-section">{{ '应答帧' | translate }}</div>
+
+<div class="req-frame">{{ data.response.hex }}</div>
+
+<div class="req-meta">
+  <span class="req-note">{{ '完整应答帧，含从站地址与 CRC16' | translate }}</span>
+  <span class="req-note">{{ '共 {{count}} 字节' | translate: { count: data.response.count } }}</span>
+  <!-- 读应答的数据区由设备返回，帧里按字节数补的是示例值 -->
+  @if (data.response.sample) {
+    <span class="req-note">{{ '数据区为示例值，真实数据由设备返回' | translate }}</span>
+  }
+  <button nz-button nzType="link" nzSize="small" (click)="copy(data.response.hex, 'response')">
+    {{ copied() === 'response' ? ('已复制' | translate) : ('复制' | translate) }}
+  </button>
+</div>
+
+<div class="req-parse">
+  <div class="req-parse-title">{{ '帧结构解析' | translate }}</div>
+  <ng-container [ngTemplateOutlet]="parseRows" [ngTemplateOutletContext]="{ parts: responseParts }" />
+</div>
+
+<div class="req-section req-section-danger">{{ '异常应答' | translate }}</div>
+
+<div class="req-frame">{{ data.exception.hex }}</div>
+
+<div class="req-meta">
+  <span class="req-note">{{ '功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位' | translate }}</span>
+  <span class="req-note">{{ '共 {{count}} 字节' | translate: { count: data.exception.count } }}</span>
+  <button nz-button nzType="link" nzSize="small" (click)="copy(data.exception.hex, 'exception')">
+    {{ copied() === 'exception' ? ('已复制' | translate) : ('复制' | translate) }}
+  </button>
+</div>
+
+<div class="req-parse">
+  <div class="req-parse-title">{{ '帧结构解析' | translate }}</div>
+  <ng-container [ngTemplateOutlet]="parseRows" [ngTemplateOutletContext]="{ parts: exceptionParts }" />
 </div>

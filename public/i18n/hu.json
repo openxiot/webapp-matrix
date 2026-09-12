@@ -330,5 +330,15 @@
   "添加成功": "Hozzáadva",
   "矩阵": "Mátrix",
   "功能列表": "Funkciólista",
-  "功能内容": "Funkció tartalma"
+  "功能内容": "Funkció tartalma",
+  "应答帧": "Válaszkeret",
+  "完整应答帧，含从站地址与 CRC16": "Teljes válaszkeret, slave-címmel és CRC16-tal",
+  "数据区": "Adatterület",
+  "数据区为示例值，真实数据由设备返回": "Az adatterület példaértékeket mutat; a valódi adatokat az eszköz adja vissza",
+  "异常应答": "Kivételválasz",
+  "异常码": "Kivételkód",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Ha a funkciókód legmagasabb bitje 1, az kivételt jelent; a kivételkódot és a CRC16-ot az eszköz adja vissza, itt ?? alakban láthatók",
+  "异常": "Kivétel",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Érvénytelen funkciókód / 02 Érvénytelen adatcím / 03 Érvénytelen adatérték / 04 Slave-eszköz hiba",
+  "待设备返回": "Várakozás az eszközre"
 }

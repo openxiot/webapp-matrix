@@ -12,7 +12,7 @@ import { ModbusCommand, ModbusConfig, ModbusDeviceInfo } from '../../../../typed
 import { LifeCycle } from '@openxiot/xiot-core-spec-ts';
 import { CommandEditComponent, type ModbusCommandDialogData } from '../command/command.edit.component';
 import { RequestFrameDialogComponent, type RequestFrameDialogData } from './request/request.frame.dialog.component';
-import { buildRequestFrame } from './request/request.frame';
+import { buildRequestFrame, buildResponseFrame } from './request/request.frame';
 import { ModbusDeviceInfoEditComponent, type ModbusDeviceInfoEditData, } from '../device-info/modbus.device.info.edit.component';
 import { coilStateText, fcLabelKey, isWriteFc, logicalAddressOf } from '../command/point.options';
 import { lifecycleModifiable, lifecycleStyle } from '../modbus.lifecycle';
@@ -418,8 +418,9 @@ export abstract class ModbusEditor {
   }
 
   /**
-   * 行操作「命令」：按当前 从站地址 + 该功能码数据 生成完整 Modbus RTU 请求帧
-   * （含从站地址与 CRC16；0F/10 数据区按配置编码真实值），弹窗展示十六进制。
+   * 行操作「命令」：按当前 从站地址 + 该功能码数据 生成完整 Modbus RTU 请求帧与应答帧
+   * （含从站地址与 CRC16；0F/10 数据区按配置编码真实值），弹窗展示十六进制与帧结构解析。
+   * 应答帧含 正常应答（读=数据区示例值、写=回显/确认）+ 异常应答（异常码与 CRC 待设备返回）。
    * 从站地址未设置或命令数据不完整时提示，不弹窗。
    */
   protected showRequest(index: number): void {
@@ -437,11 +438,21 @@ export abstract class ModbusEditor {
       this.msg.warning(this.translate.instant(result.messageKey));
       return;
     }
+    const reply = buildResponseFrame(command, slaveId);
+    if (!reply.ok) {
+      this.msg.warning(this.translate.instant(reply.messageKey));
+      return;
+    }
     this.modal.create<RequestFrameDialogComponent, RequestFrameDialogData, void>({
-      nzTitle: this.translate.instant('请求命令'),
+      nzTitle: this.translate.instant('命令'),
       nzContent: RequestFrameDialogComponent,
       nzViewContainerRef: this.viewContainerRef,
-      nzData: { command, frame: result.frame },
+      nzData: {
+        command,
+        frame: result.frame,
+        response: reply.preview.frame,
+        exception: reply.preview.exception,
+      },
       nzWidth: 720,
       nzFooter: [
         {

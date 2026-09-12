@@ -330,5 +330,15 @@
   "添加成功": "Añadido",
   "矩阵": "Matriz",
   "功能列表": "Lista de funciones",
-  "功能内容": "Contenido de la función"
+  "功能内容": "Contenido de la función",
+  "应答帧": "Trama de respuesta",
+  "完整应答帧，含从站地址与 CRC16": "Trama de respuesta completa, con dirección de esclavo y CRC16",
+  "数据区": "Área de datos",
+  "数据区为示例值，真实数据由设备返回": "El área de datos muestra valores de ejemplo; los datos reales los devuelve el dispositivo",
+  "异常应答": "Respuesta de excepción",
+  "异常码": "Código de excepción",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "El bit más alto del código de función a 1 indica una excepción; el código de excepción y el CRC16 los devuelve el dispositivo y aquí se muestran como ??",
+  "异常": "Excepción",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Código de función ilegal / 02 Dirección de datos ilegal / 03 Valor de datos ilegal / 04 Fallo del dispositivo esclavo",
+  "待设备返回": "Pendiente del dispositivo"
 }

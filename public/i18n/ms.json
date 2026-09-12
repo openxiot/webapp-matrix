@@ -330,5 +330,15 @@
   "添加成功": "Berjaya ditambah",
   "矩阵": "Matriks",
   "功能列表": "Senarai Ciri",
-  "功能内容": "Kandungan Ciri"
+  "功能内容": "Kandungan Ciri",
+  "应答帧": "Bingkai Respons",
+  "完整应答帧，含从站地址与 CRC16": "Bingkai respons lengkap, dengan alamat slave dan CRC16",
+  "数据区": "Kawasan data",
+  "数据区为示例值，真实数据由设备返回": "Kawasan data menunjukkan nilai contoh; data sebenar dikembalikan oleh peranti",
+  "异常应答": "Respons pengecualian",
+  "异常码": "Kod pengecualian",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Bit tertinggi kod fungsi bernilai 1 bermaksud pengecualian; kod pengecualian dan CRC16 dikembalikan oleh peranti dan dipaparkan sebagai ?? di sini",
+  "异常": "Pengecualian",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Kod fungsi tidak sah / 02 Alamat data tidak sah / 03 Nilai data tidak sah / 04 Kerosakan peranti slave",
+  "待设备返回": "Menunggu peranti"
 }

@@ -330,5 +330,15 @@
   "添加成功": "Dodano",
   "矩阵": "Matrica",
   "功能列表": "Popis značajki",
-  "功能内容": "Sadržaj značajke"
+  "功能内容": "Sadržaj značajke",
+  "应答帧": "Okvir odgovora",
+  "完整应答帧，含从站地址与 CRC16": "Potpuni okvir odgovora s adresom slave i CRC16",
+  "数据区": "Područje podataka",
+  "数据区为示例值，真实数据由设备返回": "Područje podataka prikazuje primjerne vrijednosti; stvarne podatke vraća uređaj",
+  "异常应答": "Odgovor s iznimkom",
+  "异常码": "Kod iznimke",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Postavljen najviši bit koda funkcije znači iznimku; kod iznimke i CRC16 vraća uređaj, ovdje su prikazani kao ??",
+  "异常": "Iznimka",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Nedopušteni kod funkcije / 02 Nedopuštena adresa podataka / 03 Nedopuštena vrijednost podataka / 04 Kvar slave uređaja",
+  "待设备返回": "Čeka se uređaj"
 }

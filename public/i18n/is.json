@@ -330,5 +330,15 @@
   "添加成功": "Bætt við",
   "矩阵": "Fylki",
   "功能列表": "Listi yfir aðgerðir",
-  "功能内容": "Innihald aðgerðar"
+  "功能内容": "Innihald aðgerðar",
+  "应答帧": "Svarrammi",
+  "完整应答帧，含从站地址与 CRC16": "Fullur svarrammi, með slaveheimilisfangi og CRC16",
+  "数据区": "Gagnasvæði",
+  "数据区为示例值，真实数据由设备返回": "Gagnasvæðið sýnir sýnishornsgildi; raunverulegu gögnin skilar tækið",
+  "异常应答": "Undantekningarsvar",
+  "异常码": "Undantekningarkóði",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Ef hæsti biti aðgerðarkóðans er 1 stendur það fyrir undantekningu; undantekningarkóðann og CRC16 skilar tækið og eru þau hér sýnd sem ??",
+  "异常": "Undantekning",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Ógildur aðgerðarkóði / 02 Ógilt gagnsheimilisfang / 03 Ógilt gagnagildi / 04 Bilun í slave-tæki",
+  "待设备返回": "Bíður tækis"
 }

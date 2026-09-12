@@ -330,5 +330,15 @@
   "添加成功": "Pievienots",
   "矩阵": "Matrica",
   "功能列表": "Funkciju saraksts",
-  "功能内容": "Funkciju saturs"
+  "功能内容": "Funkciju saturs",
+  "应答帧": "Atbildes kadrs",
+  "完整应答帧，含从站地址与 CRC16": "Pilns atbildes kadrs ar pakārtotās ierīces adresi un CRC16",
+  "数据区": "Datu apgabals",
+  "数据区为示例值，真实数据由设备返回": "Datu apgabalā ir parauga vērtības; īstos datus atgriež ierīce",
+  "异常应答": "Izņēmuma atbilde",
+  "异常码": "Izņēmuma kods",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Ja funkcijas koda augstākais bits ir 1, tas nozīmē izņēmumu; izņēmuma kodu un CRC16 atgriež ierīce, un šeit tie ir parādīti kā ??",
+  "异常": "Izņēmums",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Nederīgs funkcijas kods / 02 Nederīga datu adrese / 03 Nederīga datu vērtība / 04 Pakārtotās ierīces bojājums",
+  "待设备返回": "Gaida ierīci"
 }

@@ -330,5 +330,15 @@
   "添加成功": "Lagt til",
   "矩阵": "Matrise",
   "功能列表": "Funksjonsliste",
-  "功能内容": "Funksjonsinnhold"
+  "功能内容": "Funksjonsinnhold",
+  "应答帧": "Svarramme",
+  "完整应答帧，含从站地址与 CRC16": "Fullstendig svarramme, med slaveadresse og CRC16",
+  "数据区": "Dataområde",
+  "数据区为示例值，真实数据由设备返回": "Dataområdet viser eksempelverdier; de faktiske dataene returneres av enheten",
+  "异常应答": "Unntakssvar",
+  "异常码": "Unntakskode",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Den høyeste biten i funksjonskoden satt til 1 betyr et unntak; unntakskoden og CRC16 returneres av enheten og vises her som ??",
+  "异常": "Unntak",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Ugyldig funksjonskode / 02 Ugyldig dataadresse / 03 Ugyldig dataverdi / 04 Slaveenhetsfeil",
+  "待设备返回": "Venter på enhet"
 }

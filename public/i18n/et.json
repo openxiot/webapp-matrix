@@ -330,5 +330,15 @@
   "添加成功": "Lisatud",
   "矩阵": "Maatriks",
   "功能列表": "Funktsioonide loend",
-  "功能内容": "Funktsioonide sisu"
+  "功能内容": "Funktsioonide sisu",
+  "应答帧": "Vastuskaader",
+  "完整应答帧，含从站地址与 CRC16": "Täielik vastuskaader, sealhulgas oriseadme aadress ja CRC16",
+  "数据区": "Andmeala",
+  "数据区为示例值，真实数据由设备返回": "Andmeala näitab näidisväärtusi; tegelikud andmed tagastab seade",
+  "异常应答": "Erandvastus",
+  "异常码": "Erandkood",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Funktsioonikoodi kõrgeima biti väärtus 1 tähendab erandit; erandkoodi ja CRC16 tagastab seade, siin on need kuvatud kui ??",
+  "异常": "Erand",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Keelatud funktsioonikood / 02 Keelatud andmeaadress / 03 Keelatud andmeväärtus / 04 Oriseadme rike",
+  "待设备返回": "Ootab seadet"
 }

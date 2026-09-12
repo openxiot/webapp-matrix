@@ -330,5 +330,15 @@
   "添加成功": "Cuireadh leis é",
   "矩阵": "Maitrís",
   "功能列表": "Liosta Gnéithe",
-  "功能内容": "Ábhar Gné"
+  "功能内容": "Ábhar Gné",
+  "应答帧": "Creat Freagartha",
+  "完整应答帧，含从站地址与 CRC16": "Creat freagartha iomlán, le seoladh sclábhaí agus CRC16",
+  "数据区": "Limistéar sonraí",
+  "数据区为示例值，真实数据由设备返回": "Taispeánann an limistéar sonraí luachanna samplacha; is é an gléas a thugann na fíorshonraí ar ais",
+  "异常应答": "Freagra eisceachta",
+  "异常码": "Cód eisceachta",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Ciallaíonn an ghiotán is airde de chód na feidhme atá ag 1 go bhfuil eisceacht ann; is é an gléas a thugann an cód eisceachta agus CRC16 ar ais, agus taispeántar anseo iad mar ??",
+  "异常": "Eisceacht",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Cód feidhme neamhbhailí / 02 Seoladh sonraí neamhbhailí / 03 Luach sonraí neamhbhailí / 04 Cliseadh an ghléis sclábhaí",
+  "待设备返回": "Ag fanacht leis an ngléas"
 }

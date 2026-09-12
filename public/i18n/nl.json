@@ -330,5 +330,15 @@
   "添加成功": "Toegevoegd",
   "矩阵": "Matrix",
   "功能列表": "Functielijst",
-  "功能内容": "Functie-inhoud"
+  "功能内容": "Functie-inhoud",
+  "应答帧": "Antwoordframe",
+  "完整应答帧，含从站地址与 CRC16": "Volledige antwoordframe, met slave-adres en CRC16",
+  "数据区": "Datagebied",
+  "数据区为示例值，真实数据由设备返回": "Het datagebied toont voorbeeldwaarden; de echte data komt van het apparaat",
+  "异常应答": "Uitzonderingsantwoord",
+  "异常码": "Uitzonderingscode",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Een hoogste bit van de functiecode op 1 betekent een uitzondering; de uitzonderingscode en CRC16 komen van het apparaat en staan hier als ??",
+  "异常": "Uitzondering",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Ongeldige functiecode / 02 Ongeldig data-adres / 03 Ongeldige datawaarde / 04 Storing van het slave-apparaat",
+  "待设备返回": "Wacht op apparaat"
 }

@@ -330,5 +330,15 @@
   "添加成功": "Adăugat cu succes",
   "矩阵": "Matrice",
   "功能列表": "Listă de funcții",
-  "功能内容": "Conținutul funcției"
+  "功能内容": "Conținutul funcției",
+  "应答帧": "Cadru de răspuns",
+  "完整应答帧，含从站地址与 CRC16": "Cadru de răspuns complet, cu adresă slave și CRC16",
+  "数据区": "Zona de date",
+  "数据区为示例值，真实数据由设备返回": "Zona de date afișează valori exemplu; datele reale sunt returnate de dispozitiv",
+  "异常应答": "Răspuns de excepție",
+  "异常码": "Cod de excepție",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Bitul cel mai semnificativ al codului de funcție setat pe 1 înseamnă o excepție; codul de excepție și CRC16 sunt returnate de dispozitiv și sunt afișate aici ca ??",
+  "异常": "Excepție",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Cod de funcție ilegal / 02 Adresă de date ilegală / 03 Valoare de date ilegală / 04 Defecțiune a dispozitivului slave",
+  "待设备返回": "Se așteaptă dispozitivul"
 }

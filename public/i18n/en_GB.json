@@ -330,5 +330,15 @@
   "添加成功": "Added successfully",
   "矩阵": "Matrix",
   "功能列表": "Feature List",
-  "功能内容": "Feature Content"
+  "功能内容": "Feature Content",
+  "应答帧": "Response Frame",
+  "完整应答帧，含从站地址与 CRC16": "Full response frame incl. slave address and CRC16",
+  "数据区": "Data area",
+  "数据区为示例值，真实数据由设备返回": "The data area shows sample values; the real data is returned by the device",
+  "异常应答": "Exception Response",
+  "异常码": "Exception code",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "A set high bit in the function code means an exception; the exception code and CRC16 are returned by the device and shown as ?? here",
+  "异常": "Exception",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Illegal function / 02 Illegal data address / 03 Illegal data value / 04 Slave device failure",
+  "待设备返回": "Returned by the device"
 }

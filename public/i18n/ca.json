@@ -330,5 +330,15 @@
   "添加成功": "Afegit correctament",
   "矩阵": "Matriu",
   "功能列表": "Llista de funcions",
-  "功能内容": "Contingut de la funció"
+  "功能内容": "Contingut de la funció",
+  "应答帧": "Trama de resposta",
+  "完整应答帧，含从站地址与 CRC16": "Trama de resposta completa, amb adreça d'esclau i CRC16",
+  "数据区": "Àrea de dades",
+  "数据区为示例值，真实数据由设备返回": "L'àrea de dades mostra valors d'exemple; les dades reals les retorna el dispositiu",
+  "异常应答": "Resposta d'excepció",
+  "异常码": "Codi d'excepció",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "El bit més alt del codi de funció a 1 indica una excepció; el codi d'excepció i el CRC16 els retorna el dispositiu i aquí es mostren com a ??",
+  "异常": "Excepció",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Codi de funció il·legal / 02 Adreça de dades il·legal / 03 Valor de dades il·legal / 04 Fallada del dispositiu esclau",
+  "待设备返回": "Esperant el dispositiu"
 }

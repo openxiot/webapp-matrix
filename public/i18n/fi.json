@@ -330,5 +330,15 @@
   "添加成功": "Lisätty",
   "矩阵": "Matriisi",
   "功能列表": "Toimintoluettelo",
-  "功能内容": "Toiminnon sisältö"
+  "功能内容": "Toiminnon sisältö",
+  "应答帧": "Vastauskehys",
+  "完整应答帧，含从站地址与 CRC16": "Täydellinen vastauskehys, sisältäen slave-osoitteen ja CRC16:n",
+  "数据区": "Data-alue",
+  "数据区为示例值，真实数据由设备返回": "Data-alue näyttää esimerkkiarvot; todelliset tiedot palauttaa laite",
+  "异常应答": "Poikkeusvastaus",
+  "异常码": "Poikkeuskoodi",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Toimintokoodin korkein bitti 1 tarkoittaa poikkeusta; poikkeuskoodin ja CRC16:n palauttaa laite, ja ne näytetään tässä muodossa ??",
+  "异常": "Poikkeus",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Virheellinen toimintokoodi / 02 Virheellinen dataosoite / 03 Virheellinen data-arvo / 04 Slave-laitteen vika",
+  "待设备返回": "Odottaa laitetta"
 }

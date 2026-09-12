@@ -330,5 +330,15 @@
   "添加成功": "Bi serkeftî hate zêdekirin",
   "矩阵": "Matrîs",
   "功能列表": "Lîsteya taybetmendiyan",
-  "功能内容": "Naveroka taybetmendiyê"
+  "功能内容": "Naveroka taybetmendiyê",
+  "应答帧": "Frame-a Bersivê",
+  "完整应答帧，含从站地址与 CRC16": "Frame-a bersivê ya tevahî, bi navnîşana slave û CRC16",
+  "数据区": "Herêma daneyan",
+  "数据区为示例值，真实数据由设备返回": "Herêma daneyan nirxên nimûne nîşan dide; dane yên rastîn amûr vedigerîne",
+  "异常应答": "Bersiva îstîsnayê",
+  "异常码": "Koda îstîsnayê",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Bitê herî bilind ê koda fonksiyonê ku 1 be tê wateya îstîsnayê; koda îstîsnayê û CRC16 ji aliyê amûr ve têne vegerandin û li vir wek ?? têne nîşandan",
+  "异常": "Îstîsna",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Koda fonksiyonê ya nederbasdar / 02 Navnîşana daneyan a nederbasdar / 03 Nirxa daneyan a nederbasdar / 04 Xirabûna amûra slave",
+  "待设备返回": "Li benda amûrê"
 }

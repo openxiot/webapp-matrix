@@ -330,5 +330,15 @@
   "添加成功": "Přidáno",
   "矩阵": "Matice",
   "功能列表": "Seznam funkcí",
-  "功能内容": "Obsah funkce"
+  "功能内容": "Obsah funkce",
+  "应答帧": "Rámec odpovědi",
+  "完整应答帧，含从站地址与 CRC16": "Úplný rámec odpovědi včetně adresy slave a CRC16",
+  "数据区": "Oblast dat",
+  "数据区为示例值，真实数据由设备返回": "Oblast dat obsahuje vzorové hodnoty; skutečná data vrací zařízení",
+  "异常应答": "Odpověď s výjimkou",
+  "异常码": "Kód výjimky",
+  "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Nastavený nejvyšší bit kódu funkce znamená výjimku; kód výjimky a CRC16 vrací zařízení, zde jsou zobrazeny jako ??",
+  "异常": "Výjimka",
+  "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Nepovolený kód funkce / 02 Nepovolená adresa dat / 03 Nepovolená hodnota dat / 04 Porucha zařízení slave",
+  "待设备返回": "Čeká se na zařízení"
 }
