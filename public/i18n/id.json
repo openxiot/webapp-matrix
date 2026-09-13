@@ -182,7 +182,6 @@
   "写单个寄存器": "Tulis Satu Register",
   "写多个线圈": "Tulis Banyak Koil",
   "写多个寄存器": "Tulis Banyak Register",
-  "如：读蒸发器进水温度": "Mis. baca suhu air masuk evaporator",
   "由功能码与起始地址换算": "Dihitung dari kode fungsi dan alamat awal",
   "该参数占用的位/线圈个数": "Jumlah bit/koil yang dipakai parameter ini",
   "偏移从 0 起、不可修改，与线圈一一对应": "Offset mulai dari 0, tidak dapat diubah, satu-satu dengan koil",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Bit tertinggi kode fungsi bernilai 1 berarti pengecualian; kode pengecualian dan CRC16 dikembalikan oleh perangkat dan ditampilkan sebagai ?? di sini",
   "异常": "Pengecualian",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Kode fungsi tidak valid / 02 Alamat data tidak valid / 03 Nilai data tidak valid / 04 Kerusakan perangkat slave",
-  "待设备返回": "Menunggu perangkat"
+  "待设备返回": "Menunggu perangkat",
+  "读": "Baca",
+  "写": "Tulis",
+  "字段名称": "Nama Bidang",
+  "生成服务时作为应答字段名": "Digunakan sebagai nama bidang respons saat layanan dibuat",
+  "帧里读 {{count}} 个寄存器": "{{count}} register dibaca dalam frame",
+  "如：进水温度": "Mis. suhu air masuk",
+  "如：开机": "Mis. menyalakan",
+  "位名称": "Nama bit",
+  "第 {{n}} 位": "Bit {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Biarkan kosong: bit ini tidak punya nilai sendiri dan dibaca dari bitmask keseluruhan",
+  "整段位掩码字段名": "Nama field bitmask keseluruhan",
+  "未逐位命名，只按整段位掩码读": "Tidak ada bit yang diberi nama satu per satu; dibaca sebagai bitmask keseluruhan",
+  "同一应答里的取值名不能重复": "Nama nilai dalam satu respons harus unik"
 }

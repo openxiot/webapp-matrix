@@ -139,7 +139,14 @@
                 </td>
                 <td>{{ command.start ?? '-' }}</td>
                 <td>{{ logicalAddressOf(command.fc, command.start) ?? '-' }}</td>
-                <td>{{ command.quantity ?? '-' }}</td>
+                <td>
+                  {{ command.quantity ?? '-' }}
+                  <!-- 03/04 的数量是「值的个数」，帧里要读的寄存器数 = 数量 × 类型跨度，标注出来避免误读 -->
+                  @if (readRegFcs.has(command.fc) && command.quantity) {
+                    <span class="cmd-reg-count">({{ frameQuantityOf(command.fc, command.quantity, command.dataType) }}
+                      {{ '个寄存器' | translate }})</span>
+                  }
+                </td>
                 <td>{{ command.dataType || '-' }}</td>
                 <td>
                   @if (command.byteOrder) {

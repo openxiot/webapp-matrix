@@ -182,7 +182,6 @@
   "写单个寄存器": "Pisanje pojedinačnog registra",
   "写多个线圈": "Pisanje više zavojnica",
   "写多个寄存器": "Pisanje više registara",
-  "如：读蒸发器进水温度": "npr. čitanje temperature vode na ulazu isparivača",
   "由功能码与起始地址换算": "izračunato iz koda funkcije i početne adrese",
   "该参数占用的位/线圈个数": "broj bitova/zavojnica koje zauzima ovaj parametar",
   "偏移从 0 起、不可修改，与线圈一一对应": "Pomak od 0, nije moguće mijenjati, jedan na jedan sa zavojnicama",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Postavljen najviši bit koda funkcije znači iznimku; kod iznimke i CRC16 vraća uređaj, ovdje su prikazani kao ??",
   "异常": "Iznimka",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Nedopušteni kod funkcije / 02 Nedopuštena adresa podataka / 03 Nedopuštena vrijednost podataka / 04 Kvar slave uređaja",
-  "待设备返回": "Čeka se uređaj"
+  "待设备返回": "Čeka se uređaj",
+  "读": "Čitanje",
+  "写": "Pisanje",
+  "字段名称": "Naziv polja",
+  "生成服务时作为应答字段名": "Koristi se kao naziv polja odgovora pri stvaranju usluge",
+  "帧里读 {{count}} 个寄存器": "{{count}} registara pročitano u okviru",
+  "如：进水温度": "npr. temperatura ulazne vode",
+  "如：开机": "npr. uključivanje",
+  "位名称": "Naziv bita",
+  "第 {{n}} 位": "Bit {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Ako ostane prazno, ovaj bit nema vlastitu vrijednost i čita se iz cijele bitmaske",
+  "整段位掩码字段名": "Naziv polja cijele bitmaske",
+  "未逐位命名，只按整段位掩码读": "Nijedan bit nije pojedinačno nazvan; čita se kao cijela bitmaska",
+  "同一应答里的取值名不能重复": "Nazivi vrijednosti u istom odgovoru moraju biti jedinstveni"
 }

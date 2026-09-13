@@ -182,7 +182,6 @@
   "写单个寄存器": "Scríobh Reigisteár Amháin",
   "写多个线圈": "Scríobh Cornaí Iolracha",
   "写多个寄存器": "Scríobh Reigistéir Iolracha",
-  "如：读蒸发器进水温度": "m.sh. léigh teocht uisce ionchuir an ghalaitheora",
   "由功能码与起始地址换算": "Ríomhtar ón gcód feidhme agus ón seoladh tosaigh é",
   "该参数占用的位/线圈个数": "Líon na ngiotán/cornaí a úsáideann an paraiméadar seo",
   "偏移从 0 起、不可修改，与线圈一一对应": "Tosaíonn an fritháireamh ag 0, ní féidir é a athrú, comhfhreagraíonn sé do gach corna",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Ciallaíonn an ghiotán is airde de chód na feidhme atá ag 1 go bhfuil eisceacht ann; is é an gléas a thugann an cód eisceachta agus CRC16 ar ais, agus taispeántar anseo iad mar ??",
   "异常": "Eisceacht",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Cód feidhme neamhbhailí / 02 Seoladh sonraí neamhbhailí / 03 Luach sonraí neamhbhailí / 04 Cliseadh an ghléis sclábhaí",
-  "待设备返回": "Ag fanacht leis an ngléas"
+  "待设备返回": "Ag fanacht leis an ngléas",
+  "读": "Léigh",
+  "写": "Scríobh",
+  "字段名称": "Ainm Réimse",
+  "生成服务时作为应答字段名": "Úsáidtear é mar ainm réimse freagartha nuair a ghintear an tseirbhís",
+  "帧里读 {{count}} 个寄存器": "{{count}} reigistéir léite sa chreat",
+  "如：进水温度": "m.sh. teocht uisce ionchuir",
+  "如：开机": "m.sh. cumhacht a chur air",
+  "位名称": "Ainm an ghiotáin",
+  "第 {{n}} 位": "Giotán {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Fág folamh: níl a luach féin ag an giotán seo agus léitear é ón masc giotán iomlán",
+  "整段位掩码字段名": "Ainm réimse an mhaisc ghiotáin iomláin",
+  "未逐位命名，只按整段位掩码读": "Níl aon ghiotán ainmnithe go haonarach; léitear mar mhasc giotán iomlán",
+  "同一应答里的取值名不能重复": "Caithfidh ainmneacha luachanna laistigh de fhreagra amháin a bheith uathúil"
 }

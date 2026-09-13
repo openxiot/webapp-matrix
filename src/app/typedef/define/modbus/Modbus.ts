@@ -1,8 +1,8 @@
 /**
  * Modbus 设备点表（以功能码为中心）。
  *
- * 一行 = 一个功能码动作：读（读一个参数，quantity = 该参数占用的寄存器/位个数）
- * 或写（05 单线圈 / 06 单寄存器 / 0F 多线圈 / 10 多寄存器）。
+ * 一行 = 一个功能码动作：读（01/02 读一个位区，逐位命名见 bitNames；03/04 读 quantity 个值，
+ * 每个值的应答字段名见 fieldNames）或写（05 单线圈 / 06 单寄存器 / 0F 多线圈 / 10 多寄存器）。
  * 读写方向与“寄存器区”由功能码决定，不再单独存 area/rw；
  * 逻辑地址不落库，由 fc + start 经 logicalAddressOf(fc,start) 实时换算。
  */
@@ -21,6 +21,14 @@ export interface ModbusCoilItem {
   on?: boolean;
 }
 
+/** 01/02 读位的单个位名称（位区按位打包，逐位取值靠它命名） */
+export interface ModbusBitName {
+  /** 位偏移（0 基，从起始地址起、< 位/线圈个数；与 0F 的线圈 offset 同口径） */
+  offset?: number;
+  /** 位名称（生成服务时作为该位的应答字段名，取值 0/1） */
+  name?: string;
+}
+
 /** 10 写多寄存器的单个寄存器条目 */
 export interface ModbusRegisterItem {
   /** 数据地址（0 基；须按类型跨度连续） */
@@ -34,9 +42,9 @@ export interface ModbusRegisterItem {
 
 /**
  * 单个功能码动作。
- * 字段按功能码分组出现（见 command.options 的 FC_META）：
- * - 01/02 读位：quantity
- * - 03/04 读寄存器：quantity / dataType / byteOrder / scale / unit
+ * 字段按功能码分组出现：
+ * - 01/02 读位：quantity（位/线圈个数）/ bitNames
+ * - 03/04 读寄存器：quantity（值的个数）/ fieldNames / dataType / byteOrder / scale / unit
  * - 05 写单线圈：coilState(on/off)
  * - 06 写单寄存器：registerValue
  * - 0F 写多线圈：coils[]
@@ -49,7 +57,22 @@ export interface ModbusCommand {
   index: number;
   /** 起始地址 = 0 基数据地址（线上值） */
   start?: number;
+  /**
+   * 数量：03/04 为**值的个数**（每个值占数据格式的寄存器跨度 int16/uint16→1、int32/uint32/float32→2；
+   * string 时即字符串长度、整段算一个值，故恒为 1 个字段）；01/02 为位/线圈个数。
+   * 请求帧里的数量 = 03/04 非 string 时 数量×跨度、其余即本值（见 readRegisterCount）。
+   */
   quantity?: number;
+  /**
+   * 应答字段名称（03/04 读寄存器）：个数即应答字段数 —— 非 string 为 quantity 个、string 为 1 个；
+   * 01/02 读位改用 {@link bitNames}，写操作没有应答字段。生成服务时逐个填进 response[].field。
+   */
+  fieldNames?: string[];
+  /**
+   * 位名称（01/02 读位）：给读回的位区里的若干位各自命名，生成服务时逐位填进应答字段的位清单
+   * （bit-list），取值 0/1；缺省表示只按整段位掩码出一个字段。
+   */
+  bitNames?: ModbusBitName[];
   dataType?: string;
   byteOrder?: ModbusByteOrder;
   scale?: number;

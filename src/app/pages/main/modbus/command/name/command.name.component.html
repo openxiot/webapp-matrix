@@ -1,8 +1,11 @@
-<!-- 值控件：名称文本框。readOnly（详情查看）直接以文本展示，不渲染输入框。
+<!-- 值控件：名称文本框。前缀「读」/「写」按功能码自动加上（不可编辑），用户只填主体。
+     readOnly（详情查看）直接以文本展示完整名称，不渲染输入框。
      表单项骨架与标签「名称」由父组件 command.edit 提供 -->
 @if (readOnly()) {
-  <span class="cmd-read-value">{{ name() || '-' }}</span>
+  <span class="cmd-read-value">{{ fullName() || '-' }}</span>
 } @else {
-  <input nz-input id="cmdName" [value]="name()" (input)="onInput($event)"
-         placeholder="{{ '如：读蒸发器进水温度' | translate }}" />
+  <nz-input-wrapper [nzAddonBefore]="prefixText()">
+    <input nz-input id="cmdName" [value]="body()" (input)="onInput($event)"
+           placeholder="{{ placeholderKey() | translate }}" />
+  </nz-input-wrapper>
 }

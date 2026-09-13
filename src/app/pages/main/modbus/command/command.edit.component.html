@@ -5,7 +5,7 @@
 <nz-form-item>
   <nz-form-label [nzSpan]="4" nzFor="cmdName" [nzRequired]="true">{{ '名称' | translate }}</nz-form-label>
   <nz-form-control>
-    <modbus-command-name [(name)]="name" [readOnly]="readOnly" />
+    <modbus-command-name [(body)]="nameBody" [fc]="fc()" [readOnly]="readOnly" />
   </nz-form-control>
 </nz-form-item>
 
@@ -30,24 +30,33 @@
   </nz-form-control>
 </nz-form-item>
 
-<!-- 01/02 读位：数量 -->
+<!-- 01/02 读位：数量（位/线圈个数）+ 位名称（逐位命名，整段位掩码只有一个字段） -->
 @if (readBitFcs.has(fc())) {
   <nz-form-item>
     <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '数量' | translate }}</nz-form-label>
     <nz-form-control>
-      <modbus-command-quantity [(quantity)]="quantity"
+      <modbus-command-quantity [(quantity)]="quantity" [(bitNames)]="bitNames"
+                               [bitCount]="bitCount()" [fc]="fc()" [start]="start()"
+                               [name]="nameBody()" [conflicts]="bitConflicts()"
+                               [max]="quantityMax()"
                                [hintKey]="'该参数占用的位/线圈个数'"
                                [readOnly]="readOnly" />
     </nz-form-control>
   </nz-form-item>
 }
 
-<!-- 03/04 读寄存器：数量（非 string 锁为类型跨度）/ 数据格式 / 字节序 / 缩放系数 / 单位 -->
+<!-- 03/04 读寄存器：数量（值的个数）/ 应答字段名称（与数量一一对应）/ 数据格式 / 字节序 / 缩放系数 / 单位 -->
 @if (readRegFcs.has(fc())) {
   <nz-form-item>
     <nz-form-label [nzSpan]="4" [nzRequired]="true">{{ '数量' | translate }}</nz-form-label>
     <nz-form-control>
-      <modbus-command-quantity [(quantity)]="quantity" [locked]="quantityLocked()" [readOnly]="readOnly" />
+      <modbus-command-quantity [(quantity)]="quantity" [(fieldNames)]="fieldNames"
+                               [fieldCount]="fieldCount()" [name]="nameBody()"
+                               [conflicts]="fieldConflicts()"
+                               [max]="quantityMax()"
+                               [hintKey]="'帧里读 {{count}} 个寄存器'"
+                               [hintParams]="registerHintParams()"
+                               [readOnly]="readOnly" />
     </nz-form-control>
   </nz-form-item>
 

@@ -21,3 +21,47 @@
   margin-left: 0;
   margin-top: 2px;
 }
+
+/*
+ * 应答字段名称区：与数量一一对应的名称输入行（多字段时左侧带行号），
+ * 整体在数量控件下方留一点间距，末行为说明文案。
+ */
+.cmd-fields {
+  margin-top: 8px;
+}
+
+.cmd-fields-title {
+  margin-bottom: 4px;
+  color: rgba(0, 0, 0, 0.88);
+}
+
+.cmd-field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.cmd-field-no {
+  flex: none;
+  width: 16px;
+  color: rgba(0, 0, 0, 0.45);
+  text-align: right;
+}
+
+/* 位名称行的行标「第 N 位」：宽度按最大位数留足，右侧对齐后接名称输入框 */
+.cmd-bit-label {
+  flex: none;
+  min-width: 56px;
+  color: rgba(0, 0, 0, 0.45);
+  text-align: right;
+}
+
+/* 重名（同一应答里的取值名必须唯一，后端会拒）：命中的输入框描红，末尾提示文案同色 */
+.cmd-input-conflict {
+  border-color: #ff4d4f;
+}
+
+.cmd-hint-conflict {
+  color: #cf1322;
+}

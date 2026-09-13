@@ -182,7 +182,6 @@
   "写单个寄存器": "Zapis pojedynczego rejestru",
   "写多个线圈": "Zapis wielu cewek",
   "写多个寄存器": "Zapis wielu rejestrów",
-  "如：读蒸发器进水温度": "np. odczyt temperatury wody na wlocie parownika",
   "由功能码与起始地址换算": "wyliczane z kodu funkcji i adresu początkowego",
   "该参数占用的位/线圈个数": "liczba bitów/cewek zajmowanych przez ten parametr",
   "偏移从 0 起、不可修改，与线圈一一对应": "Przesunięcie od 0, bez możliwości zmiany, jeden do jednego z cewkami",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Ustawiony najstarszy bit kodu funkcji oznacza wyjątek; kod wyjątku i CRC16 zwraca urządzenie, tutaj pokazane jako ??",
   "异常": "Wyjątek",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Niedozwolony kod funkcji / 02 Niedozwolony adres danych / 03 Niedozwolona wartość danych / 04 Awaria urządzenia slave",
-  "待设备返回": "Oczekiwanie na urządzenie"
+  "待设备返回": "Oczekiwanie na urządzenie",
+  "读": "Odczyt",
+  "写": "Zapis",
+  "字段名称": "Nazwa pola",
+  "生成服务时作为应答字段名": "Używane jako nazwa pola odpowiedzi podczas generowania usługi",
+  "帧里读 {{count}} 个寄存器": "{{count}} rejestrów odczytanych w ramce",
+  "如：进水温度": "np. temperatura wody na wlocie",
+  "如：开机": "np. włączenie",
+  "位名称": "Nazwa bitu",
+  "第 {{n}} 位": "Bit {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Pozostaw puste: ten bit nie ma własnej wartości i jest odczytywany z całej maski bitowej",
+  "整段位掩码字段名": "Nazwa pola całej maski bitowej",
+  "未逐位命名，只按整段位掩码读": "Żaden bit nie został nazwany osobno; odczyt jako cała maska bitowa",
+  "同一应答里的取值名不能重复": "Nazwy wartości w tej samej odpowiedzi muszą być unikalne"
 }

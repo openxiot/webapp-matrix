@@ -182,7 +182,6 @@
   "写单个寄存器": "Escriure un sol registre",
   "写多个线圈": "Escriure diverses bobines",
   "写多个寄存器": "Escriure diversos registres",
-  "如：读蒸发器进水温度": "P. ex.: llegir la temperatura d'entrada d'aigua de l'evaporador",
   "由功能码与起始地址换算": "Calculat a partir del codi de funció i l'adreça inicial",
   "该参数占用的位/线圈个数": "Nombre de bits/bobines que ocupa aquest paràmetre",
   "偏移从 0 起、不可修改，与线圈一一对应": "El desplaçament comença a 0, no es pot modificar i correspon una a una amb les bobines",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "El bit més alt del codi de funció a 1 indica una excepció; el codi d'excepció i el CRC16 els retorna el dispositiu i aquí es mostren com a ??",
   "异常": "Excepció",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Codi de funció il·legal / 02 Adreça de dades il·legal / 03 Valor de dades il·legal / 04 Fallada del dispositiu esclau",
-  "待设备返回": "Esperant el dispositiu"
+  "待设备返回": "Esperant el dispositiu",
+  "读": "Llegir",
+  "写": "Escriure",
+  "字段名称": "Nom del camp",
+  "生成服务时作为应答字段名": "S'utilitza com a nom de camp de resposta en generar el servei",
+  "帧里读 {{count}} 个寄存器": "Es llegeixen {{count}} registres a la trama",
+  "如：进水温度": "P. ex.: temperatura d'entrada d'aigua",
+  "如：开机": "P. ex.: engegar",
+  "位名称": "Nom del bit",
+  "第 {{n}} 位": "Bit {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Si es deixa buit, aquest bit no té valor propi i es llegeix de la màscara de bits sencera",
+  "整段位掩码字段名": "Nom del camp de màscara de bits sencera",
+  "未逐位命名，只按整段位掩码读": "Cap bit nomenat individualment; es llegeix com a màscara de bits sencera",
+  "同一应答里的取值名不能重复": "Els noms de valor d'una mateixa resposta han de ser únics"
 }

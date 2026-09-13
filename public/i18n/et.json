@@ -182,7 +182,6 @@
   "写单个寄存器": "Kirjuta üks register",
   "写多个线圈": "Kirjuta mitu mähist",
   "写多个寄存器": "Kirjuta mitu registrit",
-  "如：读蒸发器进水温度": "Nt: loe aurusti siseneva vee temperatuuri",
   "由功能码与起始地址换算": "Arvutatakse funktsioonikoodi ja algaadressi järgi",
   "该参数占用的位/线圈个数": "Selle parameetri hõivatud bittide/mähiste arv",
   "偏移从 0 起、不可修改，与线圈一一对应": "Nihe algab 0-st, pole muudetav, vastab ühele mähisele",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Funktsioonikoodi kõrgeima biti väärtus 1 tähendab erandit; erandkoodi ja CRC16 tagastab seade, siin on need kuvatud kui ??",
   "异常": "Erand",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Keelatud funktsioonikood / 02 Keelatud andmeaadress / 03 Keelatud andmeväärtus / 04 Oriseadme rike",
-  "待设备返回": "Ootab seadet"
+  "待设备返回": "Ootab seadet",
+  "读": "Loe",
+  "写": "Kirjuta",
+  "字段名称": "Välja nimi",
+  "生成服务时作为应答字段名": "Kasutatakse teenuse loomisel vastusevälja nimena",
+  "帧里读 {{count}} 个寄存器": "Kaadris loetakse {{count}} registrit",
+  "如：进水温度": "Nt: siseneva vee temperatuur",
+  "如：开机": "Nt: sisselülitamine",
+  "位名称": "Biti nimi",
+  "第 {{n}} 位": "Bitt {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Tühjaks jättes ei ole sellel bitil oma väärtust ja seda loetakse kogu bitimaskist",
+  "整段位掩码字段名": "Kogu bitimaski välja nimi",
+  "未逐位命名，只按整段位掩码读": "Ükski bitt ei ole eraldi nimetatud; loetakse kogu bitimaskina",
+  "同一应答里的取值名不能重复": "Ühe vastuse väärtuste nimed peavad olema kordumatud"
 }

@@ -182,7 +182,6 @@
   "写单个寄存器": "Einzelnes Register schreiben",
   "写多个线圈": "Mehrere Spulen schreiben",
   "写多个寄存器": "Mehrere Register schreiben",
-  "如：读蒸发器进水温度": "z. B. Vorlauftemperatur des Verdampfers lesen",
   "由功能码与起始地址换算": "aus Funktionscode und Startadresse berechnet",
   "该参数占用的位/线圈个数": "Belegte Bits/Spulen dieses Parameters",
   "偏移从 0 起、不可修改，与线圈一一对应": "Offset ab 0, nicht änderbar, entspricht jeweils einer Spule",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Ein gesetztes höchstes Bit im Funktionscode bedeutet eine Ausnahme; Ausnahmecode und CRC16 liefert das Gerät, hier als ?? dargestellt",
   "异常": "Ausnahme",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Ungültiger Funktionscode / 02 Ungültige Datenadresse / 03 Ungültiger Datenwert / 04 Slave-Gerätefehler",
-  "待设备返回": "Wartet auf Gerät"
+  "待设备返回": "Wartet auf Gerät",
+  "读": "Lesen",
+  "写": "Schreiben",
+  "字段名称": "Feldname",
+  "生成服务时作为应答字段名": "Wird beim Generieren des Dienstes als Antwortfeldname verwendet",
+  "帧里读 {{count}} 个寄存器": "{{count}} Register im Frame gelesen",
+  "如：进水温度": "z. B. Eintrittstemperatur des Wassers",
+  "如：开机": "z. B. Einschalten",
+  "位名称": "Bitname",
+  "第 {{n}} 位": "Bit {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Leer lassen: Dieses Bit hat keinen eigenen Wert und wird aus der gesamten Bitmaske gelesen",
+  "整段位掩码字段名": "Feldname der gesamten Bitmaske",
+  "未逐位命名，只按整段位掩码读": "Kein Bit einzeln benannt; wird als gesamte Bitmaske gelesen",
+  "同一应答里的取值名不能重复": "Wertnamen innerhalb einer Antwort müssen eindeutig sein"
 }

@@ -182,7 +182,6 @@
   "写单个寄存器": "Rakstīt vienu reģistru",
   "写多个线圈": "Rakstīt vairākas spoles",
   "写多个寄存器": "Rakstīt vairākus reģistrus",
-  "如：读蒸发器进水温度": "Piem.: lasīt iztvaicētāja ieplūdes ūdens temperatūru",
   "由功能码与起始地址换算": "Aprēķina pēc funkcijas koda un sākuma adreses",
   "该参数占用的位/线圈个数": "Šī parametra aizņemto bitu/spoļu skaits",
   "偏移从 0 起、不可修改，与线圈一一对应": "Nobīde sākas no 0, nav maināma, atbilst vienai spolei",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Ja funkcijas koda augstākais bits ir 1, tas nozīmē izņēmumu; izņēmuma kodu un CRC16 atgriež ierīce, un šeit tie ir parādīti kā ??",
   "异常": "Izņēmums",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Nederīgs funkcijas kods / 02 Nederīga datu adrese / 03 Nederīga datu vērtība / 04 Pakārtotās ierīces bojājums",
-  "待设备返回": "Gaida ierīci"
+  "待设备返回": "Gaida ierīci",
+  "读": "Lasīt",
+  "写": "Rakstīt",
+  "字段名称": "Lauka nosaukums",
+  "生成服务时作为应答字段名": "Ģenerējot pakalpojumu, tiek izmantots kā atbildes lauka nosaukums",
+  "帧里读 {{count}} 个寄存器": "Kadrā nolasīti {{count}} reģistri",
+  "如：进水温度": "Piem.: ieplūdes ūdens temperatūra",
+  "如：开机": "Piem.: ieslēgt",
+  "位名称": "Bita nosaukums",
+  "第 {{n}} 位": "{{n}}. bits",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Ja atstāj tukšu, šim bitam nav savas vērtības un to nolasa no visas bitu maskas",
+  "整段位掩码字段名": "Visas bitu maskas lauka nosaukums",
+  "未逐位命名，只按整段位掩码读": "Neviens bits nav nosaukts atsevišķi; nolasa kā visu bitu masku",
+  "同一应答里的取值名不能重复": "Vienas atbildes vērtību nosaukumiem jābūt unikāliem"
 }

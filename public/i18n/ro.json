@@ -182,7 +182,6 @@
   "写单个寄存器": "Scrie un singur registru",
   "写多个线圈": "Scrie mai multe bobine",
   "写多个寄存器": "Scrie mai multe registre",
-  "如：读蒸发器进水温度": "De ex.: citește temperatura apei de intrare în evaporator",
   "由功能码与起始地址换算": "Calculat din codul de funcție și adresa de început",
   "该参数占用的位/线圈个数": "Numărul de biți/bobine ocupate de acest parametru",
   "偏移从 0 起、不可修改，与线圈一一对应": "Decalajul începe de la 0, nu poate fi modificat și corespunde unu la unu cu bobinele",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Bitul cel mai semnificativ al codului de funcție setat pe 1 înseamnă o excepție; codul de excepție și CRC16 sunt returnate de dispozitiv și sunt afișate aici ca ??",
   "异常": "Excepție",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Cod de funcție ilegal / 02 Adresă de date ilegală / 03 Valoare de date ilegală / 04 Defecțiune a dispozitivului slave",
-  "待设备返回": "Se așteaptă dispozitivul"
+  "待设备返回": "Se așteaptă dispozitivul",
+  "读": "Citește",
+  "写": "Scrie",
+  "字段名称": "Nume câmp",
+  "生成服务时作为应答字段名": "Folosit ca nume de câmp de răspuns la generarea serviciului",
+  "帧里读 {{count}} 个寄存器": "{{count}} registre citite în cadru",
+  "如：进水温度": "De ex.: temperatura apei de intrare",
+  "如：开机": "De ex.: pornire",
+  "位名称": "Nume bit",
+  "第 {{n}} 位": "Bitul {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Dacă se lasă gol, acest bit nu are valoare proprie și se citește din masca de biți completă",
+  "整段位掩码字段名": "Numele câmpului pentru masca de biți completă",
+  "未逐位命名，只按整段位掩码读": "Niciun bit nu este denumit individual; se citește ca mască de biți completă",
+  "同一应答里的取值名不能重复": "Numele valorilor din același răspuns trebuie să fie unice"
 }

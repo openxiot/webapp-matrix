@@ -6,7 +6,9 @@
  * 编码约定（与设备点表模型一致）：
  * - 从站地址取自设备信息，帧首字节；
  * - 寄存器/线圈地址 = 0 基数据地址（start），与逻辑地址换算口径一致；
- * - 03/04 等读命令 quantity 为数量；06 单寄存器值按 16 位无符号写；
+ * - 01/02 读位：数量即位数，帧里数量 = 数量；03/04 读寄存器：数量为**值的个数**，
+ *   帧里数量 = 数量 × 类型跨度（string 的数量本身就是长度，不加倍）——见 frameQuantityOf；
+ * - 06 单寄存器值按 16 位无符号写；
  * - 05 写单线圈按 coilState → 0xFF00 / 0x0000；
  * - 0F 写多线圈：数量=条目数，按 offset 打包为位（bit0=起始地址），byteCount=ceil(n/8)；
  * - 10 写多寄存器：数量=各条类型占用之和，数据区按条 dataType/byteOrder 编码 2/4 字节真实值
@@ -17,7 +19,16 @@ import {
   ModbusCommand,
   ModbusRegisterItem,
 } from '../../../../../typedef/define/modbus/Modbus';
-import { fcLabelKey, registerSpan } from '../../command/point.options';
+import {
+  expectedBitCount,
+  expectedFieldCount,
+  fcLabelKey,
+  fieldBaseName,
+  fitBitNames,
+  fitFieldNames,
+  frameQuantityOf,
+  registerSpan,
+} from '../../command/point.options';
 
 /** 生成结果帧（字节 + 展示用十六进制 + 字节数）。 */
 export interface RequestFrame {
@@ -146,8 +157,8 @@ function buildData(command: ModbusCommand): number[] | null {
   const fc = command.fc;
 
   if (fc === '01' || fc === '02' || fc === '03' || fc === '04') {
-    const quantity = command.quantity ?? 1;
-    return [...start, ...u16(quantity)];
+    // 03/04 的数量是「值的个数」，帧里要读的寄存器数 = 数量 × 类型跨度
+    return [...start, ...u16(frameQuantityOf(fc, command.quantity, command.dataType))];
   }
   if (fc === '05') {
     if (command.coilState !== 'on' && command.coilState !== 'off') {
@@ -300,8 +311,10 @@ export function buildResponseFrame(
   let sample = false;
 
   if (READ_FC_NUMBERS.has(fc)) {
-    const quantity = command.quantity ?? 1;
-    const byteCount = READ_BIT_FC_NUMBERS.has(fc) ? Math.ceil(quantity / 8) : quantity * 2;
+    // 读位按位数向上取整到字节；读寄存器按帧里实际读的寄存器数（值的个数 × 类型跨度）× 2 字节
+    const byteCount = READ_BIT_FC_NUMBERS.has(fc)
+      ? Math.ceil((command.quantity ?? 1) / 8)
+      : frameQuantityOf(command.fc, command.quantity, command.dataType) * 2;
     if (byteCount < 1) {
       return { ok: false, messageKey: INCOMPLETE_KEY };
     }
@@ -527,13 +540,42 @@ function crcPart(bytes: (number | null)[]): FramePart {
 }
 
 /**
+ * 读应答的字段名称（按功能码口径补齐，旧数据留空则用默认名：名称主体，多字段再加序号）。
+ * 与生成服务时的 response[].field 同一套（见 device/services/service.functions）。
+ */
+function readFieldNames(command: ModbusCommand): string[] {
+  return fitFieldNames(
+    command.fieldNames,
+    expectedFieldCount(command.fc, command.quantity, command.dataType),
+    fieldBaseName(command.name),
+  );
+}
+
+/**
+ * 读位命令的位名称：偏移 → 位名称（只含命名了的位）。
+ * 与生成服务时 response[].bit-list 同一套（见 device/services/service.functions）。
+ */
+function readBitNames(command: ModbusCommand): Map<number, string> {
+  const names = new Map<number, string>();
+  for (const bit of fitBitNames(command.bitNames, expectedBitCount(command.fc, command.quantity))) {
+    names.set(bit.offset ?? 0, bit.name ?? '');
+  }
+  return names;
+}
+
+/**
  * 读应答数据区 → 逐项解读：读位按位、读寄存器按点表声明的类型与字节序切分。
- * 值来自示例数据区（真实数据由设备返回），故这里展示的是「将来怎么解」。
+ * 值来自示例数据区（真实数据由设备返回），故这里展示的是「将来怎么解」；
+ * 多值读（数量 > 1）每行前面标上应答字段名（读位只标命名了的位），与生成的服务字段一一对照。
  */
 function readDataLines(command: ModbusCommand, data: number[]): string[] {
   const quantity = command.quantity ?? 1;
   if (READ_BIT_FC_NUMBERS.has(parseInt(command.fc ?? '', 16))) {
-    return coilDecodeLines(data, quantity).map((l) => `${l.at}=${l.value}`);
+    const names = readBitNames(command);
+    return coilDecodeLines(data, quantity).map((l) => {
+      const label = names.get(Number(l.at));
+      return label ? `${label}  ${l.at}=${l.value}` : `${l.at}=${l.value}`;
+    });
   }
 
   const type = command.dataType ?? 'int16';
@@ -542,6 +584,7 @@ function readDataLines(command: ModbusCommand, data: number[]): string[] {
     return [`${quantity > 1 ? `0-${quantity - 1}` : '0'}  string ${quantity * 2}B`];
   }
 
+  const names = readFieldNames(command);
   const order = command.byteOrder ?? 'ABCD';
   const suffix = [command.scale != null ? `×${command.scale}` : '', command.unit ?? '']
     .filter((s) => s.length > 0)
@@ -549,12 +592,15 @@ function readDataLines(command: ModbusCommand, data: number[]): string[] {
   const span = registerSpan(type) ?? 1;
   const lines: string[] = [];
   let address = 0;
+  let index = 0;
   for (let cursor = 0; cursor + span * 2 <= data.length; cursor += span * 2) {
     const slice = data.slice(cursor, cursor + span * 2);
     const value = decodeValue(fromWireBytes(slice, span, order), type, span * 8);
     const atLabel = span > 1 ? `${address}-${address + span - 1}` : `${address}`;
-    lines.push(`${atLabel}  ${type} ${order}${suffix ? ` ${suffix}` : ''} = ${value}`);
+    const label = names.length > 1 ? `${names[index] ?? ''}  ` : '';
+    lines.push(`${label}${atLabel}  ${type} ${order}${suffix ? ` ${suffix}` : ''} = ${value}`);
     address += span;
+    index += 1;
   }
   return lines;
 }

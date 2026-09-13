@@ -182,7 +182,6 @@
   "写单个寄存器": "Eén register schrijven",
   "写多个线圈": "Meerdere spoelen schrijven",
   "写多个寄存器": "Meerdere registers schrijven",
-  "如：读蒸发器进水温度": "bijv. aanvoertemperatuur verdamper lezen",
   "由功能码与起始地址换算": "berekend uit functiecode en startadres",
   "该参数占用的位/线圈个数": "Aantal bits/spoelen dat deze parameter gebruikt",
   "偏移从 0 起、不可修改，与线圈一一对应": "Offset begint bij 0, niet aanpasbaar, één op één met de spoelen",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Een hoogste bit van de functiecode op 1 betekent een uitzondering; de uitzonderingscode en CRC16 komen van het apparaat en staan hier als ??",
   "异常": "Uitzondering",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Ongeldige functiecode / 02 Ongeldig data-adres / 03 Ongeldige datawaarde / 04 Storing van het slave-apparaat",
-  "待设备返回": "Wacht op apparaat"
+  "待设备返回": "Wacht op apparaat",
+  "读": "Lezen",
+  "写": "Schrijven",
+  "字段名称": "Veldnaam",
+  "生成服务时作为应答字段名": "Wordt gebruikt als antwoordveldnaam wanneer de dienst wordt gegenereerd",
+  "帧里读 {{count}} 个寄存器": "{{count}} registers gelezen in het frame",
+  "如：进水温度": "bijv. aanvoertemperatuur water",
+  "如：开机": "bijv. inschakelen",
+  "位名称": "Bitnaam",
+  "第 {{n}} 位": "Bit {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Leeg laten: dit bit heeft geen eigen waarde en wordt uit de volledige bitmasker gelezen",
+  "整段位掩码字段名": "Veldnaam van de volledige bitmasker",
+  "未逐位命名，只按整段位掩码读": "Geen enkel bit afzonderlijk benoemd; wordt als volledige bitmasker gelezen",
+  "同一应答里的取值名不能重复": "Waardenamen binnen één antwoord moeten uniek zijn"
 }

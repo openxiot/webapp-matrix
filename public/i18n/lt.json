@@ -182,7 +182,6 @@
   "写单个寄存器": "Rašyti vieną registrą",
   "写多个线圈": "Rašyti kelias rites",
   "写多个寄存器": "Rašyti kelis registrus",
-  "如：读蒸发器进水温度": "Pvz.: skaityti garintuvo įleidžiamo vandens temperatūrą",
   "由功能码与起始地址换算": "Apskaičiuojama pagal funkcijos kodą ir pradžios adresą",
   "该参数占用的位/线圈个数": "Šio parametro užimamų bitų/ričių skaičius",
   "偏移从 0 起、不可修改，与线圈一一对应": "Poslinkis prasideda nuo 0, nekeičiamas, atitinka po vieną ritę",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Nustačius aukščiausią funkcijos kodo bitą į 1, tai reiškia išimtį; išimties kodą ir CRC16 grąžina įrenginys, čia jie rodomi kaip ??",
   "异常": "Išimtis",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Neteisingas funkcijos kodas / 02 Neteisingas duomenų adresas / 03 Neteisinga duomenų reikšmė / 04 Pavaldžiojo įrenginio gedimas",
-  "待设备返回": "Laukiama įrenginio"
+  "待设备返回": "Laukiama įrenginio",
+  "读": "Skaityti",
+  "写": "Rašyti",
+  "字段名称": "Lauko pavadinimas",
+  "生成服务时作为应答字段名": "Generuojant paslaugą naudojamas kaip atsakymo lauko pavadinimas",
+  "帧里读 {{count}} 个寄存器": "Kadre nuskaitoma {{count}} registrų",
+  "如：进水温度": "Pvz.: įleidžiamo vandens temperatūra",
+  "如：开机": "Pvz.: įjungti",
+  "位名称": "Bito pavadinimas",
+  "第 {{n}} 位": "{{n}}-asis bitas",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Jei paliksite tuščią, šis bitas neturės atskiros reikšmės ir bus skaitomas iš visos bitų kaukės",
+  "整段位掩码字段名": "Visos bitų kaukės lauko pavadinimas",
+  "未逐位命名，只按整段位掩码读": "Nė vienas bitas neįvardytas atskirai; skaitoma kaip visa bitų kaukė",
+  "同一应答里的取值名不能重复": "Vieno atsakymo reikšmių pavadinimai turi būti unikalūs"
 }

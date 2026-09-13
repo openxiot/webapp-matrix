@@ -182,7 +182,6 @@
   "写单个寄存器": "Tulis Register Tunggal",
   "写多个线圈": "Tulis Banyak Gegelung",
   "写多个寄存器": "Tulis Banyak Register",
-  "如：读蒸发器进水温度": "Cth. baca suhu air masuk penyejat",
   "由功能码与起始地址换算": "Dikira daripada kod fungsi dan alamat mula",
   "该参数占用的位/线圈个数": "Bilangan bit/gegelung yang digunakan parameter ini",
   "偏移从 0 起、不可修改，与线圈一一对应": "Offset bermula dari 0, tidak boleh diubah, sepadan satu dengan satu dengan gegelung",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Bit tertinggi kod fungsi bernilai 1 bermaksud pengecualian; kod pengecualian dan CRC16 dikembalikan oleh peranti dan dipaparkan sebagai ?? di sini",
   "异常": "Pengecualian",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Kod fungsi tidak sah / 02 Alamat data tidak sah / 03 Nilai data tidak sah / 04 Kerosakan peranti slave",
-  "待设备返回": "Menunggu peranti"
+  "待设备返回": "Menunggu peranti",
+  "读": "Baca",
+  "写": "Tulis",
+  "字段名称": "Nama Medan",
+  "生成服务时作为应答字段名": "Digunakan sebagai nama medan respons apabila perkhidmatan dijana",
+  "帧里读 {{count}} 个寄存器": "{{count}} register dibaca dalam bingkai",
+  "如：进水温度": "Cth. suhu air masuk",
+  "如：开机": "Cth. hidupkan kuasa",
+  "位名称": "Nama bit",
+  "第 {{n}} 位": "Bit {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Biarkan kosong: bit ini tiada nilai tersendiri dan dibaca daripada topeng bit penuh",
+  "整段位掩码字段名": "Nama medan topeng bit penuh",
+  "未逐位命名，只按整段位掩码读": "Tiada bit dinamakan secara berasingan; dibaca sebagai topeng bit penuh",
+  "同一应答里的取值名不能重复": "Nama nilai dalam satu respons mesti unik"
 }

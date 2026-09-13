@@ -182,7 +182,6 @@
   "写单个寄存器": "Ghi một thanh ghi",
   "写多个线圈": "Ghi nhiều cuộn dây",
   "写多个寄存器": "Ghi nhiều thanh ghi",
-  "如：读蒸发器进水温度": "Ví dụ: đọc nhiệt độ nước vào dàn bay hơi",
   "由功能码与起始地址换算": "Tính từ mã chức năng và địa chỉ bắt đầu",
   "该参数占用的位/线圈个数": "Số bit/cuộn dây mà tham số này chiếm",
   "偏移从 0 起、不可修改，与线圈一一对应": "Độ lệch bắt đầu từ 0, không thể sửa, tương ứng một-một với cuộn dây",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Bit cao nhất của mã chức năng bằng 1 nghĩa là ngoại lệ; mã ngoại lệ và CRC16 do thiết bị trả về, ở đây hiển thị là ??",
   "异常": "Ngoại lệ",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Mã chức năng không hợp lệ / 02 Địa chỉ dữ liệu không hợp lệ / 03 Giá trị dữ liệu không hợp lệ / 04 Lỗi thiết bị slave",
-  "待设备返回": "Đang chờ thiết bị"
+  "待设备返回": "Đang chờ thiết bị",
+  "读": "Đọc",
+  "写": "Ghi",
+  "字段名称": "Tên trường",
+  "生成服务时作为应答字段名": "Dùng làm tên trường phản hồi khi tạo dịch vụ",
+  "帧里读 {{count}} 个寄存器": "Đọc {{count}} thanh ghi trong khung",
+  "如：进水温度": "Ví dụ: nhiệt độ nước vào",
+  "如：开机": "Ví dụ: bật nguồn",
+  "位名称": "Tên bit",
+  "第 {{n}} 位": "Bit thứ {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Để trống thì bit này không có giá trị riêng và được đọc từ toàn bộ bitmask",
+  "整段位掩码字段名": "Tên trường bitmask toàn bộ",
+  "未逐位命名，只按整段位掩码读": "Không có bit nào được đặt tên riêng; đọc theo toàn bộ bitmask",
+  "同一应答里的取值名不能重复": "Tên giá trị trong cùng một phản hồi phải là duy nhất"
 }

@@ -182,7 +182,6 @@
   "写单个寄存器": "Zápis jednotlivého registru",
   "写多个线圈": "Zápis více cívek",
   "写多个寄存器": "Zápis více registrů",
-  "如：读蒸发器进水温度": "např. čtení teploty vody na vstupu výparníku",
   "由功能码与起始地址换算": "odvozeno z kódu funkce a počáteční adresy",
   "该参数占用的位/线圈个数": "počet bitů/cívek obsazených tímto parametrem",
   "偏移从 0 起、不可修改，与线圈一一对应": "Posun od 0, nelze změnit, jedna ku jedné s cívkami",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Nastavený nejvyšší bit kódu funkce znamená výjimku; kód výjimky a CRC16 vrací zařízení, zde jsou zobrazeny jako ??",
   "异常": "Výjimka",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Nepovolený kód funkce / 02 Nepovolená adresa dat / 03 Nepovolená hodnota dat / 04 Porucha zařízení slave",
-  "待设备返回": "Čeká se na zařízení"
+  "待设备返回": "Čeká se na zařízení",
+  "读": "Čtení",
+  "写": "Zápis",
+  "字段名称": "Název pole",
+  "生成服务时作为应答字段名": "Používá se jako název pole odpovědi při generování služby",
+  "帧里读 {{count}} 个寄存器": "V rámci se čte {{count}} registrů",
+  "如：进水温度": "např. teplota vstupní vody",
+  "如：开机": "např. zapnutí",
+  "位名称": "Název bitu",
+  "第 {{n}} 位": "Bit {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Ponecháte-li prázdné, tento bit nemá vlastní hodnotu a čte se z celé bitové masky",
+  "整段位掩码字段名": "Název pole celé bitové masky",
+  "未逐位命名，只按整段位掩码读": "Žádný bit není pojmenován jednotlivě; čte se jako celá bitová maska",
+  "同一应答里的取值名不能重复": "Názvy hodnot v jedné odpovědi musí být jedinečné"
 }

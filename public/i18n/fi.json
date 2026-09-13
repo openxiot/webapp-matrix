@@ -182,7 +182,6 @@
   "写单个寄存器": "Kirjoita yksittäinen rekisteri",
   "写多个线圈": "Kirjoita useita käämejä",
   "写多个寄存器": "Kirjoita useita rekistereitä",
-  "如：读蒸发器进水温度": "esim. lue höyrystimen tuloveden lämpötila",
   "由功能码与起始地址换算": "lasketaan toimintokoodista ja aloitusosoitteesta",
   "该参数占用的位/线圈个数": "parametrin varaamien bittien/käämien määrä",
   "偏移从 0 起、不可修改，与线圈一一对应": "Siirtymä alkaa nollasta, ei voi muuttaa, yksi kutakin käämiä kohden",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Toimintokoodin korkein bitti 1 tarkoittaa poikkeusta; poikkeuskoodin ja CRC16:n palauttaa laite, ja ne näytetään tässä muodossa ??",
   "异常": "Poikkeus",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Virheellinen toimintokoodi / 02 Virheellinen dataosoite / 03 Virheellinen data-arvo / 04 Slave-laitteen vika",
-  "待设备返回": "Odottaa laitetta"
+  "待设备返回": "Odottaa laitetta",
+  "读": "Lue",
+  "写": "Kirjoita",
+  "字段名称": "Kentän nimi",
+  "生成服务时作为应答字段名": "Käytetään vastauskentän nimenä, kun palvelu luodaan",
+  "帧里读 {{count}} 个寄存器": "Kehyksessä luetaan {{count}} rekisteriä",
+  "如：进水温度": "esim. tuloveden lämpötila",
+  "如：开机": "esim. käynnistys",
+  "位名称": "Bitin nimi",
+  "第 {{n}} 位": "Bitti {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Jos jätetään tyhjäksi, tällä bitillä ei ole omaa arvoa ja se luetaan koko bittimaskista",
+  "整段位掩码字段名": "Koko bittimaskin kenttänimi",
+  "未逐位命名，只按整段位掩码读": "Yhtään bittiä ei ole nimetty erikseen; luetaan koko bittimaskina",
+  "同一应答里的取值名不能重复": "Samassa vastauksessa arvojen nimien on oltava yksilöllisiä"
 }

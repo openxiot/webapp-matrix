@@ -14,7 +14,14 @@ import { CommandEditComponent, type ModbusCommandDialogData } from '../command/c
 import { RequestFrameDialogComponent, type RequestFrameDialogData } from './request/request.frame.dialog.component';
 import { buildRequestFrame, buildResponseFrame } from './request/request.frame';
 import { ModbusDeviceInfoEditComponent, type ModbusDeviceInfoEditData, } from '../device-info/modbus.device.info.edit.component';
-import { coilStateText, fcLabelKey, isWriteFc, logicalAddressOf } from '../command/point.options';
+import {
+  READ_REG_FCS,
+  coilStateText,
+  fcLabelKey,
+  frameQuantityOf,
+  isWriteFc,
+  logicalAddressOf,
+} from '../command/point.options';
 import { lifecycleModifiable, lifecycleStyle } from '../modbus.lifecycle';
 import { ConfirmComponent } from '../../../../common/dialog/confirm/confirm.component';
 
@@ -37,6 +44,8 @@ export abstract class ModbusEditor {
   protected readonly logicalAddressOf = logicalAddressOf;
   protected readonly isWriteFc = isWriteFc;
   protected readonly coilStateText = coilStateText;
+  protected readonly readRegFcs = READ_REG_FCS;
+  protected readonly frameQuantityOf = frameQuantityOf;
   protected readonly lifecycleStyle = lifecycleStyle;
 
   /** 生命周期枚举值（模板 @switch 按 lifecycle() 分支渲染 header 按钮组）。 */
@@ -665,6 +674,8 @@ function commandKey(command: ModbusCommand): string {
     normValue(command.fc),
     normValue(command.start),
     normValue(command.quantity),
+    (command.fieldNames ?? []).map((x) => normValue(x)),
+    (command.bitNames ?? []).map((x) => [normValue(x.offset), normValue(x.name)]),
     normValue(command.dataType),
     normValue(command.byteOrder),
     normValue(command.scale),

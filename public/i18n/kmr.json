@@ -182,7 +182,6 @@
   "写单个寄存器": "Regîsterekê binivîse",
   "写多个线圈": "Çend koylan binivîse",
   "写多个寄存器": "Çend regîsteran binivîse",
-  "如：读蒸发器进水温度": "Bo nimûne: germahiya ava ketana evaporatorê bixwîne",
   "由功能码与起始地址换算": "Ji koda fonksiyonê û navnîşana destpêkê tê hesabkirin",
   "该参数占用的位/线圈个数": "Hejmara bît/koylan ku ev parametre digire",
   "偏移从 0 起、不可修改，与线圈一一对应": "Offset ji 0 dest pê dike û nayê guhertin, yek bi yek li gel koylan e",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Bitê herî bilind ê koda fonksiyonê ku 1 be tê wateya îstîsnayê; koda îstîsnayê û CRC16 ji aliyê amûr ve têne vegerandin û li vir wek ?? têne nîşandan",
   "异常": "Îstîsna",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Koda fonksiyonê ya nederbasdar / 02 Navnîşana daneyan a nederbasdar / 03 Nirxa daneyan a nederbasdar / 04 Xirabûna amûra slave",
-  "待设备返回": "Li benda amûrê"
+  "待设备返回": "Li benda amûrê",
+  "读": "Bixwîne",
+  "写": "Binivîse",
+  "字段名称": "Navê qadê",
+  "生成服务时作为应答字段名": "Dema xizmet tê çêkirin wek navê qada bersivê tê bikaranîn",
+  "帧里读 {{count}} 个寄存器": "Di frameê de {{count}} regîster têne xwendin",
+  "如：进水温度": "Bo nimûne: germahiya ava ketanê",
+  "如：开机": "Bo nimûne: vekirin",
+  "位名称": "Navê bitê",
+  "第 {{n}} 位": "Bita {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Heke vala were hiştin, ev bit xwedî nirxa xwe nîne û ji maskeya bitê ya tevahî tê xwendin",
+  "整段位掩码字段名": "Navê qada maskeya bitê ya tevahî",
+  "未逐位命名，只按整段位掩码读": "Tu bit bi serê xwe nehatiye navkirin; wek maskeya bitê ya tevahî tê xwendin",
+  "同一应答里的取值名不能重复": "Navên nirxan di nav yek bersivê de divê yekta bin"
 }

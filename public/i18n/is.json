@@ -182,7 +182,6 @@
   "写单个寄存器": "Skrifa eina skrá",
   "写多个线圈": "Skrifa margar spólur",
   "写多个寄存器": "Skrifa margar skrár",
-  "如：读蒸发器进水温度": "t.d. lesa hitastig inntaksvatns eimsvala",
   "由功能码与起始地址换算": "reiknað út frá aðgerðarkóða og upphafsheimilisfangi",
   "该参数占用的位/线圈个数": "fjöldi bita/spóla sem færibreytan tekur",
   "偏移从 0 起、不可修改，与线圈一一对应": "Hliðrun byrjar í 0, ekki hægt að breyta, ein fyrir hverja spólu",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Ef hæsti biti aðgerðarkóðans er 1 stendur það fyrir undantekningu; undantekningarkóðann og CRC16 skilar tækið og eru þau hér sýnd sem ??",
   "异常": "Undantekning",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Ógildur aðgerðarkóði / 02 Ógilt gagnsheimilisfang / 03 Ógilt gagnagildi / 04 Bilun í slave-tæki",
-  "待设备返回": "Bíður tækis"
+  "待设备返回": "Bíður tækis",
+  "读": "Lesa",
+  "写": "Skrifa",
+  "字段名称": "Heiti reits",
+  "生成服务时作为应答字段名": "Notað sem heiti svarreits þegar þjónustan er búin til",
+  "帧里读 {{count}} 个寄存器": "{{count}} skrár lesnar í rammanum",
+  "如：进水温度": "t.d. hitastig inntaksvatns",
+  "如：开机": "t.d. kveikt",
+  "位名称": "Heiti bits",
+  "第 {{n}} 位": "Bit {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Ef skilið er eftir autt hefur þetta bit ekki eigið gildi og er lesið úr allri bitmottunni",
+  "整段位掩码字段名": "Heiti reits fyrir allri bitmottunni",
+  "未逐位命名，只按整段位掩码读": "Ekkert bit er nefnt sérstaklega; lesið sem allri bitmottunni",
+  "同一应答里的取值名不能重复": "Heiti gilda í sama svari verða að vera einstök"
 }

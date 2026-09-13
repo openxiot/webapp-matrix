@@ -182,7 +182,6 @@
   "写单个寄存器": "Écrire registre unique",
   "写多个线圈": "Écrire bobines multiples",
   "写多个寄存器": "Écrire registres multiples",
-  "如：读蒸发器进水温度": "Ex. : lire la température d'entrée d'eau de l'évaporateur",
   "由功能码与起始地址换算": "Calculé à partir du code de fonction et de l'adresse de départ",
   "该参数占用的位/线圈个数": "Bits/bobines occupés par ce paramètre",
   "偏移从 0 起、不可修改，与线圈一一对应": "Décalage depuis 0, non modifiable, un par bobine",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Le bit de poids fort du code de fonction à 1 indique une exception ; le code d'exception et le CRC16 sont renvoyés par l'appareil et affichés ici en ??",
   "异常": "Exception",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Code de fonction illégal / 02 Adresse de données illégale / 03 Valeur de données illégale / 04 Défaillance de l’esclave",
-  "待设备返回": "En attente de l'appareil"
+  "待设备返回": "En attente de l'appareil",
+  "读": "Lire",
+  "写": "Écrire",
+  "字段名称": "Nom du champ",
+  "生成服务时作为应答字段名": "Utilisé comme nom de champ de réponse lors de la génération du service",
+  "帧里读 {{count}} 个寄存器": "{{count}} registres lus dans la trame",
+  "如：进水温度": "Ex. : température d'entrée d'eau",
+  "如：开机": "Ex. : mise sous tension",
+  "位名称": "Nom du bit",
+  "第 {{n}} 位": "Bit {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Laisser vide : ce bit n'a pas de valeur propre et se lit depuis le masque de bits complet",
+  "整段位掩码字段名": "Nom du champ du masque de bits complet",
+  "未逐位命名，只按整段位掩码读": "Aucun bit nommé individuellement ; lecture du masque de bits complet",
+  "同一应答里的取值名不能重复": "Les noms de valeur d’une même réponse doivent être uniques"
 }

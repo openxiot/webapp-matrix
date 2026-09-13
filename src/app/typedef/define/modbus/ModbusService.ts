@@ -34,6 +34,18 @@ export class ModbusServiceFieldValue {
 }
 
 /**
+ * 位区字段里的具名位：除字段自身那份整段位掩码外，把该位单独作为一个 0/1 取值输出（key 即 field）。
+ *
+ * 偏移是 0 基、从位区起点（请求的起始地址）算起；帧内按 LSB-first 取位，
+ * 即第 `offset/8` 个数据字节的第 `offset%8` 位。
+ */
+export class ModbusServiceFieldBit {
+  offset: number = 0;
+  /** 该位的取值名：invoke 返回值里这个位的 key */
+  field: string = '';
+}
+
+/**
  * 应答帧里的一个字段：描述「从数据区第几段开始、多少字节、怎么解」。
  *
  * 一个方法的应答数据区按 index 升序、以 bytes 依次累加偏移切分，
@@ -56,6 +68,8 @@ export class ModbusServiceField {
   unit?: string;
   /** 线上键名 `value-list` */
   valueList?: ModbusServiceFieldValue[];
+  /** 线上键名 `bit-list`（01/02 位区逐位取值） */
+  bitList?: ModbusServiceFieldBit[];
 }
 
 /**

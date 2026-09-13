@@ -182,7 +182,6 @@
   "写单个寄存器": "Tek Register Yaz",
   "写多个线圈": "Çoklu Bobin Yaz",
   "写多个寄存器": "Çoklu Register Yaz",
-  "如：读蒸发器进水温度": "örn. evaporatör giriş suyu sıcaklığını oku",
   "由功能码与起始地址换算": "fonksiyon kodu ve başlangıç adresinden hesaplanır",
   "该参数占用的位/线圈个数": "bu parametrenin kapladığı bit/bobin sayısı",
   "偏移从 0 起、不可修改，与线圈一一对应": "Ofset 0'dan başlar, değiştirilemez, her bobine karşılık bir ofset",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Fonksiyon kodunun en yüksek bitinin 1 olması istisna anlamına gelir; istisna kodu ve CRC16 cihaz tarafından döndürülür, burada ?? olarak gösterilir",
   "异常": "İstisna",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Geçersiz fonksiyon kodu / 02 Geçersiz veri adresi / 03 Geçersiz veri değeri / 04 Slave cihaz arızası",
-  "待设备返回": "Cihaz bekleniyor"
+  "待设备返回": "Cihaz bekleniyor",
+  "读": "Oku",
+  "写": "Yaz",
+  "字段名称": "Alan Adı",
+  "生成服务时作为应答字段名": "Servis oluşturulurken yanıt alan adı olarak kullanılır",
+  "帧里读 {{count}} 个寄存器": "Çerçevede {{count}} register okunur",
+  "如：进水温度": "örn. giriş suyu sıcaklığı",
+  "如：开机": "örn. cihazı aç",
+  "位名称": "Bit adı",
+  "第 {{n}} 位": "{{n}}. bit",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Boş bırakılırsa bu bitin kendi değeri olmaz ve tüm bit maskesinden okunur",
+  "整段位掩码字段名": "Tüm bit maskesi alan adı",
+  "未逐位命名，只按整段位掩码读": "Hiçbir bit ayrı ayrı adlandırılmadı; tüm bit maskesi olarak okunur",
+  "同一应答里的取值名不能重复": "Aynı yanıttaki değer adları benzersiz olmalıdır"
 }

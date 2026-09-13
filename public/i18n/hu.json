@@ -182,7 +182,6 @@
   "写单个寄存器": "Egyetlen regiszter írása",
   "写多个线圈": "Több tekercs írása",
   "写多个寄存器": "Több regiszter írása",
-  "如：读蒸发器进水温度": "pl. az elpárologtató belépő vízhőmérsékletének olvasása",
   "由功能码与起始地址换算": "a funkciókódból és a kezdőcímből számítva",
   "该参数占用的位/线圈个数": "az e paraméter által elfoglalt bitek/tekercsek száma",
   "偏移从 0 起、不可修改，与线圈一一对应": "Az eltolás 0-tól indul, nem módosítható, egy az egyben megfelel a tekercseknek",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Ha a funkciókód legmagasabb bitje 1, az kivételt jelent; a kivételkódot és a CRC16-ot az eszköz adja vissza, itt ?? alakban láthatók",
   "异常": "Kivétel",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Érvénytelen funkciókód / 02 Érvénytelen adatcím / 03 Érvénytelen adatérték / 04 Slave-eszköz hiba",
-  "待设备返回": "Várakozás az eszközre"
+  "待设备返回": "Várakozás az eszközre",
+  "读": "Olvasás",
+  "写": "Írás",
+  "字段名称": "Mező neve",
+  "生成服务时作为应答字段名": "A szolgáltatás létrehozásakor válaszmezőnévként szolgál",
+  "帧里读 {{count}} 个寄存器": "A keretben {{count}} regiszter olvasása",
+  "如：进水温度": "pl. belépő vízhőmérséklet",
+  "如：开机": "pl. bekapcsolás",
+  "位名称": "Bit neve",
+  "第 {{n}} 位": "{{n}}. bit",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Ha üresen hagyja, ennek a bitnek nincs saját értéke, és a teljes bitmaszkból olvasható",
+  "整段位掩码字段名": "A teljes bitmaszk mezőneve",
+  "未逐位命名，只按整段位掩码读": "Egyetlen bit sincs külön elnevezve; a teljes bitmaszkként olvasható",
+  "同一应答里的取值名不能重复": "Egy válaszon belül az értékneveknek egyedinek kell lenniük"
 }

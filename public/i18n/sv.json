@@ -182,7 +182,6 @@
   "写单个寄存器": "Skriv enkelt register",
   "写多个线圈": "Skriv flera spolar",
   "写多个寄存器": "Skriv flera register",
-  "如：读蒸发器进水温度": "t.ex. läs inloppsvattentemperatur på förångare",
   "由功能码与起始地址换算": "beräknas från funktionskod och startadress",
   "该参数占用的位/线圈个数": "antal bitar/spolar som parametern upptar",
   "偏移从 0 起、不可修改，与线圈一一对应": "Förskjutningen börjar på 0, kan inte ändras, en per spole",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "Funktionskodens högsta bit satt till 1 betyder ett undantag; undantagskoden och CRC16 returneras av enheten och visas här som ??",
   "异常": "Undantag",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Ogiltig funktionskod / 02 Ogiltig dataadress / 03 Ogiltigt datavärde / 04 Slavenhetsfel",
-  "待设备返回": "Väntar på enhet"
+  "待设备返回": "Väntar på enhet",
+  "读": "Läs",
+  "写": "Skriv",
+  "字段名称": "Fältnamn",
+  "生成服务时作为应答字段名": "Används som svarfältnamn när tjänsten genereras",
+  "帧里读 {{count}} 个寄存器": "{{count}} register läses i ramen",
+  "如：进水温度": "t.ex. inloppsvattentemperatur",
+  "如：开机": "t.ex. start",
+  "位名称": "Bitnamn",
+  "第 {{n}} 位": "Bit {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Lämna tomt: denna bit har inget eget värde och läses från hela bitmasken",
+  "整段位掩码字段名": "Fältnamn för hela bitmasken",
+  "未逐位命名，只按整段位掩码读": "Ingen bit namngiven enskilt; läses som hela bitmasken",
+  "同一应答里的取值名不能重复": "Värdenamn i samma svar måste vara unika"
 }

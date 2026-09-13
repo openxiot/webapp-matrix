@@ -182,7 +182,6 @@
   "写单个寄存器": "Write Single Register",
   "写多个线圈": "Write Multiple Coils",
   "写多个寄存器": "Write Multiple Registers",
-  "如：读蒸发器进水温度": "e.g. read evaporator inlet water temp.",
   "由功能码与起始地址换算": "derived from function code and start address",
   "该参数占用的位/线圈个数": "bits/coils this parameter occupies",
   "偏移从 0 起、不可修改，与线圈一一对应": "Offset is auto from 0, one per coil",
@@ -340,5 +339,18 @@
   "功能码最高位置 1 表示异常；异常码与 CRC16 由设备返回，此处以 ?? 占位": "A set high bit in the function code means an exception; the exception code and CRC16 are returned by the device and shown as ?? here",
   "异常": "Exception",
   "01 非法功能码 / 02 非法数据地址 / 03 非法数据值 / 04 从站设备故障": "01 Illegal function / 02 Illegal data address / 03 Illegal data value / 04 Slave device failure",
-  "待设备返回": "Returned by the device"
+  "待设备返回": "Returned by the device",
+  "读": "Read",
+  "写": "Write",
+  "字段名称": "Field name",
+  "生成服务时作为应答字段名": "Used as a response field name when the service is generated",
+  "帧里读 {{count}} 个寄存器": "{{count}} register(s) read in the frame",
+  "如：进水温度": "e.g. Inlet water temperature",
+  "如：开机": "e.g. Power on",
+  "位名称": "Bit name",
+  "第 {{n}} 位": "Bit {{n}}",
+  "留空则该位不单独出值，仍可从整段位掩码读": "Leave blank: this bit gets no value of its own and is read from the whole bitmask",
+  "整段位掩码字段名": "Whole-bitmask field name",
+  "未逐位命名，只按整段位掩码读": "No bit named individually; read from the whole bitmask",
+  "同一应答里的取值名不能重复": "Value names within one response must be unique"
 }

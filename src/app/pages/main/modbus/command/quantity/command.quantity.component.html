@@ -1,11 +1,74 @@
-<!-- 值控件：数量（01/02 读位 = 位/线圈个数；03/04 读寄存器 = 类型跨度或长度）。
+<!-- 值控件：数量（01/02 读位 = 位/线圈个数；03/04 读寄存器 = 值的个数）+ 应答字段名称 / 位名称（读操作）。
      readOnly（详情查看）直接以文本展示；表单项骨架与标签「数量」由父组件 command.edit 提供 -->
 @if (readOnly()) {
   <span class="cmd-read-value">{{ quantity() ?? '-' }}</span>
 } @else {
-  <nz-input-number [ngModel]="quantity()" (ngModelChange)="onChange($event)" [nzMin]="1" [nzMax]="255"
-                   [nzStep]="1" [nzDisabled]="locked()" style="width: 100%"></nz-input-number>
+  <nz-input-number [ngModel]="quantity()" (ngModelChange)="onChange($event)" [nzMin]="1"
+                   [nzMax]="max() ?? 255" [nzStep]="1" style="width: 100%"></nz-input-number>
 }
 @if (hintKey()) {
-  <span class="cmd-hint cmd-hint-block">{{ hintKey() | translate }}</span>
+  <span class="cmd-hint cmd-hint-block">{{ hintKey() | translate: (hintParams() ?? {}) }}</span>
+}
+
+<!-- 应答字段名称：与数量一一对应（string 只有一个），生成服务时逐个填进 response[].field -->
+@if (fieldCount() > 0) {
+  <div class="cmd-fields">
+    <div class="cmd-fields-title">{{ '字段名称' | translate }}</div>
+    @for (index of rows(); track index) {
+      <div class="cmd-field-row">
+        @if (fieldCount() > 1) {
+          <span class="cmd-field-no">{{ index + 1 }}</span>
+        }
+        @if (readOnly()) {
+          <span class="cmd-read-value">{{ fieldValue(index) || fieldPlaceholder(index) || '-' }}</span>
+        } @else {
+          <input nz-input id="cmdField{{ index }}" [value]="fieldValue(index)"
+                 [class.cmd-input-conflict]="fieldConflict(index)"
+                 (input)="onFieldInput(index, $event)"
+                 placeholder="{{ fieldPlaceholder(index) }}" />
+        }
+      </div>
+    }
+    <span class="cmd-hint">{{ '生成服务时作为应答字段名' | translate }}</span>
+    @if (conflicts().size > 0) {
+      <span class="cmd-hint cmd-hint-block cmd-hint-conflict">
+        {{ '同一应答里的取值名不能重复' | translate }}：{{ conflictNames() }}
+      </span>
+    }
+  </div>
+}
+
+<!-- 位名称（01/02）：位区按位打包、整段只有一个应答字段（位掩码），逐位取值在这里命名 ——
+     命名了的位在生成服务时进该字段的 bit-list、各自出一个 0/1；留空则该位不单独出值 -->
+@if (bitCount() > 0) {
+  <div class="cmd-fields">
+    <div class="cmd-fields-title">{{ '位名称' | translate }}</div>
+    @for (offset of bitRows(); track offset) {
+      <div class="cmd-field-row">
+        <span class="cmd-bit-label">{{ bitLabel(offset) }}</span>
+        @if (readOnly()) {
+          <span class="cmd-read-value">{{ bitValue(offset) || '-' }}</span>
+        } @else {
+          <input nz-input id="cmdBit{{ offset }}" [value]="bitValue(offset)"
+                 [class.cmd-input-conflict]="bitConflict(offset)"
+                 (input)="onBitInput(offset, $event)" />
+        }
+        @if (bitAddress(offset)) {
+          <span class="cmd-hint">{{ bitAddress(offset) }}</span>
+        }
+      </div>
+    }
+    @if (bitRows().length === 0) {
+      <span class="cmd-hint">{{ '未逐位命名，只按整段位掩码读' | translate }}</span>
+    }
+    <span class="cmd-hint cmd-hint-block">{{ '留空则该位不单独出值，仍可从整段位掩码读' | translate }}</span>
+    <span class="cmd-hint cmd-hint-block" [class.cmd-hint-conflict]="maskConflict()">
+      {{ '整段位掩码字段名' | translate }}：{{ maskField() }}
+    </span>
+    @if (conflicts().size > 0) {
+      <span class="cmd-hint cmd-hint-block cmd-hint-conflict">
+        {{ '同一应答里的取值名不能重复' | translate }}：{{ conflictNames() }}
+      </span>
+    }
+  </div>
 }
