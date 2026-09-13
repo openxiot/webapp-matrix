@@ -7,6 +7,8 @@ import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTableModule } from 'ng-zorro-antd/table';
@@ -18,7 +20,7 @@ import { DeviceServiceEditor } from '../editor/device.service.editor';
 
 /**
  * 编辑 Modbus 服务：按路由 id 载入既有定义，改名称 / 依赖坐标 / 源点表。
- * 方法列表随源点表现场重算，只读不可手改（后端整份 functions 覆盖落库）。
+ * 方法列表随源点表现场重算，除「调用周期」外不可手改（后端整份 functions 覆盖落库）。
  */
 @Component({
   selector: 'device-service-edit',
@@ -34,6 +36,8 @@ import { DeviceServiceEditor } from '../editor/device.service.editor';
     NzFormModule,
     NzSelectModule,
     NzInputModule,
+    NzInputNumberModule,
+    NzSwitchModule,
     NzButtonModule,
     NzTagModule,
     NzTableModule,

@@ -14,7 +14,30 @@ import {
   ModbusServiceFunction,
 } from '../../../../../../typedef/define/modbus/ModbusService';
 import { SpaceRef } from '../../../../../../typedef/define/space/SpaceRef';
-import { WRITE_METHOD_REPLY_KEY, buildServiceFunctions, describeFunctionResponse } from '../service.functions';
+import {
+  WRITE_METHOD_REPLY_KEY,
+  buildServiceFunctions,
+  describeFunctionResponse,
+  isReadFunction,
+  pollSignature,
+  serviceChanged,
+  type FunctionPoll,
+  type ServiceBaseline,
+} from '../service.functions';
+
+/**
+ * 自动调用周期的上下限（秒）：与后端 ModbusServiceValidator 的 MIN/MAX_INTERVAL_SECONDS 同口径 ——
+ * 下限 3 秒（RS485 是共享总线，周期太密会把总线吃满），上限 3600 秒（再长就该由人手动调用，
+ * 而不是挂个几乎不跑的定时器）。两边改动要同步，否则前端放过去的值会被后端拒掉。
+ */
+const MIN_INTERVAL_SECONDS = 3;
+const MAX_INTERVAL_SECONDS = 3600;
+
+/**
+ * 打开自动轮询时给的起步周期（秒）：后端要求「开了轮询就必须有周期」，
+ * 总不能因为用户先拨开关、还没来得及填周期就卡住保存 —— 填个保守值，用户随即能改。
+ */
+const DEFAULT_INTERVAL_SECONDS = 60;
 
 /**
  * 「添加 Modbus 服务」/「编辑 Modbus 服务」两个页面共用的编辑器逻辑与视图。
@@ -27,8 +50,10 @@ import { WRITE_METHOD_REPLY_KEY, buildServiceFunctions, describeFunctionResponse
  *    一个功能码动作 = 一个方法（序号、名称沿用动作，请求帧由点表生成器出）；
  * 3. **服务名称**（用户填）。
  *
- * 方法列表**只读**：既不出编辑控件，也不允许手工增删（后端 functions 由本页一次性落库）。
- * 编辑页若源点表已删 / 跨组织取不到，退回服务里存的方法原样展示并提示，保存不改动它们。
+ * 方法列表由点表现场展开、不允许手工增删（后端 functions 由本页一次性落库）；名称/请求帧/应答字段
+ * 都只读，唯独**自动轮询**（开关 + 调用周期）可改 —— 轮询不属于点表，是「这份服务怎么跑」的事
+ * （见 {@link polls}）。编辑页若源点表已删 / 跨组织取不到，退回服务里存的方法原样展示并提示，
+ * 保存不改动它们（轮询那两列仍可改，它们是从服务里种进来的）。
  *
  * 本类不带模板：create / edit 两个页面组件各自把 templateUrl 指到同一份
  * device.service.editor.html，仅以 {@link kind} 区分标题与提交动作。
@@ -75,6 +100,45 @@ export abstract class DeviceServiceEditor implements OnInit {
   readonly selectedSiid = signal<number | null>(null);
   readonly selectedAiid = signal<number | null>(null);
   readonly selectedConfigId = signal<string | null>(null);
+
+  /**
+   * 各方法的自动轮询配置（开关 + 周期），key = `点表ID#方法序号` —— 方法列表由点表现场重算，
+   * 轮询却只存在这份服务里，得另存一份才能合进方法定义。
+   *
+   * key 带上点表 ID：换源点表时不会把 A 点表的轮询配置套到 B 点表序号相同的方法上，
+   * 切回来时改过的值也还在（换点表即换一批方法，序号相同并不代表同一个方法）。
+   */
+  private readonly polls = signal<Map<string, FunctionPoll>>(new Map());
+
+  /** 周期的上下限（秒）：模板绑定控件用，口径见文件头常量 */
+  protected readonly intervalMin = MIN_INTERVAL_SECONDS;
+  protected readonly intervalMax = MAX_INTERVAL_SECONDS;
+  /** 方法是不是读方法（写方法不能自动调用）：模板据此决定这一格出控件还是「—」 */
+  protected readonly isReadFunction = isReadFunction;
+
+  /** 载入完成时的基线（编辑页「有没有改过」的原值）：载入前为 null，保存按钮此时也是不可用 */
+  private readonly baseline = signal<ServiceBaseline | null>(null);
+
+  /** 当前表单按基线口径取值（与基线的字段一一对应） */
+  private readonly form = computed<ServiceBaseline>(() => ({
+    name: this.name().trim(),
+    siid: this.selectedSiid(),
+    aiid: this.selectedAiid(),
+    configId: this.selectedConfigId(),
+    polls: pollSignature(this.polls()),
+  }));
+
+  /**
+   * 相对载入时是否真正改过（用户能改的五样：名称 / 依赖服务 / 依赖方法 / 源点表 / 各方法轮询配置）。
+   * 新增页没有原值可比，恒为 true —— 保存按钮只看「填得对不对」。
+   */
+  readonly changed = computed<boolean>(() => {
+    if (this.kind !== 'edit') {
+      return true;
+    }
+    const base = this.baseline();
+    return base != null && serviceChanged(base, this.form());
+  });
 
   readonly saving = signal(false);
 
@@ -123,12 +187,14 @@ export abstract class DeviceServiceEditor implements OnInit {
   readonly built = computed(() => buildServiceFunctions(this.selectedConfig()));
 
   /**
-   * 只读预览的方法列表：选中源点表就按它现场展开（一个功能码动作 = 一个方法）；
+   * 方法列表：选中源点表就按它现场展开（一个功能码动作 = 一个方法）；
    * 点表缺失（编辑页里源点表已删 / 跨组织取不到）时退回服务里存的原样。
+   * 两者都把 {@link polls} 里的轮询配置合进来，故它也是提交时的最终方法定义。
    */
-  readonly functions = computed<ModbusServiceFunction[]>(() =>
-    this.selectedConfig() ? this.built().functions : this.storedFunctions(),
-  );
+  readonly functions = computed<ModbusServiceFunction[]>(() => {
+    const base = this.selectedConfig() ? this.built().functions : this.storedFunctions();
+    return base.map((func) => this.withPoll(func));
+  });
 
   /** 生成不出请求帧 / 应答规则而被跳过的动作（只提示，不阻断保存） */
   readonly skipped = computed<string[]>(() => (this.selectedConfig() ? this.built().skipped : []));
@@ -229,6 +295,9 @@ export abstract class DeviceServiceEditor implements OnInit {
         this.selectedSiid.set(service.device?.siid ?? null);
         this.selectedAiid.set(service.device?.aiid ?? null);
         this.storedFunctions.set(service.functions ?? []);
+        this.seedPolls(service.configId ?? null, service.functions ?? []);
+        // 基线要在名称/坐标/点表/轮询配置都落定之后取：它就是「原样不动直接保存」的那一份
+        this.baseline.set(this.form());
         this.version = service.version;
         this.storedSpace = service.device?.space;
         this.loadingService.set(false);
@@ -259,6 +328,92 @@ export abstract class DeviceServiceEditor implements OnInit {
   }
 
   /**
+   * 改某个方法的调用周期（秒）：清空 = 没配周期（开关随之关掉，后端也不允许开了轮询却没周期）。
+   * 越界的输入夹到上下限（控件本身也带 nzMin/nzMax，这里兜底）。
+   */
+  protected onIntervalChange(func: ModbusServiceFunction, value: number | null): void {
+    if (!isReadFunction(func)) {
+      return;
+    }
+    const key = this.pollKey(func);
+    this.polls.update((map) => {
+      const next = new Map(map);
+      if (value == null || !Number.isFinite(value)) {
+        next.delete(key);
+        return next;
+      }
+      // 只换周期，开关原样留着（关着的时候也能改周期，改完再开）
+      next.set(key, { ...next.get(key), interval: this.clampInterval(value) });
+      return next;
+    });
+  }
+
+  /**
+   * 开关某个方法的自动轮询。
+   *
+   * 打开时若还没配周期，先给个起步值（后端要求「开了轮询就必须有周期」，否则保存会被拒）；
+   * 关掉只改开关、周期留着 —— 这正是这个开关的用处：停一台设备的采集，不必把配好的周期删掉。
+   */
+  protected onPollingChange(func: ModbusServiceFunction, enabled: boolean): void {
+    if (!isReadFunction(func)) {
+      return;
+    }
+    const key = this.pollKey(func);
+    this.polls.update((map) => {
+      const next = new Map(map);
+      const poll = next.get(key);
+      if (!enabled) {
+        if (poll != null) {
+          next.set(key, { ...poll, polling: false });
+        }
+        return next;
+      }
+      next.set(key, { interval: poll?.interval ?? DEFAULT_INTERVAL_SECONDS, polling: true });
+      return next;
+    });
+  }
+
+  /** 周期夹到上下限（控件本身也带 nzMin/nzMax，这里兜底：载入的旧值也要过一遍） */
+  private clampInterval(seconds: number): number {
+    return Math.min(MAX_INTERVAL_SECONDS, Math.max(MIN_INTERVAL_SECONDS, Math.round(seconds)));
+  }
+
+  /**
+   * 编辑页：把服务里已存的轮询配置按 `点表ID#序号` 种进 {@link polls}。
+   * 方法列表在编辑页是拿点表现场重算的（自带不了这些），不种这一下，
+   * 用户不动开关/周期直接保存就会把已设的抹掉。
+   */
+  private seedPolls(configId: string | null, functions: ModbusServiceFunction[]): void {
+    const seeded = new Map<string, FunctionPoll>();
+    for (const func of functions) {
+      const interval = func.interval;
+      if (interval == null || !isReadFunction(func)) {
+        continue;
+      }
+      // 老定义没有 polling 字段：按「有周期即启用」显示成开着（与后端 validatePolling 的缺省判定一致）
+      seeded.set(`${configId ?? ''}#${func.index}`, { interval, polling: func.polling ?? true });
+    }
+    this.polls.set(seeded);
+  }
+
+  /** 轮询配置在 {@link polls} 里的 key */
+  private pollKey(func: ModbusServiceFunction): string {
+    return `${this.selectedConfigId() ?? ''}#${func.index}`;
+  }
+
+  /**
+   * 把该方法的轮询配置合进方法定义：写方法恒不带（后端拒绝对写方法周期调用）。
+   * 没配周期就两个字段都不发；配了就显式带上开关，不再依赖「缺省 = 有周期即启用」那套口径。
+   */
+  private withPoll(func: ModbusServiceFunction): ModbusServiceFunction {
+    const poll = isReadFunction(func) ? this.polls().get(this.pollKey(func)) : undefined;
+    if (poll?.interval == null) {
+      return { ...func, interval: undefined, polling: undefined };
+    }
+    return { ...func, interval: poll.interval, polling: poll.polling ?? true };
+  }
+
+  /**
    * 服务名称默认取所选点表的描述（slave.description）：换点表即跟着换；
    * 用户手填过（或点表没写描述）就不再覆盖，免得把已经改好的名字冲掉。
    */
@@ -274,16 +429,20 @@ export abstract class DeviceServiceEditor implements OnInit {
     }
   }
 
-  protected canSave(): boolean {
-    return (
+  /**
+   * 保存按钮可用：填得对 **且** 相对载入时确实改过（编辑页）。
+   * 「改过」只认用户能改的五样（见 {@link changed}），方法列表重新生成不算。
+   */
+  protected readonly canSave = computed<boolean>(
+    () =>
+      this.changed() &&
       this.name().trim().length > 0 &&
       this.selectedSiid() !== null &&
       this.selectedAiid() !== null &&
       !!this.selectedConfigId() &&
       this.functions().length > 0 &&
-      !this.saving()
-    );
-  }
+      !this.saving(),
+  );
 
   /* ----------------------------------------------------------------------------------------------
    * 保存

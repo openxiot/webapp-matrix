@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "No s'ha pogut obtenir la taula de punts d'origen (potser s'ha suprimit o no pertany a aquesta organització). A continuació es mostren tal com estan desats al servei; no es modificaran en desar.",
   "下列动作数据不完整，已跳过：": "Les accions següents tenen dades incompletes i s'han omès:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "Després de seleccionar la taula de punts d'origen, aquí es llisten per codi de funció els mètodes de només lectura que es generaran",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Els mètodes es generen a partir de la taula de punts d'origen (una acció de codi de funció = un mètode); es mostren en només lectura i no es poden afegir, editar ni suprimir manualment",
   "功能名称": "Nom de la funció",
   "您真的要删除这个服务吗？": "Segur que voleu suprimir aquest servei?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Introduïu el nom del servei i seleccioneu el mètode del dispositiu dependent i la taula de punts d'origen",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Si es deixa buit, aquest bit no té valor propi i es llegeix de la màscara de bits sencera",
   "整段位掩码字段名": "Nom del camp de màscara de bits sencera",
   "未逐位命名，只按整段位掩码读": "Cap bit nomenat individualment; es llegeix com a màscara de bits sencera",
-  "同一应答里的取值名不能重复": "Els noms de valor d'una mateixa resposta han de ser únics"
+  "同一应答里的取值名不能重复": "Els noms de valor d'una mateixa resposta han de ser únics",
+  "调用周期": "Període de crida",
+  "秒": "segons",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Els mètodes es generen a partir de la taula de punts (una acció de codi de funció = un mètode); tot és de només lectura excepte l’enquesta automàtica i el període de crida",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Buit = sense crida automàtica, només manual; els mètodes d’escriptura no es poden cridar automàticament",
+  "自动轮询": "Enquesta automàtica",
+  "停用": "Desactivat",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Activat = el servidor crida el mètode automàticament segons el període de crida; Desactivat = en pausa (període conservat)"
 }

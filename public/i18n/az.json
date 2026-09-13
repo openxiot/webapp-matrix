@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Mənbə nöqtə cədvəli əlçatan deyil (silinmiş və ya başqa təşkilata aid ola bilər). Aşağıdakılar xidmətdə saxlandığı kimi göstərilir və yadda saxlanarkən dəyişdirilməyəcək.",
   "下列动作数据不完整，已跳过：": "Aşağıdakı əməliyyatların məlumatları natamamdır, keçildi:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "Mənbə nöqtə cədvəli seçildikdən sonra yaradılacaq yalnız oxuna bilən metodlar burada funksiya koduna görə göstərilir",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Metodlar mənbə nöqtə cədvəlindən yaradılır (bir funksiya kodu əməliyyatı = bir metod); yalnız oxuna bilən göstərilir, əl ilə əlavə, redaktə və ya silinə bilməz",
   "功能名称": "Funksiya Adı",
   "您真的要删除这个服务吗？": "Bu xidməti silmək istədiyinizə əminsiniz?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Xahiş edirik xidmət adını daxil edin və asılı cihazın metodunu və mənbə nöqtə cədvəlini seçin",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Boş buraxsanız bu bitin ayrı dəyəri olmur, yalnız tam bit maskasından oxunur",
   "整段位掩码字段名": "Tam bit maskası sahəsinin adı",
   "未逐位命名，只按整段位掩码读": "Heç bir bit ayrıca adlandırılmayıb; tam bit maskası kimi oxunur",
-  "同一应答里的取值名不能重复": "Bir cavabdakı dəyər adları unikal olmalıdır"
+  "同一应答里的取值名不能重复": "Bir cavabdakı dəyər adları unikal olmalıdır",
+  "调用周期": "Çağırma dövrü",
+  "秒": "saniyə",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Metodlar nöqtə cədvəlindən yaradılır (bir funksiya kodu əməliyyatı = bir metod); avtomatik sorğu və çağırma dövründən başqa hamısı yalnız oxunuş üçündür",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Boş = avtomatik çağırma yoxdur, yalnız əl ilə; yazma metodları avtomatik çağırıla bilməz",
+  "自动轮询": "Avtomatik sorğu",
+  "停用": "Deaktiv",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Aktiv = server metodu çağırma dövrünə uyğun avtomatik çağırır; Deaktiv = fasilə (dövr saxlanılır)"
 }

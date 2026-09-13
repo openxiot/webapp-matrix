@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Tabela de pontos de origem indisponível (pode ter sido excluída ou pertencer a outra organização). Os valores salvos no serviço são exibidos como estão e não serão alterados ao salvar.",
   "下列动作数据不完整，已跳过：": "As ações a seguir têm dados incompletos e foram ignoradas:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "Após selecionar uma tabela de pontos de origem, os métodos somente leitura a gerar são listados aqui por código de função",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Os métodos são gerados a partir da tabela de pontos de origem (uma ação de código de função = um método); somente leitura, não podem ser adicionados, editados ou removidos manualmente",
   "功能名称": "Nome da função",
   "您真的要删除这个服务吗？": "Tem certeza de que deseja excluir este serviço?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Insira um nome de serviço e selecione o método do dispositivo dependente e a tabela de pontos de origem",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Se ficar vazio, este bit não tem valor próprio e é lido da máscara de bits completa",
   "整段位掩码字段名": "Nome do campo da máscara de bits completa",
   "未逐位命名，只按整段位掩码读": "Nenhum bit nomeado individualmente; leitura como máscara de bits completa",
-  "同一应答里的取值名不能重复": "Os nomes de valor numa mesma resposta devem ser únicos"
+  "同一应答里的取值名不能重复": "Os nomes de valor numa mesma resposta devem ser únicos",
+  "调用周期": "Intervalo de chamada",
+  "秒": "segundos",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Os métodos são gerados a partir da tabela de pontos (uma ação de código de função = um método); tudo é somente leitura, exceto a sondagem automática e o intervalo de chamada",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Em branco = sem chamada automática, apenas manual; métodos de escrita não podem ser chamados automaticamente",
+  "自动轮询": "Sondagem automática",
+  "停用": "Desativado",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Ativado = o servidor chama o método automaticamente conforme o intervalo de chamada; Desativado = em pausa (intervalo mantido)"
 }

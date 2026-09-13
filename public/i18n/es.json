@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Tabla de puntos de origen no disponible (puede haber sido eliminada o pertenecer a otra organización). Los valores guardados en el servicio se muestran tal cual y no se modificarán al guardar.",
   "下列动作数据不完整，已跳过：": "Las siguientes acciones tienen datos incompletos y se omitieron:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "Tras seleccionar una tabla de puntos de origen, aquí se listan por código de función los métodos de solo lectura que se generarán",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Los métodos se generan desde la tabla de puntos de origen (una acción de código de función = un método); solo lectura, no se pueden añadir, editar ni eliminar manualmente",
   "功能名称": "Nombre de la función",
   "您真的要删除这个服务吗？": "¿Seguro que desea eliminar este servicio?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Ingrese un nombre de servicio y seleccione el método del dispositivo dependiente y la tabla de puntos de origen",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Si se deja vacío, este bit no tiene valor propio y se lee de la máscara de bits completa",
   "整段位掩码字段名": "Nombre del campo de máscara de bits completa",
   "未逐位命名，只按整段位掩码读": "Ningún bit nombrado individualmente; se lee como máscara de bits completa",
-  "同一应答里的取值名不能重复": "Los nombres de valor de una misma respuesta deben ser únicos"
+  "同一应答里的取值名不能重复": "Los nombres de valor de una misma respuesta deben ser únicos",
+  "调用周期": "Periodo de llamada",
+  "秒": "segundos",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Los métodos se generan a partir de la tabla de puntos (una acción de código de función = un método); todo es de solo lectura excepto el sondeo automático y el periodo de llamada",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "En blanco = sin llamada automática, solo manual; los métodos de escritura no pueden llamarse automáticamente",
+  "自动轮询": "Sondeo automático",
+  "停用": "Deshabilitado",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Habilitado = el servidor lo llama automáticamente según el periodo de llamada; Deshabilitado = en pausa (periodo conservado)"
 }

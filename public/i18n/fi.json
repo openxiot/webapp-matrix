@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Lähdepistetaulukkoa ei saada (se on ehkä poistettu tai kuuluu toiseen organisaatioon). Alla näytetään palveluun tallennetut tiedot sellaisenaan, eikä niitä muuteta tallennettaessa.",
   "下列动作数据不完整，已跳过：": "Seuraavien toimintojen tiedot ovat puutteelliset ja ne ohitettiin:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "Kun lähdepistetaulukko on valittu, luotavat vain luku -metodit luetellaan tässä toimintokoodeittain",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Metodit luodaan lähdepistetaulukosta (yksi toimintokooditoiminto = yksi metodi); näytetään vain luku -tilassa, ei voi lisätä, muokata tai poistaa manuaalisesti",
   "功能名称": "Toiminnon nimi",
   "您真的要删除这个服务吗？": "Haluatko varmasti poistaa tämän palvelun?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Anna palvelun nimi ja valitse riippuvan laitteen metodi sekä lähdepistetaulukko",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Jos jätetään tyhjäksi, tällä bitillä ei ole omaa arvoa ja se luetaan koko bittimaskista",
   "整段位掩码字段名": "Koko bittimaskin kenttänimi",
   "未逐位命名，只按整段位掩码读": "Yhtään bittiä ei ole nimetty erikseen; luetaan koko bittimaskina",
-  "同一应答里的取值名不能重复": "Samassa vastauksessa arvojen nimien on oltava yksilöllisiä"
+  "同一应答里的取值名不能重复": "Samassa vastauksessa arvojen nimien on oltava yksilöllisiä",
+  "调用周期": "Kutsuväli",
+  "秒": "sekuntia",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Menetelmät luodaan pisterekisteristä (yksi toimintokooditoiminto = yksi menetelmä); kaikki on vain luku -tilassa lukuun ottamatta automaattista kyselyä ja kutsuväliä",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Tyhjä = ei automaattista kutsua, vain manuaalinen; kirjoitusmenetelmiä ei voi kutsua automaattisesti",
+  "自动轮询": "Automaattinen kysely",
+  "停用": "Pois käytöstä",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Käytössä = palvelin kutsuu menetelmää automaattisesti kutsuvälin mukaan; Pois käytöstä = keskeytetty (väli säilyy)"
 }

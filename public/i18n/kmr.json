@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Tabloya xalên çavkaniyê neberdest e (dibe ku hatibe jêbirin an ne ya vê rêxistinê be). Nirxên di xizmetê de hatine tomarkirin wek xwe têne nîşandan û dema tomarkirinê nayên guhertin.",
   "下列动作数据不完整，已跳过：": "Çalakiyên jêrîn daneyên wan ne temam in û hatin derbaskirin:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "Piştî hilbijartina tabloya xalên çavkaniyê, li vir metodên tenê-xwendinê yên ku bêne çêkirin li gorî koda fonksiyonê têne rêzkirin",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Metod ji tabloya xalên çavkaniyê têne çêkirin (yek çalakiya koda fonksiyonê = yek metod), tenê nîşandan, bi destan nayê zêdekirin, guhertin an jêbirin",
   "功能名称": "Navê fonksiyonê",
   "您真的要删除这个服务吗？": "Ma tu bi rastî dixwazî vê xizmetê jê bibî?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Ji kerema xwe navê xizmetê binivîse û metoda amûra girêdayî û tabloya xalên çavkaniyê hilbijêre",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Heke vala were hiştin, ev bit xwedî nirxa xwe nîne û ji maskeya bitê ya tevahî tê xwendin",
   "整段位掩码字段名": "Navê qada maskeya bitê ya tevahî",
   "未逐位命名，只按整段位掩码读": "Tu bit bi serê xwe nehatiye navkirin; wek maskeya bitê ya tevahî tê xwendin",
-  "同一应答里的取值名不能重复": "Navên nirxan di nav yek bersivê de divê yekta bin"
+  "同一应答里的取值名不能重复": "Navên nirxan di nav yek bersivê de divê yekta bin",
+  "调用周期": "Navbera bangê",
+  "秒": "çirke",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Rêbaz ji tabloya xalan têne çêkirin (yek çalakiya koda fonksiyonê = yek rêbaz); ji bilî banga xweber û navbera bangê hemû tenê-xwendinê ne",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Vala = banga otomatîk tune, tenê bi destan; rêbazên nivîsandinê bi otomatîk nayên bangkirin",
+  "自动轮询": "Banga xweber",
+  "停用": "Neçalak",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Çalak = server bi navbera bangê metodê bixweber bang dike; Neçalak = rawestandî (navber tê parastin)"
 }

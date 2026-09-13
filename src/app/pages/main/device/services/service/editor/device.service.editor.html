@@ -147,6 +147,8 @@
               <th nzWidth="200px">{{ '方法名称' | translate }}</th>
               <th>{{ '请求帧' | translate }}</th>
               <th nzWidth="320px">{{ '应答字段' | translate }}</th>
+              <th nzWidth="110px">{{ '自动轮询' | translate }}</th>
+              <th nzWidth="180px">{{ '调用周期' | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -156,12 +158,49 @@
                 <td>{{ func.name }}</td>
                 <td><code class="service-editor-frame">{{ func.request }}</code></td>
                 <td>{{ responseText(func) }}</td>
+                <td>
+                  <!-- 自动轮询开关：只有读方法能周期调用（写方法周期调用 = 周期性写寄存器，后端会拒） -->
+                  @if (isReadFunction(func)) {
+                    <nz-switch
+                      [ngModel]="func.polling === true"
+                      (ngModelChange)="onPollingChange(func, $event)"
+                    ></nz-switch>
+                  } @else {
+                    <span class="service-editor-hint">—</span>
+                  }
+                </td>
+                <td>
+                  <!-- 调用周期：关掉开关也不清空（暂停后随时能再开） -->
+                  @if (isReadFunction(func)) {
+                    <nz-input-number
+                      [ngModel]="func.interval ?? null"
+                      (ngModelChange)="onIntervalChange(func, $event)"
+                      [nzMin]="intervalMin"
+                      [nzMax]="intervalMax"
+                      [nzStep]="1"
+                      nzAddonAfter="{{ '秒' | translate }}"
+                      style="width: 100%"
+                    ></nz-input-number>
+                  } @else {
+                    <span class="service-editor-hint">—</span>
+                  }
+                </td>
               </tr>
             }
           </tbody>
         </nz-table>
         <div class="service-editor-hint">
-          {{ '方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改' | translate }}
+          {{ '方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读' | translate }}
+        </div>
+        <div class="service-editor-hint">
+          {{ '启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）' | translate }}
+        </div>
+        <div class="service-editor-hint">
+          {{ '留空 = 不自动调用，只手动调用；写方法不能自动调用' | translate }}
+        </div>
+        <!-- 上下限直接取自组件常量（与后端校验同口径），不写死在文案里：改范围不用重翻词典 -->
+        <div class="service-editor-hint">
+          {{ '调用周期' | translate }}：{{ intervalMin }} ~ {{ intervalMax }} {{ '秒' | translate }}
         </div>
       }
     </nz-card>

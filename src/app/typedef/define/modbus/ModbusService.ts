@@ -85,6 +85,24 @@ export class ModbusServiceFunction {
   name: string = '';
   /** 请求帧：完整的 Modbus RTU 帧 16 进制字符串（含 CRC16），由前端生成，原样交给设备发送 */
   request: string = '';
+  /**
+   * 服务端自动调用本方法的周期（秒）：到点自动 invoke 一次，再按 response 解出字段值；
+   * 缺省（undefined）表示没配周期 —— 后端用 null 表达同一件事，不用 0。
+   *
+   * 配了周期不等于会跑：跑不跑看 {@link polling}。只对读方法（fc 01/02/03/04）有意义 ——
+   * 写方法的应答是请求回显，周期调用等于让服务端周期性地往寄存器里写值，后端校验
+   * （ModbusServiceValidator.validateInterval）直接拒，故写方法上不会出现这个字段；
+   * 取值 3 ~ 3600 秒（与后端校验同口径）。
+   */
+  interval?: number;
+  /**
+   * 是否启用自动轮询：true = 服务端按 interval 周期调用；false = 保留周期但暂停（随时可再开）；
+   * 缺省（undefined）= 按 interval 判定，配了周期即启用 —— 与加这个字段之前的定义一致。
+   *
+   * 只有读方法能启用：true 而没给 interval、或该方法不是读方法，后端都会拒
+   * （ModbusServiceValidator.validatePolling / validateInterval）。
+   */
+  polling?: boolean;
   /** 应答解析规则；空数组表示写方法 */
   response: ModbusServiceField[] = [];
 }

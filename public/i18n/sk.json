@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Zdrojová tabuľka bodov nie je dostupná (mohla byť odstránená alebo patriť inej organizácii). Nižšie sú zobrazené hodnoty uložené v službe tak, ako sú; uloženie ich nezmení.",
   "下列动作数据不完整，已跳过：": "Nasledujúce akcie majú neúplné údaje a boli preskočené:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "Po výbere zdrojovej tabuľky bodov sa tu postupne podľa kódov funkcií zobrazia metódy iba na čítanie, ktoré sa majú vytvoriť",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Metódy sa vytvárajú zo zdrojovej tabuľky bodov (jedna akcia kódu funkcie = jedna metóda); zobrazenie iba na čítanie, nie je možné ich ručne pridávať, upravovať ani odstraňovať",
   "功能名称": "Názov funkcie",
   "您真的要删除这个服务吗？": "Naozaj chcete odstrániť túto službu?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Zadajte názov služby a vyberte metódu závislého zariadenia a zdrojovú tabuľku bodov",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Ak ponecháte prázdne, tento bit nemá vlastnú hodnotu a číta sa z celej bitovej masky",
   "整段位掩码字段名": "Názov poľa celej bitovej masky",
   "未逐位命名，只按整段位掩码读": "Žiadny bit nie je pomenovaný jednotlivo; číta sa ako celá bitová maska",
-  "同一应答里的取值名不能重复": "Názvy hodnôt v jednej odpovedi musia byť jedinečné"
+  "同一应答里的取值名不能重复": "Názvy hodnôt v jednej odpovedi musia byť jedinečné",
+  "调用周期": "Perióda volania",
+  "秒": "sekúnd",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Metódy sa generujú z tabuľky bodov (jedna akcia kódu funkcie = jedna metóda); všetko je iba na čítanie okrem automatického dopytovania a periódy volania",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Prázdne = žiadne automatické volanie, iba manuálne; metódy zápisu nemožno volať automaticky",
+  "自动轮询": "Automatické dopytovanie",
+  "停用": "Zakázané",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Zapnuté = server volá metódu automaticky podľa periódy volania; Zakázané = pozastavené (perióda zostáva)"
 }

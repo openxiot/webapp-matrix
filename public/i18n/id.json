@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Tabel titik sumber tidak tersedia (mungkin telah dihapus atau bukan milik organisasi ini); bagian di bawah ditampilkan apa adanya seperti tersimpan di layanan dan tidak akan berubah saat disimpan",
   "下列动作数据不完整，已跳过：": "Tindakan berikut datanya tidak lengkap dan dilewati:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "Setelah memilih tabel titik sumber, metode hanya-baca yang akan dibuat dicantumkan di sini per kode fungsi",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Metode dibuat dari tabel titik sumber (satu tindakan kode fungsi = satu metode); hanya-baca, tidak dapat ditambah, diubah, atau dihapus manual",
   "功能名称": "Nama Fungsi",
   "您真的要删除这个服务吗？": "Yakin ingin menghapus layanan ini?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Harap isi nama layanan dan pilih metode perangkat dependen serta tabel titik sumber",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Biarkan kosong: bit ini tidak punya nilai sendiri dan dibaca dari bitmask keseluruhan",
   "整段位掩码字段名": "Nama field bitmask keseluruhan",
   "未逐位命名，只按整段位掩码读": "Tidak ada bit yang diberi nama satu per satu; dibaca sebagai bitmask keseluruhan",
-  "同一应答里的取值名不能重复": "Nama nilai dalam satu respons harus unik"
+  "同一应答里的取值名不能重复": "Nama nilai dalam satu respons harus unik",
+  "调用周期": "Interval panggilan",
+  "秒": "detik",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Metode dihasilkan dari tabel titik (satu aksi kode fungsi = satu metode); semuanya hanya-baca kecuali polling otomatis dan interval panggilan",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Kosong = tanpa panggilan otomatis, hanya manual; metode tulis tidak dapat dipanggil otomatis",
+  "自动轮询": "Polling otomatis",
+  "停用": "Nonaktif",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Aktif = server memanggil metode secara otomatis sesuai interval panggilan; Nonaktif = dijeda (interval tetap disimpan)"
 }

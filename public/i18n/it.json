@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Tabella punti di origine non disponibile (forse eliminata o non appartenente a questa organizzazione). I valori memorizzati nel servizio vengono mostrati così come sono e non saranno modificati al salvataggio.",
   "下列动作数据不完整，已跳过：": "Le seguenti azioni hanno dati incompleti e sono state ignorate:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "Dopo aver selezionato una tabella punti di origine, qui vengono elencati per codice funzione i metodi di sola lettura da generare",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "I metodi sono generati dalla tabella punti di origine (un'azione codice funzione = un metodo); sola lettura, non è possibile aggiungerli, modificarli o eliminarli manualmente",
   "功能名称": "Nome funzione",
   "您真的要删除这个服务吗？": "Vuoi davvero eliminare questo servizio?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Inserisci il nome del servizio e seleziona il metodo e la tabella punti di origine del dispositivo dipendente",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Se lasciato vuoto, questo bit non ha un valore proprio e viene letto dalla maschera di bit completa",
   "整段位掩码字段名": "Nome del campo maschera di bit completa",
   "未逐位命名，只按整段位掩码读": "Nessun bit denominato singolarmente; si legge come maschera di bit completa",
-  "同一应答里的取值名不能重复": "I nomi dei valori in una stessa risposta devono essere univoci"
+  "同一应答里的取值名不能重复": "I nomi dei valori in una stessa risposta devono essere univoci",
+  "调用周期": "Intervallo di chiamata",
+  "秒": "secondi",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "I metodi vengono generati dalla tabella dei punti (un’azione di codice funzione = un metodo); tutto è in sola lettura tranne l’interrogazione automatica e l’intervallo di chiamata",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Vuoto = nessuna chiamata automatica, solo manuale; i metodi di scrittura non possono essere chiamati automaticamente",
+  "自动轮询": "Interrogazione automatica",
+  "停用": "Disattivato",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Attivato = il server chiama il metodo automaticamente secondo l’intervallo di chiamata; Disattivato = in pausa (intervallo conservato)"
 }

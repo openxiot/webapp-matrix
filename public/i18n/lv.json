@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Avota punktu tabula nav pieejama (tā, iespējams, ir dzēsta vai nepieder šai organizācijai). Tālāk tiek rādīti pakalpojumā saglabātie dati; saglabājot tie netiks mainīti.",
   "下列动作数据不完整，已跳过：": "Šīm darbībām dati ir nepilnīgi, tās tika izlaistas:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "Pēc avota punktu tabulas atlases šeit pa funkciju kodiem tiks uzskaitītas ģenerējamās tikai lasāmas metodes",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Metodes tiek ģenerētas no avota punktu tabulas (viena funkcijas koda darbība = viena metode), tās ir tikai lasāmas, tās nevar manuāli pievienot, rediģēt vai dzēst",
   "功能名称": "Funkcijas nosaukums",
   "您真的要删除这个服务吗？": "Vai tiešām vēlaties dzēst šo pakalpojumu?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Ievadiet pakalpojuma nosaukumu un atlasiet atkarīgās ierīces metodi un avota punktu tabulu",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Ja atstāj tukšu, šim bitam nav savas vērtības un to nolasa no visas bitu maskas",
   "整段位掩码字段名": "Visas bitu maskas lauka nosaukums",
   "未逐位命名，只按整段位掩码读": "Neviens bits nav nosaukts atsevišķi; nolasa kā visu bitu masku",
-  "同一应答里的取值名不能重复": "Vienas atbildes vērtību nosaukumiem jābūt unikāliem"
+  "同一应答里的取值名不能重复": "Vienas atbildes vērtību nosaukumiem jābūt unikāliem",
+  "调用周期": "Izsaukšanas intervāls",
+  "秒": "sekundes",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Metodes tiek ģenerētas no punktu tabulas (viena funkcijas koda darbība = viena metode); viss ir tikai lasāms, izņemot automātisko aptauju un izsaukšanas intervālu",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Tukšs = nav automātiska izsaukuma, tikai manuāli; rakstīšanas metodes nevar izsaukt automātiski",
+  "自动轮询": "Automātiska aptauja",
+  "停用": "Atspējots",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Iespējots = serveris izsauc metodi automātiski atbilstoši izsaukšanas intervālam; Atspējots = apturēts (intervāls tiek saglabāts)"
 }

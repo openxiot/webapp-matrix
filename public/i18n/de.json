@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Quellpunkttabelle nicht verfügbar (möglicherweise gelöscht oder gehört nicht zu dieser Organisation). Die im Dienst gespeicherten Werte werden unverändert angezeigt und beim Speichern nicht geändert.",
   "下列动作数据不完整，已跳过：": "Folgende Aktionen haben unvollständige Daten und wurden übersprungen:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "Nach Auswahl einer Quellpunkttabelle werden hier die zu erzeugenden schreibgeschützten Methoden nach Funktionscode aufgelistet",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Methoden werden aus der Quellpunkttabelle erzeugt (eine Funktionscode-Aktion = eine Methode); schreibgeschützt, manuelles Hinzufügen, Ändern oder Löschen ist nicht möglich",
   "功能名称": "Funktionsname",
   "您真的要删除这个服务吗？": "Möchten Sie diesen Dienst wirklich löschen?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Bitte Dienstnamen eingeben und Methode sowie Quellpunkttabelle des abhängigen Geräts auswählen",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Leer lassen: Dieses Bit hat keinen eigenen Wert und wird aus der gesamten Bitmaske gelesen",
   "整段位掩码字段名": "Feldname der gesamten Bitmaske",
   "未逐位命名，只按整段位掩码读": "Kein Bit einzeln benannt; wird als gesamte Bitmaske gelesen",
-  "同一应答里的取值名不能重复": "Wertnamen innerhalb einer Antwort müssen eindeutig sein"
+  "同一应答里的取值名不能重复": "Wertnamen innerhalb einer Antwort müssen eindeutig sein",
+  "调用周期": "Aufrufintervall",
+  "秒": "Sekunden",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Methoden werden aus der Punktliste erzeugt (eine Funktionscode-Aktion = eine Methode); alles außer automatischer Abfrage und dem Aufrufintervall ist schreibgeschützt",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Leer lassen = kein automatischer Aufruf, nur manuell; Schreibmethoden können nicht automatisch aufgerufen werden",
+  "自动轮询": "Automatische Abfrage",
+  "停用": "Deaktiviert",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Aktiviert = der Server ruft die Methode automatisch im Aufrufintervall auf; Deaktiviert = pausiert (Intervall bleibt erhalten)"
 }

@@ -7,6 +7,8 @@ import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTableModule } from 'ng-zorro-antd/table';
@@ -33,6 +35,8 @@ import { DeviceServiceEditor } from '../editor/device.service.editor';
     NzFormModule,
     NzSelectModule,
     NzInputModule,
+    NzInputNumberModule,
+    NzSwitchModule,
     NzButtonModule,
     NzTagModule,
     NzTableModule,

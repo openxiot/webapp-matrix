@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Källpunktabellen är inte tillgänglig (den kan ha tagits bort eller tillhöra en annan organisation). Nedan visas värdena från tjänsten som de är, och de ändras inte vid sparande.",
   "下列动作数据不完整，已跳过：": "Följande åtgärder har ofullständiga data och hoppades över:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "När en källpunktabell har valts listas de skrivskyddade metoder som skapas här, grupperade efter funktionskod",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Metoder genereras från källpunktabellen (en funktionskodåtgärd = en metod); skrivskyddat, kan inte läggas till, ändras eller tas bort manuellt",
   "功能名称": "Funktionsnamn",
   "您真的要删除这个服务吗？": "Är du säker på att du vill ta bort den här tjänsten?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Ange ett tjänstenamn och välj den beroende enhetens metod och källpunktabell",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Lämna tomt: denna bit har inget eget värde och läses från hela bitmasken",
   "整段位掩码字段名": "Fältnamn för hela bitmasken",
   "未逐位命名，只按整段位掩码读": "Ingen bit namngiven enskilt; läses som hela bitmasken",
-  "同一应答里的取值名不能重复": "Värdenamn i samma svar måste vara unika"
+  "同一应答里的取值名不能重复": "Värdenamn i samma svar måste vara unika",
+  "调用周期": "Anropsintervall",
+  "秒": "sekunder",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Metoder genereras från punktlistan (en funktionskodåtgärd = en metod); allt är skrivskyddat utom automatisk pollning och anropsintervallet",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Tomt = inget automatiskt anrop, endast manuellt; skrivmetoder kan inte anropas automatiskt",
+  "自动轮询": "Automatisk pollning",
+  "停用": "Inaktiverad",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Aktiverad = servern anropar metoden automatiskt enligt anropsintervallet; Inaktiverad = pausad (intervallet behålls)"
 }

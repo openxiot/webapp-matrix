@@ -8,7 +8,9 @@
  *   字段名取自动作的 fieldNames（留空用默认名）；写动作（05/06/0F/10）的应答是请求回显、
  *   没有读值，给空数组。
  *
- * 纯函数、无 Angular 依赖，供「添加/编辑服务」页在选中点表后即时展开成只读预览。
+ * 纯函数、无 Angular 依赖，供「添加/编辑服务」页在选中点表后即时展开成预览
+ * （名称/请求帧/应答字段只读，只有「调用周期」由用户在预览表里改 —— 周期不属于点表，
+ * 由宿主页另存一份并在此处合进方法定义）。
  */
 import {
   ModbusCommand,
@@ -205,6 +207,87 @@ export function describeServiceField(field: ModbusServiceField): string {
 
 /** 写方法（无 response）的提示文案 i18n key —— 页面自写文案，由调用方走翻译；响应的字段文案来自点表数据，不翻译。 */
 export const WRITE_METHOD_REPLY_KEY = '写方法（应答为请求回显，无返回字段）';
+
+/**
+ * 请求帧里的功能码（两位大写 16 进制）：帧结构 [slave][fc][...]，即第二个字节。
+ * 帧缺失 / 太短 / 不是 16 进制时返回 undefined —— 判不出功能码就当「不是读方法」，
+ * 与后端 ModbusFrameCodec 取 fc 的口径一致（后端从请求帧第二字节判定读写）。
+ */
+export function functionFcOf(request: string | undefined): string | undefined {
+  const hex = (request ?? '').replace(/\s+/g, '');
+  if (hex.length < 4) {
+    return undefined;
+  }
+  const fc = hex.slice(2, 4).toUpperCase();
+  return /^[0-9A-F]{2}$/.test(fc) ? fc : undefined;
+}
+
+/**
+ * 方法是否读方法（fc 01/02/03/04）。
+ *
+ * 只有读方法能挂自动调用周期：写方法的应答是请求回显，周期调用等于让服务端周期性地往寄存器里
+ * 写值，后端 ModbusServiceValidator 会直接拒（`only read functions (fc 01/02/03/04) can be polled`）。
+ */
+export function isReadFunction(func: ModbusServiceFunction): boolean {
+  return READ_FCS.has(functionFcOf(func.request) ?? '');
+}
+
+/**
+ * 用户在方法预览表里能改的两样：自动轮询开关与调用周期。
+ *
+ * 两者是一件事的两面（开关决定跑不跑、周期决定多久跑一次），故一起存、一起合进方法定义，
+ * 由宿主页按 `点表ID#方法序号` 存一份（方法列表是拿点表现场重算的，自带不了）。
+ */
+export interface FunctionPoll {
+  /** 调用周期（秒）；undefined = 没配周期（此时开关也无从开起） */
+  interval?: number;
+  /** 轮询开关：true 启用 / false 暂停（周期保留）；undefined = 未表态，按「有周期即启用」判定 */
+  polling?: boolean;
+}
+
+/**
+ * 编辑页「有没有真正改过」的基线：**只装用户能改的东西**（名称 / 依赖服务 / 依赖方法 / 源点表 /
+ * 各方法的轮询配置）。
+ *
+ * 方法列表本体不进来：它是拿所选点表现场重算的，存的那份与算出来的那份在同一次生成口径下必然一致，
+ * 而一旦生成器口径演进（字段名、bit-list、格式兜底这些），一进页面就会被判成「已修改」——
+ * 那不是用户改的，保存按钮不该亮。
+ */
+export interface ServiceBaseline {
+  /** 名称（trim 后：与保存时落库的口径一致） */
+  name: string;
+  siid: number | null;
+  aiid: number | null;
+  configId: string | null;
+  /** 轮询配置表的快照（见 {@link pollSignature}） */
+  polls: string;
+}
+
+/** 当前表单相对基线是否改过（新增页没有原值可比，由调用方直接当「改过」）。 */
+export function serviceChanged(base: ServiceBaseline, current: ServiceBaseline): boolean {
+  return (
+    base.name !== current.name ||
+    base.siid !== current.siid ||
+    base.aiid !== current.aiid ||
+    base.configId !== current.configId ||
+    base.polls !== current.polls
+  );
+}
+
+/**
+ * 轮询配置表的可比较快照：按 key 排序后序列化 —— Map 的遍历顺序是插入顺序，
+ * 直接序列化会被「先改哪个方法」影响，同一份配置比出两种结果。
+ *
+ * 值摊平成 `[周期, 开关]` 再比：开关没表态（undefined）与显式 true 在渲染上是同一件事，
+ * 摊平后两者都写成 true，切来切去不会凭空多出一次「已修改」。
+ */
+export function pollSignature(polls: Map<string, FunctionPoll>): string {
+  return JSON.stringify(
+    [...polls.entries()]
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([key, poll]) => [key, poll.interval ?? null, poll.polling ?? (poll.interval != null)]),
+  );
+}
 
 /** 一个方法的应答字段文案；写方法（无 response）没有返回字段，返回 null 交给调用方给提示文案 */
 export function describeFunctionResponse(func: ModbusServiceFunction): string | null {

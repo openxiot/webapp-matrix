@@ -28,7 +28,7 @@ import {
   ModbusService as ModbusServiceDef,
   ModbusServiceFunction,
 } from '../../../../../../typedef/define/modbus/ModbusService';
-import { WRITE_METHOD_REPLY_KEY, describeFunctionResponse } from '../service.functions';
+import { WRITE_METHOD_REPLY_KEY, describeFunctionResponse, isReadFunction } from '../service.functions';
 
 /** 一次调用的结果：调的是哪个方法、返回了什么 */
 interface InvokeResult {
@@ -277,6 +277,33 @@ export class DeviceServiceDetailComponent implements OnInit {
 
   protected responseText(func: ModbusServiceFunction): string {
     return describeFunctionResponse(func) ?? this.i18n.translate.instant(WRITE_METHOD_REPLY_KEY);
+  }
+
+  /**
+   * 方法的自动调用周期：没配周期（含全部写方法）= 只手动调用，显示 -；
+   * 配了就是周期值，停用（开关关着）时也照常显示 —— 那是留着待用的配置。
+   */
+  protected intervalText(func: ModbusServiceFunction): string {
+    if (func.interval == null) {
+      return '-';
+    }
+    return `${func.interval} ${this.i18n.translate.instant('秒')}`;
+  }
+
+  /**
+   * 自动轮询状态：启用 / 停用（周期保留）/ -（写方法或没配周期）。
+   * 服务里没写 polling 的定义按「有周期即启用」算，与后端 validatePolling 的缺省判定一致。
+   */
+  protected pollingText(func: ModbusServiceFunction): string {
+    if (!isReadFunction(func) || func.interval == null) {
+      return '-';
+    }
+    return this.i18n.translate.instant(func.polling === false ? '停用' : '启用');
+  }
+
+  /** 自动轮询是否停着（模板给标签上色用：停用是灰的，启用是绿的） */
+  protected pollingOff(func: ModbusServiceFunction): boolean {
+    return isReadFunction(func) && func.interval != null && func.polling === false;
   }
 
   protected updateTime(service: ModbusServiceDef): string | number | null {

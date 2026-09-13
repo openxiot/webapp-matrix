@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Bronpunttabel niet beschikbaar (mogelijk verwijderd of behoort niet tot deze organisatie). De in de dienst opgeslagen waarden worden ongewijzigd getoond en worden bij opslaan niet gewijzigd.",
   "下列动作数据不完整，已跳过：": "De volgende acties hebben onvolledige gegevens en zijn overgeslagen:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "Na het selecteren van een bronpunttabel worden hier per functiecode de aan te maken alleen-lezen methoden weergegeven",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Methoden worden gegenereerd uit de bronpunttabel (één functiecode-actie = één methode); alleen-lezen, handmatig toevoegen, wijzigen of verwijderen is niet mogelijk",
   "功能名称": "Functienaam",
   "您真的要删除这个服务吗？": "Weet u zeker dat u deze dienst wilt verwijderen?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Vul de dienstnaam in en selecteer de methode en bronpunttabel van het afhankelijke apparaat",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Leeg laten: dit bit heeft geen eigen waarde en wordt uit de volledige bitmasker gelezen",
   "整段位掩码字段名": "Veldnaam van de volledige bitmasker",
   "未逐位命名，只按整段位掩码读": "Geen enkel bit afzonderlijk benoemd; wordt als volledige bitmasker gelezen",
-  "同一应答里的取值名不能重复": "Waardenamen binnen één antwoord moeten uniek zijn"
+  "同一应答里的取值名不能重复": "Waardenamen binnen één antwoord moeten uniek zijn",
+  "调用周期": "Aanroepperiode",
+  "秒": "seconden",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Methoden worden gegenereerd uit de puntenlijst (één functiecode-actie = één methode); alles is alleen-lezen behalve automatisch pollen en de aanroepperiode",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Leeg laten = geen automatische aanroep, alleen handmatig; schrijfmethoden kunnen niet automatisch worden aangeroepen",
+  "自动轮询": "Automatisch pollen",
+  "停用": "Uitgeschakeld",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Ingeschakeld = de server roept de methode automatisch aan volgens de aanroepperiode; Uitgeschakeld = gepauzeerd (periode blijft bewaard)"
 }

@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Níl an tábla pointí foinse ar fáil (b'fhéidir gur scriosadh é nó nach mbaineann sé leis an eagraíocht seo). Taispeántar na luachanna atá stóráilte sa tseirbhís mar atá siad, agus ní athrófar iad nuair a shábhálfar.",
   "下列动作数据不完整，已跳过：": "Tá sonraí neamhiomlán ag na gníomhartha seo a leanas agus scipeáladh iad:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "Tar éis tábla pointí foinse a roghnú, liostófar anseo de réir cóid feidhme na modhanna inléite a ghinfear",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Gintear na modhanna ón tábla pointí foinse (gníomh amháin cóid feidhme = modh amháin); taispeántar mar inléite iad, ní féidir iad a chur leis, a chur in eagar ná a bhaint de láimh",
   "功能名称": "Ainm Feidhme",
   "您真的要删除这个服务吗？": "An bhfuil tú cinnte gur mhaith leat an tseirbhís seo a scriosadh?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Líon isteach ainm na seirbhíse agus roghnaigh modh an ghléis shpleách agus an tábla pointí foinse",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Fág folamh: níl a luach féin ag an giotán seo agus léitear é ón masc giotán iomlán",
   "整段位掩码字段名": "Ainm réimse an mhaisc ghiotáin iomláin",
   "未逐位命名，只按整段位掩码读": "Níl aon ghiotán ainmnithe go haonarach; léitear mar mhasc giotán iomlán",
-  "同一应答里的取值名不能重复": "Caithfidh ainmneacha luachanna laistigh de fhreagra amháin a bheith uathúil"
+  "同一应答里的取值名不能重复": "Caithfidh ainmneacha luachanna laistigh de fhreagra amháin a bheith uathúil",
+  "调用周期": "Eatramh glaoch",
+  "秒": "soicind",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Gintear modhanna ón tábla pointí (gníomh amháin de chód feidhme = modh amháin); tá gach rud inléite amháin seachas fiosrú uathoibríoch agus an t-eatramh glaoch",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Folamh = gan glaoch uathoibríoch, láimhe amháin; ní féidir modhanna scríofa a ghlaoch go huathoibríoch",
+  "自动轮询": "Fiosrú uathoibríoch",
+  "停用": "Díchumasaithe",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Cumasaithe = glaonn an freastalaí ar an modh go huathoibríoch de réir an eatraimh glaoch; Díchumasaithe = ar sos (coinnítear an t-eatramh)"
 }

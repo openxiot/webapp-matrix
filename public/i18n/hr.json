@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Izvorna tablica točaka nije dostupna (možda je izbrisana ili pripada drugoj organizaciji). U nastavku su prikazane vrijednosti spremljene u usluzi takve kakve jesu; spremanje ih neće promijeniti.",
   "下列动作数据不完整，已跳过：": "Sljedeće radnje imaju nepotpune podatke i preskočene su:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "Nakon odabira izvorne tablice točaka ovdje će se po redu prema kodovima funkcija prikazati metode samo za čitanje koje će se stvoriti",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Metode se stvaraju iz izvorne tablice točaka (jedna radnja koda funkcije = jedna metoda); prikaz samo za čitanje, nije ih moguće ručno dodavati, uređivati ni brisati",
   "功能名称": "Naziv funkcije",
   "您真的要删除这个服务吗？": "Jeste li sigurni da želite izbrisati ovu uslugu?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Unesite naziv usluge i odaberite metodu ovisnog uređaja te izvornu tablicu točaka",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Ako ostane prazno, ovaj bit nema vlastitu vrijednost i čita se iz cijele bitmaske",
   "整段位掩码字段名": "Naziv polja cijele bitmaske",
   "未逐位命名，只按整段位掩码读": "Nijedan bit nije pojedinačno nazvan; čita se kao cijela bitmaska",
-  "同一应答里的取值名不能重复": "Nazivi vrijednosti u istom odgovoru moraju biti jedinstveni"
+  "同一应答里的取值名不能重复": "Nazivi vrijednosti u istom odgovoru moraju biti jedinstveni",
+  "调用周期": "Interval poziva",
+  "秒": "sekundi",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Metode se generiraju iz tablice točaka (jedna radnja koda funkcije = jedna metoda); sve je samo za čitanje osim automatskog ispitivanja i intervala poziva",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Prazno = bez automatskog poziva, samo ručno; metode pisanja ne mogu se pozivati automatski",
+  "自动轮询": "Automatsko ispitivanje",
+  "停用": "Onemogućeno",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Omogućeno = poslužitelj automatski poziva metodu prema intervalu poziva; Onemogućeno = pauzirano (interval se čuva)"
 }

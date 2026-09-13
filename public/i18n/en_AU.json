@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Source point table unavailable (it may have been deleted or belong to another organisation). The values stored in the service are shown as-is and will not be changed on save.",
   "下列动作数据不完整，已跳过：": "The following actions have incomplete data and were skipped:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "After choosing a source point table, the read-only methods to be generated are listed here by function code",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Methods are generated from the source point table (one function-code action = one method); read-only, cannot be added, edited or removed manually",
   "功能名称": "Function Name",
   "您真的要删除这个服务吗？": "Are you sure you want to delete this service?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Please enter a service name and choose the dependent device's method and source point table",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Leave blank: this bit gets no value of its own and is read from the whole bitmask",
   "整段位掩码字段名": "Whole-bitmask field name",
   "未逐位命名，只按整段位掩码读": "No bit named individually; read from the whole bitmask",
-  "同一应答里的取值名不能重复": "Value names within one response must be unique"
+  "同一应答里的取值名不能重复": "Value names within one response must be unique",
+  "调用周期": "Call Interval",
+  "秒": "seconds",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Methods are generated from the point table (one function-code action = one method); everything is read-only except automatic polling and the call interval",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Leave blank = no automatic call, manual only; write methods cannot be called automatically",
+  "自动轮询": "Automatic polling",
+  "停用": "Disabled",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Enabled = the server calls it automatically on the call interval; Disabled = paused (interval kept)"
 }

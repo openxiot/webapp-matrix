@@ -58,6 +58,8 @@
           <th nzWidth="200px">{{ '方法名称' | translate }}</th>
           <th>{{ '请求帧' | translate }}</th>
           <th nzWidth="320px">{{ '应答字段' | translate }}</th>
+          <th nzWidth="110px">{{ '自动轮询' | translate }}</th>
+          <th nzWidth="110px">{{ '调用周期' | translate }}</th>
           <th nzWidth="100px">{{ '操作' | translate }}</th>
         </tr>
         </thead>
@@ -68,6 +70,17 @@
               <td>{{ func.name }}</td>
               <td><code class="service-detail-frame">{{ func.request }}</code></td>
               <td>{{ responseText(func) }}</td>
+              <td>
+                <!-- 启用 / 停用（周期保留）/ -（写方法或没配周期） -->
+                @if (pollingText(func) === '-') {
+                  -
+                } @else {
+                  <nz-tag [nzColor]="pollingOff(func) ? 'default' : 'success'">
+                    {{ pollingText(func) }}
+                  </nz-tag>
+                }
+              </td>
+              <td>{{ intervalText(func) }}</td>
               <td>
                 <button
                   nz-button

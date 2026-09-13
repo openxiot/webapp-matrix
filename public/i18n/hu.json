@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "A forrás ponttáblázat nem érhető el (lehet, hogy törölték, vagy más szervezethez tartozik). Az alábbiak a szolgáltatásban tárolt értékeket mutatják változatlanul; a mentés nem módosítja őket.",
   "下列动作数据不完整，已跳过：": "A következő műveletek adatai hiányosak, ezért kihagytuk őket:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "A forrás ponttáblázat kiválasztása után itt funkciókódok szerint soroljuk fel a létrehozandó írásvédett metódusokat",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "A metódusok a forrás ponttáblázatból generálódnak (egy funkciókód-művelet = egy metódus); írásvédett megjelenítés, kézzel nem adhatók hozzá, nem szerkeszthetők és nem törölhetők",
   "功能名称": "Funkció neve",
   "您真的要删除这个服务吗？": "Biztosan törölni szeretné ezt a szolgáltatást?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Adja meg a szolgáltatás nevét, és válassza ki a függő eszköz metódusát és a forrás ponttáblázatot",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Ha üresen hagyja, ennek a bitnek nincs saját értéke, és a teljes bitmaszkból olvasható",
   "整段位掩码字段名": "A teljes bitmaszk mezőneve",
   "未逐位命名，只按整段位掩码读": "Egyetlen bit sincs külön elnevezve; a teljes bitmaszkként olvasható",
-  "同一应答里的取值名不能重复": "Egy válaszon belül az értékneveknek egyedinek kell lenniük"
+  "同一应答里的取值名不能重复": "Egy válaszon belül az értékneveknek egyedinek kell lenniük",
+  "调用周期": "Hívási intervallum",
+  "秒": "másodperc",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "A metódusok a ponttáblából generálódnak (egy funkciókód-művelet = egy metódus); az automatikus lekérdezés és a hívási intervallum kivételével minden csak olvasható",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Üres = nincs automatikus hívás, csak kézi; az író metódusok nem hívhatók automatikusan",
+  "自动轮询": "Automatikus lekérdezés",
+  "停用": "Letiltva",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Engedélyezve = a szerver a hívási intervallum szerint automatikusan hívja a metódust; Letiltva = szüneteltetve (az intervallum megmarad)"
 }

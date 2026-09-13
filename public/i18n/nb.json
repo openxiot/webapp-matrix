@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Kildepunktabellen er utilgjengelig (den kan være slettet eller tilhøre en annen organisasjon). Nedenfor vises verdiene fra tjenesten som de er, og de endres ikke ved lagring.",
   "下列动作数据不完整，已跳过：": "Følgende handlinger har ufullstendige data og ble hoppet over:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "Når en kildepunktabell er valgt, listes de skrivebeskyttede metodene som opprettes, her gruppert etter funksjonskode",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Metoder genereres fra kildepunktabellen (én funksjonskodehandling = én metode); skrivebeskyttet, kan ikke legges til, endres eller slettes manuelt",
   "功能名称": "Funksjonsnavn",
   "您真的要删除这个服务吗？": "Er du sikker på at du vil slette denne tjenesten?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Angi et tjenestenavn og velg den avhengige enhetens metode og kildepunktabell",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Tomt felt: denne biten har ingen egen verdi og leses fra hele bitmasken",
   "整段位掩码字段名": "Feltnavn for hele bitmasken",
   "未逐位命名，只按整段位掩码读": "Ingen bit er navngitt enkeltvis; leses som hele bitmasken",
-  "同一应答里的取值名不能重复": "Verdinavn i samme svar må være unike"
+  "同一应答里的取值名不能重复": "Verdinavn i samme svar må være unike",
+  "调用周期": "Kalleintervall",
+  "秒": "sekunder",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Metoder genereres fra punktlisten (én funksjonskode-handling = én metode); alt er skrivebeskyttet unntatt automatisk polling og kalleintervallet",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Tomt = ingen automatisk kall, kun manuelt; skrivemetoder kan ikke kalles automatisk",
+  "自动轮询": "Automatisk polling",
+  "停用": "Deaktivert",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Aktivert = serveren kaller metoden automatisk etter kalleintervallet; Deaktivert = satt på pause (intervallet beholdes)"
 }

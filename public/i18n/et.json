@@ -287,7 +287,6 @@
   "取不到源点表（可能已删除或不属于本组织），下面按服务里存的原样展示，保存不会改动它们": "Allika punktitabel pole saadaval (see võib olla kustutatud või kuuluda teisele organisatsioonile). Allpool kuvatakse teenuses salvestatud andmed; salvestamisel neid ei muudeta.",
   "下列动作数据不完整，已跳过：": "Järgmiste toimingute andmed on puudulikud ja need jäeti vahele:",
   "选择源点表后，这里按功能码逐个列出将要生成的只读方法": "Pärast allika punktitabeli valimist loetletakse siin funktsioonikoodide kaupa loodavad ainult lugemise meetodid",
-  "方法由源点表生成（一个功能码动作 = 一个方法），只读展示，不能手工增删改": "Meetodid luuakse allika punktitabelist (üks funktsioonikoodi toiming = üks meetod), kuvatakse ainult lugemiseks, neid ei saa käsitsi lisada, muuta ega kustutada",
   "功能名称": "Funktsiooni nimi",
   "您真的要删除这个服务吗？": "Kas soovite kindlasti selle teenuse kustutada?",
   "请填写服务名称，并选择依赖设备的方法与源点表": "Sisestage teenuse nimi ning valige sõltuva seadme meetod ja allika punktitabel",
@@ -352,5 +351,12 @@
   "留空则该位不单独出值，仍可从整段位掩码读": "Tühjaks jättes ei ole sellel bitil oma väärtust ja seda loetakse kogu bitimaskist",
   "整段位掩码字段名": "Kogu bitimaski välja nimi",
   "未逐位命名，只按整段位掩码读": "Ükski bitt ei ole eraldi nimetatud; loetakse kogu bitimaskina",
-  "同一应答里的取值名不能重复": "Ühe vastuse väärtuste nimed peavad olema kordumatud"
+  "同一应答里的取值名不能重复": "Ühe vastuse väärtuste nimed peavad olema kordumatud",
+  "调用周期": "Kutseintervall",
+  "秒": "sekundit",
+  "方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读": "Meetodid luuakse punktitabelist (üks funktsioonikoodi toiming = üks meetod); kõik on ainult lugemiseks peale automaatse küsitluse ja kutseintervalli",
+  "留空 = 不自动调用，只手动调用；写方法不能自动调用": "Tühi = automaatset kutset ei ole, ainult käsitsi; kirjutamismeetodeid ei saa automaatselt kutsuda",
+  "自动轮询": "Automaatne küsitlus",
+  "停用": "Keelatud",
+  "启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）": "Lubatud = server kutsub meetodit automaatselt kutseintervalli järgi; Keelatud = peatatud (intervall säilib)"
 }
