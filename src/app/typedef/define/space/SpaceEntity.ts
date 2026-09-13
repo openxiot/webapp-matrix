@@ -8,7 +8,6 @@ export class SpaceEntity {
   type: string = '';
   typeAlias: string = '';
   parentId: string = '';
-  rootId: string = '';
   level: number = 0;
   ancestors: string[] = [];
   sortOrder: number = 0;

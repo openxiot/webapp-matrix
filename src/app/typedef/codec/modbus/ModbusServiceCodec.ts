@@ -7,8 +7,7 @@ import { ModbusServiceFunctionCodec } from './ModbusServiceFunctionCodec';
  * Modbus 服务与 JSON 的互转（对应后端 ModbusServiceCodec）。
  *
  * decode 用于读取：主键是十六进制字符串，子结构逐个委派给各自的 Codec。
- * encode 用于请求体：id / orgId / creator / updater 不由请求体决定（id 由后端生成、org 取 X-Org-Id、
- * 人员取当前登录用户），故不输出。
+ * encode 用于请求体：id / creator / updater 不由请求体决定（id 由后端生成、人员取当前登录用户），故不输出。
  */
 export class ModbusServiceCodec {
   static decode(o: any): ModbusService {
@@ -16,9 +15,6 @@ export class ModbusServiceCodec {
 
     if (o.id != null) {
       x.id = o.id;
-    }
-    if (o.orgId != null) {
-      x.orgId = o.orgId;
     }
     x.name = o.name || '';
     if (o.version != null) {

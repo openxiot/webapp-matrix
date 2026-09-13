@@ -534,7 +534,6 @@ export class ProjectComponent implements OnInit {
         space.name = result.name.trim();
         space.type = result.type;
         space.parentId = parent.id;
-        space.rootId = this.rootId();
         space.sortOrder = 0;
 
         this.matrix.createSpace(space).subscribe({

@@ -27,10 +27,10 @@ import {
 
 /**
  * 自动调用周期的上下限（秒）：与后端 ModbusServiceValidator 的 MIN/MAX_INTERVAL_SECONDS 同口径 ——
- * 下限 3 秒（RS485 是共享总线，周期太密会把总线吃满），上限 3600 秒（再长就该由人手动调用，
+ * 下限 5 秒（RS485 是共享总线，周期太密会把总线吃满），上限 3600 秒（再长就该由人手动调用，
  * 而不是挂个几乎不跑的定时器）。两边改动要同步，否则前端放过去的值会被后端拒掉。
  */
-const MIN_INTERVAL_SECONDS = 3;
+const MIN_INTERVAL_SECONDS = 5;
 const MAX_INTERVAL_SECONDS = 3600;
 
 /**

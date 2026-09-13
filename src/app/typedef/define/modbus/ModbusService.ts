@@ -92,7 +92,7 @@ export class ModbusServiceFunction {
    * 配了周期不等于会跑：跑不跑看 {@link polling}。只对读方法（fc 01/02/03/04）有意义 ——
    * 写方法的应答是请求回显，周期调用等于让服务端周期性地往寄存器里写值，后端校验
    * （ModbusServiceValidator.validateInterval）直接拒，故写方法上不会出现这个字段；
-   * 取值 3 ~ 3600 秒（与后端校验同口径）。
+   * 取值 5 ~ 3600 秒（与后端校验同口径）。
    */
   interval?: number;
   /**
@@ -111,8 +111,6 @@ export class ModbusServiceFunction {
 export class ModbusService {
   /** 十六进制字符串主键（后端生成） */
   id?: string;
-  /** 所属组织（取 X-Org-Id，不由请求体决定） */
-  orgId?: string;
   /** 服务名称（展示用，如 1 号冷水机组） */
   name: string = '';
   /** 定义格式版本号：functions 内部结构演进时递增（新建由后端填 1） */

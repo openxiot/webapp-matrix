@@ -12,7 +12,6 @@ export class SpaceEntityCodec {
     x.type = o.type || '';
     x.typeAlias = o.typeAlias || '';
     x.parentId = o.parentId || '';
-    x.rootId = o.rootId || '';
     x.level = o.level || 0;
     x.ancestors = o.ancestors || [];
     x.sortOrder = o.sortOrder || 0;
@@ -33,7 +32,6 @@ export class SpaceEntityCodec {
       type: x.type,
       typeAlias: x.typeAlias,
       parentId: x.parentId,
-      rootId: x.rootId,
       level: x.level,
       ancestors: x.ancestors,
       sortOrder: x.sortOrder,

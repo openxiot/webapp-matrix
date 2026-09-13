@@ -83,7 +83,6 @@ export class ProjectCreateComponent implements OnInit {
     space.name = this.form.controls.name.value.trim();
     space.type = 'site';
     space.parentId = '';
-    space.rootId = '';
     space.sortOrder = 0;
 
     this.service.createSpace(space).subscribe({
