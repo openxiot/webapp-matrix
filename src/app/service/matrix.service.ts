@@ -41,12 +41,6 @@ export class MatrixService {
       .pipe(map((r) => SpaceEntityCodec.decode(r.data)));
   }
 
-  getSpaceTree(rootId: string): Observable<SpaceEntity> {
-    return this.http
-      .get<OxResponse>(`${this.server}/matrix/v1/space/tree/${rootId}`)
-      .pipe(map((r) => SpaceEntityCodec.decode(r.data)));
-  }
-
   getSpaceGraph(rootId: string): Observable<SpaceGraph> {
     return this.http
       .get<OxResponse>(`${this.server}/matrix/v1/space/graph/${rootId}`)
