@@ -447,6 +447,11 @@ export class ProjectComponent implements OnInit {
     return ['/main/device/services', service.did, 'service', 'detail', service.id];
   }
 
+  /** 服务历史数据页链接（路由见 device.routes.ts） */
+  serviceHistoryLink(service: GenericService): string[] {
+    return ['/main/device/services', service.did, 'service', 'history', service.id];
+  }
+
   /** 设备图标：按型号（URN 第 7 段）命中产品图标；未命中返回空串，由模板回退默认图标 */
   deviceIcon(device: DeviceEntity): string {
     return this.productIcons().get(this.deviceModel(device)) || '';

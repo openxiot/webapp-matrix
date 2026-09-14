@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { DatePipe, Location } from '@angular/common';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
@@ -13,6 +13,7 @@ import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { TranslatePipe } from '@ngx-translate/core';
 import { BreadcrumbTranslateDirective } from '../../../../../../common/components/breadcrumb/breadcrumb-translate.directive';
@@ -70,11 +71,12 @@ interface ResultRow {
     NzIconModule,
     BreadcrumbTranslateDirective,
     TranslatePipe,
+    NzSpaceModule,
   ],
 })
 export class DeviceServiceDetailComponent implements OnInit {
+  protected readonly location = inject(Location);
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly msg = inject(NzMessageService);
   private readonly account = inject(AccountService);
   private readonly matrix = inject(MatrixService);
@@ -115,7 +117,9 @@ export class DeviceServiceDetailComponent implements OnInit {
     const selfEntry = this.members().find((m) => m.userId === me.id);
     if (selfEntry?.role === 'admin') return true;
     const org = this.account.organization();
-    const orgEntry = this.rootSpace()?.accesses?.find((a) => a.type === 'organization' && a.id === org.id);
+    const orgEntry = this.rootSpace()?.accesses?.find(
+      (a) => a.type === 'organization' && a.id === org.id,
+    );
     if (orgEntry) {
       const meInOrg = org.members.find((m) => m.userId === me.id);
       return meInOrg !== undefined && meInOrg.role === 'admin';
@@ -249,8 +253,9 @@ export class DeviceServiceDetailComponent implements OnInit {
     return ['/main/device/services', this.did(), 'service', 'edit', this.id()];
   }
 
-  protected back(): void {
-    this.router.navigate(['/main/device/services', this.did()]);
+  /** 服务历史数据页路径（表格 / 曲线图两种形式，见 device.service.history.component） */
+  protected historyLink(): string[] {
+    return ['/main/device/services', this.did(), 'service', 'history', this.id()];
   }
 
   /** 源点表显示名：厂家 型号（点表取不到时退回 id） */
@@ -262,7 +267,8 @@ export class DeviceServiceDetailComponent implements OnInit {
     if (!cfg) {
       return configId;
     }
-    const label = `${cfg.slave?.manufacturer?.trim() ?? ''} ${cfg.slave?.model?.trim() ?? ''}`.trim();
+    const label =
+      `${cfg.slave?.manufacturer?.trim() ?? ''} ${cfg.slave?.model?.trim() ?? ''}`.trim();
     return label || configId;
   }
 

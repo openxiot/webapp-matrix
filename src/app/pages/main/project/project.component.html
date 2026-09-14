@@ -126,6 +126,10 @@
                 }
                 @case ('service') {
                   <a [routerLink]="serviceDetailLink(row.service!)">{{ '详情' | translate }}</a>
+
+                  <nz-divider nzType="vertical"></nz-divider>
+                  <a [routerLink]="serviceHistoryLink(row.service!)">{{ '历史' | translate }}</a>
+
                   @if (isAdmin()) {
                     <nz-divider nzType="vertical"></nz-divider>
                     <a (click)="removeService(row.service!)">{{ '删除' | translate }}</a>
@@ -133,10 +137,12 @@
                 }
                 @default {
                   <a [routerLink]="['/main/device/detail', row.device!.did]">{{ '详情' | translate }}</a>
+
                   @if (showMapping(row.device!)) {
                     <nz-divider nzType="vertical"></nz-divider>
                     <a [routerLink]="['/main/device/services', row.device!.did]">{{ '服务' | translate }}</a>
                   }
+
                   <!-- 调试 / 删除都要空间管理员；详情、服务对空间成员开放 -->
                   @if (isAdmin()) {
                     <nz-divider nzType="vertical"></nz-divider>

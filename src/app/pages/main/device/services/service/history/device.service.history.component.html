@@ -1,5 +1,9 @@
 <nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
-  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+  <nz-breadcrumb
+    [nzAutoGenerate]="true"
+    nz-page-header-breadcrumb
+    appBreadcrumbTranslate
+  ></nz-breadcrumb>
 
   <nz-page-header-extra>
     <button nz-button [nzLoading]="loading()" (click)="load()">
@@ -23,7 +27,7 @@
         {{ sampledCount() }} / {{ readFunctions().length }}
       </nz-descriptions-item>
       <nz-descriptions-item nzTitle="{{ '采集时间' | translate }}" [nzSpan]="1">
-        {{ lastRecordedAt() ? (lastRecordedAt() | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
+        {{ lastRecordedAt() ? (lastRecordedAt() | date: 'yyyy-MM-dd HH:mm:ss') : '-' }}
       </nz-descriptions-item>
     </nz-descriptions>
   </nz-page-header-content>
@@ -43,13 +47,15 @@
             nzSize="small"
             [nzOptions]="presetOptions()"
             [ngModel]="preset()"
-            (ngModelChange)="onPresetChange($event)"></nz-segmented>
+            (ngModelChange)="onPresetChange($event)"
+          ></nz-segmented>
           @if (preset() === 'custom') {
             <nz-range-picker
               nzSize="small"
               nzShowTime
               [ngModel]="customRange()"
-              (ngModelChange)="onCustomRangeChange($event)"></nz-range-picker>
+              (ngModelChange)="onCustomRangeChange($event)"
+            ></nz-range-picker>
           }
         </div>
 
@@ -59,7 +65,8 @@
             class="service-history-select"
             nzSize="small"
             [ngModel]="functionIndex()"
-            (ngModelChange)="onFunctionChange($event)">
+            (ngModelChange)="onFunctionChange($event)"
+          >
             <nz-option [nzValue]="0" [nzLabel]="'全部方法' | translate"></nz-option>
             @for (func of readFunctions(); track func.index) {
               <nz-option [nzValue]="func.index" [nzLabel]="functionLabel(func)"></nz-option>
@@ -72,7 +79,8 @@
             nzSize="small"
             [nzOptions]="viewOptions()"
             [ngModel]="view()"
-            (ngModelChange)="onViewChange($event)"></nz-segmented>
+            (ngModelChange)="onViewChange($event)"
+          ></nz-segmented>
         </div>
 
         @if (view() === 'chart') {
@@ -85,7 +93,8 @@
               nzSize="small"
               [nzMaxTagCount]="3"
               [ngModel]="chartFields()"
-              (ngModelChange)="onChartFieldsChange($event)">
+              (ngModelChange)="onChartFieldsChange($event)"
+            >
               @for (ref of numericFields(); track ref.key) {
                 <nz-option [nzValue]="ref.key" [nzLabel]="fieldLabel(ref)"></nz-option>
               }
@@ -105,7 +114,10 @@
       <nz-alert
         nzType="info"
         nzShowIcon
-        [nzMessage]="'数据点较多，已按时间区间降采样（值为该段平均值，括号内为最小~最大值）' | translate"></nz-alert>
+        [nzMessage]="
+          '数据点较多，已按时间区间降采样（值为该段平均值，括号内为最小~最大值）' | translate
+        "
+      ></nz-alert>
     }
 
     @if (view() === 'table') {
@@ -117,16 +129,17 @@
           [nzPageSize]="50"
           [nzShowSizeChanger]="false"
           [nzShowPagination]="rows().length > 50"
-          nzSize="small">
+          nzSize="small"
+        >
           <thead>
-          <tr>
-            <th nzWidth="230px">{{ '采集时间' | translate }}</th>
-            <th nzWidth="220px">{{ '方法' | translate }}</th>
-            <th nzWidth="220px">{{ '字段' | translate }}</th>
-            <th nzWidth="220px">{{ '值' | translate }}</th>
-            <th nzWidth="90px">{{ '单位' | translate }}</th>
-            <th>{{ '备注' | translate }}</th>
-          </tr>
+            <tr>
+              <th nzWidth="230px">{{ '采集时间' | translate }}</th>
+              <th nzWidth="220px">{{ '方法' | translate }}</th>
+              <th nzWidth="220px">{{ '字段' | translate }}</th>
+              <th nzWidth="220px">{{ '值' | translate }}</th>
+              <th nzWidth="90px">{{ '单位' | translate }}</th>
+              <th>{{ '备注' | translate }}</th>
+            </tr>
           </thead>
           <tbody>
             @for (row of rows(); track row.key) {
@@ -156,7 +169,9 @@
             <div class="service-history-chart">
               <div class="service-history-chart-head">
                 <span class="service-history-chart-field">{{ chart.field }}</span>
-                <span class="service-history-chart-method">#{{ chart.functionIndex }} {{ chart.functionName }}</span>
+                <span class="service-history-chart-method"
+                  >#{{ chart.functionIndex }} {{ chart.functionName }}</span
+                >
               </div>
               @if (chart.error) {
                 <nz-alert nzType="warning" nzShowIcon [nzMessage]="chart.error"></nz-alert>
@@ -174,7 +189,9 @@
         @if (f.summary.byType.length > 0 || f.summary.byRemoteCode.length > 0) {
           <div class="service-history-summary">
             @for (item of f.summary.byType; track item.type) {
-              <nz-tag nzColor="error" [title]="item.type">{{ failureLabel(item.type) }} × {{ item.count }}</nz-tag>
+              <nz-tag nzColor="error" [title]="item.type"
+                >{{ failureLabel(item.type) }} × {{ item.count }}</nz-tag
+              >
             }
             @for (item of f.summary.byRemoteCode; track item.remoteCode) {
               <nz-tag>{{ '异常' | translate }} {{ item.remoteCode }} × {{ item.count }}</nz-tag>
@@ -188,19 +205,20 @@
           [nzPageSize]="20"
           [nzShowSizeChanger]="false"
           [nzShowPagination]="f.items.length > 20"
-          nzSize="small">
+          nzSize="small"
+        >
           <thead>
-          <tr>
-            <th nzWidth="230px">{{ '采集时间' | translate }}</th>
-            <th nzWidth="120px">{{ '方法' | translate }}</th>
-            <th nzWidth="260px">{{ '类型' | translate }}</th>
-            <th>{{ '消息' | translate }}</th>
-          </tr>
+            <tr>
+              <th nzWidth="230px">{{ '采集时间' | translate }}</th>
+              <th nzWidth="120px">{{ '方法' | translate }}</th>
+              <th nzWidth="260px">{{ '类型' | translate }}</th>
+              <th>{{ '消息' | translate }}</th>
+            </tr>
           </thead>
           <tbody>
             @for (item of f.items; track $index) {
               <tr>
-                <td>{{ item.at | date:'yyyy-MM-dd HH:mm:ss' }}</td>
+                <td>{{ item.at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
                 <td>#{{ item.functionIndex }}</td>
                 <td>
                   {{ failureType(item) }}
@@ -214,7 +232,9 @@
           </tbody>
         </nz-table>
         @if (f.truncated) {
-          <div class="service-history-hint">{{ '异常记录超过上限，只列出最近的部分' | translate }}</div>
+          <div class="service-history-hint">
+            {{ '异常记录超过上限，只列出最近的部分' | translate }}
+          </div>
         }
       } @else if (failuresError()) {
         <nz-alert nzType="warning" nzShowIcon [nzMessage]="failuresError()"></nz-alert>

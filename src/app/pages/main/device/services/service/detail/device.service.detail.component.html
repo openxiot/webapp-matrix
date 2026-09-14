@@ -1,14 +1,25 @@
-<nz-page-header (nzBack)="back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
+<nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
   <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
 
   <nz-page-header-extra>
-    <!-- 编辑入口只给空间管理员；调用（方法列表里的按钮）仍是空间成员即可 -->
-    @if (isAdmin()) {
-      <button nz-button nzType="primary" [routerLink]="editLink()">
-        <span nz-icon nzType="edit"></span>
-        {{ '编辑' | translate }}
-      </button>
-    }
+    <nz-space>
+      <div *nzSpaceItem>
+        <button nz-button [routerLink]="historyLink()">
+          <nz-icon nzType="history" nzTheme="outline" />
+          {{ '历史' | translate }}
+        </button>
+      </div>
+
+      <!-- 编辑入口只给空间管理员；调用（方法列表里的按钮）仍是空间成员即可 -->
+      @if (isAdmin()) {
+        <div *nzSpaceItem>
+          <button nz-button nzType="primary" [routerLink]="editLink()">
+            <span nz-icon nzType="edit"></span>
+            {{ '编辑' | translate }}
+          </button>
+        </div>
+      }
+    </nz-space>
   </nz-page-header-extra>
 
   <nz-page-header-content>

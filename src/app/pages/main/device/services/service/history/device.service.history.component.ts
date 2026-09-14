@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { DatePipe, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -337,7 +344,9 @@ export class DeviceServiceHistoryComponent implements OnInit {
   });
 
   /** 命中降采样时给一句说明：表格里的括号与图上的虚线都靠它解释 */
-  readonly downsampled = computed(() => this.data().some((item) => item.range?.downsampled === true));
+  readonly downsampled = computed(() =>
+    this.data().some((item) => item.range?.downsampled === true),
+  );
 
   /** 取数失败的字段：一个字段失败不影响其余，表格没有挂错处，去重后统一提示在内容上方 */
   readonly loadErrors = computed<string[]>(() => {
@@ -568,7 +577,11 @@ export class DeviceServiceHistoryComponent implements OnInit {
 
   /** 默认勾选排在前面的若干个数值字段（不勾满：字段多时先给几张图看个大概） */
   private resetChartFields(): void {
-    this.chartFields.set(this.numericFields().slice(0, DEFAULT_CHART_FIELDS).map((ref) => ref.key));
+    this.chartFields.set(
+      this.numericFields()
+        .slice(0, DEFAULT_CHART_FIELDS)
+        .map((ref) => ref.key),
+    );
   }
 
   private resetPages(): void {
@@ -618,11 +631,7 @@ function refKey(functionIndex: number, field: string): string {
 }
 
 /** 应答字段 → 可取数的字段；数值判定见 {@link fieldRef} 里的说明 */
-function fieldRef(
-  func: ModbusServiceFunction,
-  field: ModbusServiceField,
-  step: boolean,
-): FieldRef {
+function fieldRef(func: ModbusServiceFunction, field: ModbusServiceField, step: boolean): FieldRef {
   return {
     key: refKey(func.index, field.field),
     functionIndex: func.index,
