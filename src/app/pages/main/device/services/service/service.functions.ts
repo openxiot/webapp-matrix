@@ -22,7 +22,11 @@ import {
   ModbusServiceFieldBit,
   ModbusServiceFunction,
 } from '../../../../../typedef/define/modbus/ModbusService';
-import { MODBUS_ALARM_OPERATORS } from '../../../../../typedef/define/modbus/ModbusAlarm';
+import {
+  MODBUS_ALARM_LEVELS,
+  MODBUS_ALARM_OPERATORS,
+  newAlarmId,
+} from '../../../../../typedef/define/modbus/ModbusAlarm';
 import { buildRequestFrame } from '../../../modbus/editor/request/request.frame';
 import {
   READ_BIT_FCS,
@@ -193,13 +197,44 @@ function formatOf(dataType: string | undefined, bytes: number): string {
 export function describeServiceField(field: ModbusServiceField): string {
   const parts = [describeFieldType(field)];
   // 已启用的告警缀在最后：这一行是「这个方法返回什么、越限会不会报」的摘要，
-  // 漏掉告警就少说了一件事（字段自身与各位各一份，与展开行里的行序一致）
-  for (const alarm of [field.alarm, ...(field.bitList ?? []).map((bit) => bit.alarm)]) {
-    if (alarm?.enabled) {
+  // 漏掉告警就少说了一件事（字段自身与各位各一份，与展开行里的行序一致）。
+  // 一个出值可能配了一组分级规则，这里只缀**级别最高**的那条 —— 与运行期「同时只留最严重的一条」
+  // 同口径，也正是用户最该先看到的那句（完整的一组展开就见，故不缀条数）
+  for (const alarms of [field.alarms, ...(field.bitList ?? []).map((bit) => bit.alarms)]) {
+    const alarm = primaryAlarm(alarms);
+    if (alarm != null) {
       parts.push(`→ ${alarmBrief(alarm)}`);
     }
   }
   return parts.join(' ');
+}
+
+/**
+ * 一组规则里**真正会生效**的那条：已启用的规则中级别最高的，
+ * 与后端 `ModbusAlarmPolicy` 的选举同一条口径（见 {@link ModbusServiceField.alarms}）。
+ *
+ * 它只是**摘要的取法**，不是判定：值有没有越限要看采样，这里无从得知，
+ * 所以取的是「启用规则里最重的那条」而不是「命中的那些里最重的那条」。级别缺省的按最低算。
+ * 同级并列取**声明顺序靠后**的那条（`>=` 而不是 `>`），与后端一致。
+ */
+export function primaryAlarm(
+  alarms: ModbusServiceFieldAlarm[] | undefined,
+): ModbusServiceFieldAlarm | undefined {
+  let winner: ModbusServiceFieldAlarm | undefined;
+  for (const alarm of alarms ?? []) {
+    if (alarm == null || alarm.enabled !== true) {
+      continue;
+    }
+    if (winner == null || alarmRank(alarm.level) >= alarmRank(winner.level)) {
+      winner = alarm;
+    }
+  }
+  return winner;
+}
+
+/** 级别次序（由轻到重）里的位次；不认识的级别（含缺省）一律最低，与后端 `rank` 同口径 */
+export function alarmRank(level: string | undefined | null): number {
+  return level == null ? -1 : (MODBUS_ALARM_LEVELS as readonly string[]).indexOf(level);
 }
 
 /**
@@ -398,8 +433,19 @@ export function alarmOperatorsOf(kind: AlarmTargetKind): string[] {
 }
 
 /**
- * 打开告警开关时补齐的起步配置 —— 与自动轮询的 `DEFAULT_INTERVAL_SECONDS` 同一个用意：
- * 后端要求「开了告警就得填齐」，总不能因为用户先拨开关、还没来得及填就被拒。
+ * 一个出值最多能配几条规则：与后端 `ModbusServiceValidator` 的上限同口径（两边改动要同步）。
+ *
+ * 它**不是安全边界**（多几条规则只是多几次纯内存比较），是给「界面上误加了一堆规则」一个明确的上限，
+ * 故到顶时只是把「添加规则」按钮禁掉，不弹错。
+ */
+export const MAX_ALARM_RULES = 8;
+
+/**
+ * 新加一条规则时补齐的起步配置 —— 与自动轮询的 `DEFAULT_INTERVAL_SECONDS` 同一个用意：
+ * 后端要求「开了告警就得填齐」，总不能因为用户刚点「添加规则」、还没来得及填就被拒。
+ *
+ * `id` 在这里就生成：它是规则的身份（见 {@link ModbusServiceFieldAlarm.id}），
+ * 后补的话在补之前那一段里这条规则就没有身份可用。
  *
  * `text` 取该出值的名字（用户随即能改）：后端也不接受空文本，而「进水温度」这种默认值
  * 恰恰是绝大多数人要填的那个 —— 与服务名称默认取点表描述（`applyAutoName`）同一条做法。
@@ -409,6 +455,7 @@ export function alarmOperatorsOf(kind: AlarmTargetKind): string[] {
  */
 export function defaultAlarm(kind: AlarmTargetKind, text: string): ModbusServiceFieldAlarm {
   const alarm: ModbusServiceFieldAlarm = {
+    id: newAlarmId(),
     enabled: true,
     compare: kind === 'numeric' ? '>' : '=',
     level: 'WARN',
@@ -434,21 +481,27 @@ export function alarmKey(configId: string | null, functionIndex: number, field: 
  * 告警配置表的可比较快照：按 key 排序后序列化。理由同 {@link pollSignature}（Map 的遍历顺序
  * 是插入顺序，直接序列化会被「先改哪一行」影响）。
  *
- * 值**逐字段摊平成固定顺序的数组**而不是直接塞对象：对象里键的顺序跟着改动路径走
+ * 一个 key 下是**一组规则**，组内**按声明顺序**摊平、一个字节都不排序：顺序参与同级并列的裁决
+ * （后端取靠后的那条），所以重排是一次真改动、保存按钮该亮。
+ * 每条规则**逐字段摊平成固定顺序的数组**而不是直接塞对象：对象里键的顺序跟着改动路径走
  * （先改级别还是先改文本），同一个配置会序列化出两种字符串，保存按钮就白白亮一次。
+ * `id` 也在快照里：它不变（改阈值不动它），但删掉一条再加一条是另一次改动，快照该不同。
  */
-export function alarmSignature(alarms: Map<string, ModbusServiceFieldAlarm>): string {
+export function alarmSignature(alarms: Map<string, ModbusServiceFieldAlarm[]>): string {
   return JSON.stringify(
     [...alarms.entries()]
       .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-      .map(([key, alarm]) => [
+      .map(([key, rules]) => [
         key,
-        alarm.enabled ?? false,
-        alarm.compare ?? null,
-        alarm.threshold ?? null,
-        alarm.state ?? null,
-        alarm.level ?? null,
-        alarm.text ?? null,
+        rules.map((alarm) => [
+          alarm.id ?? null,
+          alarm.enabled ?? false,
+          alarm.compare ?? null,
+          alarm.threshold ?? null,
+          alarm.state ?? null,
+          alarm.level ?? null,
+          alarm.text ?? null,
+        ]),
       ]),
   );
 }

@@ -1,4 +1,9 @@
-import { ModbusAlarm, ModbusAlarmList, applyHandledAlarm } from './ModbusAlarm';
+import {
+  ModbusAlarm,
+  ModbusAlarmList,
+  applyHandledAlarm,
+  modbusAlarmCloseLabel,
+} from './ModbusAlarm';
 
 /**
  * 「处理」之后就地替换那一行的纯函数。
@@ -61,6 +66,34 @@ describe('applyHandledAlarm', () => {
 
     expect(next.items).toEqual(list.items);
     expect(next.summary.unhandled).toBe(1);
+  });
+});
+
+/**
+ * 关闭原因标签。三条路径都要露脸，且都要说人话 ——
+ * 一条没有恢复样本的关闭（定义不再覆盖这个键、或被同出值的另一条规则接管）
+ * 看起来与「值回来了」一模一样，只显示其中一种就说了半句话。
+ *
+ * 断言里带上「没收录的枚举名原样给出」这一条：后端加了新的关闭原因时，
+ * 页面该露出那个枚举名（可搜日志），而不是一片空白。
+ */
+describe('modbusAlarmCloseLabel', () => {
+  // 假翻译函数：把词典键原样回显，于是断言里既能看到「查了哪个键」也能看到「没查到时给什么」
+  const t = (key: string) => `译:${key}`;
+
+  it('三个关闭原因各自译出', () => {
+    expect(modbusAlarmCloseLabel('VALUE', t)).toBe('译:值恢复');
+    expect(modbusAlarmCloseLabel('DEFINITION', t)).toBe('译:定义变更');
+    expect(modbusAlarmCloseLabel('SUPERSEDED', t)).toBe('译:被取代');
+  });
+
+  it('没收录的枚举名原样给出，不空白', () => {
+    expect(modbusAlarmCloseLabel('SOMETHING_NEW', t)).toBe('SOMETHING_NEW');
+  });
+
+  it('没有关闭原因就是空串（未恢复的行没有这个键）', () => {
+    expect(modbusAlarmCloseLabel(undefined, t)).toBe('');
+    expect(modbusAlarmCloseLabel(null, t)).toBe('');
   });
 });
 

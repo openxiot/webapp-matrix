@@ -93,6 +93,36 @@ export function modbusAlarmLevelLabel(
 }
 
 /**
+ * 一条告警**是怎么关掉的**（后端 `ModbusServiceAlarm` 的 `CLOSE_*` 常量，线上就是这些字符串）。
+ *
+ * 三个值互斥且覆盖完整，一条开着的行只可能从其中一条路出去：
+ * - `VALUE` 值回到了不命中任何规则的地方（真·恢复正常）；
+ * - `DEFINITION` 定义不再覆盖这个键：出值被删、规则被删、或该出值所有规则都被停用；
+ * - `SUPERSEDED` 同一个出值上换了一条规则生效 —— **升级与降级都算**。
+ *   降级（严重那条关了、警告那条接管）尤其不能用 `VALUE` 表达：值仍然越限，记「值恢复」是谎话。
+ *
+ * 它与 {@link MODBUS_ALARM_LEVELS} / {@link MODBUS_ALARM_OPERATORS} 一样是**闭集枚举**，
+ * 故照那两份的口径给译文；原始的枚举名仍留在页面的 `title` 上（排查时拿它搜后端日志）。
+ */
+export const MODBUS_ALARM_CLOSE_LABELS: Record<string, string> = {
+  VALUE: '值恢复',
+  DEFINITION: '定义变更',
+  SUPERSEDED: '被取代',
+};
+
+/** 关闭原因标签：没收录的枚举名原样给出（老数据 / 后端加了新原因时不至于空白）。 */
+export function modbusAlarmCloseLabel(
+  closeType: string | undefined | null,
+  translate: (key: string) => string,
+): string {
+  if (!closeType) {
+    return '';
+  }
+  const key = MODBUS_ALARM_CLOSE_LABELS[closeType];
+  return key ? translate(key) : closeType;
+}
+
+/**
  * 「触发条件」那一列的文字：比较方式 + 阈值/状态 + 单位，如 `超过 80℃`、`等于 制冷`。
  *
  * 入参是**行的形状**而不是某个具体类：告警行把快照摊在顶层（`compare`/`threshold`/`state`/`unit`），
@@ -117,6 +147,20 @@ export function modbusAlarmCondition(
       : (alarm?.state ?? '');
 
   return [operator, target].filter((part) => part !== '').join(' ');
+}
+
+/**
+ * 生成一条告警规则的 `id`（见 `ModbusService.ts` 的 `ModbusServiceFieldAlarm.id`）。
+ *
+ * **刻意不用 `crypto.randomUUID()`**：那个 API 只在安全上下文（https / localhost）存在，
+ * 局域网 http 部署下 `crypto.randomUUID` 是 `undefined`，一开告警开关就抛异常。
+ * 这里要的只是「同一个出值的那几条规则里不重名」，而规则条数上限是 8 ——
+ * 时间戳（36 进制）加 6 位随机（36 进制，约 20 亿种）绰绰有余，长度约 15、远低于后端 64 的上限。
+ *
+ * 只保证「够用」，不保证全局唯一：它的作用域本来就是**一组规则**（后端也只在这个范围内查重）。
+ */
+export function newAlarmId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
 /**
@@ -159,10 +203,10 @@ export class ModbusAlarm {
   /** 值回到正常的时刻（毫秒）；**没有这个键 = 仍在越限**（这就是状态本身） */
   recoveredAt?: number;
   /**
-   * 怎么关掉的：`VALUE` 值回来了 / `DEFINITION` 定义不再覆盖这个键（字段被删、告警被关掉）。
+   * 怎么关掉的（{@link MODBUS_ALARM_CLOSE_LABELS} 的三个值之一，页面照级别那样翻）。
    *
-   * 后端枚举名（服务端数据，页面若要露脸就原样显示、**不翻译**）：它存在的意义是让「一条没有
-   * 恢复样本的关闭」可解释 —— 否则用户只会看到一条告警莫名其妙地变成了「已恢复」。
+   * 它存在的意义是让「一条没有恢复样本的关闭」可解释 —— 否则用户只会看到一条告警莫名其妙地
+   * 变成了「已恢复」。而三条路径必须都露脸：只显示其中一种，另外两种的行就说了半句话。
    */
   closeType?: string;
   // —— 处理 ——

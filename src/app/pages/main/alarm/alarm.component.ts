@@ -39,6 +39,7 @@ import {
   ModbusAlarm,
   ModbusAlarmList,
   applyHandledAlarm,
+  modbusAlarmCloseLabel,
   modbusAlarmCondition,
   modbusAlarmLevelLabel,
 } from '../../../typedef/define/modbus/ModbusAlarm';
@@ -444,6 +445,18 @@ export class AlarmComponent implements OnInit {
   protected levelLabel(level: string | undefined): string {
     this.langChange();
     return modbusAlarmLevelLabel(level, (key) => this.i18n.translate.instant(key));
+  }
+
+  /**
+   * 「怎么关掉的」：`值恢复` / `定义变更` / `被取代`（见 `MODBUS_ALARM_CLOSE_LABELS`）。
+   *
+   * 三条关闭路径都得露脸 —— 只显示其中一种，另外两种的行就说了半句话：一条没有恢复样本的关闭
+   * 看起来跟「值回来了」一模一样。原始的枚举名留在 `title` 上（排查时拿它搜后端日志，
+   * 与级别标签的 `[title]="item.level"` 同一个做法）。
+   */
+  protected closeLabel(closeType: string | undefined): string {
+    this.langChange();
+    return modbusAlarmCloseLabel(closeType, (key) => this.i18n.translate.instant(key));
   }
 
   protected levelColor(level: string | undefined): string {

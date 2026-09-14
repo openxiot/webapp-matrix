@@ -219,111 +219,178 @@
                             <th style="width: 170px">{{ '阈值' | translate }}</th>
                             <th style="width: 120px">{{ '告警级别' | translate }}</th>
                             <th style="width: 200px">{{ '告警文本' | translate }}</th>
+                            <th style="width: 90px">{{ '操作' | translate }}</th>
                           </tr>
                         </thead>
                         <tbody>
+                          <!--
+                            行的单位是「出值 + 规则」：一个出值一组，组内一条规则一行（分级配置就靠这个表达，
+                            如温度「低于 20 告警 / 超过 26 提示 / 超过 28 警告 / 超过 30 严重」）。
+                            出值名与类型只在组的第一行显示，同组后续行留空并缩进 —— 它们与上一行是同一个出值。
+                          -->
                           @for (item of alarmItems(func); track $index) {
-                            <tr>
-                              <!-- 位行缩进一级：位是父字段位区里的一位，但它是**独立的结果键**，各配各的告警 -->
-                              <td [class.service-alarm-nested]="item.bit != null">{{ item.key }}</td>
-                              <td>
-                                @if (item.bit) {
-                                  <!-- 位的取值恒为 0/1（后端 parser 逐位取），写成符号不必进词典 -->
-                                  <code class="service-editor-frame">0/1</code>
-                                } @else {
-                                  <!-- 类型摘要不带告警尾巴：右边就是告警控件，不必同一句话说两遍 -->
-                                  {{ describeFieldType(item.field) }}
-                                }
-                              </td>
-                              @if (item.kind === 'none') {
+                            @if (item.kind === 'none') {
+                              <tr>
+                                <!-- 位行缩进一级：位是父字段位区里的一位，但它是**独立的结果键**，各配各的告警 -->
+                                <td [class.service-alarm-nested]="item.bit != null">{{ item.key }}</td>
+                                <td>
+                                  @if (item.bit) {
+                                    <!-- 位的取值恒为 0/1（后端 parser 逐位取），写成符号不必进词典 -->
+                                    <code class="service-editor-frame">0/1</code>
+                                  } @else {
+                                    <!-- 类型摘要不带告警尾巴：右边就是告警控件，不必同一句话说两遍 -->
+                                    {{ describeFieldType(item.field) }}
+                                  }
+                                </td>
                                 <!-- string 字段的值可能是任意文本，五种比较都无从谈起，后端直接拒 -->
-                                <td [attr.colspan]="5" class="service-editor-hint">
+                                <td [attr.colspan]="6" class="service-editor-hint">
                                   {{ '文本字段不能配置告警' | translate }}
                                 </td>
-                              } @else {
-                                <td>
-                                  <nz-switch
-                                    [ngModel]="alarmOf(func, item)?.enabled === true"
-                                    (ngModelChange)="onAlarmEnabled(func, item, $event)"
-                                  ></nz-switch>
-                                </td>
-                                <!--
-                                  开关关掉后控件仍显示、只是灰着：配置是**留着**的（随时能再开），
-                                  藏起来会让人以为关一下就把配好的东西弄丢了。
-                                -->
-                                <td>
-                                  <nz-select
-                                    [ngModel]="alarmOf(func, item)?.compare ?? null"
-                                    (ngModelChange)="onAlarmCompare(func, item, $event)"
-                                    [nzDisabled]="alarmOf(func, item)?.enabled !== true"
-                                    [nzPlaceHolder]="'请选择' | translate"
-                                    style="width: 100%"
-                                  >
-                                    @for (op of compareOptions(item); track op.value) {
-                                      <nz-option [nzValue]="op.value" [nzLabel]="op.label"></nz-option>
-                                    }
-                                  </nz-select>
-                                </td>
-                                <td>
-                                  @if (alarmUsesState(item.kind, alarmOf(func, item)?.compare)) {
-                                    <!-- 比状态：取值表里的描述，原样显示（数据、不翻译） -->
+                              </tr>
+                            } @else {
+                              @for (rule of alarmRulesOf(func, item); track rule.id; let first = $first) {
+                                <tr>
+                                  @if (first) {
+                                    <td [class.service-alarm-nested]="item.bit != null">{{ item.key }}</td>
+                                    <td>
+                                      @if (item.bit) {
+                                        <code class="service-editor-frame">0/1</code>
+                                      } @else {
+                                        {{ describeFieldType(item.field) }}
+                                      }
+                                    </td>
+                                  } @else {
+                                    <!-- 同组的后续规则：出值名与类型不重复，只留出缩进 -->
+                                    <td [attr.colspan]="2" [class.service-alarm-nested]="item.bit != null"></td>
+                                  }
+                                  <td>
+                                    <nz-switch
+                                      [ngModel]="rule.enabled === true"
+                                      (ngModelChange)="onAlarmEnabled(func, item, rule, $event)"
+                                    ></nz-switch>
+                                  </td>
+                                  <!--
+                                    开关关掉后控件仍显示、只是灰着：配置是**留着**的（随时能再开），
+                                    藏起来会让人以为关一下就把配好的东西弄丢了。
+                                  -->
+                                  <td>
                                     <nz-select
-                                      [ngModel]="alarmOf(func, item)?.state ?? null"
-                                      (ngModelChange)="onAlarmState(func, item, $event)"
-                                      [nzDisabled]="alarmOf(func, item)?.enabled !== true"
+                                      [ngModel]="rule.compare ?? null"
+                                      (ngModelChange)="onAlarmCompare(func, item, rule, $event)"
+                                      [nzDisabled]="rule.enabled !== true"
                                       [nzPlaceHolder]="'请选择' | translate"
                                       style="width: 100%"
                                     >
-                                      @for (v of alarmStateOptions(item.field); track v.value) {
-                                        <nz-option [nzValue]="v.value" [nzLabel]="v.label"></nz-option>
+                                      @for (op of compareOptions(item); track op.value) {
+                                        <nz-option [nzValue]="op.value" [nzLabel]="op.label"></nz-option>
                                       }
                                     </nz-select>
-                                  } @else if (item.bit) {
-                                    <!-- 位只有 0 / 1 两个候选，给下拉比给数字框更不容易填错 -->
+                                  </td>
+                                  <td>
+                                    @if (alarmUsesState(item.kind, rule.compare)) {
+                                      <!-- 比状态：取值表里的描述，原样显示（数据、不翻译） -->
+                                      <nz-select
+                                        [ngModel]="rule.state ?? null"
+                                        (ngModelChange)="onAlarmState(func, item, rule, $event)"
+                                        [nzDisabled]="rule.enabled !== true"
+                                        [nzPlaceHolder]="'请选择' | translate"
+                                        style="width: 100%"
+                                      >
+                                        @for (v of alarmStateOptions(item.field); track v.value) {
+                                          <nz-option [nzValue]="v.value" [nzLabel]="v.label"></nz-option>
+                                        }
+                                      </nz-select>
+                                    } @else if (item.bit) {
+                                      <!-- 位只有 0 / 1 两个候选，给下拉比给数字框更不容易填错 -->
+                                      <nz-select
+                                        [ngModel]="rule.threshold ?? null"
+                                        (ngModelChange)="onAlarmThreshold(func, item, rule, $event)"
+                                        [nzDisabled]="rule.enabled !== true"
+                                        style="width: 100%"
+                                      >
+                                        <nz-option [nzValue]="0" nzLabel="0"></nz-option>
+                                        <nz-option [nzValue]="1" nzLabel="1"></nz-option>
+                                      </nz-select>
+                                    } @else {
+                                      <nz-input-number
+                                        [ngModel]="rule.threshold ?? null"
+                                        (ngModelChange)="onAlarmThreshold(func, item, rule, $event)"
+                                        [nzDisabled]="rule.enabled !== true"
+                                        nzAddonAfter="{{ item.field.unit }}"
+                                        style="width: 100%"
+                                      ></nz-input-number>
+                                    }
+                                  </td>
+                                  <td>
                                     <nz-select
-                                      [ngModel]="alarmOf(func, item)?.threshold ?? null"
-                                      (ngModelChange)="onAlarmThreshold(func, item, $event)"
-                                      [nzDisabled]="alarmOf(func, item)?.enabled !== true"
+                                      [ngModel]="rule.level ?? null"
+                                      (ngModelChange)="onAlarmLevel(func, item, rule, $event)"
+                                      [nzDisabled]="rule.enabled !== true"
+                                      [nzPlaceHolder]="'请选择' | translate"
                                       style="width: 100%"
                                     >
-                                      <nz-option [nzValue]="0" nzLabel="0"></nz-option>
-                                      <nz-option [nzValue]="1" nzLabel="1"></nz-option>
+                                      @for (lv of alarmLevelOptions; track lv.value) {
+                                        <nz-option [nzValue]="lv.value" [nzLabel]="lv.label"></nz-option>
+                                      }
                                     </nz-select>
-                                  } @else {
-                                    <nz-input-number
-                                      [ngModel]="alarmOf(func, item)?.threshold ?? null"
-                                      (ngModelChange)="onAlarmThreshold(func, item, $event)"
-                                      [nzDisabled]="alarmOf(func, item)?.enabled !== true"
-                                      nzAddonAfter="{{ item.field.unit }}"
-                                      style="width: 100%"
-                                    ></nz-input-number>
-                                  }
-                                </td>
-                                <td>
-                                  <nz-select
-                                    [ngModel]="alarmOf(func, item)?.level ?? null"
-                                    (ngModelChange)="onAlarmLevel(func, item, $event)"
-                                    [nzDisabled]="alarmOf(func, item)?.enabled !== true"
-                                    [nzPlaceHolder]="'请选择' | translate"
-                                    style="width: 100%"
-                                  >
-                                    @for (lv of alarmLevelOptions; track lv.value) {
-                                      <nz-option [nzValue]="lv.value" [nzLabel]="lv.label"></nz-option>
-                                    }
-                                  </nz-select>
-                                </td>
-                                <td>
-                                  <!-- 告警文本是用户自己填的（如「温度过高」）：**数据，永不翻译** -->
-                                  <input
-                                    nz-input
-                                    maxlength="64"
-                                    [ngModel]="alarmOf(func, item)?.text ?? ''"
-                                    (ngModelChange)="onAlarmText(func, item, $event)"
-                                    [disabled]="alarmOf(func, item)?.enabled !== true"
-                                  />
-                                </td>
+                                  </td>
+                                  <td>
+                                    <!-- 告警文本是用户自己填的（如「温度过高」）：**数据，永不翻译** -->
+                                    <input
+                                      nz-input
+                                      maxlength="64"
+                                      [ngModel]="rule.text ?? ''"
+                                      (ngModelChange)="onAlarmText(func, item, rule, $event)"
+                                      [disabled]="rule.enabled !== true"
+                                    />
+                                  </td>
+                                  <td>
+                                    <button
+                                      nz-button
+                                      nzType="link"
+                                      nzSize="small"
+                                      nzDanger
+                                      (click)="onAlarmRemove(func, item, rule)"
+                                    >
+                                      {{ '删除' | translate }}
+                                    </button>
+                                  </td>
+                                </tr>
                               }
-                            </tr>
+                              <!--
+                                组尾一行「添加规则」：一个出值可以配多条（分级），所以按钮在组上而不是行上。
+                                整组一条都没有时，这一行就是唯一的一行 —— 出值名与类型仍要显示，
+                                否则用户看不出自己在给哪个出值加规则。
+                              -->
+                              <tr>
+                                @if (alarmRulesOf(func, item).length === 0) {
+                                  <td [class.service-alarm-nested]="item.bit != null">{{ item.key }}</td>
+                                  <td>
+                                    @if (item.bit) {
+                                      <code class="service-editor-frame">0/1</code>
+                                    } @else {
+                                      {{ describeFieldType(item.field) }}
+                                    }
+                                  </td>
+                                  <td [attr.colspan]="5" class="service-editor-hint">
+                                    {{ '未配置告警' | translate }}
+                                  </td>
+                                } @else {
+                                  <td [attr.colspan]="7"></td>
+                                }
+                                <td>
+                                  <button
+                                    nz-button
+                                    nzType="link"
+                                    nzSize="small"
+                                    [disabled]="alarmRulesOf(func, item).length >= maxAlarmRules"
+                                    (click)="onAlarmAdd(func, item)"
+                                  >
+                                    {{ '添加规则' | translate }}
+                                  </button>
+                                </td>
+                              </tr>
+                            }
                           }
                         </tbody>
                       </table>

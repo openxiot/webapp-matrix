@@ -34,11 +34,17 @@ export class ModbusServiceFieldValue {
 }
 
 /**
- * 一个出值的阈值告警配置（对应后端 `ModbusServiceFieldAlarm`）。
+ * 一个出值的阈值告警规则，是**一组**（{@link ModbusServiceField.alarms}）里的一条
+ * （对应后端 `ModbusServiceFieldAlarm`）。分级配置就靠这个数组表达：
+ * 温度「低于 20 告警 / 超过 26 提示 / 超过 28 警告 / 超过 30 严重」是同一个出值上的四条规则。
  *
  * **越限判定按边沿**：正常→越限记一条告警，持续越限不重复记，回正常后再越限才是新的一次；
  * 判定比的是**解析后**的值（`scale` 已生效、命中取值表时是那条 `description`），
  * 因为阈值是用户按工程单位填的、曲线画的也是解析值。
+ *
+ * **同时最多只有一条生效**：一次采样里命中多条时，只留**级别最高**的那条开着，
+ * 其余（连同上一轮开着的那条）按「被取代」关闭 —— 一个出值同时两条开着，
+ * 用户处理了 A、B 还挂着，未处理计数就永远不对。
  *
  * 字段的取值形态决定能怎么比（后端 `ModbusAlarmPolicy` 与校验器同一口径）：
  * - 数值（含位区的整段掩码）：`compare` 五种都行，比 `threshold`；
@@ -47,8 +53,21 @@ export class ModbusServiceFieldValue {
  * - `format` 为 `string` 的字段：**不能配告警**（无从比较）。
  *
  * 只能配在**读方法**（fc 01/02/03/04）上：写方法的应答是请求回显，没有读值。
+ * 一个出值最多 **8 条**（`alarm` 与位各自算）。
  */
 export class ModbusServiceFieldAlarm {
+  /**
+   * 这条规则的**身份**：前端生成、随配置落库（如 `m1a2b3c4d5e`）。
+   *
+   * 「这条开着的告警是哪条规则开的」全靠它 —— 后端把当前胜者的 `id` 写进告警行的 `ruleId`，
+   * 之后拿它比对定义。**绝不能用数组下标当身份**：删掉第 0 条会让第 1 条正开着的告警
+   * 静默改嫁到新第 0 条。它也是「改阈值不 churn」的原因（id 不变 ⇒ 胜者不变 ⇒ 不关不重开）。
+   *
+   * 后端只校验（非空 / ≤64 / 同出值内唯一，且**只在 `enabled == true` 时**），**不下发**回前端。
+   * 生成走 `ModbusAlarm.ts` 的 `newAlarmId()`，**不要用 `crypto.randomUUID()`** ——
+   * 那个 API 只在安全上下文（https / localhost）存在，局域网 http 部署下是 `undefined`。
+   */
+  id?: string;
   /** 开关。缺省 / false = 不告警，**配置原样留着**（与 `interval` 配了却暂停轮询同口径） */
   enabled?: boolean;
   /** `>` 超过 / `>=` 达到 / `<` 低于 / `<=` 低于等于 / `=` 等于（符号不翻译，见 ModbusAlarm.ts） */
@@ -74,10 +93,11 @@ export class ModbusServiceFieldBit {
   /** 该位的取值名：invoke 返回值里这个位的 key */
   field: string = '';
   /**
-   * 该位的告警配置（**位是独立的结果键**：parser 逐位把值写进返回值，位自己就能比 0/1）——
-   * 只挂父字段的话「位 = 1 就告警」根本够不着。
+   * 该位的一组告警规则（**位是独立的结果键**：parser 逐位把值写进返回值，位自己就能比 0/1）——
+   * 只挂父字段的话「位 = 1 就告警」根本够不着。与 {@link ModbusServiceField.alarms} **各是一组、
+   * 各自算**（含条数上限与 `id` 唯一性）。
    */
-  alarm?: ModbusServiceFieldAlarm;
+  alarms?: ModbusServiceFieldAlarm[];
 }
 
 /**
@@ -106,10 +126,14 @@ export class ModbusServiceField {
   /** 线上键名 `bit-list`（01/02 位区逐位取值） */
   bitList?: ModbusServiceFieldBit[];
   /**
-   * 该字段出值的阈值告警（缺省 = 没配）。与 {@link ModbusServiceFieldBit.alarm} 是两处独立的配置：
-   * 位上的告警比的是那一位的 0/1，这里的比的是整段位掩码 / 寄存器值本身。
+   * 该字段出值的**一组**阈值告警规则，按声明顺序排列（缺省 / 空 = 没配）。同一个出值同时最多
+   * 只有一条规则生效 —— 命中多条时只留级别最高的那条（同级取靠后的），其余按「被取代」关闭。
+   *
+   * 与 {@link ModbusServiceFieldBit.alarms} 是两处独立的配置：位上的比的是那一位的 0/1，
+   * 这里的比的是整段位掩码 / 寄存器值本身。**顺序有意义**（同级并列的裁决依据），
+   * 所以增删与重排都算真改动、保存按钮该亮。
    */
-  alarm?: ModbusServiceFieldAlarm;
+  alarms?: ModbusServiceFieldAlarm[];
 }
 
 /**

@@ -122,6 +122,7 @@ describe('ModbusAlarmCodec', () => {
 describe('ModbusServiceFieldAlarmCodec', () => {
   it('往返稳定：解出来再编回去是同一份', () => {
     const raw = {
+      id: 'r1',
       enabled: true,
       compare: '>=',
       threshold: 80,
@@ -162,62 +163,90 @@ describe('ModbusServiceFieldAlarmCodec', () => {
   it('全空的配置编不出一个空对象', () => {
     expect(ModbusServiceFieldAlarmCodec.encode({})).toBeUndefined();
   });
+
+  it('一组的往返：顺序原样保留、id 保真', () => {
+    // 声明顺序参与运行期同级并列的裁决（后端取靠后的那条），所以重排是一次真改动 ——
+    // codec 只做搬运，不能顺手排序
+    const raw = [
+      { id: 'a', enabled: true, compare: '<', threshold: 20, level: 'WARN', text: '温度过低' },
+      { id: 'b', enabled: true, compare: '>', threshold: 30, level: 'CRITICAL', text: '温度过高' },
+    ];
+
+    const decoded = ModbusServiceFieldAlarmCodec.decodeList(raw);
+
+    expect(decoded?.map((rule) => rule.id)).toEqual(['a', 'b']);
+    expect(ModbusServiceFieldAlarmCodec.encodeList(decoded)).toEqual(raw);
+  });
+
+  it('空数组与「元素全是空壳」都读作没配', () => {
+    // 空数组留在库里就是 `alarms: []` 这种噪音，而后端与这里都把它读作「没配」——
+    // 两边同一口径，才不会因为过了一趟前端就把服务定义改了形
+    expect(ModbusServiceFieldAlarmCodec.decodeList([])).toBeUndefined();
+    expect(ModbusServiceFieldAlarmCodec.decodeList([{}, null])).toBeUndefined();
+    expect(ModbusServiceFieldAlarmCodec.decodeList(null)).toBeUndefined();
+    expect(ModbusServiceFieldAlarmCodec.encodeList([])).toBeUndefined();
+    expect(ModbusServiceFieldAlarmCodec.encodeList([{}])).toBeUndefined();
+    expect(ModbusServiceFieldAlarmCodec.encodeList(undefined)).toBeUndefined();
+  });
+
+  it('组里的空壳丢掉、真配置留下', () => {
+    const decoded = ModbusServiceFieldAlarmCodec.decodeList([
+      {},
+      { id: 'a', enabled: true, level: 'WARN' },
+      null,
+    ]);
+
+    expect(decoded?.length).toBe(1);
+    expect(decoded?.[0].id).toBe('a');
+  });
 });
 
 describe('字段与位上的告警进出', () => {
-  it('没配告警的字段不写出 alarm 键', () => {
-    // 服务定义里绝大多数字段都没配告警：不该因为过了一趟前端就在每个字段上多一个空对象
+  it('没配告警的字段不写出 alarms 键', () => {
+    // 服务定义里绝大多数字段都没配告警：不该因为过了一趟前端就在每个字段上多一个空数组
     const o = ModbusServiceFieldCodec.encode(ModbusServiceFieldCodec.decode(fieldJson()));
 
-    expect('alarm' in o).toBe(false);
+    expect('alarms' in o).toBe(false);
   });
 
-  it('字段上的告警进来又出去', () => {
-    const o = ModbusServiceFieldCodec.encode(
-      ModbusServiceFieldCodec.decode(
-        fieldJson({ enabled: true, compare: '>', threshold: 80, level: 'WARN', text: '温度过高' }),
-      ),
-    );
+  it('字段上的一组规则进来又出去', () => {
+    // 分级配置就靠这个数组表达：同一个出值上「低于 20 告警 / 超过 30 严重」
+    const group = [
+      { id: 'a', enabled: true, compare: '<', threshold: 20, level: 'WARN', text: '温度过低' },
+      { id: 'b', enabled: true, compare: '>', threshold: 30, level: 'CRITICAL', text: '温度过高' },
+    ];
 
-    expect(o.alarm).toEqual({
-      enabled: true,
-      compare: '>',
-      threshold: 80,
-      level: 'WARN',
-      text: '温度过高',
-    });
+    const o = ModbusServiceFieldCodec.encode(ModbusServiceFieldCodec.decode(fieldJson(group)));
+
+    expect(o.alarms).toEqual(group);
   });
 
-  it('位上的告警与父字段那份互不干扰', () => {
+  it('空数组不出 alarms 键', () => {
+    const o = ModbusServiceFieldCodec.encode(ModbusServiceFieldCodec.decode(fieldJson([])));
+
+    expect('alarms' in o).toBe(false);
+  });
+
+  it('位上的规则组与父字段那组互不干扰', () => {
     // 位是**独立的结果键**（parser 逐位把值写进返回值）：只挂父字段的话「位 = 1 就告警」够不着
+    const bitGroup = [
+      { id: 'b1', enabled: true, compare: '=', threshold: 1, level: 'INFO', text: '机组运行' },
+    ];
+
     const o = ModbusServiceFieldCodec.encode(
-      ModbusServiceFieldCodec.decode(
-        fieldJson(undefined, [
-          {
-            offset: 0,
-            field: '运行',
-            alarm: { enabled: true, compare: '=', threshold: 1, level: 'INFO', text: '机组运行' },
-          },
-        ]),
-      ),
+      ModbusServiceFieldCodec.decode(fieldJson(undefined, [{ offset: 0, field: '运行', alarms: bitGroup }])),
     );
 
-    expect('alarm' in o).toBe(false);
-    expect(o['bit-list'][0].alarm).toEqual({
-      enabled: true,
-      compare: '=',
-      threshold: 1,
-      level: 'INFO',
-      text: '机组运行',
-    });
+    expect('alarms' in o).toBe(false);
+    expect(o['bit-list'][0].alarms).toEqual(bitGroup);
   });
 });
 
-/** 一个最小可用字段的线上形状（alarm / bit-list 按需加）。 */
-function fieldJson(alarm?: any, bitList?: any[]): any {
+/** 一个最小可用字段的线上形状（alarms / bit-list 按需加）。 */
+function fieldJson(alarms?: any[], bitList?: any[]): any {
   const o: any = { index: 1, field: '进水温度', bytes: 2, format: 'int16', byteOrder: 'ABCD' };
-  if (alarm != null) {
-    o.alarm = alarm;
+  if (alarms != null) {
+    o.alarms = alarms;
   }
   if (bitList != null) {
     o['bit-list'] = bitList;

@@ -19,9 +19,11 @@ import {
   MODBUS_ALARM_LEVELS,
   modbusAlarmLevelLabel,
   modbusAlarmOperatorLabel,
+  newAlarmId,
 } from '../../../../../../typedef/define/modbus/ModbusAlarm';
 import { SpaceRef } from '../../../../../../typedef/define/space/SpaceRef';
 import {
+  MAX_ALARM_RULES,
   WRITE_METHOD_REPLY_KEY,
   alarmKey,
   alarmItems,
@@ -127,11 +129,15 @@ export abstract class DeviceServiceEditor implements OnInit {
   private readonly polls = signal<Map<string, FunctionPoll>>(new Map());
 
   /**
-   * 各出值（应答字段，或位清单里的一位）的阈值告警配置，key = `点表ID#方法序号#出值名`
+   * 各出值（应答字段，或位清单里的一位）的阈值告警**规则组**，key = `点表ID#方法序号#出值名`
    * （见 {@link alarmKey}）—— 存这一份的理由与 {@link polls} 完全相同：方法列表由点表现场重算，
    * 告警却只存在这份服务里。
+   *
+   * 一个 key 下是**一组**规则（温度：低于 20 告警 / 超过 26 提示 / 超过 28 警告 / 超过 30 严重），
+   * 组内就是声明顺序 —— 它参与运行期同级并列的裁决，故增删与重排都是真改动。
+   * 对应服务定义里的 `ModbusServiceField.alarms`（位上是 `ModbusServiceFieldBit.alarms`）。
    */
-  private readonly alarms = signal<Map<string, ModbusServiceFieldAlarm>>(new Map());
+  private readonly alarms = signal<Map<string, ModbusServiceFieldAlarm[]>>(new Map());
 
   /** 展开了告警配置那一行的方法序号（方法预览表的第一列是展开手柄，只有读方法有） */
   private readonly expanded = signal<Set<number>>(new Set());
@@ -151,6 +157,8 @@ export abstract class DeviceServiceEditor implements OnInit {
   protected readonly describeFieldType = describeFieldType;
   /** 该出值此刻比的是状态还是数值：模板据此把阈值那一格换成下拉还是数字框 */
   protected readonly alarmUsesState = alarmUsesState;
+  /** 一个出值最多几条规则（模板据此禁用「添加规则」）：与后端校验同一个上限 */
+  protected readonly maxAlarmRules = MAX_ALARM_RULES;
 
   /** 载入完成时的基线（编辑页「有没有改过」的原值）：载入前为 null，保存按钮此时也是不可用 */
   private readonly baseline = signal<ServiceBaseline | null>(null);
@@ -475,24 +483,66 @@ export abstract class DeviceServiceEditor implements OnInit {
   }
 
   /**
-   * 开关某个出值的告警。
+   * 开关**一条规则**。关掉只改开关、**配置原样留着** —— 这正是这个开关的用处：
+   * 先停掉一条吵闹的规则，不必把比较方式、阈值、文本都删掉（与轮询开关保留周期同口径）。
    *
-   * 打开时若还没配过，先给一份能过校验的起步配置（后端要求「开了告警就得填齐」）；
-   * 关掉只改开关、**配置原样留着** —— 这正是这个开关的用处：先停掉一条吵闹的告警，
-   * 不必把比较方式、阈值、文本都删掉（与轮询开关保留周期同口径）。
+   * 停用的规则后端不校验、也不参与判定，故完全可以「先建好、先关着，回头再开」。
    */
-  protected onAlarmEnabled(func: ModbusServiceFunction, item: ServiceAlarmItem, enabled: boolean): void {
+  protected onAlarmEnabled(
+    func: ModbusServiceFunction,
+    item: ServiceAlarmItem,
+    rule: ModbusServiceFieldAlarm,
+    enabled: boolean,
+  ): void {
+    this.patchAlarm(func, item, rule, { enabled });
+  }
+
+  /**
+   * 给这个出值再加一条规则（如「超过 30 严重」）。起步配置见 {@link defaultAlarm}：
+   * 它一出生就是启用且填得齐的，用户随即改。
+   *
+   * 到上限（{@link MAX_ALARM_RULES}）时按钮已禁用，这里再兜一次 —— 按钮是给人看的，
+   * 真正不该越界的是这份数据。
+   */
+  protected onAlarmAdd(func: ModbusServiceFunction, item: ServiceAlarmItem): void {
     if (item.kind === 'none') {
       return;
     }
     const key = this.alarmKey(func, item);
     this.alarms.update((map) => {
       const next = new Map(map);
-      const alarm = next.get(key);
-      if (enabled) {
-        next.set(key, { ...defaultAlarm(item.kind, item.key), ...alarm, enabled: true });
-      } else if (alarm != null) {
-        next.set(key, { ...alarm, enabled: false });
+      const rules = next.get(key) ?? [];
+      if (rules.length >= MAX_ALARM_RULES) {
+        return next;
+      }
+      next.set(key, [...rules, defaultAlarm(item.kind, item.key)]);
+      return next;
+    });
+  }
+
+  /**
+   * 删掉一条规则。**整组删空时把 key 也去掉**（而不是留一个空数组）：留空数组会让
+   * {@link withAlarms} 往定义里写 `alarms: []`，而空数组在 codec 与后端那里都读作「没配」，
+   * 白白在库里留个噪音。
+   */
+  protected onAlarmRemove(
+    func: ModbusServiceFunction,
+    item: ServiceAlarmItem,
+    rule: ModbusServiceFieldAlarm,
+  ): void {
+    const key = this.alarmKey(func, item);
+    this.alarms.update((map) => {
+      const next = new Map(map);
+      const rules = [...(next.get(key) ?? [])];
+      const at = rules.indexOf(rule);
+      if (at < 0) {
+        return next;
+      }
+      rules.splice(at, 1);
+      if (rules.length > 0) {
+        next.set(key, rules);
+      } else {
+        next.delete(key);
       }
       return next;
     });
@@ -506,6 +556,7 @@ export abstract class DeviceServiceEditor implements OnInit {
   protected onAlarmCompare(
     func: ModbusServiceFunction,
     item: ServiceAlarmItem,
+    rule: ModbusServiceFieldAlarm,
     compare: string | null,
   ): void {
     const patch: Partial<ModbusServiceFieldAlarm> = { compare: compare ?? undefined };
@@ -514,52 +565,83 @@ export abstract class DeviceServiceEditor implements OnInit {
     } else {
       patch.state = undefined;
     }
-    this.patchAlarm(func, item, patch);
+    this.patchAlarm(func, item, rule, patch);
   }
 
   protected onAlarmThreshold(
     func: ModbusServiceFunction,
     item: ServiceAlarmItem,
+    rule: ModbusServiceFieldAlarm,
     value: number | null,
   ): void {
     // 清空 = 还没填（后端会拒），不是 0：0 是个正经阈值，不能拿「没填」冒充它
-    this.patchAlarm(func, item, {
+    this.patchAlarm(func, item, rule, {
       threshold: value == null || !Number.isFinite(value) ? undefined : value,
     });
   }
 
-  protected onAlarmState(func: ModbusServiceFunction, item: ServiceAlarmItem, state: string | null): void {
-    this.patchAlarm(func, item, { state: state ?? undefined });
+  protected onAlarmState(
+    func: ModbusServiceFunction,
+    item: ServiceAlarmItem,
+    rule: ModbusServiceFieldAlarm,
+    state: string | null,
+  ): void {
+    this.patchAlarm(func, item, rule, { state: state ?? undefined });
   }
 
-  protected onAlarmLevel(func: ModbusServiceFunction, item: ServiceAlarmItem, level: string | null): void {
-    this.patchAlarm(func, item, { level: level ?? undefined });
+  protected onAlarmLevel(
+    func: ModbusServiceFunction,
+    item: ServiceAlarmItem,
+    rule: ModbusServiceFieldAlarm,
+    level: string | null,
+  ): void {
+    this.patchAlarm(func, item, rule, { level: level ?? undefined });
   }
 
-  protected onAlarmText(func: ModbusServiceFunction, item: ServiceAlarmItem, text: string): void {
-    this.patchAlarm(func, item, { text });
+  protected onAlarmText(
+    func: ModbusServiceFunction,
+    item: ServiceAlarmItem,
+    rule: ModbusServiceFieldAlarm,
+    text: string,
+  ): void {
+    this.patchAlarm(func, item, rule, { text });
   }
 
-  /** 改一个出值的告警配置（没配过就先建一条空白的，由 patch 填进去） */
+  /**
+   * 改一组里的一条规则：**按对象身份定位**（模板交给我们的就是组里那个对象），不按数组下标。
+   *
+   * 身份这条纪律在这里尤其要紧：这一组会连同它所在的数组被整份替换，下标只是「此刻的位置」，
+   * 而运行期判「这条开着的告警是哪条规则开的」看的是 `id`，两处必须认同一个人
+   * （见 {@link ModbusServiceFieldAlarm.id}）。
+   * 定位不到（模板还停在上一帧的数组上）就什么都不做，而不是往组里塞一条新的。
+   */
   private patchAlarm(
     func: ModbusServiceFunction,
     item: ServiceAlarmItem,
+    rule: ModbusServiceFieldAlarm,
     patch: Partial<ModbusServiceFieldAlarm>,
   ): void {
     const key = this.alarmKey(func, item);
     this.alarms.update((map) => {
       const next = new Map(map);
-      next.set(key, { ...next.get(key), ...patch });
+      const rules = next.get(key) ?? [];
+      const at = rules.indexOf(rule);
+      if (at < 0) {
+        return next;
+      }
+      const updated = [...rules];
+      updated[at] = { ...rule, ...patch };
+      next.set(key, updated);
       return next;
     });
   }
 
-  /** 该出值当前的告警配置（没配过 = undefined，模板按它决定控件显不显示值） */
-  protected alarmOf(
+  /** 该出值当前的规则组（没配过 = 空数组，模板按它决定出规则行还是「未配置告警」那一行） */
+  protected alarmRulesOf(
     func: ModbusServiceFunction,
     item: ServiceAlarmItem,
-  ): ModbusServiceFieldAlarm | undefined {
-    return this.alarms().get(this.alarmKey(func, item));
+  ): ModbusServiceFieldAlarm[] {
+    return this.alarms().get(this.alarmKey(func, item)) ?? [];
   }
 
   /** 告警配置在 {@link alarms} 里的 key */
@@ -568,38 +650,49 @@ export abstract class DeviceServiceEditor implements OnInit {
   }
 
   /**
-   * 编辑页：把服务里已存的告警配置按 `点表ID#序号#出值名` 种进 {@link alarms}。
+   * 编辑页：把服务里已存的告警规则按 `点表ID#序号#出值名` 种进 {@link alarms}。
    * 与 {@link seedPolls} 同理：不种这一下，用户不动告警直接保存就会把已配的抹掉。
+   *
+   * **顺带补 `id`**：更早配下的（或在别处写进来的）规则可能没有身份，而没有身份的规则既没法
+   * 与运行期「哪条规则正开着」比对，也没法在界面上定位（增删改都按它认人）。
+   * 补缺必须**在取基线之前**完成（本方法正是载入流程里的那一步）—— 补晚一步，
+   * {@link alarmSignature} 的快照就与基线不同，保存按钮从一进页面就亮着，用户会以为自己改过东西。
    */
   private seedAlarms(configId: string | null, functions: ModbusServiceFunction[]): void {
-    const seeded = new Map<string, ModbusServiceFieldAlarm>();
+    const seeded = new Map<string, ModbusServiceFieldAlarm[]>();
     for (const func of functions) {
       for (const item of alarmItems(func)) {
-        // 位行只看位自己那份：父字段的告警是另一行的事，不能拿它冒充位上的配置
-        const alarm = item.bit ? item.bit.alarm : item.field.alarm;
-        if (alarm != null) {
-          seeded.set(alarmKey(configId, func.index, item.key), alarm);
+        // 位行只看位自己那一组：父字段的告警是另一行的事，不能拿它冒充位上的配置
+        const rules = (item.bit ? item.bit.alarms : item.field.alarms) ?? [];
+        if (rules.length === 0) {
+          continue;
         }
+        seeded.set(
+          alarmKey(configId, func.index, item.key),
+          rules.map((alarm) => (alarm.id ? alarm : { ...alarm, id: newAlarmId() })),
+        );
       }
     }
     this.alarms.set(seeded);
   }
 
   /**
-   * 把该方法的告警配置并进应答字段：字段自身一份、位清单里每一位各一份
-   * （位是独立的结果键，见 {@link ServiceAlarmItem}）。
+   * 把该方法的告警**规则组**并进应答字段：字段自身一组、位清单里每一位各一组
+   * （位是独立的结果键，见 {@link ServiceAlarmItem}）。组内顺序原样带出去 —— 它参与运行期的裁决。
    *
-   * 没配的出值**不出 `alarm` 键** —— 定义里绝大多数字段都没配告警，过一趟编辑页不该
-   * 在每个字段上多出一个空对象。写方法没有 response，这个循环自然什么也不做。
+   * 没配的出值**不出 `alarms` 键** —— 定义里绝大多数字段都没配告警，过一趟编辑页不该
+   * 在每个字段上多出一个空数组。写方法没有 response，这个循环自然什么也不做。
    */
   private withAlarms(func: ModbusServiceFunction): ModbusServiceFunction {
+    const configId = this.selectedConfigId();
+    const groupOf = (name: string): ModbusServiceFieldAlarm[] | undefined => {
+      const rules = this.alarms().get(alarmKey(configId, func.index, name));
+      return rules != null && rules.length > 0 ? rules : undefined;
+    };
     const response = (func.response ?? []).map((field: ModbusServiceField) => ({
       ...field,
-      alarm: this.alarms().get(alarmKey(this.selectedConfigId(), func.index, field.field)),
-      bitList: field.bitList?.map((bit) => ({
-        ...bit,
-        alarm: this.alarms().get(alarmKey(this.selectedConfigId(), func.index, bit.field)),
-      })),
+      alarms: groupOf(field.field),
+      bitList: field.bitList?.map((bit) => ({ ...bit, alarms: groupOf(bit.field) })),
     }));
     return { ...func, response };
   }

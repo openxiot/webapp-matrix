@@ -1,13 +1,15 @@
 import { ModbusServiceFieldAlarm } from '../../define/modbus/ModbusService';
 
 /**
- * 出值的告警配置与 JSON 的互转（对应后端 `ModbusServiceFieldAlarmCodec`）。
+ * 出值的一组告警规则与 JSON 的互转（对应后端 `ModbusServiceFieldAlarmCodec`）。
  *
  * 守全仓的「null 不出键」：没配的项不写出去，免得往库里写一堆空值；空对象解码成 `undefined`
- * （而不是一个字段全空的实例），这样父 Codec 才能靠「没有就不出键」把「没配」原样带回去 ——
- * 编辑页取回定义后原样回存，不该因为过了一趟前端就把服务定义改形。
+ * （而不是一个字段全空的实例），**空数组与「元素全是空对象」的数组也解码成 `undefined`**
+ * —— 这样父 Codec 才能靠「没有就不出键」把「没配」原样带回去：
+ * 编辑页取回定义后原样回存，不该因为过了一趟前端就把服务定义改形，也不该在库里留下
+ * 一个 `alarms: []` 或一串空壳规则。
  *
- * 六个字段都是可选的（`compare` 与 `threshold`/`state` 按比较方式互斥），故一律用 `!= null` 判，
+ * 七个字段都是可选的（`compare` 与 `threshold`/`state` 按比较方式互斥），故一律用 `!= null` 判，
  * 不做 `||` 兜底：`enabled: false` 与 `threshold: 0` 都是**有值**。
  */
 export class ModbusServiceFieldAlarmCodec {
@@ -18,6 +20,10 @@ export class ModbusServiceFieldAlarmCodec {
     const x = new ModbusServiceFieldAlarm();
     let seen = false;
 
+    if (o.id != null) {
+      x.id = o.id;
+      seen = true;
+    }
     if (o.enabled != null) {
       x.enabled = o.enabled;
       seen = true;
@@ -53,6 +59,9 @@ export class ModbusServiceFieldAlarmCodec {
     }
     const o: any = {};
 
+    if (x.id != null && x.id !== '') {
+      o.id = x.id;
+    }
     if (x.enabled != null) {
       o.enabled = x.enabled;
     }
@@ -74,5 +83,41 @@ export class ModbusServiceFieldAlarmCodec {
 
     // 一个键都没写出去 ⇒ 当没配（与 decode 对称：不让一个空对象在库里来回传）
     return Object.keys(o).length > 0 ? o : undefined;
+  }
+
+  /**
+   * 一组规则。**空数组与「元素全是空对象」都读作 `undefined`**（= 没配），与
+   * {@link decode} 同一条口径，于是父 Codec 那一句「非空才出键」把 `[]` 也原样消掉。
+   */
+  static decodeList(a: any): ModbusServiceFieldAlarm[] | undefined {
+    if (!Array.isArray(a) || a.length === 0) {
+      return undefined;
+    }
+    const list: ModbusServiceFieldAlarm[] = [];
+    for (const item of a) {
+      const alarm = ModbusServiceFieldAlarmCodec.decode(item);
+      if (alarm != null) {
+        list.push(alarm);
+      }
+    }
+    return list.length > 0 ? list : undefined;
+  }
+
+  /**
+   * 一组规则。**顺序原样保留**：声明顺序参与同级并列的裁决（后端取靠后的那条），
+   * 所以重排是一次真改动，不能在这里顺手排序。
+   */
+  static encodeList(list: ModbusServiceFieldAlarm[] | undefined): any {
+    if (list == null || list.length === 0) {
+      return undefined;
+    }
+    const arr: any[] = [];
+    for (const alarm of list) {
+      const o = ModbusServiceFieldAlarmCodec.encode(alarm);
+      if (o != null) {
+        arr.push(o);
+      }
+    }
+    return arr.length > 0 ? arr : undefined;
   }
 }

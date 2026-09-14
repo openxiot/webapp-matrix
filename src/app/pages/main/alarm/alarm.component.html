@@ -212,11 +212,16 @@
                           <span class="main-alarm-time" [title]="'恢复时间' | translate">
                             {{ item.recoveredAt | date: 'MM-dd HH:mm:ss' }}
                           </span>
-                          <!-- 怎么关掉的：DEFINITION = 定义不再覆盖这个键（字段被删/告警被关），不是值回来了。
-                               后端枚举名，原样显示（排查时要拿它去搜日志），与历史页露枚举名是同一个做法 -->
-                          @if (item.closeType === 'DEFINITION') {
+                          <!--
+                            怎么关掉的：值恢复 / 定义变更 / 被取代（见 modbusAlarmCloseLabel）。
+                            三条路径都露出来 —— 一条没有恢复样本的关闭（定义不再覆盖这个键、或被同出值的
+                            另一条规则接管）看起来与「值回来了」一模一样，只显示其中一种就说了半句话。
+                            正文走词典，title 留**原样枚举名**（排查时要拿它去搜后端日志，
+                            与上面级别标签的 [title]="item.level" 同一个做法）。
+                          -->
+                          @if (item.closeType) {
                             <span class="main-alarm-enum" title="{{ item.closeType }}">
-                              {{ item.closeType }}
+                              {{ closeLabel(item.closeType) }}
                             </span>
                           }
                         }
