@@ -9,8 +9,8 @@
  *   没有读值，给空数组。
  *
  * 纯函数、无 Angular 依赖，供「添加/编辑服务」页在选中点表后即时展开成预览
- * （名称/请求帧/应答字段只读，只有「调用周期」由用户在预览表里改 —— 周期不属于点表，
- * 由宿主页另存一份并在此处合进方法定义）。
+ * （名称/请求帧/应答字段只读，只有「自动轮询」与「逐字段告警」由用户在预览表里改 ——
+ * 这两样都不属于点表，由宿主页各存一份并在此处合进方法定义）。
  */
 import {
   ModbusCommand,
@@ -18,8 +18,11 @@ import {
 } from '../../../../../typedef/define/modbus/Modbus';
 import {
   ModbusServiceField,
+  ModbusServiceFieldAlarm,
+  ModbusServiceFieldBit,
   ModbusServiceFunction,
 } from '../../../../../typedef/define/modbus/ModbusService';
+import { MODBUS_ALARM_OPERATORS } from '../../../../../typedef/define/modbus/ModbusAlarm';
 import { buildRequestFrame } from '../../../modbus/editor/request/request.frame';
 import {
   READ_BIT_FCS,
@@ -186,8 +189,24 @@ function formatOf(dataType: string | undefined, bytes: number): string {
   }
 }
 
-/** 应答字段的展示文案：字段名 类型/字节数 [字节序] [×缩放] [单位] [位: 名称@偏移 …] */
+/** 应答字段的展示文案：字段名 类型/字节数 [字节序] [×缩放] [单位] [位: 名称@偏移 …] [→ 告警 …] */
 export function describeServiceField(field: ModbusServiceField): string {
+  const parts = [describeFieldType(field)];
+  // 已启用的告警缀在最后：这一行是「这个方法返回什么、越限会不会报」的摘要，
+  // 漏掉告警就少说了一件事（字段自身与各位各一份，与展开行里的行序一致）
+  for (const alarm of [field.alarm, ...(field.bitList ?? []).map((bit) => bit.alarm)]) {
+    if (alarm?.enabled) {
+      parts.push(`→ ${alarmBrief(alarm)}`);
+    }
+  }
+  return parts.join(' ');
+}
+
+/**
+ * 只看字段自身的类型描述，**不带告警**：展开行里的「类型」列用它 ——
+ * 那一列右边就是告警的几个控件，再缀一遍「→ 温度过高(>80)」是同一句话说两遍。
+ */
+export function describeFieldType(field: ModbusServiceField): string {
   const parts = [`${field.field}`, `${field.format}/${field.bytes}B`];
   if (field.byteOrder) {
     parts.push(field.byteOrder);
@@ -203,6 +222,17 @@ export function describeServiceField(field: ModbusServiceField): string {
     parts.push(`位: ${field.bitList.map((bit) => `${bit.field}@${bit.offset}`).join(' ')}`);
   }
   return parts.join(' ');
+}
+
+/**
+ * 已启用的告警在摘要里的样子：`温度过高(>80)`、`机组运行(=1)`。
+ *
+ * 用**符号**而不是「超过」那类词：这一行是跟着 `uint16/2B` 一起出现的技术摘要，
+ * 符号与定义里存的值逐字对齐，也就不必进词典（见 `ModbusAlarm.ts` 的 `MODBUS_ALARM_OPERATORS`）。
+ */
+function alarmBrief(alarm: ModbusServiceFieldAlarm): string {
+  const target = alarm.threshold != null ? String(alarm.threshold) : (alarm.state ?? '');
+  return `${alarm.text ?? ''}(${alarm.compare ?? ''}${target})`;
 }
 
 /** 写方法（无 response）的提示文案 i18n key —— 页面自写文案，由调用方走翻译；响应的字段文案来自点表数据，不翻译。 */
@@ -247,7 +277,7 @@ export interface FunctionPoll {
 
 /**
  * 编辑页「有没有真正改过」的基线：**只装用户能改的东西**（名称 / 依赖服务 / 依赖方法 / 源点表 /
- * 各方法的轮询配置）。
+ * 各方法的轮询配置 / 各出值的告警配置）。
  *
  * 方法列表本体不进来：它是拿所选点表现场重算的，存的那份与算出来的那份在同一次生成口径下必然一致，
  * 而一旦生成器口径演进（字段名、bit-list、格式兜底这些），一进页面就会被判成「已修改」——
@@ -261,6 +291,8 @@ export interface ServiceBaseline {
   configId: string | null;
   /** 轮询配置表的快照（见 {@link pollSignature}） */
   polls: string;
+  /** 告警配置表的快照（见 {@link alarmSignature}） */
+  alarms: string;
 }
 
 /** 当前表单相对基线是否改过（新增页没有原值可比，由调用方直接当「改过」）。 */
@@ -270,7 +302,8 @@ export function serviceChanged(base: ServiceBaseline, current: ServiceBaseline):
     base.siid !== current.siid ||
     base.aiid !== current.aiid ||
     base.configId !== current.configId ||
-    base.polls !== current.polls
+    base.polls !== current.polls ||
+    base.alarms !== current.alarms
   );
 }
 
@@ -286,6 +319,137 @@ export function pollSignature(polls: Map<string, FunctionPoll>): string {
     [...polls.entries()]
       .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
       .map(([key, poll]) => [key, poll.interval ?? null, poll.polling ?? (poll.interval != null)]),
+  );
+}
+
+/* ----------------------------------------------------------------------------------------------
+ * 逐字段告警
+ * ----------------------------------------------------------------------------------------------*/
+
+/**
+ * 一个出值能怎么比 —— 与后端 `ModbusAlarmPolicy` / `ModbusServiceValidator` 同一口径：
+ * - `state`：命中取值表，值的形态是那条 `description` 字符串 ⇒ 只有 `=` 合法，比某条状态；
+ * - `bit`：位清单里的一位，值是 0 / 1 ⇒ 只有 `=` 合法，阈值取 0 / 1；
+ * - `numeric`：数值（含位区的整段掩码）⇒ 五种比较都比阈值；
+ * - `none`：`format` 为 `string` 的字段 ⇒ 无从比较，**不能配告警**（后端直接拒）。
+ */
+export type AlarmTargetKind = 'state' | 'bit' | 'numeric' | 'none';
+
+/**
+ * 展开行里的一个出值：一个应答字段，或位清单里的一位。
+ *
+ * 位是**独立的结果键** —— 后端 parser 逐位把 0/1 写进返回值，所以它与父字段各占一行、
+ * 各配各的告警；只挂父字段的话「位 = 1 就告警」根本够不着。
+ */
+export interface ServiceAlarmItem {
+  /** 出值名：invoke 返回值里的 key，也是告警行里的 `field`（**数据、不翻译**） */
+  key: string;
+  /** 载着这个出值的字段：单位 / 取值表这些属性都看它 */
+  field: ModbusServiceField;
+  /** 位清单里的一位；字段自身那一行为 undefined */
+  bit?: ModbusServiceFieldBit;
+  /** 这个出值能怎么比（见 {@link AlarmTargetKind}） */
+  kind: AlarmTargetKind;
+}
+
+/** 一个方法的所有出值（应答字段 + 各自的位），展开行按这个顺序逐行列出 */
+export function alarmItems(func: ModbusServiceFunction): ServiceAlarmItem[] {
+  const items: ServiceAlarmItem[] = [];
+  for (const field of func.response ?? []) {
+    items.push({ key: field.field, field, kind: alarmTargetKind(field) });
+    for (const bit of field.bitList ?? []) {
+      items.push({ key: bit.field, field, bit, kind: alarmTargetKind(field, bit) });
+    }
+  }
+  return items;
+}
+
+/**
+ * 出值能怎么比。位恒为 `bit`（位区只能是 01/02 的整段掩码，格式不会是 string）；
+ * 其余看字段自身的形态：string 不能配，带取值表只能比状态，剩下的都是数值。
+ */
+export function alarmTargetKind(
+  field: ModbusServiceField,
+  bit?: ModbusServiceFieldBit,
+): AlarmTargetKind {
+  if (bit) {
+    return 'bit';
+  }
+  if (field.format === 'string') {
+    return 'none';
+  }
+  return (field.valueList ?? []).length > 0 ? 'state' : 'numeric';
+}
+
+/**
+ * 该出值此刻比的是「取值表的状态」还是「数值阈值」。后端校验器把这两个字段做成互斥的
+ * （同时给或都不给都报错），所以「选了 = 且带取值表」之外的任何情形都走 threshold。
+ */
+export function alarmUsesState(kind: AlarmTargetKind, compare: string | undefined): boolean {
+  return kind === 'state' && compare === '=';
+}
+
+/** 该出值能选的比较方式：数值五种，取值表与位只有 `=`，string 一个都没有 */
+export function alarmOperatorsOf(kind: AlarmTargetKind): string[] {
+  if (kind === 'none') {
+    return [];
+  }
+  return kind === 'numeric' ? [...MODBUS_ALARM_OPERATORS] : ['='];
+}
+
+/**
+ * 打开告警开关时补齐的起步配置 —— 与自动轮询的 `DEFAULT_INTERVAL_SECONDS` 同一个用意：
+ * 后端要求「开了告警就得填齐」，总不能因为用户先拨开关、还没来得及填就被拒。
+ *
+ * `text` 取该出值的名字（用户随即能改）：后端也不接受空文本，而「进水温度」这种默认值
+ * 恰恰是绝大多数人要填的那个 —— 与服务名称默认取点表描述（`applyAutoName`）同一条做法。
+ *
+ * 阈值的默认值只有位给得起（0 / 1 两个候选里取「置位就告警」那个）；数值阈值没有合理缺省，
+ * 留给用户填 —— 后端会明确拒掉空值，比这里猜一个 0（那会立刻置起一条告警）诚实。
+ */
+export function defaultAlarm(kind: AlarmTargetKind, text: string): ModbusServiceFieldAlarm {
+  const alarm: ModbusServiceFieldAlarm = {
+    enabled: true,
+    compare: kind === 'numeric' ? '>' : '=',
+    level: 'WARN',
+    text,
+  };
+  if (kind === 'bit') {
+    alarm.threshold = 1;
+  }
+  return alarm;
+}
+
+/**
+ * 告警配置在编辑页那张侧表里的 key：`点表ID#方法序号#出值名`。
+ *
+ * 与 {@link pollSignature} 那边带上点表 ID 的理由相同：换了源点表，不能把 A 点表的告警
+ * 带到 B 点表序号相同的方法里名字相同的字段上。
+ */
+export function alarmKey(configId: string | null, functionIndex: number, field: string): string {
+  return `${configId ?? ''}#${functionIndex}#${field}`;
+}
+
+/**
+ * 告警配置表的可比较快照：按 key 排序后序列化。理由同 {@link pollSignature}（Map 的遍历顺序
+ * 是插入顺序，直接序列化会被「先改哪一行」影响）。
+ *
+ * 值**逐字段摊平成固定顺序的数组**而不是直接塞对象：对象里键的顺序跟着改动路径走
+ * （先改级别还是先改文本），同一个配置会序列化出两种字符串，保存按钮就白白亮一次。
+ */
+export function alarmSignature(alarms: Map<string, ModbusServiceFieldAlarm>): string {
+  return JSON.stringify(
+    [...alarms.entries()]
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([key, alarm]) => [
+        key,
+        alarm.enabled ?? false,
+        alarm.compare ?? null,
+        alarm.threshold ?? null,
+        alarm.state ?? null,
+        alarm.level ?? null,
+        alarm.text ?? null,
+      ]),
   );
 }
 

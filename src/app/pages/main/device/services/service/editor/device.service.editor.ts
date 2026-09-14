@@ -11,17 +11,32 @@ import { DeviceEntity } from '../../../../../../typedef/define/device/DeviceEnti
 import { ModbusConfig } from '../../../../../../typedef/define/modbus/Modbus';
 import {
   ModbusService as ModbusServiceDef,
+  ModbusServiceField,
+  ModbusServiceFieldAlarm,
   ModbusServiceFunction,
 } from '../../../../../../typedef/define/modbus/ModbusService';
+import {
+  MODBUS_ALARM_LEVELS,
+  modbusAlarmLevelLabel,
+  modbusAlarmOperatorLabel,
+} from '../../../../../../typedef/define/modbus/ModbusAlarm';
 import { SpaceRef } from '../../../../../../typedef/define/space/SpaceRef';
 import {
   WRITE_METHOD_REPLY_KEY,
+  alarmKey,
+  alarmItems,
+  alarmOperatorsOf,
+  alarmSignature,
+  alarmUsesState,
   buildServiceFunctions,
+  defaultAlarm,
+  describeFieldType,
   describeFunctionResponse,
   isReadFunction,
   pollSignature,
   serviceChanged,
   type FunctionPoll,
+  type ServiceAlarmItem,
   type ServiceBaseline,
 } from '../service.functions';
 
@@ -51,9 +66,10 @@ const DEFAULT_INTERVAL_SECONDS = 60;
  * 3. **服务名称**（用户填）。
  *
  * 方法列表由点表现场展开、不允许手工增删（后端 functions 由本页一次性落库）；名称/请求帧/应答字段
- * 都只读，唯独**自动轮询**（开关 + 调用周期）可改 —— 轮询不属于点表，是「这份服务怎么跑」的事
- * （见 {@link polls}）。编辑页若源点表已删 / 跨组织取不到，退回服务里存的方法原样展示并提示，
- * 保存不改动它们（轮询那两列仍可改，它们是从服务里种进来的）。
+ * 都只读，可改的是**自动轮询**（开关 + 调用周期）与**逐字段告警**（展开行里配）—— 两者都不属于点表，
+ * 是「这份服务怎么跑、越限算不算事」的事（见 {@link polls} 与 {@link alarms}）。
+ * 编辑页若源点表已删 / 跨组织取不到，退回服务里存的方法原样展示并提示，
+ * 保存不改动它们（这两样仍可改，它们是从服务里种进来的）。
  *
  * 本类不带模板：create / edit 两个页面组件各自把 templateUrl 指到同一份
  * device.service.editor.html，仅以 {@link kind} 区分标题与提交动作。
@@ -110,11 +126,31 @@ export abstract class DeviceServiceEditor implements OnInit {
    */
   private readonly polls = signal<Map<string, FunctionPoll>>(new Map());
 
+  /**
+   * 各出值（应答字段，或位清单里的一位）的阈值告警配置，key = `点表ID#方法序号#出值名`
+   * （见 {@link alarmKey}）—— 存这一份的理由与 {@link polls} 完全相同：方法列表由点表现场重算，
+   * 告警却只存在这份服务里。
+   */
+  private readonly alarms = signal<Map<string, ModbusServiceFieldAlarm>>(new Map());
+
+  /** 展开了告警配置那一行的方法序号（方法预览表的第一列是展开手柄，只有读方法有） */
+  private readonly expanded = signal<Set<number>>(new Set());
+
   /** 周期的上下限（秒）：模板绑定控件用，口径见文件头常量 */
   protected readonly intervalMin = MIN_INTERVAL_SECONDS;
   protected readonly intervalMax = MAX_INTERVAL_SECONDS;
   /** 方法是不是读方法（写方法不能自动调用）：模板据此决定这一格出控件还是「—」 */
   protected readonly isReadFunction = isReadFunction;
+  /** 一个方法的全部出值（应答字段 + 各自的位）：展开行逐行列出 */
+  protected readonly alarmItems = alarmItems;
+  /**
+   * 出值的类型摘要，**不带告警尾巴**：展开行的「类型」列用它 —— 右边紧挨着就是告警的几个控件，
+   * 再缀一遍「→ 温度过高(>80)」是同一句话说两遍，而且会随用户敲字实时变。
+   * 上面那张表的「应答字段」列走 {@link responseText}，那里要的是带尾巴的完整摘要。
+   */
+  protected readonly describeFieldType = describeFieldType;
+  /** 该出值此刻比的是状态还是数值：模板据此把阈值那一格换成下拉还是数字框 */
+  protected readonly alarmUsesState = alarmUsesState;
 
   /** 载入完成时的基线（编辑页「有没有改过」的原值）：载入前为 null，保存按钮此时也是不可用 */
   private readonly baseline = signal<ServiceBaseline | null>(null);
@@ -126,11 +162,12 @@ export abstract class DeviceServiceEditor implements OnInit {
     aiid: this.selectedAiid(),
     configId: this.selectedConfigId(),
     polls: pollSignature(this.polls()),
+    alarms: alarmSignature(this.alarms()),
   }));
 
   /**
-   * 相对载入时是否真正改过（用户能改的五样：名称 / 依赖服务 / 依赖方法 / 源点表 / 各方法轮询配置）。
-   * 新增页没有原值可比，恒为 true —— 保存按钮只看「填得对不对」。
+   * 相对载入时是否真正改过（用户能改的六样：名称 / 依赖服务 / 依赖方法 / 源点表 / 各方法轮询配置 /
+   * 各出值告警配置）。新增页没有原值可比，恒为 true —— 保存按钮只看「填得对不对」。
    */
   readonly changed = computed<boolean>(() => {
     if (this.kind !== 'edit') {
@@ -189,11 +226,12 @@ export abstract class DeviceServiceEditor implements OnInit {
   /**
    * 方法列表：选中源点表就按它现场展开（一个功能码动作 = 一个方法）；
    * 点表缺失（编辑页里源点表已删 / 跨组织取不到）时退回服务里存的原样。
-   * 两者都把 {@link polls} 里的轮询配置合进来，故它也是提交时的最终方法定义。
+   * 两者都把 {@link polls} 的轮询配置与 {@link alarms} 的告警配置合进来，
+   * 故它也是提交时的最终方法定义。
    */
   readonly functions = computed<ModbusServiceFunction[]>(() => {
     const base = this.selectedConfig() ? this.built().functions : this.storedFunctions();
-    return base.map((func) => this.withPoll(func));
+    return base.map((func) => this.withAlarms(this.withPoll(func)));
   });
 
   /** 生成不出请求帧 / 应答规则而被跳过的动作（只提示，不阻断保存） */
@@ -296,7 +334,8 @@ export abstract class DeviceServiceEditor implements OnInit {
         this.selectedAiid.set(service.device?.aiid ?? null);
         this.storedFunctions.set(service.functions ?? []);
         this.seedPolls(service.configId ?? null, service.functions ?? []);
-        // 基线要在名称/坐标/点表/轮询配置都落定之后取：它就是「原样不动直接保存」的那一份
+        this.seedAlarms(service.configId ?? null, service.functions ?? []);
+        // 基线要在名称/坐标/点表/轮询与告警配置都落定之后取：它就是「原样不动直接保存」的那一份
         this.baseline.set(this.form());
         this.version = service.version;
         this.storedSpace = service.device?.space;
@@ -411,6 +450,158 @@ export abstract class DeviceServiceEditor implements OnInit {
       return { ...func, interval: undefined, polling: undefined };
     }
     return { ...func, interval: poll.interval, polling: poll.polling ?? true };
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * 逐字段告警（展开行）
+   * ----------------------------------------------------------------------------------------------*/
+
+  /** 展开 / 收起某个方法的告警配置行（只有读方法有手柄） */
+  protected onAlarmExpand(func: ModbusServiceFunction, expanded: boolean): void {
+    this.expanded.update((set) => {
+      const next = new Set(set);
+      if (expanded) {
+        next.add(func.index);
+      } else {
+        next.delete(func.index);
+      }
+      return next;
+    });
+  }
+
+  /** 该方法此刻是否展开着 */
+  protected isAlarmExpanded(func: ModbusServiceFunction): boolean {
+    return this.expanded().has(func.index);
+  }
+
+  /**
+   * 开关某个出值的告警。
+   *
+   * 打开时若还没配过，先给一份能过校验的起步配置（后端要求「开了告警就得填齐」）；
+   * 关掉只改开关、**配置原样留着** —— 这正是这个开关的用处：先停掉一条吵闹的告警，
+   * 不必把比较方式、阈值、文本都删掉（与轮询开关保留周期同口径）。
+   */
+  protected onAlarmEnabled(func: ModbusServiceFunction, item: ServiceAlarmItem, enabled: boolean): void {
+    if (item.kind === 'none') {
+      return;
+    }
+    const key = this.alarmKey(func, item);
+    this.alarms.update((map) => {
+      const next = new Map(map);
+      const alarm = next.get(key);
+      if (enabled) {
+        next.set(key, { ...defaultAlarm(item.kind, item.key), ...alarm, enabled: true });
+      } else if (alarm != null) {
+        next.set(key, { ...alarm, enabled: false });
+      }
+      return next;
+    });
+  }
+
+  /**
+   * 改比较方式。比较方式决定「比的是状态还是数值」（见 {@link alarmUsesState}），
+   * 后端把这两个目标字段做成互斥的，故这一步顺手把用不上的那个清掉 ——
+   * 不清的话，从「= 制冷」切到「> 80」会同时带着 state，保存被后端拒。
+   */
+  protected onAlarmCompare(
+    func: ModbusServiceFunction,
+    item: ServiceAlarmItem,
+    compare: string | null,
+  ): void {
+    const patch: Partial<ModbusServiceFieldAlarm> = { compare: compare ?? undefined };
+    if (alarmUsesState(item.kind, compare ?? undefined)) {
+      patch.threshold = undefined;
+    } else {
+      patch.state = undefined;
+    }
+    this.patchAlarm(func, item, patch);
+  }
+
+  protected onAlarmThreshold(
+    func: ModbusServiceFunction,
+    item: ServiceAlarmItem,
+    value: number | null,
+  ): void {
+    // 清空 = 还没填（后端会拒），不是 0：0 是个正经阈值，不能拿「没填」冒充它
+    this.patchAlarm(func, item, {
+      threshold: value == null || !Number.isFinite(value) ? undefined : value,
+    });
+  }
+
+  protected onAlarmState(func: ModbusServiceFunction, item: ServiceAlarmItem, state: string | null): void {
+    this.patchAlarm(func, item, { state: state ?? undefined });
+  }
+
+  protected onAlarmLevel(func: ModbusServiceFunction, item: ServiceAlarmItem, level: string | null): void {
+    this.patchAlarm(func, item, { level: level ?? undefined });
+  }
+
+  protected onAlarmText(func: ModbusServiceFunction, item: ServiceAlarmItem, text: string): void {
+    this.patchAlarm(func, item, { text });
+  }
+
+  /** 改一个出值的告警配置（没配过就先建一条空白的，由 patch 填进去） */
+  private patchAlarm(
+    func: ModbusServiceFunction,
+    item: ServiceAlarmItem,
+    patch: Partial<ModbusServiceFieldAlarm>,
+  ): void {
+    const key = this.alarmKey(func, item);
+    this.alarms.update((map) => {
+      const next = new Map(map);
+      next.set(key, { ...next.get(key), ...patch });
+      return next;
+    });
+  }
+
+  /** 该出值当前的告警配置（没配过 = undefined，模板按它决定控件显不显示值） */
+  protected alarmOf(
+    func: ModbusServiceFunction,
+    item: ServiceAlarmItem,
+  ): ModbusServiceFieldAlarm | undefined {
+    return this.alarms().get(this.alarmKey(func, item));
+  }
+
+  /** 告警配置在 {@link alarms} 里的 key */
+  private alarmKey(func: ModbusServiceFunction, item: ServiceAlarmItem): string {
+    return alarmKey(this.selectedConfigId(), func.index, item.key);
+  }
+
+  /**
+   * 编辑页：把服务里已存的告警配置按 `点表ID#序号#出值名` 种进 {@link alarms}。
+   * 与 {@link seedPolls} 同理：不种这一下，用户不动告警直接保存就会把已配的抹掉。
+   */
+  private seedAlarms(configId: string | null, functions: ModbusServiceFunction[]): void {
+    const seeded = new Map<string, ModbusServiceFieldAlarm>();
+    for (const func of functions) {
+      for (const item of alarmItems(func)) {
+        // 位行只看位自己那份：父字段的告警是另一行的事，不能拿它冒充位上的配置
+        const alarm = item.bit ? item.bit.alarm : item.field.alarm;
+        if (alarm != null) {
+          seeded.set(alarmKey(configId, func.index, item.key), alarm);
+        }
+      }
+    }
+    this.alarms.set(seeded);
+  }
+
+  /**
+   * 把该方法的告警配置并进应答字段：字段自身一份、位清单里每一位各一份
+   * （位是独立的结果键，见 {@link ServiceAlarmItem}）。
+   *
+   * 没配的出值**不出 `alarm` 键** —— 定义里绝大多数字段都没配告警，过一趟编辑页不该
+   * 在每个字段上多出一个空对象。写方法没有 response，这个循环自然什么也不做。
+   */
+  private withAlarms(func: ModbusServiceFunction): ModbusServiceFunction {
+    const response = (func.response ?? []).map((field: ModbusServiceField) => ({
+      ...field,
+      alarm: this.alarms().get(alarmKey(this.selectedConfigId(), func.index, field.field)),
+      bitList: field.bitList?.map((bit) => ({
+        ...bit,
+        alarm: this.alarms().get(alarmKey(this.selectedConfigId(), func.index, bit.field)),
+      })),
+    }));
+    return { ...func, response };
   }
 
   /**
@@ -543,5 +734,38 @@ export abstract class DeviceServiceEditor implements OnInit {
   /** 一个方法的应答字段文案（模板用；写方法返回提示文案） */
   protected responseText(func: ModbusServiceFunction): string {
     return describeFunctionResponse(func) ?? this.i18n.translate.instant(WRITE_METHOD_REPLY_KEY);
+  }
+
+  /**
+   * 翻译 i18n 键。内部读取 currentLang 信号，使下面的下拉选项在语言切换时随视图重算
+   * （`instant` 不是响应式的，口径同 dashboard.component 的 `t`）。
+   */
+  private readonly t = (key: string): string => {
+    this.i18n.currentLang();
+    return this.i18n.translate.instant(key);
+  };
+
+  /** 比较方式下拉：「文案 + 符号」两样都给 —— 词是给不看符号的人，符号与定义里存的值逐字对齐 */
+  protected compareOptions(item: ServiceAlarmItem): { value: string; label: string }[] {
+    return alarmOperatorsOf(item.kind).map((op) => ({
+      value: op,
+      label: `${modbusAlarmOperatorLabel(op, this.t)} ${op}`,
+    }));
+  }
+
+  /** 级别下拉：顺序即「由轻到重」，与告警列表页的筛选同一个顺序 */
+  protected get alarmLevelOptions(): { value: string; label: string }[] {
+    return MODBUS_ALARM_LEVELS.map((level) => ({
+      value: level,
+      label: modbusAlarmLevelLabel(level, this.t),
+    }));
+  }
+
+  /**
+   * `=` 的比较目标：该字段取值表里的描述，**原样显示、不翻译** —— 它是点表里的数据，
+   * 与后端逐字比对的就是这个串，翻了保存就会被拒（见 AGENTS.md 的 i18n 一节）。
+   */
+  protected alarmStateOptions(field: ModbusServiceField): { value: string; label: string }[] {
+    return (field.valueList ?? []).map((v) => ({ value: v.description, label: v.description }));
   }
 }

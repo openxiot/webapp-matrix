@@ -154,7 +154,14 @@
           <tbody>
             @for (func of functions(); track func.index) {
               <tr>
-                <td>{{ func.index }}</td>
+                <!-- 序号列兼作展开手柄（本仓库的树表也是把展开方框放首列）：展开后是该方法的逐出值告警配置 -->
+                <td
+                  [nzShowExpand]="isReadFunction(func)"
+                  [nzExpand]="isAlarmExpanded(func)"
+                  (nzExpandChange)="onAlarmExpand(func, $event)"
+                >
+                  {{ func.index }}
+                </td>
                 <td>{{ func.name }}</td>
                 <td><code class="service-editor-frame">{{ func.request }}</code></td>
                 <td>{{ responseText(func) }}</td>
@@ -186,11 +193,149 @@
                   }
                 </td>
               </tr>
+              <!--
+                逐出值告警配置：展开行。
+                这一行用 @if 自己渲染（而不是 ng-zorro 的 tr[nzExpand]）：那套是给「子行也在数据里」
+                的树表用的，而这里要的是一张独立的配置表，自己掌控 td 的 colspan 反而更直白。
+                首列的 td[nzShowExpand] 才是手柄本身，两边共用 isAlarmExpanded(func) 这一个状态。
+              -->
+              @if (isAlarmExpanded(func)) {
+                <tr class="service-alarm-row">
+                  <!-- colspan = 上面那张表的列数（序号/方法名称/请求帧/应答字段/自动轮询/调用周期） -->
+                  <td [attr.colspan]="6">
+                    @if (alarmItems(func).length === 0) {
+                      <div class="service-editor-hint">
+                        {{ '只有读方法的字段可以配置告警' | translate }}
+                      </div>
+                    } @else {
+                      <table class="service-alarm-table">
+                        <thead>
+                          <tr>
+                            <!-- 这是一张普通 table（不是 nz-table），故列宽用 style 而不是 nzWidth -->
+                            <th>{{ '字段' | translate }}</th>
+                            <th>{{ '类型' | translate }}</th>
+                            <th style="width: 70px">{{ '告警' | translate }}</th>
+                            <th style="width: 160px">{{ '比较方式' | translate }}</th>
+                            <th style="width: 170px">{{ '阈值' | translate }}</th>
+                            <th style="width: 120px">{{ '告警级别' | translate }}</th>
+                            <th style="width: 200px">{{ '告警文本' | translate }}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (item of alarmItems(func); track $index) {
+                            <tr>
+                              <!-- 位行缩进一级：位是父字段位区里的一位，但它是**独立的结果键**，各配各的告警 -->
+                              <td [class.service-alarm-nested]="item.bit != null">{{ item.key }}</td>
+                              <td>
+                                @if (item.bit) {
+                                  <!-- 位的取值恒为 0/1（后端 parser 逐位取），写成符号不必进词典 -->
+                                  <code class="service-editor-frame">0/1</code>
+                                } @else {
+                                  <!-- 类型摘要不带告警尾巴：右边就是告警控件，不必同一句话说两遍 -->
+                                  {{ describeFieldType(item.field) }}
+                                }
+                              </td>
+                              @if (item.kind === 'none') {
+                                <!-- string 字段的值可能是任意文本，五种比较都无从谈起，后端直接拒 -->
+                                <td [attr.colspan]="5" class="service-editor-hint">
+                                  {{ '文本字段不能配置告警' | translate }}
+                                </td>
+                              } @else {
+                                <td>
+                                  <nz-switch
+                                    [ngModel]="alarmOf(func, item)?.enabled === true"
+                                    (ngModelChange)="onAlarmEnabled(func, item, $event)"
+                                  ></nz-switch>
+                                </td>
+                                <!--
+                                  开关关掉后控件仍显示、只是灰着：配置是**留着**的（随时能再开），
+                                  藏起来会让人以为关一下就把配好的东西弄丢了。
+                                -->
+                                <td>
+                                  <nz-select
+                                    [ngModel]="alarmOf(func, item)?.compare ?? null"
+                                    (ngModelChange)="onAlarmCompare(func, item, $event)"
+                                    [nzDisabled]="alarmOf(func, item)?.enabled !== true"
+                                    [nzPlaceHolder]="'请选择' | translate"
+                                    style="width: 100%"
+                                  >
+                                    @for (op of compareOptions(item); track op.value) {
+                                      <nz-option [nzValue]="op.value" [nzLabel]="op.label"></nz-option>
+                                    }
+                                  </nz-select>
+                                </td>
+                                <td>
+                                  @if (alarmUsesState(item.kind, alarmOf(func, item)?.compare)) {
+                                    <!-- 比状态：取值表里的描述，原样显示（数据、不翻译） -->
+                                    <nz-select
+                                      [ngModel]="alarmOf(func, item)?.state ?? null"
+                                      (ngModelChange)="onAlarmState(func, item, $event)"
+                                      [nzDisabled]="alarmOf(func, item)?.enabled !== true"
+                                      [nzPlaceHolder]="'请选择' | translate"
+                                      style="width: 100%"
+                                    >
+                                      @for (v of alarmStateOptions(item.field); track v.value) {
+                                        <nz-option [nzValue]="v.value" [nzLabel]="v.label"></nz-option>
+                                      }
+                                    </nz-select>
+                                  } @else if (item.bit) {
+                                    <!-- 位只有 0 / 1 两个候选，给下拉比给数字框更不容易填错 -->
+                                    <nz-select
+                                      [ngModel]="alarmOf(func, item)?.threshold ?? null"
+                                      (ngModelChange)="onAlarmThreshold(func, item, $event)"
+                                      [nzDisabled]="alarmOf(func, item)?.enabled !== true"
+                                      style="width: 100%"
+                                    >
+                                      <nz-option [nzValue]="0" nzLabel="0"></nz-option>
+                                      <nz-option [nzValue]="1" nzLabel="1"></nz-option>
+                                    </nz-select>
+                                  } @else {
+                                    <nz-input-number
+                                      [ngModel]="alarmOf(func, item)?.threshold ?? null"
+                                      (ngModelChange)="onAlarmThreshold(func, item, $event)"
+                                      [nzDisabled]="alarmOf(func, item)?.enabled !== true"
+                                      nzAddonAfter="{{ item.field.unit }}"
+                                      style="width: 100%"
+                                    ></nz-input-number>
+                                  }
+                                </td>
+                                <td>
+                                  <nz-select
+                                    [ngModel]="alarmOf(func, item)?.level ?? null"
+                                    (ngModelChange)="onAlarmLevel(func, item, $event)"
+                                    [nzDisabled]="alarmOf(func, item)?.enabled !== true"
+                                    [nzPlaceHolder]="'请选择' | translate"
+                                    style="width: 100%"
+                                  >
+                                    @for (lv of alarmLevelOptions; track lv.value) {
+                                      <nz-option [nzValue]="lv.value" [nzLabel]="lv.label"></nz-option>
+                                    }
+                                  </nz-select>
+                                </td>
+                                <td>
+                                  <!-- 告警文本是用户自己填的（如「温度过高」）：**数据，永不翻译** -->
+                                  <input
+                                    nz-input
+                                    maxlength="64"
+                                    [ngModel]="alarmOf(func, item)?.text ?? ''"
+                                    (ngModelChange)="onAlarmText(func, item, $event)"
+                                    [disabled]="alarmOf(func, item)?.enabled !== true"
+                                  />
+                                </td>
+                              }
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    }
+                  </td>
+                </tr>
+              }
             }
           </tbody>
         </nz-table>
         <div class="service-editor-hint">
-          {{ '方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询与调用周期外均只读' | translate }}
+          {{ '方法由源点表生成（一个功能码动作 = 一个方法），除自动轮询、调用周期与逐字段告警外均只读' | translate }}
         </div>
         <div class="service-editor-hint">
           {{ '启用 = 服务端按调用周期自动调用；停用 = 暂停（周期保留）' | translate }}
@@ -201,6 +346,13 @@
         <!-- 上下限直接取自组件常量（与后端校验同口径），不写死在文案里：改范围不用重翻词典 -->
         <div class="service-editor-hint">
           {{ '调用周期' | translate }}：{{ intervalMin }} ~ {{ intervalMax }} {{ '秒' | translate }}
+        </div>
+        <!-- 展开手柄只在读方法上出：写方法的应答是请求回显，没有可比的出值 -->
+        <div class="service-editor-hint">
+          {{ '只有读方法的字段可以配置告警' | translate }}
+        </div>
+        <div class="service-editor-hint">
+          {{ '启用 = 出值越限时记一条告警；停用 = 不告警（配置保留）' | translate }}
         </div>
       }
     </nz-card>
