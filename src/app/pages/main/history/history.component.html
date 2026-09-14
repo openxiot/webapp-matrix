@@ -79,14 +79,16 @@
           [nzShowSizeChanger]="false"
           [nzShowPagination]="overviewRows().length > 20"
         >
+          <!-- 不写 nzWidth：表是 table-layout: auto，nzWidth 落成 col 的 width + **min-width**，
+               加起来比窗口还宽时反而把列挤住。各列长短本就由服务端的名字/时刻决定 -->
           <thead>
-          <tr>
-            <th nzWidth="260px">{{ '服务名称' | translate }}</th>
-            <th nzWidth="340px">{{ '依赖设备' | translate }}</th>
-            <th nzWidth="100px">{{ '方法数' | translate }}</th>
-            <th nzWidth="200px">{{ '采集时间' | translate }}</th>
-            <th>{{ '采集异常' | translate }}</th>
-          </tr>
+            <tr>
+              <th>{{ '服务名称' | translate }}</th>
+              <th>{{ '依赖设备' | translate }}</th>
+              <th>{{ '方法数' | translate }}</th>
+              <th>{{ '采集时间' | translate }}</th>
+              <th>{{ '采集异常' | translate }}</th>
+            </tr>
           </thead>
           <tbody>
             @for (row of serviceTable.data; track row.service.id) {
@@ -159,15 +161,16 @@
                 [nzShowPagination]="failureRows().length > 20"
                 nzSize="small"
               >
+                <!-- 同上：列宽不写死，交给浏览器按内容分 -->
                 <thead>
-                <tr>
-                  <th nzWidth="230px">{{ '采集时间' | translate }}</th>
-                  <th nzWidth="180px">{{ '服务' | translate }}</th>
-                  <th nzWidth="180px">{{ '设备' | translate }}</th>
-                  <th nzWidth="80px">{{ '方法' | translate }}</th>
-                  <th nzWidth="260px">{{ '类型' | translate }}</th>
-                  <th>{{ '消息' | translate }}</th>
-                </tr>
+                  <tr>
+                    <th>{{ '采集时间' | translate }}</th>
+                    <th>{{ '服务' | translate }}</th>
+                    <th>{{ '设备' | translate }}</th>
+                    <th>{{ '方法' | translate }}</th>
+                    <th>{{ '类型' | translate }}</th>
+                    <th>{{ '消息' | translate }}</th>
+                  </tr>
                 </thead>
                 <tbody>
                   @for (row of failureTable.data; track row.key) {
