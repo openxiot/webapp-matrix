@@ -57,7 +57,7 @@ export function dayStart(ms: number): number {
 /**
  * 桶起点不早于 `since` 的桶计数之和。
  *
- * 「今日告警 / 今日异常」= `sumSince(hourly, dayStart(to))`。桶起点正好等于今天 00:00 的那一桶
+ * 「今日告警」= `sumSince(hourly, dayStart(to))`。桶起点正好等于今天 00:00 的那一桶
  * **算今天**（`>=`）：那是 00:00~01:00 这一小时的数，整点归属当天。
  */
 export function sumSince(hourly: StatisticsBucket[], since: number): number {

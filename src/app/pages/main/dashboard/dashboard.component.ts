@@ -25,10 +25,16 @@ import * as charts from './dashboard.charts';
 /**
  * 首页（数据看板）。
  *
- * 一屏的六个数字与四张图分两处取：
- * - **真实**：设备（总量 / 在线 / 按类型）、服务（总量 / 按点表）、告警（今日 / 近 24 小时 /
- *   按文本）、异常（今日）—— 全来自一次 `GET /statistics/overview`，故卡片与曲线天然同源；
+ * 一屏的四个数字与四张图分两处取：
+ * - **真实**：设备（总量，在线数挂在同一张卡的标题行）、服务（总量 / 按点表）、
+ *   告警（今日 / 近 24 小时 / 按文本）—— 全来自一次 `GET /statistics/overview`，
+ *   故卡片与曲线天然同源；
  * - **伪造**：本月能耗与日能耗曲线（没有能耗采集，见 dashboard.mock.ts）。
+ *
+ * 响应里有三个字段目前页面上不用：`failures.total`、`failures.hourly`（故障，卡片已去掉）
+ * 与 `alarms.total`（「今日告警」是从 `alarms.hourly` 里按今天 00:00 求和得来的，口径见
+ * {@link todayOf}）。接口照旧下发、codec 照旧解出来 —— 这类整屏一次取回的接口，
+ * 增减一张卡片不该牵动后端。
  *
  * 窗口由本页算（后端只收 from/to）：近 24 小时整点，见 {@link alarmWindow}。「今日」= 窗口内
  * 桶起点不早于本地今天 00:00 的求和 —— 窗口恒盖住今天全天，不必第二次请求。
@@ -99,22 +105,20 @@ export class DashboardComponent {
   }
 
   /* ----------------------------------------------------------------------------------------------
-   * 六个数字。null = 还没取到（或取失败），页面上是空白
+   * 四个数字。null = 还没取到（或取失败），页面上是空白
    * ----------------------------------------------------------------------------------------------*/
 
   /** 设备总量（含子空间） */
   readonly deviceTotal = computed(() => this.overview()?.devices.total ?? null);
-  /** 在线设备（后端按 device.online 数） */
+  /**
+   * 在线设备（后端按 `device.online` 数）。与 {@link deviceTotal} 同出一张卡：
+   * 总量是卡里的大数，在线挂在标题行右端 —— 故这里只要算数，不管摆哪儿。
+   */
   readonly onlineCount = computed(() => this.overview()?.devices.online ?? null);
   /** 服务总量（含子空间） */
   readonly serviceTotal = computed(() => this.overview()?.services.total ?? null);
   /** 今日告警：本地今天 00:00 起的告警条数 */
   readonly alarmToday = computed(() => this.todayOf(this.overview()?.alarms.hourly));
-  /**
-   * 今日异常。口径与告警卡不同：故障行在**写入时按 message 去重**（同一条消息只记首次出现的
-   * 那一行），所以这是「今天**新出现**的失败条数」而不是失败次数。
-   */
-  readonly failureToday = computed(() => this.todayOf(this.overview()?.failures.hourly));
   /** 本月能耗（kWh，mock） */
   readonly monthEnergy = computed(() => this.energyStats().monthTotal);
 

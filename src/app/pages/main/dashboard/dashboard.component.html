@@ -6,7 +6,7 @@
 <!--  {{ '首页' | translate }}-->
 <!--</ng-template>-->
 
-<div style="padding: 12px 20px">
+<div style="padding: 20px 20px">
   <nz-spin [nzSpinning]="loading()">
     @if (error(); as message) {
       <!-- 取数失败就明说：静默留一屏 0 或空白，看板就成了「项目里一个设备都没有」 -->
@@ -14,11 +14,11 @@
     } @else if (!account.space().id) {
       <nz-empty [nzNotFoundContent]="'请先在项目列表中选择一个项目' | translate"></nz-empty>
     } @else {
-      <!-- 全页的卡片一律 nzSize="small"：11 张卡省下的内边距（每行 43px）正好换给图表，
+      <!-- 全页的卡片一律 nzSize="small"：省下的内边距（每行 43px）正好换给图表，
            比单纯把图压扁划算。各行高度见 dashboard.component.less 的注释 -->
-      <!-- 第一行：六个数字。手机 2/行、中屏 3/行（正好两行）、宽屏 6/行 -->
+      <!-- 第一行：四个数字。窄屏 2/行（两行）、宽屏 4/行（一行） -->
       <nz-row [nzGutter]="[16, 16]" style="margin-bottom: 16px">
-        <nz-col [nzXs]="12" [nzMd]="8" [nzXl]="4">
+        <nz-col [nzXs]="12" [nzMd]="12" [nzLg]="6" [nzXl]="6">
           <nz-card nzSize="small">
             <nz-statistic
               [nzTitle]="statDeviceTotal"
@@ -26,27 +26,25 @@
               [nzSuffix]="statUnit(deviceTotal(), '台' | translate)"
             >
               <ng-template #statDeviceTotal>
-                <nz-icon nzType="appstore" nzTheme="outline" />
-                {{ '设备总量' | translate }}
+                <span class="stat-title">
+                  <span>
+                    <nz-icon nzType="appstore" nzTheme="outline" />
+                    {{ '设备总量' | translate }}
+                  </span>
+                  <!-- 在线数并进这张卡（原先自己是独立的一张卡）。挂标题行右端而不是另起一行，
+                       是高度账：数字卡每高 1px，下面两行图就得让出 1px -->
+                  <span class="stat-title-extra">
+                    {{ '在线设备' | translate }}
+                    <span class="stat-title-value">
+                      {{ statValue(onlineCount()) }}{{ statUnit(onlineCount(), '台' | translate) }}
+                    </span>
+                  </span>
+                </span>
               </ng-template>
             </nz-statistic>
           </nz-card>
         </nz-col>
-        <nz-col [nzXs]="12" [nzMd]="8" [nzXl]="4">
-          <nz-card nzSize="small">
-            <nz-statistic
-              [nzTitle]="statOnline"
-              [nzValue]="statValue(onlineCount())"
-              [nzSuffix]="statUnit(onlineCount(), '台' | translate)"
-            >
-              <ng-template #statOnline>
-                <nz-icon nzType="check" nzTheme="outline" />
-                {{ '在线设备' | translate }}
-              </ng-template>
-            </nz-statistic>
-          </nz-card>
-        </nz-col>
-        <nz-col [nzXs]="12" [nzMd]="8" [nzXl]="4">
+        <nz-col [nzXs]="12" [nzMd]="12" [nzLg]="6" [nzXl]="6">
           <nz-card nzSize="small">
             <nz-statistic
               [nzTitle]="statServiceTotal"
@@ -60,7 +58,7 @@
             </nz-statistic>
           </nz-card>
         </nz-col>
-        <nz-col [nzXs]="12" [nzMd]="8" [nzXl]="4">
+        <nz-col [nzXs]="12" [nzMd]="12" [nzLg]="6" [nzXl]="6">
           <nz-card nzSize="small">
             <nz-statistic
               [nzTitle]="statAlarm"
@@ -74,21 +72,7 @@
             </nz-statistic>
           </nz-card>
         </nz-col>
-        <nz-col [nzXs]="12" [nzMd]="8" [nzXl]="4">
-          <nz-card nzSize="small">
-            <nz-statistic
-              [nzTitle]="statFailure"
-              [nzValue]="statValue(failureToday())"
-              [nzSuffix]="statUnit(failureToday(), '条' | translate)"
-            >
-              <ng-template #statFailure>
-                <nz-icon nzType="bug" nzTheme="outline" />
-                {{ '今日异常' | translate }}
-              </ng-template>
-            </nz-statistic>
-          </nz-card>
-        </nz-col>
-        <nz-col [nzXs]="12" [nzMd]="8" [nzXl]="4">
+        <nz-col [nzXs]="12" [nzMd]="12" [nzLg]="6" [nzXl]="6">
           <nz-card nzSize="small">
             <nz-statistic [nzTitle]="statEnergy" [nzValue]="monthEnergy()" [nzSuffix]="'kWh'">
               <ng-template #statEnergy>
