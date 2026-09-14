@@ -224,9 +224,12 @@ export class ModbusService {
    * 某服务（或其中某个方法）在 [from, to] 内的采集失败清单 + 汇总
    * （GET /history/failures/{spaceId}），items 按时间倒序，`limit` 缺省 200、后端夹到 [1, 1000]。
    *
-   * `serviceId` 传 null = **整个空间**：后端把该空间下所有服务的失败合并成一条时间倒序的清单
-   * （每条 item 自带 serviceId 认领归属），`limit` 与 `truncated` 也按整份清单算。项目级页面
-   * 用这一条顶掉「按服务扇出的 N 条」，而不是拿 N 个响应在内存里拼。
+   * `serviceId` 传 null = **整个空间（含子空间）**：后端把该空间及其子树下所有服务的失败合并成
+   * 一条时间倒序的清单（每条 item 自带 serviceId 认领归属），`limit` 与 `truncated` 也按整份清单算。
+   * 项目级页面用这一条顶掉「按服务扇出的 N 条」，而不是拿 N 个响应在内存里拼。
+   *
+   * 「含子空间」与 `getSpaceGraph` 同口径：项目页的服务清单来自那张图（整棵子树），
+   * 故障清单必须覆盖同一批服务，否则子空间里的服务会「表里列着、异常栏永远是空的」。
    */
   getHistoryFailures(
     spaceId: string,
