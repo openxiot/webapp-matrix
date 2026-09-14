@@ -383,5 +383,7 @@
   "应答帧非法": "Bingkai respons tidak sah",
   "字段定义错误": "Ralat takrifan medan",
   "服务配置错误": "Ralat konfigurasi perkhidmatan",
-  "未知失败": "Ralat tidak dikenali"
+  "未知失败": "Ralat tidak dikenali",
+  "所有服务": "Semua Perkhidmatan",
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Terlalu banyak medan dipilih; graf hanya memaparkan beberapa yang pertama. Kecilkan pilihan dengan «Medan»"
 }

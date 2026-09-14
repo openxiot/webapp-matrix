@@ -383,5 +383,7 @@
   "应答帧非法": "Neveljaven okvir odgovora",
   "字段定义错误": "Napaka definicije polja",
   "服务配置错误": "Napaka konfiguracije storitve",
-  "未知失败": "Neznana napaka"
+  "未知失败": "Neznana napaka",
+  "所有服务": "Vse storitve",
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Izbranih je preveč polj; graf prikaže le prvih nekaj. Zožite izbor s »Polje«"
 }

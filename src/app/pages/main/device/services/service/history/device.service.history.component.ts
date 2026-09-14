@@ -40,11 +40,11 @@ import {
   ModbusServiceFunction,
 } from '../../../../../../typedef/define/modbus/ModbusService';
 import {
-  MODBUS_FAILURE_LABELS,
   ModbusHistoryBucket,
   ModbusHistoryCurrent,
   ModbusHistoryFailures,
   ModbusHistoryRange,
+  modbusFailureLabel,
 } from '../../../../../../typedef/define/modbus/ModbusHistory';
 import { isBucket } from '../../../../../../typedef/codec/modbus/ModbusHistoryCodec';
 import { isReadFunction } from '../service.functions';
@@ -605,23 +605,19 @@ export class DeviceServiceHistoryComponent implements OnInit {
   }
 
   /**
-   * 失败类型标签：枚举名翻成当前语言（见 {@link MODBUS_FAILURE_LABELS}），
-   * 后面缀远端码 —— 只有从站异常应答那个码是 Modbus 异常码，其余原样给号。
+   * 失败类型标签：枚举名翻成当前语言、缀上远端码（见 {@link modbusFailureLabel}）——
+   * 只有从站异常应答那个码是 Modbus 异常码，其余原样给号。
    * 枚举名本身另有出处（表格里以小字附在标签后、汇总标签上给 title），排查时能直接拿去搜日志。
    */
   protected failureType(item: { type?: string; remoteCode?: number }): string {
-    const label = this.failureLabel(item.type);
-    return item.remoteCode != null ? `${label} (${item.remoteCode})` : label;
+    return this.failureLabel(item.type, item.remoteCode);
   }
 
-  /** 单个类型的标签（汇总标签用），未收录的枚举名原样显示，后端加新类型时不至于空白 */
-  protected failureLabel(type?: string): string {
+  /** 单个类型的标签（汇总标签用，没有远端码） */
+  protected failureLabel(type?: string, remoteCode?: number): string {
+    // 语言变化信号：instant 本身不响应式，读一下它才能让模板在切换语言时重算
     this.langChange();
-    if (!type) {
-      return '-';
-    }
-    const key = MODBUS_FAILURE_LABELS[type];
-    return key ? this.i18n.translate.instant(key) : type;
+    return modbusFailureLabel(type, remoteCode, (key) => this.i18n.translate.instant(key));
   }
 }
 

@@ -131,7 +131,10 @@ export class ModbusHistoryCodec {
 
   static decodeFailures(o: any): ModbusHistoryFailures {
     const x = new ModbusHistoryFailures();
-    x.serviceId = o?.serviceId ?? '';
+    // 空间级查询（不传 serviceId）时后端不出这个键：保持 undefined，别填成空串冒充「某个服务」
+    if (o?.serviceId != null) {
+      x.serviceId = o.serviceId;
+    }
     x.from = o?.from ?? 0;
     x.to = o?.to ?? 0;
     x.limit = o?.limit ?? 0;
@@ -148,6 +151,10 @@ export class ModbusHistoryCodec {
     }
     for (const item of array) {
       const x = new ModbusHistoryFailure();
+      // 每条都带归属服务（空间级查询靠它认领）；老数据/单服务查询下可能没有，保持 undefined
+      if (item?.serviceId != null) {
+        x.serviceId = item.serviceId;
+      }
       x.functionIndex = item?.functionIndex ?? 0;
       if (item?.type != null) {
         x.type = item.type;

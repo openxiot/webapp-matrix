@@ -383,5 +383,7 @@
   "应答帧非法": "Cadru de răspuns invalid",
   "字段定义错误": "Eroare de definiție a câmpului",
   "服务配置错误": "Eroare de configurare a serviciului",
-  "未知失败": "Eroare necunoscută"
+  "未知失败": "Eroare necunoscută",
+  "所有服务": "Toate serviciile",
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Prea multe câmpuri selectate; graficul afișează doar primele. Restrânge selecția cu „Câmp”"
 }

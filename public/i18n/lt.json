@@ -383,5 +383,7 @@
   "应答帧非法": "Neteisingas atsakymo kadras",
   "字段定义错误": "Lauko apibrėžimo klaida",
   "服务配置错误": "Paslaugos konfigūracijos klaida",
-  "未知失败": "Nežinoma klaida"
+  "未知失败": "Nežinoma klaida",
+  "所有服务": "Visos paslaugos",
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Pasirinkta per daug laukų; grafikas rodo tik pirmuosius. Susiaurinkite pasirinkimą naudodami „Laukas“"
 }

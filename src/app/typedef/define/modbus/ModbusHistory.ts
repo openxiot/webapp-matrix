@@ -143,10 +143,39 @@ export const MODBUS_FAILURE_LABELS: Record<string, string> = {
 };
 
 /**
+ * 失败类型（+ 远端码）→ 界面标签：先按 {@link MODBUS_FAILURE_LABELS} 翻成当前语言，
+ * 有远端码就缀在后面（`异常应答 (2)`）。枚举名本身不在这里露脸，页面各按各的位置附上
+ * —— 排查时要拿它去搜后端日志，得留在明面上，但那是版式的事。
+ *
+ * <p>`type` 缺失（老数据可能没有）给 `-`；没收录的枚举名原样给出，后端加新类型时不至于空白。</p>
+ *
+ * <p>翻译函数由调用方传进来：本文件是纯类型定义、不认识 i18n 服务，而「标签怎么拼」这件事
+ * 服务级（device.service.history）与项目级（history）两个页面必须一致 —— 各写一套迟早会走样。
+ * 又因为 ngx-translate 的 instant 不是响应式的，页面还得各自把它挂在语言变化信号上触发重算。</p>
+ */
+export function modbusFailureLabel(
+  type: string | undefined | null,
+  remoteCode: number | null | undefined,
+  translate: (key: string) => string,
+): string {
+  if (!type) {
+    return '-';
+  }
+  const key = MODBUS_FAILURE_LABELS[type];
+  const label = key ? translate(key) : type;
+  return remoteCode != null ? `${label} (${remoteCode})` : label;
+}
+
+/**
  * 一条采集失败。同一条消息（message 相同）**只记第一次**，故这列的是「错误首次出现的时刻」，
  * 不是每次失败都有一行 —— 与曲线上的竖线含义一致。
  */
 export class ModbusHistoryFailure {
+  /**
+   * 这条失败属于哪个服务。按服务查时与响应顶层的 `serviceId` 重复；**空间级查询（不传 serviceId）
+   * 时是唯一的归属依据** —— 那种查法回来的清单里混着多个服务的失败，表格的 track 与名称列都得靠它。
+   */
+  serviceId?: string;
   functionIndex: number = 0;
   /** {@link MODBUS_FAILURE_TYPES} 之一；老数据可能没有 */
   type?: string;
@@ -182,9 +211,14 @@ export class ModbusFailureSummary {
 /**
  * 采集失败清单
  * （GET /history/failures/{spaceId}?serviceId&functionIndex&type&from&to&limit）。
+ *
+ * <p>`serviceId` 不传 = **整个空间**：后端把空间下所有服务的失败合成一条时间倒序的清单，
+ * 响应里就没有顶层 `serviceId` 这个键（每条 item 自带一个，见 {@link ModbusHistoryFailure.serviceId}），
+ * 故这里它是可选的。`limit` 与 `truncated` 也跟着变成**整份清单**的口径，而不是某个服务的。</p>
  */
 export class ModbusHistoryFailures {
-  serviceId: string = '';
+  /** 查的是哪个服务；空间级查询时没有这个键 */
+  serviceId?: string;
   from: number = 0;
   to: number = 0;
   limit: number = 0;

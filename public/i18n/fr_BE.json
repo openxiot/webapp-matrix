@@ -383,5 +383,7 @@
   "应答帧非法": "Trame de réponse illégale",
   "字段定义错误": "Erreur de définition de champ",
   "服务配置错误": "Erreur de configuration du service",
-  "未知失败": "Échec inconnu"
+  "未知失败": "Échec inconnu",
+  "所有服务": "Tous les services",
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Trop de champs sélectionnés ; le graphique n’affiche que les premiers. Affinez la sélection avec « Champ »"
 }

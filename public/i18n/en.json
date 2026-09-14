@@ -383,5 +383,7 @@
   "应答帧非法": "Invalid Response Frame",
   "字段定义错误": "Field Definition Error",
   "服务配置错误": "Service Configuration Error",
-  "未知失败": "Unknown Error"
+  "未知失败": "Unknown Error",
+  "所有服务": "All Services",
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Too many fields selected; the chart shows only the first few. Narrow the selection with Fields"
 }

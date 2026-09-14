@@ -383,5 +383,7 @@
   "应答帧非法": "Trama de resposta ilegal",
   "字段定义错误": "Erro de definición de campo",
   "服务配置错误": "Erro de configuración do servizo",
-  "未知失败": "Erro descoñecido"
+  "未知失败": "Erro descoñecido",
+  "所有服务": "Todos os servizos",
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Hai demasiados campos seleccionados; o gráfico só mostra os primeiros. Limita a selección con «Campo»"
 }

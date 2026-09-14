@@ -122,7 +122,10 @@
 
     @if (view() === 'table') {
       <nz-card [nzBordered]="false">
+        <!-- 遍历的是 nz-table 的 data（当前页那一片），不是 rows()：直接遍历自己的数组，
+             前端分页只会翻页码、行还是一次画全（见 nz-table 的 data 注释） -->
         <nz-table
+          #historyTable
           [nzData]="rows()"
           [nzPageIndex]="pageIndex()"
           (nzPageIndexChange)="pageIndex.set($event)"
@@ -142,7 +145,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (row of rows(); track row.key) {
+            @for (row of historyTable.data; track row.key) {
               <tr>
                 <td>{{ row.time }}</td>
                 <td>{{ row.functionIndex }} · {{ row.functionName }}</td>
@@ -199,6 +202,7 @@
           </div>
         }
         <nz-table
+          #failureTable
           [nzData]="f.items"
           [nzPageIndex]="failurePageIndex()"
           (nzPageIndexChange)="failurePageIndex.set($event)"
@@ -216,7 +220,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (item of f.items; track $index) {
+            @for (item of failureTable.data; track $index) {
               <tr>
                 <td>{{ item.at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
                 <td>#{{ item.functionIndex }}</td>

@@ -56,3 +56,12 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Use the `providedIn: 'root'` option for singleton services
 - Prefer the `@Service` decorator over `@Injectable({providedIn: 'root'})` for new singleton services (Angular v22+)
 - Use the `inject()` function instead of constructor injection
+
+## i18n
+
+- 只翻译**页面自己的文案**（标题、列头、按钮、提示语、枚举→标签的映射）。词典在 `public/i18n/*.json`，
+  键即中文原文，**66 个词典的键集合与顺序必须完全一致**，新增键追加在末尾。
+- **来自服务端的文本一律原样显示，不进翻译**：Modbus 服务/方法/字段的 `name` 与 `field`（即键名）、
+  `unit`、取值表的 `description`、采集失败的 `message`、设备与空间的名称等。它们是用户配置的数据，
+  不是界面文案 —— 翻译它等于改数据（而且键名一变，排查时对不上后端日志）。
+- 推论：`| translate` 只能用在字面量或**本地**拼出来的词条键上，绝不能用在服务端数据上。

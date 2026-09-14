@@ -383,5 +383,7 @@
   "应答帧非法": "Ógildur svarrammi",
   "字段定义错误": "Villa í skilgreiningu reits",
   "服务配置错误": "Villa í stillingu þjónustu",
-  "未知失败": "Óþekkt villa"
+  "未知失败": "Óþekkt villa",
+  "所有服务": "Allar þjónustur",
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Of mörg svæði valin; grafið sýnir aðeins fyrstu. Þrengdu valið með „Reitur“"
 }

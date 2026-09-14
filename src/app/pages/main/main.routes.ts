@@ -59,4 +59,10 @@ export const routes: Routes = [
     data: { breadcrumb: '设备点表' },
     loadChildren: () => import('./modbus/modbus.routes').then((m) => m.MODBUS_ROUTES),
   },
+  {
+    path: 'history',
+    canActivate: [authGuard],
+    data: { breadcrumb: '历史' },
+    loadChildren: () => import('./history/history.routes').then((m) => m.HISTORY_ROUTES),
+  },
 ];

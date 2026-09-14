@@ -383,5 +383,7 @@
   "应答帧非法": "Érvénytelen válaszkeret",
   "字段定义错误": "Meződefiníciós hiba",
   "服务配置错误": "Szolgáltatáskonfigurációs hiba",
-  "未知失败": "Ismeretlen hiba"
+  "未知失败": "Ismeretlen hiba",
+  "所有服务": "Minden szolgáltatás",
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Túl sok mező van kijelölve; a grafikon csak az elsőket mutatja. Szűkítse a választást a „Mező” használatával"
 }

@@ -4,9 +4,9 @@ import {
   ChangeDetectionStrategy,
   computed,
   signal,
-  ViewContainerRef,
+  ViewContainerRef, inject,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
@@ -67,6 +67,9 @@ import { OrganizationMember } from '../../../../typedef/define/user/UserOrganiza
   providers: [NzModalService],
 })
 export class DeviceServicesComponent implements OnInit {
+
+  protected readonly location = inject(Location);
+
   /** 设备（DTU）did */
   did = signal('');
 
@@ -97,7 +100,9 @@ export class DeviceServicesComponent implements OnInit {
     if (selfEntry?.role === 'admin') return true;
 
     const org = this.account.organization();
-    const orgEntry = this.rootSpace()?.accesses?.find((a) => a.type === 'organization' && a.id === org.id);
+    const orgEntry = this.rootSpace()?.accesses?.find(
+      (a) => a.type === 'organization' && a.id === org.id,
+    );
     if (orgEntry) {
       const meInOrg = org.members.find((m) => m.userId === me.id);
       return meInOrg !== undefined && meInOrg.role === 'admin';
@@ -260,7 +265,8 @@ export class DeviceServicesComponent implements OnInit {
     if (!config) {
       return configId;
     }
-    const label = `${config.slave?.manufacturer?.trim() ?? ''} ${config.slave?.model?.trim() ?? ''}`.trim();
+    const label =
+      `${config.slave?.manufacturer?.trim() ?? ''} ${config.slave?.model?.trim() ?? ''}`.trim();
     return label || configId;
   }
 

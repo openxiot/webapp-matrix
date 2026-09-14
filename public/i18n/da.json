@@ -383,5 +383,7 @@
   "应答帧非法": "Ugyldig svarramme",
   "字段定义错误": "Fejl i feltdefinition",
   "服务配置错误": "Fejl i tjenestekonfiguration",
-  "未知失败": "Ukendt fejl"
+  "未知失败": "Ukendt fejl",
+  "所有服务": "Alle tjenester",
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Der er valgt for mange felter; grafen viser kun de første. Afgræns valget med »Felt«"
 }

@@ -383,5 +383,7 @@
   "应答帧非法": "Creat freagartha neamhbhailí",
   "字段定义错误": "Earráid i sainmhíniú réimse",
   "服务配置错误": "Earráid chumraíochta seirbhíse",
-  "未知失败": "Earráid anaithnid"
+  "未知失败": "Earráid anaithnid",
+  "所有服务": "Gach seirbhís",
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Tá an iomarca réimsí roghnaithe; ní thaispeánann an graf ach na cinn tosaigh. Caolaigh an rogha le « Réimse »"
 }

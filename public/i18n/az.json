@@ -383,5 +383,7 @@
   "应答帧非法": "Yanlış cavab çərçivəsi",
   "字段定义错误": "Sahə Təyini Xətası",
   "服务配置错误": "Xidmət Konfiqurasiyası Xətası",
-  "未知失败": "Naməlum Xəta"
+  "未知失败": "Naməlum Xəta",
+  "所有服务": "Bütün xidmətlər",
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Seçilmiş sahələr çoxdur; qrafik yalnız ilk bir neçəsini göstərir. «Sahə» ilə seçimi daraldın"
 }

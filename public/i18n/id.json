@@ -383,5 +383,7 @@
   "应答帧非法": "Frame respons tidak valid",
   "字段定义错误": "Kesalahan definisi bidang",
   "服务配置错误": "Kesalahan konfigurasi layanan",
-  "未知失败": "Kesalahan tidak dikenal"
+  "未知失败": "Kesalahan tidak dikenal",
+  "所有服务": "Semua Layanan",
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Terlalu banyak bidang dipilih; grafik hanya menampilkan beberapa yang pertama. Persempit pilihan dengan «Bidang»"
 }

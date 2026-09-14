@@ -223,16 +223,23 @@ export class ModbusService {
   /**
    * 某服务（或其中某个方法）在 [from, to] 内的采集失败清单 + 汇总
    * （GET /history/failures/{spaceId}），items 按时间倒序，`limit` 缺省 200、后端夹到 [1, 1000]。
+   *
+   * `serviceId` 传 null = **整个空间**：后端把该空间下所有服务的失败合并成一条时间倒序的清单
+   * （每条 item 自带 serviceId 认领归属），`limit` 与 `truncated` 也按整份清单算。项目级页面
+   * 用这一条顶掉「按服务扇出的 N 条」，而不是拿 N 个响应在内存里拼。
    */
   getHistoryFailures(
     spaceId: string,
-    serviceId: string,
+    serviceId: string | null,
     from: number,
     to: number | null,
     functionIndex?: number | null,
     limit?: number,
   ): Observable<ModbusHistoryFailures> {
-    let params = new HttpParams().set('serviceId', serviceId).set('from', from);
+    let params = new HttpParams().set('from', from);
+    if (serviceId != null) {
+      params = params.set('serviceId', serviceId);
+    }
     if (to != null) {
       params = params.set('to', to);
     }

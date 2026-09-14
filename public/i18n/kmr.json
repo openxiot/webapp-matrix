@@ -383,5 +383,7 @@
   "应答帧非法": "Frame-a bersivê ya nederbasdar",
   "字段定义错误": "Çewtiya danasîna qadê",
   "服务配置错误": "Çewtiya veavakirina xizmetê",
-  "未知失败": "Çewtiya nenas"
+  "未知失败": "Çewtiya nenas",
+  "所有服务": "Hemû xizmet",
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Qadên hilbijartî pir in; grafîk tenê çendên pêşîn nîşan dide. Bi «Qad» hilbijartinê teng bike"
 }
