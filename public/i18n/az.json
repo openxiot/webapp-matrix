@@ -415,5 +415,10 @@
   "达到": "Böyük və ya bərabər",
   "低于": "Kiçikdir",
   "低于等于": "Kiçik və ya bərabər",
-  "等于": "Bərabərdir"
+  "等于": "Bərabərdir",
+  "添加规则": "Qayda əlavə et",
+  "未配置告警": "Alarmlar konfiqurasiya edilməyib",
+  "值恢复": "Dəyər bərpa edildi",
+  "定义变更": "Təyinat dəyişdi",
+  "被取代": "Əvəzləndi"
 }

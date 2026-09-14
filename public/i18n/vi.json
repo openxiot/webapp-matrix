@@ -415,5 +415,10 @@
   "达到": "Đạt tới",
   "低于": "Nhỏ hơn",
   "低于等于": "Không lớn hơn",
-  "等于": "Bằng"
+  "等于": "Bằng",
+  "添加规则": "Thêm quy tắc",
+  "未配置告警": "Chưa cấu hình cảnh báo",
+  "值恢复": "Giá trị đã khôi phục",
+  "定义变更": "Định nghĩa đã thay đổi",
+  "被取代": "Bị thay thế"
 }

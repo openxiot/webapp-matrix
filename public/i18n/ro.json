@@ -415,5 +415,10 @@
   "达到": "Mai mare sau egal",
   "低于": "Mai mic decât",
   "低于等于": "Mai mic sau egal",
-  "等于": "Egal cu"
+  "等于": "Egal cu",
+  "添加规则": "Adaugă regulă",
+  "未配置告警": "Niciun alarmă configurată",
+  "值恢复": "Valoare restabilită",
+  "定义变更": "Definiție modificată",
+  "被取代": "Înlocuită"
 }

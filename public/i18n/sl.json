@@ -415,5 +415,10 @@
   "达到": "Ne manjše",
   "低于": "Manjše",
   "低于等于": "Ne večje",
-  "等于": "Enako"
+  "等于": "Enako",
+  "添加规则": "Dodaj pravilo",
+  "未配置告警": "Ni nastavljenih alarmov",
+  "值恢复": "Vrednost obnovljena",
+  "定义变更": "Definicija spremenjena",
+  "被取代": "Nadomeščeno"
 }

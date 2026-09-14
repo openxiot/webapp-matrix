@@ -415,5 +415,10 @@
   "达到": "Minnst",
   "低于": "Minna en",
   "低于等于": "Mest",
-  "等于": "Jafnt"
+  "等于": "Jafnt",
+  "添加规则": "Bæta við reglu",
+  "未配置告警": "Engar viðvaranir stilltar",
+  "值恢复": "Gildi endurheimt",
+  "定义变更": "Skilgreining breytt",
+  "被取代": "Skipt út"
 }

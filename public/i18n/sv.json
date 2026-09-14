@@ -415,5 +415,10 @@
   "达到": "Minst",
   "低于": "Mindre än",
   "低于等于": "Högst",
-  "等于": "Lika med"
+  "等于": "Lika med",
+  "添加规则": "Lägg till regel",
+  "未配置告警": "Inga larm konfigurerade",
+  "值恢复": "Värde återställt",
+  "定义变更": "Definition ändrad",
+  "被取代": "Ersatt"
 }

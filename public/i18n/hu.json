@@ -415,5 +415,10 @@
   "达到": "Nagyobb vagy egyenlő",
   "低于": "Kisebb mint",
   "低于等于": "Kisebb vagy egyenlő",
-  "等于": "Egyenlő"
+  "等于": "Egyenlő",
+  "添加规则": "Szabály hozzáadása",
+  "未配置告警": "Nincsenek beállított riasztások",
+  "值恢复": "Érték helyreállt",
+  "定义变更": "Definíció módosult",
+  "被取代": "Lecserélve"
 }

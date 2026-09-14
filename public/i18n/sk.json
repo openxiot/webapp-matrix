@@ -415,5 +415,10 @@
   "达到": "Nie menšie",
   "低于": "Menšie",
   "低于等于": "Nie väčšie",
-  "等于": "Rovné"
+  "等于": "Rovné",
+  "添加规则": "Pridať pravidlo",
+  "未配置告警": "Nie sú nastavené žiadne alarmy",
+  "值恢复": "Hodnota obnovená",
+  "定义变更": "Definícia zmenená",
+  "被取代": "Nahradené"
 }

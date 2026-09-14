@@ -415,5 +415,10 @@
   "达到": "Büyük veya eşit",
   "低于": "Küçüktür",
   "低于等于": "Küçük veya eşit",
-  "等于": "Eşittir"
+  "等于": "Eşittir",
+  "添加规则": "Kural ekle",
+  "未配置告警": "Alarm yapılandırılmadı",
+  "值恢复": "Değer giderildi",
+  "定义变更": "Tanım değişti",
+  "被取代": "Yerine geçildi"
 }

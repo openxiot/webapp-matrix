@@ -415,5 +415,10 @@
   "达到": "Més gran o igual",
   "低于": "Més petit que",
   "低于等于": "Més petit o igual",
-  "等于": "Igual a"
+  "等于": "Igual a",
+  "添加规则": "Afegir regla",
+  "未配置告警": "Sense alarmes configurats",
+  "值恢复": "Valor restablert",
+  "定义变更": "Definició canviada",
+  "被取代": "Substituïda"
 }

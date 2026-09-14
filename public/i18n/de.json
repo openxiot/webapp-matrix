@@ -415,5 +415,10 @@
   "达到": "Mindestens",
   "低于": "Kleiner als",
   "低于等于": "Höchstens",
-  "等于": "Gleich"
+  "等于": "Gleich",
+  "添加规则": "Regel hinzufügen",
+  "未配置告警": "Keine Alarme konfiguriert",
+  "值恢复": "Wert wiederhergestellt",
+  "定义变更": "Definition geändert",
+  "被取代": "Abgelöst"
 }

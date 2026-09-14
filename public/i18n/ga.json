@@ -415,5 +415,10 @@
   "达到": "Ar a laghad",
   "低于": "Níos lú ná",
   "低于等于": "Ar a mhéad",
-  "等于": "Cothrom le"
+  "等于": "Cothrom le",
+  "添加规则": "Cuir Riail Leis",
+  "未配置告警": "Níl aon alaraim cumraithe",
+  "值恢复": "Luach Aisghafa",
+  "定义变更": "Sainmhíniú Athraithe",
+  "被取代": "Ionadaithe"
 }

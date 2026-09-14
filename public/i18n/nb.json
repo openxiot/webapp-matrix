@@ -415,5 +415,10 @@
   "达到": "Minst",
   "低于": "Mindre enn",
   "低于等于": "Høyst",
-  "等于": "Lik"
+  "等于": "Lik",
+  "添加规则": "Legg til regel",
+  "未配置告警": "Ingen alarmer konfigurert",
+  "值恢复": "Verdi gjenopprettet",
+  "定义变更": "Definisjon endret",
+  "被取代": "Erstattet"
 }
