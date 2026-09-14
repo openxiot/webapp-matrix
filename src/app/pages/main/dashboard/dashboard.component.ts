@@ -1,4 +1,5 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
@@ -58,6 +59,7 @@ import * as charts from './dashboard.charts';
     NzIconModule,
     NzRowDirective,
     NzColDirective,
+    RouterLink,
     EChartsDirective,
     TranslatePipe,
   ],

@@ -16,10 +16,13 @@
     } @else {
       <!-- 全页的卡片一律 nzSize="small"：省下的内边距（每行 43px）正好换给图表，
            比单纯把图压扁划算。各行高度见 dashboard.component.less 的注释 -->
-      <!-- 第一行：四个数字。窄屏 2/行（两行）、宽屏 4/行（一行） -->
+      <!-- 第一行：四个数字。窄屏 2/行（两行）、宽屏 4/行（一行）。
+           四张都能点（nzHoverable 顺带给了 cursor: pointer），去处见各卡上的 routerLink；
+           服务总量那一张也去设备页，因为服务清单挂在 `/main/device/services/:did` 下、
+           必须先选一个设备，没有独立的服务列表页 -->
       <nz-row [nzGutter]="[16, 16]" style="margin-bottom: 16px">
         <nz-col [nzXs]="12" [nzMd]="12" [nzLg]="6" [nzXl]="6">
-          <nz-card nzSize="small">
+          <nz-card nzSize="small" [nzHoverable]="true" routerLink="/main/device">
             <nz-statistic
               [nzTitle]="statDeviceTotal"
               [nzValue]="statValue(deviceTotal())"
@@ -34,7 +37,7 @@
                   <!-- 在线数并进这张卡（原先自己是独立的一张卡）。挂标题行右端而不是另起一行，
                        是高度账：数字卡每高 1px，下面两行图就得让出 1px -->
                   <span class="stat-title-extra">
-                    {{ '在线设备' | translate }}
+                    {{ '在线' | translate }}
                     <span class="stat-title-value">
                       {{ statValue(onlineCount()) }}{{ statUnit(onlineCount(), '台' | translate) }}
                     </span>
@@ -45,7 +48,7 @@
           </nz-card>
         </nz-col>
         <nz-col [nzXs]="12" [nzMd]="12" [nzLg]="6" [nzXl]="6">
-          <nz-card nzSize="small">
+          <nz-card nzSize="small" [nzHoverable]="true" routerLink="/main/device">
             <nz-statistic
               [nzTitle]="statServiceTotal"
               [nzValue]="statValue(serviceTotal())"
@@ -59,7 +62,7 @@
           </nz-card>
         </nz-col>
         <nz-col [nzXs]="12" [nzMd]="12" [nzLg]="6" [nzXl]="6">
-          <nz-card nzSize="small">
+          <nz-card nzSize="small" [nzHoverable]="true" routerLink="/main/alarm">
             <nz-statistic
               [nzTitle]="statAlarm"
               [nzValue]="statValue(alarmToday())"
@@ -73,7 +76,7 @@
           </nz-card>
         </nz-col>
         <nz-col [nzXs]="12" [nzMd]="12" [nzLg]="6" [nzXl]="6">
-          <nz-card nzSize="small">
+          <nz-card nzSize="small" [nzHoverable]="true" routerLink="/main/alarm">
             <nz-statistic [nzTitle]="statEnergy" [nzValue]="monthEnergy()" [nzSuffix]="'kWh'">
               <ng-template #statEnergy>
                 <nz-icon nzType="thunderbolt" nzTheme="outline" />
