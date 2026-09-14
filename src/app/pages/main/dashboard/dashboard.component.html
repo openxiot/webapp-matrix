@@ -14,10 +14,12 @@
     } @else if (!account.space().id) {
       <nz-empty [nzNotFoundContent]="'请先在项目列表中选择一个项目' | translate"></nz-empty>
     } @else {
+      <!-- 全页的卡片一律 nzSize="small"：11 张卡省下的内边距（每行 43px）正好换给图表，
+           比单纯把图压扁划算。各行高度见 dashboard.component.less 的注释 -->
       <!-- 第一行：六个数字。手机 2/行、中屏 3/行（正好两行）、宽屏 6/行 -->
       <nz-row [nzGutter]="[16, 16]" style="margin-bottom: 16px">
         <nz-col [nzXs]="12" [nzMd]="8" [nzXl]="4">
-          <nz-card>
+          <nz-card nzSize="small">
             <nz-statistic
               [nzTitle]="statDeviceTotal"
               [nzValue]="statValue(deviceTotal())"
@@ -31,7 +33,7 @@
           </nz-card>
         </nz-col>
         <nz-col [nzXs]="12" [nzMd]="8" [nzXl]="4">
-          <nz-card>
+          <nz-card nzSize="small">
             <nz-statistic
               [nzTitle]="statOnline"
               [nzValue]="statValue(onlineCount())"
@@ -45,7 +47,7 @@
           </nz-card>
         </nz-col>
         <nz-col [nzXs]="12" [nzMd]="8" [nzXl]="4">
-          <nz-card>
+          <nz-card nzSize="small">
             <nz-statistic
               [nzTitle]="statServiceTotal"
               [nzValue]="statValue(serviceTotal())"
@@ -59,7 +61,7 @@
           </nz-card>
         </nz-col>
         <nz-col [nzXs]="12" [nzMd]="8" [nzXl]="4">
-          <nz-card>
+          <nz-card nzSize="small">
             <nz-statistic
               [nzTitle]="statAlarm"
               [nzValue]="statValue(alarmToday())"
@@ -73,7 +75,7 @@
           </nz-card>
         </nz-col>
         <nz-col [nzXs]="12" [nzMd]="8" [nzXl]="4">
-          <nz-card>
+          <nz-card nzSize="small">
             <nz-statistic
               [nzTitle]="statFailure"
               [nzValue]="statValue(failureToday())"
@@ -87,7 +89,7 @@
           </nz-card>
         </nz-col>
         <nz-col [nzXs]="12" [nzMd]="8" [nzXl]="4">
-          <nz-card>
+          <nz-card nzSize="small">
             <nz-statistic [nzTitle]="statEnergy" [nzValue]="monthEnergy()" [nzSuffix]="'kWh'">
               <ng-template #statEnergy>
                 <nz-icon nzType="thunderbolt" nzTheme="outline" />
@@ -101,27 +103,27 @@
       <!-- 第二行：三张分布。饼里每一片都是服务端数据，原样显示 -->
       <nz-row [nzGutter]="[16, 16]" style="margin-bottom: 16px">
         <nz-col [nzXs]="24" [nzMd]="8">
-          <nz-card [nzTitle]="'设备类型分布' | translate">
+          <nz-card nzSize="small" [nzTitle]="'设备类型分布' | translate">
             @if (hasDeviceTypes()) {
-              <div class="chart" [appEcharts]="deviceTypeOption"></div>
+              <div class="chart-pie" [appEcharts]="deviceTypeOption"></div>
             } @else {
               <nz-empty></nz-empty>
             }
           </nz-card>
         </nz-col>
         <nz-col [nzXs]="24" [nzMd]="8">
-          <nz-card [nzTitle]="'服务类型分布' | translate">
+          <nz-card nzSize="small" [nzTitle]="'服务类型分布' | translate">
             @if (hasServiceTypes()) {
-              <div class="chart" [appEcharts]="serviceTypeOption"></div>
+              <div class="chart-pie" [appEcharts]="serviceTypeOption"></div>
             } @else {
               <nz-empty></nz-empty>
             }
           </nz-card>
         </nz-col>
         <nz-col [nzXs]="24" [nzMd]="8">
-          <nz-card [nzTitle]="'告警类型分布' | translate">
+          <nz-card nzSize="small" [nzTitle]="'告警类型分布' | translate">
             @if (hasAlarmTypes()) {
-              <div class="chart" [appEcharts]="alarmTypeOption"></div>
+              <div class="chart-pie" [appEcharts]="alarmTypeOption"></div>
             } @else {
               <nz-empty></nz-empty>
             }
@@ -133,13 +135,13 @@
            日能耗仍是 mock -->
       <nz-row [nzGutter]="[16, 16]">
         <nz-col [nzXs]="24" [nzMd]="12">
-          <nz-card [nzTitle]="'日能耗曲线' | translate">
-            <div class="chart" [appEcharts]="energyOption"></div>
+          <nz-card nzSize="small" [nzTitle]="'日能耗曲线' | translate">
+            <div class="chart-line" [appEcharts]="energyOption"></div>
           </nz-card>
         </nz-col>
         <nz-col [nzXs]="24" [nzMd]="12">
-          <nz-card [nzTitle]="'告警曲线' | translate">
-            <div class="chart" [appEcharts]="alarmCurveOption"></div>
+          <nz-card nzSize="small" [nzTitle]="'告警曲线' | translate">
+            <div class="chart-line" [appEcharts]="alarmCurveOption"></div>
           </nz-card>
         </nz-col>
       </nz-row>
