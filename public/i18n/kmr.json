@@ -424,5 +424,9 @@
   "告警配置": "Veavakirina hişyariyê",
   "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Ji bo yek nirxa derketinê dikare çend qaîde bên veavakirin; eger çend qaîde bi hev re pêk bên, tenê ya bi asta herî bilind kar dike. Eger ast yek be, qaîdeya jêrîn kar dike.",
   "拖动可调整顺序": "Ji bo guhertina rêzê bikşîne",
-  "只有管理员可以修改告警配置": "Ten rêveber dikarin veavakirina hişyariyê biguherînin"
+  "只有管理员可以修改告警配置": "Ten rêveber dikarin veavakirina hişyariyê biguherînin",
+  "服务总量": "Tevahiya xizmetan",
+  "今日异常": "Îstîsneyên îro",
+  "服务类型分布": "Belavbûna cureyên xizmetan",
+  "个": "xizmet"
 }

@@ -424,5 +424,9 @@
   "告警配置": "Configurazione allarmi",
   "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Un valore di uscita può avere più regole; se più di una è soddisfatta contemporaneamente, vale solo quella di livello più alto. A parità di livello vale la regola sottostante.",
   "拖动可调整顺序": "Trascina per riordinare",
-  "只有管理员可以修改告警配置": "Solo gli amministratori possono modificare la configurazione allarmi"
+  "只有管理员可以修改告警配置": "Solo gli amministratori possono modificare la configurazione allarmi",
+  "服务总量": "Totale servizi",
+  "今日异常": "Eccezioni di oggi",
+  "服务类型分布": "Distribuzione dei tipi di servizio",
+  "个": "servizi"
 }

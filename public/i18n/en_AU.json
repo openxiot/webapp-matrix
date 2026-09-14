@@ -424,5 +424,9 @@
   "告警配置": "Alarm Configuration",
   "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "One output value can have multiple rules. When several match at the same time, only the one with the highest level takes effect. When levels are equal, the lower rule wins.",
   "拖动可调整顺序": "Drag to reorder",
-  "只有管理员可以修改告警配置": "Only administrators can modify the alarm configuration"
+  "只有管理员可以修改告警配置": "Only administrators can modify the alarm configuration",
+  "服务总量": "Total Services",
+  "今日异常": "Today's Exceptions",
+  "服务类型分布": "Service Type Distribution",
+  "个": "services"
 }

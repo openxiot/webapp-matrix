@@ -424,5 +424,9 @@
   "告警配置": "Alarm konfiqurasiyası",
   "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Bir çıxış dəyəri üçün bir neçə qayda təyin edilə bilər; eyni anda bir neçəsi uyğun gələrsə, yalnız səviyyəsi ən yüksək olan qüvvəyə minir. Eyni səviyyədə olduqda, aşağıdakı qayda qüvvəyə minir.",
   "拖动可调整顺序": "Sıralamanı dəyişmək üçün sürüşdürün",
-  "只有管理员可以修改告警配置": "Alarm konfiqurasiyasını yalnız administratorlar dəyişə bilər"
+  "只有管理员可以修改告警配置": "Alarm konfiqurasiyasını yalnız administratorlar dəyişə bilər",
+  "服务总量": "Ümumi Xidmət",
+  "今日异常": "Bugünkü İstisnalar",
+  "服务类型分布": "Xidmət Növlərinin Bölgüsü",
+  "个": "xidmət"
 }

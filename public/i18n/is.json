@@ -424,5 +424,9 @@
   "告警配置": "Stilling viðvörunar",
   "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Eitt útgildi getur haft fleiri en eina reglu. Ef fleiri en ein stemma á sama tíma gildir aðeins reglan með hæsta stigið. Ef stigin eru jöfn gildir reglan fyrir neðan.",
   "拖动可调整顺序": "Dragðu til að endurraða",
-  "只有管理员可以修改告警配置": "Aðeins stjórnendur geta breytt stillingu viðvörunar"
+  "只有管理员可以修改告警配置": "Aðeins stjórnendur geta breytt stillingu viðvörunar",
+  "服务总量": "Þjónustur samtals",
+  "今日异常": "Undantekningar dagsins",
+  "服务类型分布": "Dreifing þjónustutegunda",
+  "个": "þjónustur"
 }

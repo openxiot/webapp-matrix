@@ -424,5 +424,9 @@
   "告警配置": "Configuração de alarmes",
   "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Um valor de saída pode ter várias regras; se várias coincidirem ao mesmo tempo, só se aplica a de nível mais alto. Com o mesmo nível, vale a regra de baixo.",
   "拖动可调整顺序": "Arraste para reordenar",
-  "只有管理员可以修改告警配置": "Apenas administradores podem alterar a configuração de alarmes"
+  "只有管理员可以修改告警配置": "Apenas administradores podem alterar a configuração de alarmes",
+  "服务总量": "Total de serviços",
+  "今日异常": "Exceções de hoje",
+  "服务类型分布": "Distribuição por tipo de serviço",
+  "个": "serviços"
 }

@@ -31,7 +31,7 @@ import { MatrixService } from '../../../../../../service/matrix.service';
 import { ModbusService } from '../../../../../../service/modbus.service';
 import { MainI18nService } from '../../../../../../service/i18n.service';
 import { DeviceEntity } from '../../../../../../typedef/define/device/DeviceEntity';
-import { ModbusConfig } from '../../../../../../typedef/define/modbus/Modbus';
+import { ModbusConfig, modbusConfigLabel } from '../../../../../../typedef/define/modbus/Modbus';
 import { SpaceEntity } from '../../../../../../typedef/define/space/SpaceEntity';
 import { OrganizationMember } from '../../../../../../typedef/define/user/UserOrganization';
 import {
@@ -402,18 +402,9 @@ export class DeviceServiceDetailComponent implements OnInit {
     return ['/main/device/services', this.did(), 'service', 'history', this.id()];
   }
 
-  /** 源点表显示名：厂家 型号（点表取不到时退回 id） */
+  /** 源点表显示名：厂家 型号（点表取不到时退回 id；没配点表显示 -）。拼法与其他三处共用一份 */
   protected configLabel(configId?: string): string {
-    if (!configId) {
-      return '-';
-    }
-    const cfg = this.configs().find((c) => c.id === configId);
-    if (!cfg) {
-      return configId;
-    }
-    const label =
-      `${cfg.slave?.manufacturer?.trim() ?? ''} ${cfg.slave?.model?.trim() ?? ''}`.trim();
-    return label || configId;
+    return modbusConfigLabel(this.configs(), configId) || '-';
   }
 
   /** 调用坐标文案：#siid · #aiid（入参 piid） */

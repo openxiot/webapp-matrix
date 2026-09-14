@@ -9,7 +9,7 @@ import { MatrixService } from '../../../../../../service/matrix.service';
 import { ModbusService } from '../../../../../../service/modbus.service';
 import { ProductService } from '../../../../../../service/product.service';
 import { DeviceEntity } from '../../../../../../typedef/define/device/DeviceEntity';
-import { ModbusConfig } from '../../../../../../typedef/define/modbus/Modbus';
+import { ModbusConfig, modbusSlaveLabel } from '../../../../../../typedef/define/modbus/Modbus';
 import {
   ModbusService as ModbusServiceDef,
   ModbusServiceFieldAlarm,
@@ -707,10 +707,9 @@ export abstract class DeviceServiceEditor implements OnInit {
     return name ? `#${a.iid} · ${name}` : `#${a.iid}`;
   }
 
-  /** 源点表选项文案：厂家 型号 · (id) */
+  /** 源点表选项文案：厂家 型号 (id)。拼法与其他三处共用一份，这里只多缀一个 id（下拉里同名点表要分得开） */
   protected configLabel(cfg: ModbusConfig): string {
-    const base =
-      `${cfg.slave?.manufacturer?.trim() ?? ''} ${cfg.slave?.model?.trim() ?? ''}`.trim();
+    const base = modbusSlaveLabel(cfg.slave);
     if (base) {
       return cfg.id ? `${base} (${cfg.id})` : base;
     }

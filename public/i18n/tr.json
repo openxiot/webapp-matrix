@@ -424,5 +424,9 @@
   "告警配置": "Alarm yapılandırması",
   "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Bir çıkış değeri için birden çok kural tanımlanabilir; aynı anda birkaçı eşleşirse yalnızca seviyesi en yüksek olan kural geçerli olur. Seviye aynıysa alttaki kural geçerli olur.",
   "拖动可调整顺序": "Sıralamak için sürükleyin",
-  "只有管理员可以修改告警配置": "Alarm yapılandırmasını yalnızca yönetici değiştirebilir"
+  "只有管理员可以修改告警配置": "Alarm yapılandırmasını yalnızca yönetici değiştirebilir",
+  "服务总量": "Toplam Servis",
+  "今日异常": "Bugünkü İstisnalar",
+  "服务类型分布": "Servis Türü Dağılımı",
+  "个": "servis"
 }

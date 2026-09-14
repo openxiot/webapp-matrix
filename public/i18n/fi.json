@@ -424,5 +424,9 @@
   "告警配置": "Hälytysasetukset",
   "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Yhdellä lähtöarvolla voi olla useita sääntöjä; jos useampi täyttyy samaan aikaan, vain korkeimman tason sääntö tulee voimaan. Samalla tasolla alempi sääntö tulee voimaan.",
   "拖动可调整顺序": "Järjestä uudelleen vetämällä",
-  "只有管理员可以修改告警配置": "Vain järjestelmänvalvoja voi muuttaa hälytysasetuksia"
+  "只有管理员可以修改告警配置": "Vain järjestelmänvalvoja voi muuttaa hälytysasetuksia",
+  "服务总量": "Palveluita yhteensä",
+  "今日异常": "Tämän päivän poikkeukset",
+  "服务类型分布": "Palvelutyyppien jakauma",
+  "个": "palvelua"
 }

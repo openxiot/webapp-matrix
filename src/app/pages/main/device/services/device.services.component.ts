@@ -31,7 +31,7 @@ import { ModbusService } from '../../../../service/modbus.service';
 import { MainI18nService } from '../../../../service/i18n.service';
 import { ModbusService as ModbusServiceDef } from '../../../../typedef/define/modbus/ModbusService';
 import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
-import { ModbusConfig } from '../../../../typedef/define/modbus/Modbus';
+import { ModbusConfig, modbusConfigLabel } from '../../../../typedef/define/modbus/Modbus';
 import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
 import { OrganizationMember } from '../../../../typedef/define/user/UserOrganization';
 
@@ -252,18 +252,9 @@ export class DeviceServicesComponent implements OnInit {
     });
   }
 
-  /** 源点表显示名：厂家 型号（点表取不到时退回 id） */
+  /** 源点表显示名：厂家 型号（点表取不到时退回 id；没配点表显示 -）。拼法与其他三处共用一份 */
   protected configLabel(configId?: string): string {
-    if (!configId) {
-      return '-';
-    }
-    const config = this.configs().find((c) => c.id === configId);
-    if (!config) {
-      return configId;
-    }
-    const label =
-      `${config.slave?.manufacturer?.trim() ?? ''} ${config.slave?.model?.trim() ?? ''}`.trim();
-    return label || configId;
+    return modbusConfigLabel(this.configs(), configId) || '-';
   }
 
   /** 最后更新时间（后端人员记录里的毫秒时间戳） */

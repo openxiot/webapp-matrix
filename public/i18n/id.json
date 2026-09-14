@@ -424,5 +424,9 @@
   "告警配置": "Konfigurasi Alarm",
   "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Satu nilai keluaran dapat memiliki beberapa aturan; jika beberapa cocok sekaligus, hanya aturan dengan tingkat tertinggi yang berlaku. Jika tingkatnya sama, aturan di bawah yang berlaku.",
   "拖动可调整顺序": "Seret untuk mengubah urutan",
-  "只有管理员可以修改告警配置": "Hanya administrator yang dapat mengubah Konfigurasi Alarm"
+  "只有管理员可以修改告警配置": "Hanya administrator yang dapat mengubah Konfigurasi Alarm",
+  "服务总量": "Total Layanan",
+  "今日异常": "Pengecualian Hari Ini",
+  "服务类型分布": "Distribusi Jenis Layanan",
+  "个": "layanan"
 }

@@ -424,5 +424,9 @@
   "告警配置": "Alarmconfiguratie",
   "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Eén uitgangswaarde kan meerdere regels hebben; als er meerdere tegelijk overeenkomen, geldt alleen de regel met het hoogste niveau. Bij hetzelfde niveau geldt de onderste regel.",
   "拖动可调整顺序": "Slepen om te herordenen",
-  "只有管理员可以修改告警配置": "Alleen beheerders kunnen de alarmconfiguratie wijzigen"
+  "只有管理员可以修改告警配置": "Alleen beheerders kunnen de alarmconfiguratie wijzigen",
+  "服务总量": "Totaal diensten",
+  "今日异常": "Uitzonderingen van vandaag",
+  "服务类型分布": "Verdeling diensttypes",
+  "个": "diensten"
 }

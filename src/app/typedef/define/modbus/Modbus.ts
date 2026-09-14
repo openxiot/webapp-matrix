@@ -137,3 +137,36 @@ export interface ModbusPerson {
   /** epoch 毫秒时间戳 */
   timestamp?: number;
 }
+
+/**
+ * 从站显示名：厂家 + 型号（如 `特灵 19XRV`）。
+ *
+ * 收成一份纯函数是因为这个拼法原先在**三个地方各写了一遍**（服务清单页的「点表名称」列、
+ * 服务详情页的「源点表」、编辑页的点表下拉），三处必须逐字一致 ——
+ * 首页「服务类型分布」那一饼的片名也用它，与服务清单页那一列因此天然同源。
+ *
+ * 两者都空（或 slave 整个缺失）时给**空串**：「没有名字该显示什么」是各页自己的事
+ * （清单页与详情页显示 `-`，首页归到词典里的 `未定义`，编辑页退回 id）。
+ * 厂家 / 型号是点表里的**数据**，原样给出、不进词典（见 AGENTS.md 的 i18n 一节）。
+ */
+export function modbusSlaveLabel(slave: ModbusSlave | undefined | null): string {
+  return `${slave?.manufacturer?.trim() ?? ''} ${slave?.model?.trim() ?? ''}`.trim();
+}
+
+/**
+ * 点表显示名：{@link modbusSlaveLabel}，拼不出来时**退回 id**（连 id 都没有才给空串）。
+ *
+ * `configs` 是页面上那份可见点表清单（点表可能已被删或不可见，故查不到是常态而不是错误）；
+ * `configId` 为空 = 这个服务压根没配点表，直接给空串 —— 调用方据此显示 `-`，
+ * 而不是把一个空 id 当成点表名。
+ */
+export function modbusConfigLabel(configs: ModbusConfig[], configId?: string | null): string {
+  if (!configId) {
+    return '';
+  }
+  const config = configs?.find((c) => c.id === configId);
+  if (!config) {
+    return configId;
+  }
+  return modbusSlaveLabel(config.slave) || configId;
+}
