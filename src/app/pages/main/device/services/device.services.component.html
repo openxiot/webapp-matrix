@@ -58,6 +58,8 @@
               </td>
               <td>
                 <a [routerLink]="detailLink(service)">{{ '详情' | translate }}</a>
+                <nz-divider nzType="vertical"></nz-divider>
+                <a [routerLink]="historyLink(service)">{{ '历史' | translate }}</a>
                 @if (isAdmin()) {
                   <nz-divider nzType="vertical"></nz-divider>
                   <a (click)="remove(service)">{{ '删除' | translate }}</a>

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { OxResponse } from './response/OxResponse';
@@ -7,6 +7,12 @@ import { ModbusConfig } from '../typedef/define/modbus/Modbus';
 // 实体类与下面的本服务类同名（后端都叫 ModbusService），此处按「实体加 Def 后缀」的约定别名引入
 import { ModbusService as ModbusServiceDef } from '../typedef/define/modbus/ModbusService';
 import { ModbusServiceCodec } from '../typedef/codec/modbus/ModbusServiceCodec';
+import {
+  ModbusHistoryCurrent,
+  ModbusHistoryFailures,
+  ModbusHistoryRange,
+} from '../typedef/define/modbus/ModbusHistory';
+import { ModbusHistoryCodec } from '../typedef/codec/modbus/ModbusHistoryCodec';
 import { DeviceEntity } from '../typedef/define/device/DeviceEntity';
 
 /**
@@ -162,5 +168,84 @@ export class ModbusService {
     return this.http
       .post<OxResponse>(`${this.server}/matrix/v1/modbus/service/invoke/${encodeURIComponent(spaceId)}`, body)
       .pipe(map((r) => (r.data ?? {}) as Record<string, unknown>));
+  }
+
+  /**------------------------------------------------------------------------------------------------
+   * Modbus 采集历史（ModbusHistoryResource，端点 /matrix/v1/modbus/history）
+   *
+   * 服务端按各方法的 interval 自动调用依赖设备，读到的值落库；下面三个接口分别取
+   * 「当前值 / 序列 / 失败清单」。权限与查询服务同口径（空间成员），空间 ID 在 Path 上。
+   *------------------------------------------------------------------------------------------------*/
+
+  /** 每个方法最后一次成功采到的字段值（GET /history/current/{spaceId}/{serviceId}） */
+  getHistoryCurrent(spaceId: string, serviceId: string): Observable<ModbusHistoryCurrent> {
+    return this.http
+      .get<OxResponse>(
+        `${this.server}/matrix/v1/modbus/history/current/${encodeURIComponent(spaceId)}/${encodeURIComponent(serviceId)}`,
+      )
+      .pipe(map((r) => ModbusHistoryCodec.decodeCurrent(r.data)));
+  }
+
+  /**
+   * 一个方法的某一个字段在 [from, to] 内的序列（GET /history/range/{spaceId}）。
+   *
+   * `from`/`to` 是毫秒时间戳（`to` 缺省 = 现在）；`maxPoints` 缺省 500、后端夹到 [1, 2000]，
+   * 原始样本超过它就返回降采样桶。窗口内原始样本超过 2 万条时后端直接报错，
+   * 要求收窄 from/to（不会静默截断）。
+   */
+  getHistoryRange(
+    spaceId: string,
+    serviceId: string,
+    functionIndex: number,
+    field: string,
+    from: number,
+    to: number | null,
+    maxPoints?: number,
+  ): Observable<ModbusHistoryRange> {
+    let params = new HttpParams()
+      .set('serviceId', serviceId)
+      .set('functionIndex', functionIndex)
+      .set('field', field)
+      .set('from', from);
+    if (to != null) {
+      params = params.set('to', to);
+    }
+    if (maxPoints != null) {
+      params = params.set('maxPoints', maxPoints);
+    }
+    return this.http
+      .get<OxResponse>(`${this.server}/matrix/v1/modbus/history/range/${encodeURIComponent(spaceId)}`, {
+        params,
+      })
+      .pipe(map((r) => ModbusHistoryCodec.decodeRange(r.data)));
+  }
+
+  /**
+   * 某服务（或其中某个方法）在 [from, to] 内的采集失败清单 + 汇总
+   * （GET /history/failures/{spaceId}），items 按时间倒序，`limit` 缺省 200、后端夹到 [1, 1000]。
+   */
+  getHistoryFailures(
+    spaceId: string,
+    serviceId: string,
+    from: number,
+    to: number | null,
+    functionIndex?: number | null,
+    limit?: number,
+  ): Observable<ModbusHistoryFailures> {
+    let params = new HttpParams().set('serviceId', serviceId).set('from', from);
+    if (to != null) {
+      params = params.set('to', to);
+    }
+    if (functionIndex != null) {
+      params = params.set('functionIndex', functionIndex);
+    }
+    if (limit != null) {
+      params = params.set('limit', limit);
+    }
+    return this.http
+      .get<OxResponse>(`${this.server}/matrix/v1/modbus/history/failures/${encodeURIComponent(spaceId)}`, {
+        params,
+      })
+      .pipe(map((r) => ModbusHistoryCodec.decodeFailures(r.data)));
   }
 }

@@ -462,6 +462,11 @@ export class DeviceComponent implements OnInit {
     return ['/main/device/services', service.did, 'service', 'detail', service.id];
   }
 
+  /** 服务历史数据页链接（路由见 device.routes.ts） */
+  serviceHistoryLink(service: GenericService): string[] {
+    return ['/main/device/services', service.did, 'service', 'history', service.id];
+  }
+
   /** 服务所在空间的可读名称；service.spaceId 缺失/不在图里返回 '-' */
   serviceSpaceName(service: GenericService): string {
     const s = service.spaceId ? this.spaceById().get(service.spaceId) : undefined;

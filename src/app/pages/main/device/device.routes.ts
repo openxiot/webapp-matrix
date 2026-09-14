@@ -7,6 +7,7 @@ import { DeviceServicesComponent } from './services/device.services.component';
 import { DeviceServiceCreateComponent } from './services/service/create/device.service.create.component';
 import { DeviceServiceDetailComponent } from './services/service/detail/device.service.detail.component';
 import { DeviceServiceEditComponent } from './services/service/edit/device.service.edit.component';
+import { DeviceServiceHistoryComponent } from './services/service/history/device.service.history.component';
 
 export const DEVICE_ROUTES: Routes = [
   {
@@ -57,6 +58,11 @@ export const DEVICE_ROUTES: Routes = [
         path: 'service/edit/:id',
         data: { breadcrumb: '编辑' },
         component: DeviceServiceEditComponent,
+      },
+      {
+        path: 'service/history/:id',
+        data: { breadcrumb: '历史' },
+        component: DeviceServiceHistoryComponent,
       },
     ],
   },

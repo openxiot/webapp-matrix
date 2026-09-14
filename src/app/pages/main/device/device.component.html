@@ -92,6 +92,8 @@
                     }
                   } @else {
                     <a [routerLink]="serviceDetailLink(row.service!)">{{ '详情' | translate }}</a>
+                    <nz-divider nzType="vertical"></nz-divider>
+                    <a [routerLink]="serviceHistoryLink(row.service!)">{{ '历史' | translate }}</a>
                     @if (isAdmin()) {
                       <nz-divider nzType="vertical"></nz-divider>
                       <a (click)="removeService(row.service!)">{{ '删除' | translate }}</a>

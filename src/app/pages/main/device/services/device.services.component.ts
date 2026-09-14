@@ -203,6 +203,11 @@ export class DeviceServicesComponent implements OnInit {
     return ['/main/device/services', this.did(), 'service', 'detail', service.id ?? ''];
   }
 
+  /** 服务历史数据页路径（表格 / 曲线图两种形式，见 device.service.history.component） */
+  protected historyLink(service: ModbusServiceDef): string[] {
+    return ['/main/device/services', this.did(), 'service', 'history', service.id ?? ''];
+  }
+
   /** 删除服务：需当前项目空间的管理员，失败按报错提示 */
   protected remove(service: ModbusServiceDef): void {
     const spaceId = this.account.space().id;

@@ -1,0 +1,94 @@
+.service-history {
+  padding: 0 20px 20px;
+
+  nz-card {
+    margin-bottom: 16px;
+  }
+
+  nz-alert {
+    display: block;
+    margin-bottom: 16px;
+  }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: #595959;
+  }
+}
+
+/* 筛选条：一行放不下就换行，别把选择器挤没了 */
+.service-history-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+}
+
+.service-history-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.service-history-label {
+  color: #8c8c8c;
+}
+
+.service-history-select {
+  width: 220px;
+}
+
+.service-history-select-wide {
+  width: 320px;
+}
+
+.service-history-hint {
+  margin-bottom: 12px;
+  color: #8c8c8c;
+  font-size: 12px;
+}
+
+/* 一个字段一张小图，竖向排开、共用同一条时间轴：图与图之间只留标题那点空隙 */
+.service-history-chart {
+  margin-bottom: 8px;
+}
+
+.service-history-chart-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.service-history-chart-field {
+  font-weight: 500;
+}
+
+.service-history-chart-method {
+  color: #8c8c8c;
+  font-size: 12px;
+}
+
+.service-history-chart-body {
+  height: 160px;
+}
+
+.service-history-summary {
+  margin-bottom: 12px;
+
+  nz-tag {
+    margin-bottom: 4px;
+  }
+}
+
+.service-history-message {
+  word-break: break-all;
+}
+
+/* 失败类型后面缀的枚举名：排查时要拿它去搜后端日志，故留在明面上，但压小、压灰 */
+.service-history-enum {
+  margin-left: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #bfbfbf;
+}

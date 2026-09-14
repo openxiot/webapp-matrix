@@ -1,15 +1,23 @@
 import {Directive, ElementRef, Input, OnChanges, OnDestroy, OnInit, inject} from '@angular/core';
 import {init, use, type EChartsCoreOption, type EChartsType} from 'echarts/core';
 import {LineChart, PieChart} from 'echarts/charts';
-import {GridComponent, LegendComponent, TitleComponent, TooltipComponent} from 'echarts/components';
+import {
+  GridComponent,
+  LegendComponent,
+  MarkLineComponent,
+  TitleComponent,
+  TooltipComponent,
+} from 'echarts/components';
 import {CanvasRenderer} from 'echarts/renderers';
 
-// 按需注册图表/组件，避免打包完整 echarts（体积更小）
+// 按需注册图表/组件，避免打包完整 echarts（体积更小）。
+// MarkLine 是采集历史页画「失败时刻竖线」用的，其余页面用不到也不会因此变大。
 use([
   LineChart,
   PieChart,
   GridComponent,
   LegendComponent,
+  MarkLineComponent,
   TitleComponent,
   TooltipComponent,
   CanvasRenderer,
