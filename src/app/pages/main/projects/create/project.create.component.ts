@@ -10,7 +10,6 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzStepsModule } from 'ng-zorro-antd/steps';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
-import { Router } from '@angular/router';
 import {
   FormControl,
   FormGroup,
@@ -57,7 +56,6 @@ export class ProjectCreateComponent implements OnInit {
 
   constructor(
     protected location: Location,
-    private router: Router,
     private account: AccountService,
     private fb: NonNullableFormBuilder,
     private msg: NzMessageService,
@@ -90,7 +88,7 @@ export class ProjectCreateComponent implements OnInit {
         this.loading.set(false);
         this.account.setCurrentProject(created);
         this.msg.success(this.translate.instant('创建项目成功'));
-        this.router.navigate(['/main/projects']).then(() => {});
+        this.location.back();
       },
       error: (error) => {
         this.msg.warning(error);

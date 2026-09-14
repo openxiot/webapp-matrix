@@ -1,6 +1,6 @@
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { computed, effect, inject, signal, ViewContainerRef } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -121,7 +121,6 @@ export abstract class ModbusEditor {
 
   protected location = inject(Location);
   protected account = inject(AccountService);
-  private router = inject(Router);
   private route = inject(ActivatedRoute);
   private service = inject(ModbusService);
   private orgService = inject(UserOrganizationService);
@@ -523,7 +522,9 @@ export abstract class ModbusEditor {
         this.msg.success(
           this.translate.instant(this.kind === 'detail' ? '保存成功' : '创建成功'),
         );
-        void this.router.navigate(['/main/modbus']);
+        // 返回箭头、保存后都是退回上一层：本页的两个入口（列表上的「创建」与每行的「详情」）
+        // 都在 /main/modbus，走历史比写死路由更贴合来处
+        this.location.back();
       },
       error: (error) => {
         this.submitting.set(false);
