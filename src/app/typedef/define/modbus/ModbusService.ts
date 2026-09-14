@@ -34,6 +34,36 @@ export class ModbusServiceFieldValue {
 }
 
 /**
+ * 一个出值的阈值告警配置（对应后端 `ModbusServiceFieldAlarm`）。
+ *
+ * **越限判定按边沿**：正常→越限记一条告警，持续越限不重复记，回正常后再越限才是新的一次；
+ * 判定比的是**解析后**的值（`scale` 已生效、命中取值表时是那条 `description`），
+ * 因为阈值是用户按工程单位填的、曲线画的也是解析值。
+ *
+ * 字段的取值形态决定能怎么比（后端 `ModbusAlarmPolicy` 与校验器同一口径）：
+ * - 数值（含位区的整段掩码）：`compare` 五种都行，比 `threshold`；
+ * - 命中取值表：只有 `=` 合法，比 `state`（取值表的某个 `description`，逐字命中）；
+ * - 位清单里的一个位：只有 `=` 合法，`threshold` 取 0 / 1；
+ * - `format` 为 `string` 的字段：**不能配告警**（无从比较）。
+ *
+ * 只能配在**读方法**（fc 01/02/03/04）上：写方法的应答是请求回显，没有读值。
+ */
+export class ModbusServiceFieldAlarm {
+  /** 开关。缺省 / false = 不告警，**配置原样留着**（与 `interval` 配了却暂停轮询同口径） */
+  enabled?: boolean;
+  /** `>` 超过 / `>=` 达到 / `<` 低于 / `<=` 低于等于 / `=` 等于（符号不翻译，见 ModbusAlarm.ts） */
+  compare?: string;
+  /** 数值阈值；`=` 且字段带取值表时改用 {@link state} */
+  threshold?: number;
+  /** `=` 的比较目标：取值表里的 `description` */
+  state?: string;
+  /** INFO 提示 / WARN 警告 / CRITICAL 严重 */
+  level?: string;
+  /** 告警文本（用户自己填的，如「温度过高」）—— **用户数据，永不翻译** */
+  text?: string;
+}
+
+/**
  * 位区字段里的具名位：除字段自身那份整段位掩码外，把该位单独作为一个 0/1 取值输出（key 即 field）。
  *
  * 偏移是 0 基、从位区起点（请求的起始地址）算起；帧内按 LSB-first 取位，
@@ -43,6 +73,11 @@ export class ModbusServiceFieldBit {
   offset: number = 0;
   /** 该位的取值名：invoke 返回值里这个位的 key */
   field: string = '';
+  /**
+   * 该位的告警配置（**位是独立的结果键**：parser 逐位把值写进返回值，位自己就能比 0/1）——
+   * 只挂父字段的话「位 = 1 就告警」根本够不着。
+   */
+  alarm?: ModbusServiceFieldAlarm;
 }
 
 /**
@@ -70,6 +105,11 @@ export class ModbusServiceField {
   valueList?: ModbusServiceFieldValue[];
   /** 线上键名 `bit-list`（01/02 位区逐位取值） */
   bitList?: ModbusServiceFieldBit[];
+  /**
+   * 该字段出值的阈值告警（缺省 = 没配）。与 {@link ModbusServiceFieldBit.alarm} 是两处独立的配置：
+   * 位上的告警比的是那一位的 0/1，这里的比的是整段位掩码 / 寄存器值本身。
+   */
+  alarm?: ModbusServiceFieldAlarm;
 }
 
 /**

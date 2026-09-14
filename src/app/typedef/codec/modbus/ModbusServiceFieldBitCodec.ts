@@ -1,8 +1,11 @@
 import { ModbusServiceFieldBit } from '../../define/modbus/ModbusService';
+import { ModbusServiceFieldAlarmCodec } from './ModbusServiceFieldAlarmCodec';
 
 /**
- * 位区字段里的具名位（01/02）与 JSON 的互转：`{offset, field}` —— 偏移 0 基、从位区起点算起，
+ * 位区字段里的具名位（01/02）与 JSON 的互转：`{offset, field, alarm?}` —— 偏移 0 基、从位区起点算起，
  * field 是这一位在 invoke 返回值里的 key（取值 0/1）。
+ *
+ * `alarm` 与父字段那份是**两处独立配置**（位比的是自己的 0/1），同样守「没配就不出键」。
  */
 export class ModbusServiceFieldBitCodec {
   static decode(o: any): ModbusServiceFieldBit {
@@ -10,15 +13,21 @@ export class ModbusServiceFieldBitCodec {
 
     x.offset = o.offset;
     x.field = o.field || '';
+    x.alarm = ModbusServiceFieldAlarmCodec.decode(o.alarm);
 
     return x;
   }
 
   static encode(x: ModbusServiceFieldBit): any {
-    return {
+    const o: any = {
       offset: x.offset,
       field: x.field,
     };
+    const alarm = ModbusServiceFieldAlarmCodec.encode(x.alarm);
+    if (alarm != null) {
+      o.alarm = alarm;
+    }
+    return o;
   }
 
   static decodeArray(array: Object): ModbusServiceFieldBit[] {

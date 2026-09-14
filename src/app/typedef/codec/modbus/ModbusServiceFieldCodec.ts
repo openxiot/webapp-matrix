@@ -1,11 +1,12 @@
 import { ModbusServiceField } from '../../define/modbus/ModbusService';
+import { ModbusServiceFieldAlarmCodec } from './ModbusServiceFieldAlarmCodec';
 import { ModbusServiceFieldBitCodec } from './ModbusServiceFieldBitCodec';
 import { ModbusServiceFieldValueCodec } from './ModbusServiceFieldValueCodec';
 
 /**
  * 应答字段解析规则与 JSON 的互转。
  *
- * 可选项（byteOrder / scale / unit / value-list / bit-list）只在有值时输出：编辑页把取回的定义原样回存，
+ * 可选项（byteOrder / scale / unit / value-list / bit-list / alarm）只在有值时输出：编辑页把取回的定义原样回存，
  * 缺省项不该被补成空值写回库里。带连字符的 `value-list` / `bit-list` 对应实体的 valueList / bitList。
  */
 export class ModbusServiceFieldCodec {
@@ -31,6 +32,8 @@ export class ModbusServiceFieldCodec {
     if (o['bit-list'] != null) {
       x.bitList = ModbusServiceFieldBitCodec.decodeArray(o['bit-list']);
     }
+    // 空对象读作「没配」（与后端 decode 同口径），故这里不能写成 else 分支的默认值
+    x.alarm = ModbusServiceFieldAlarmCodec.decode(o.alarm);
 
     return x;
   }
@@ -56,6 +59,10 @@ export class ModbusServiceFieldCodec {
     }
     if (x.bitList != null && x.bitList.length > 0) {
       o['bit-list'] = ModbusServiceFieldBitCodec.encodeArray(x.bitList);
+    }
+    const alarm = ModbusServiceFieldAlarmCodec.encode(x.alarm);
+    if (alarm != null) {
+      o.alarm = alarm;
     }
     return o;
   }

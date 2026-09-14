@@ -13,6 +13,12 @@ import {
   ModbusHistoryRange,
 } from '../typedef/define/modbus/ModbusHistory';
 import { ModbusHistoryCodec } from '../typedef/codec/modbus/ModbusHistoryCodec';
+import {
+  ModbusAlarm,
+  ModbusAlarmList,
+  ModbusAlarmQuery,
+} from '../typedef/define/modbus/ModbusAlarm';
+import { ModbusAlarmCodec } from '../typedef/codec/modbus/ModbusAlarmCodec';
 import { DeviceEntity } from '../typedef/define/device/DeviceEntity';
 
 /**
@@ -103,7 +109,9 @@ export class ModbusService {
   /** 按空间列出服务（GET /service/many/{spaceId}，筛的是服务里记的设备落点） */
   listServices(spaceId: string): Observable<ModbusServiceDef[]> {
     return this.http
-      .get<OxResponse>(`${this.server}/matrix/v1/modbus/service/many/${encodeURIComponent(spaceId)}`)
+      .get<OxResponse>(
+        `${this.server}/matrix/v1/modbus/service/many/${encodeURIComponent(spaceId)}`,
+      )
       .pipe(map((r) => ModbusServiceCodec.decodeArray(r.data)));
   }
 
@@ -166,7 +174,10 @@ export class ModbusService {
   ): Observable<Record<string, unknown>> {
     const body = { service: serviceId, function: functionIndex };
     return this.http
-      .post<OxResponse>(`${this.server}/matrix/v1/modbus/service/invoke/${encodeURIComponent(spaceId)}`, body)
+      .post<OxResponse>(
+        `${this.server}/matrix/v1/modbus/service/invoke/${encodeURIComponent(spaceId)}`,
+        body,
+      )
       .pipe(map((r) => (r.data ?? {}) as Record<string, unknown>));
   }
 
@@ -214,9 +225,12 @@ export class ModbusService {
       params = params.set('maxPoints', maxPoints);
     }
     return this.http
-      .get<OxResponse>(`${this.server}/matrix/v1/modbus/history/range/${encodeURIComponent(spaceId)}`, {
-        params,
-      })
+      .get<OxResponse>(
+        `${this.server}/matrix/v1/modbus/history/range/${encodeURIComponent(spaceId)}`,
+        {
+          params,
+        },
+      )
       .pipe(map((r) => ModbusHistoryCodec.decodeRange(r.data)));
   }
 
@@ -253,9 +267,84 @@ export class ModbusService {
       params = params.set('limit', limit);
     }
     return this.http
-      .get<OxResponse>(`${this.server}/matrix/v1/modbus/history/failures/${encodeURIComponent(spaceId)}`, {
-        params,
-      })
+      .get<OxResponse>(
+        `${this.server}/matrix/v1/modbus/history/failures/${encodeURIComponent(spaceId)}`,
+        {
+          params,
+        },
+      )
       .pipe(map((r) => ModbusHistoryCodec.decodeFailures(r.data)));
+  }
+
+  /**
+   * 某服务（或整个空间）在 [from, to] 内的**阈值告警**清单 + 汇总
+   * （GET /alarm/many/{spaceId}），items 按 `at` 倒序，`limit` 缺省 200、后端夹到 [1, 1000]。
+   *
+   * `query.serviceId` 不传 = **整个空间（含子空间）**：后端把该空间及其子树下所有服务的告警合并成
+   * 一条时间倒序的清单（每条 item 自带 serviceId 认领归属），`limit` 与 `truncated` 也按整份清单算。
+   * 告警页要的「这个项目现在哪儿在告警」就是这一条，不必按服务扇出 N 个请求。
+   *
+   * 筛选条件收在一个对象里（不像 `getHistoryFailures` 那样一路位置参数）：告警多了
+   * `level` / `field` / `open` / `handled` 四个，位置参数排到第六七个就没人记得住顺序了。
+   * 三个布尔/枚举筛选的「不传」都是**不限**，故 `open` / `handled` 传 null 与传 false 不是一回事。
+   *
+   * `from` 必填（后端拒无起点的查询：那是全表扫）；`to` 传 null = 到现在。
+   */
+  getAlarms(
+    spaceId: string,
+    from: number,
+    to: number | null,
+    query: ModbusAlarmQuery = {},
+  ): Observable<ModbusAlarmList> {
+    let params = new HttpParams().set('from', from);
+    if (query.serviceId != null && query.serviceId !== '') {
+      params = params.set('serviceId', query.serviceId);
+    }
+    if (to != null) {
+      params = params.set('to', to);
+    }
+    if (query.functionIndex != null) {
+      params = params.set('functionIndex', query.functionIndex);
+    }
+    if (query.field != null && query.field !== '') {
+      params = params.set('field', query.field);
+    }
+    if (query.level != null && query.level !== '') {
+      params = params.set('level', query.level);
+    }
+    // 「不传 = 不限」：null / undefined 都不带这个参数，只有明确的 true / false 才带上
+    if (query.open != null) {
+      params = params.set('open', query.open);
+    }
+    if (query.handled != null) {
+      params = params.set('handled', query.handled);
+    }
+    if (query.limit != null) {
+      params = params.set('limit', query.limit);
+    }
+    return this.http
+      .get<OxResponse>(
+        `${this.server}/matrix/v1/modbus/alarm/many/${encodeURIComponent(spaceId)}`,
+        {
+          params,
+        },
+      )
+      .pipe(map((r) => ModbusAlarmCodec.decodeList(r.data)));
+  }
+
+  /**
+   * 处理一条告警（POST /alarm/handle/{spaceId}/{id}，**无 body**）：处理人取当前登录账号，
+   * 返回**更新后的那一条**，页面据此就地替换该行、不整页刷新。
+   *
+   * 重复点击算成功（后端把「已经处理过了」当成功返回）：页面不必自己做「点过了就禁用」，
+   * 但仍应就地更新，否则用户会以为没生效。该告警不属于传入空间的子树时后端拒绝（拿别人的 id 点不了）。
+   */
+  handleAlarm(spaceId: string, id: string): Observable<ModbusAlarm> {
+    return this.http
+      .post<OxResponse>(
+        `${this.server}/matrix/v1/modbus/alarm/handle/${encodeURIComponent(spaceId)}/${encodeURIComponent(id)}`,
+        {},
+      )
+      .pipe(map((r) => ModbusAlarmCodec.decode(r.data)));
   }
 }
