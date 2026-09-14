@@ -50,7 +50,7 @@ export const routes: Routes = [
   },
   {
     path: 'alarm',
-    data: { breadcrumb: '报警' },
+    data: { breadcrumb: '告警' },
     loadChildren: () => import('./alarm/alarm.routes').then((m) => m.ALARM_ROUTES),
   },
   {

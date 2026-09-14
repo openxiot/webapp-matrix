@@ -1,7 +1,7 @@
 /**
  * 数据看板 mock 数据。
  *
- * 后台没有设备/能耗/报警统计接口，这里在前端伪造数据：
+ * 后台没有设备/能耗/告警统计接口，这里在前端伪造数据：
  *   - 用 mulberry32 种子 PRNG，以「当天日期」为种子 → 同一天内刷新稳定，跨天自然变化
  *   - 类型名直接产出中文短语（本应用 i18n 键，zh 值即键），渲染时经 translate 翻译
  */
@@ -55,21 +55,21 @@ export interface EnergyStats {
 }
 
 export interface AlarmTypeStat {
-  /** 报警类型名（i18n 键，中文短语） */
+  /** 告警类型名（i18n 键，中文短语） */
   type: string;
   count: number;
 }
 
 export interface AlarmStats {
-  /** 今日报警总量 */
+  /** 今日告警总量 */
   todayCount: number;
   byType: AlarmTypeStat[];
-  /** 近 24 小时报警曲线（HH:mm） */
+  /** 近 24 小时告警曲线（HH:mm） */
   curve: {time: string; count: number}[];
 }
 
 const DEVICE_TYPES = ['智能网关', '温湿度传感器', '智能插座', '智能门锁', '网络摄像头', '烟感传感器'];
-const ALARM_TYPES = ['高温报警', '烟雾报警', '非法闯入', '电量过低', '设备离线', '门未关闭'];
+const ALARM_TYPES = ['高温告警', '烟雾告警', '非法闯入', '电量过低', '设备离线', '门未关闭'];
 
 export function mockDeviceStats(date: Date): DeviceStats {
   const rand = mulberry32(seedOf(date));
@@ -110,7 +110,7 @@ export function mockAlarmStats(date: Date): AlarmStats {
     count: randInt(rand, 1, 12),
   }));
   const todayCount = byType.reduce((sum, d) => sum + d.count, 0);
-  // 近 24 小时，以当前整点为终点；夜间休息时段报警偏少
+  // 近 24 小时，以当前整点为终点；夜间休息时段告警偏少
   const curve: {time: string; count: number}[] = [];
   for (let i = 23; i >= 0; i--) {
     const h = (date.getHours() - i + 24) % 24;

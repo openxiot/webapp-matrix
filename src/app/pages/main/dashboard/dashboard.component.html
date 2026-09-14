@@ -43,7 +43,7 @@
         <nz-statistic [nzTitle]="statAlarm" [nzValue]="alarmToday()" [nzSuffix]="'条' | translate">
           <ng-template #statAlarm>
             <nz-icon nzType="alert" nzTheme="outline" />
-            {{ '今日报警' | translate }}
+            {{ '今日告警' | translate }}
           </ng-template>
         </nz-statistic>
       </nz-card>
@@ -62,12 +62,12 @@
       </nz-card>
     </nz-col>
     <nz-col [nzXs]="24" [nzMd]="12">
-      <nz-card [nzTitle]="'报警类型分布' | translate">
+      <nz-card [nzTitle]="'告警类型分布' | translate">
         <div class="chart" [appEcharts]="alarmTypeOption"></div>
       </nz-card>
     </nz-col>
     <nz-col [nzXs]="24" [nzMd]="12">
-      <nz-card [nzTitle]="'报警曲线' | translate">
+      <nz-card [nzTitle]="'告警曲线' | translate">
         <div class="chart" [appEcharts]="alarmCurveOption"></div>
       </nz-card>
     </nz-col>

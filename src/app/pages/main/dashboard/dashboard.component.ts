@@ -47,7 +47,7 @@ export class DashboardComponent {
   readonly deviceStats = signal<DeviceStats>(mockDeviceStats(this.now));
   /** 能耗统计（mock） */
   readonly energyStats = signal<EnergyStats>(mockEnergyStats(this.now));
-  /** 报警统计（mock） */
+  /** 告警统计（mock） */
   readonly alarmStats = signal<AlarmStats>(mockAlarmStats(this.now));
 
   /** 设备总量 */
@@ -56,7 +56,7 @@ export class DashboardComponent {
   readonly onlineCount = computed(() => this.deviceStats().online);
   /** 本月能耗（kWh） */
   readonly monthEnergy = computed(() => this.energyStats().monthTotal);
-  /** 今日报警 */
+  /** 今日告警 */
   readonly alarmToday = computed(() => this.alarmStats().todayCount);
 
   /**
