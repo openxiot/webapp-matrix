@@ -1,6 +1,7 @@
-import { computed, Directive, inject, OnInit, signal } from '@angular/core';
+import { computed, Directive, inject, OnInit, signal, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalService } from 'ng-zorro-antd/modal';
 import { Action, DeviceInstance, Service } from '@openxiot/xiot-core-spec-ts';
 import { AccountService } from '../../../../../../service/account.service';
 import { MainI18nService } from '../../../../../../service/i18n.service';
@@ -11,36 +12,31 @@ import { DeviceEntity } from '../../../../../../typedef/define/device/DeviceEnti
 import { ModbusConfig } from '../../../../../../typedef/define/modbus/Modbus';
 import {
   ModbusService as ModbusServiceDef,
-  ModbusServiceField,
   ModbusServiceFieldAlarm,
   ModbusServiceFunction,
 } from '../../../../../../typedef/define/modbus/ModbusService';
-import {
-  MODBUS_ALARM_LEVELS,
-  modbusAlarmLevelLabel,
-  modbusAlarmOperatorLabel,
-  newAlarmId,
-} from '../../../../../../typedef/define/modbus/ModbusAlarm';
+import { newAlarmId } from '../../../../../../typedef/define/modbus/ModbusAlarm';
 import { SpaceRef } from '../../../../../../typedef/define/space/SpaceRef';
 import {
-  MAX_ALARM_RULES,
   WRITE_METHOD_REPLY_KEY,
-  alarmKey,
+  alarmCount,
   alarmItems,
-  alarmOperatorsOf,
+  alarmKey,
   alarmSignature,
-  alarmUsesState,
   buildServiceFunctions,
-  defaultAlarm,
-  describeFieldType,
   describeFunctionResponse,
   isReadFunction,
   pollSignature,
   serviceChanged,
+  withAlarmsOf,
   type FunctionPoll,
   type ServiceAlarmItem,
   type ServiceBaseline,
 } from '../service.functions';
+import {
+  DeviceServiceAlarmDialogComponent,
+  type ServiceAlarmDialogData,
+} from './alarms/device.service.alarm.dialog.component';
 import { Location } from '@angular/common';
 
 /**
@@ -69,7 +65,8 @@ const DEFAULT_INTERVAL_SECONDS = 60;
  * 3. **服务名称**（用户填）。
  *
  * 方法列表由点表现场展开、不允许手工增删（后端 functions 由本页一次性落库）；名称/请求帧/应答字段
- * 都只读，可改的是**自动轮询**（开关 + 调用周期）与**逐字段告警**（展开行里配）—— 两者都不属于点表，
+ * 都只读，可改的是**自动轮询**（预览表里的开关 + 调用周期）与**逐字段告警**（点「告警配置」那一列
+ * 开对话框配，见 {@link openAlarmDialog}）—— 两者都不属于点表，
  * 是「这份服务怎么跑、越限算不算事」的事（见 {@link polls} 与 {@link alarms}）。
  * 编辑页若源点表已删 / 跨组织取不到，退回服务里存的方法原样展示并提示，
  * 保存不改动它们（这两样仍可改，它们是从服务里种进来的）。
@@ -90,6 +87,9 @@ export abstract class DeviceServiceEditor implements OnInit {
   private readonly matrix = inject(MatrixService);
   private readonly product = inject(ProductService);
   private readonly modbus = inject(ModbusService);
+  private readonly modal = inject(NzModalService);
+  /** 告警对话框挂在编辑页的视图容器下：它随本页一起销毁（本页走了不该留个悬着的对话框） */
+  private readonly viewContainerRef = inject(ViewContainerRef);
 
   /** 依赖设备（DTU）did（路由参数） */
   readonly did = signal('');
@@ -140,26 +140,11 @@ export abstract class DeviceServiceEditor implements OnInit {
    */
   private readonly alarms = signal<Map<string, ModbusServiceFieldAlarm[]>>(new Map());
 
-  /** 展开了告警配置那一行的方法序号（方法预览表的第一列是展开手柄，只有读方法有） */
-  private readonly expanded = signal<Set<number>>(new Set());
-
   /** 周期的上下限（秒）：模板绑定控件用，口径见文件头常量 */
   protected readonly intervalMin = MIN_INTERVAL_SECONDS;
   protected readonly intervalMax = MAX_INTERVAL_SECONDS;
   /** 方法是不是读方法（写方法不能自动调用）：模板据此决定这一格出控件还是「—」 */
   protected readonly isReadFunction = isReadFunction;
-  /** 一个方法的全部出值（应答字段 + 各自的位）：展开行逐行列出 */
-  protected readonly alarmItems = alarmItems;
-  /**
-   * 出值的类型摘要，**不带告警尾巴**：展开行的「类型」列用它 —— 右边紧挨着就是告警的几个控件，
-   * 再缀一遍「→ 温度过高(>80)」是同一句话说两遍，而且会随用户敲字实时变。
-   * 上面那张表的「应答字段」列走 {@link responseText}，那里要的是带尾巴的完整摘要。
-   */
-  protected readonly describeFieldType = describeFieldType;
-  /** 该出值此刻比的是状态还是数值：模板据此把阈值那一格换成下拉还是数字框 */
-  protected readonly alarmUsesState = alarmUsesState;
-  /** 一个出值最多几条规则（模板据此禁用「添加规则」）：与后端校验同一个上限 */
-  protected readonly maxAlarmRules = MAX_ALARM_RULES;
 
   /** 载入完成时的基线（编辑页「有没有改过」的原值）：载入前为 null，保存按钮此时也是不可用 */
   private readonly baseline = signal<ServiceBaseline | null>(null);
@@ -462,182 +447,94 @@ export abstract class DeviceServiceEditor implements OnInit {
   }
 
   /* ----------------------------------------------------------------------------------------------
-   * 逐字段告警（展开行）
+   * 逐字段告警（对话框）
    * ----------------------------------------------------------------------------------------------*/
 
-  /** 展开 / 收起某个方法的告警配置行（只有读方法有手柄） */
-  protected onAlarmExpand(func: ModbusServiceFunction, expanded: boolean): void {
-    this.expanded.update((set) => {
-      const next = new Set(set);
-      if (expanded) {
-        next.add(func.index);
-      } else {
-        next.delete(func.index);
-      }
-      return next;
-    });
-  }
-
-  /** 该方法此刻是否展开着 */
-  protected isAlarmExpanded(func: ModbusServiceFunction): boolean {
-    return this.expanded().has(func.index);
+  /**
+   * 该方法配了多少条告警规则：方法预览表「告警配置」列上那个数字（见 {@link alarmCount}）。
+   * 这一列只有读方法有数 —— 写方法没有应答字段，一个出值都没有。
+   */
+  protected alarmCount(func: ModbusServiceFunction): number {
+    return alarmCount(func, this.selectedConfigId(), this.alarms());
   }
 
   /**
-   * 开关**一条规则**。关掉只改开关、**配置原样留着** —— 这正是这个开关的用处：
-   * 先停掉一条吵闹的规则，不必把比较方式、阈值、文本都删掉（与轮询开关保留周期同口径）。
+   * 打开逐出值编辑告警的对话框。
    *
-   * 停用的规则后端不校验、也不参与判定，故完全可以「先建好、先关着，回头再开」。
-   */
-  protected onAlarmEnabled(
-    func: ModbusServiceFunction,
-    item: ServiceAlarmItem,
-    rule: ModbusServiceFieldAlarm,
-    enabled: boolean,
-  ): void {
-    this.patchAlarm(func, item, rule, { enabled });
-  }
-
-  /**
-   * 给这个出值再加一条规则（如「超过 30 严重」）。起步配置见 {@link defaultAlarm}：
-   * 它一出生就是启用且填得齐的，用户随即改。
+   * 规则**抄一份副本**进去：对话框里改到一半取消（或直接关窗）时，页面上的侧表一个字都没动 ——
+   * 这正是「编辑落在一个临时副本上」的用处。点「确认」才走 {@link applyAlarms} 合回来。
    *
-   * 到上限（{@link MAX_ALARM_RULES}）时按钮已禁用，这里再兜一次 —— 按钮是给人看的，
-   * 真正不该越界的是这份数据。
+   * 副本按**出值名**重排一份 key（不再带 `点表ID#方法序号` 前缀）：对话框只认这一批出值，
+   * 前缀对它没有意义，摘掉后它那边「key = 出值名」更直接。
    */
-  protected onAlarmAdd(func: ModbusServiceFunction, item: ServiceAlarmItem): void {
-    if (item.kind === 'none') {
-      return;
+  protected openAlarmDialog(func: ModbusServiceFunction): void {
+    const items = alarmItems(func);
+    const seeded = new Map<string, ModbusServiceFieldAlarm[]>();
+    for (const item of items) {
+      seeded.set(
+        item.key,
+        this.alarmRulesOf(func, item).map((rule) => ({ ...rule })),
+      );
     }
-    const key = this.alarmKey(func, item);
-    this.alarms.update((map) => {
-      const next = new Map(map);
-      const rules = next.get(key) ?? [];
-      if (rules.length >= MAX_ALARM_RULES) {
-        return next;
+    const modal = this.modal.create<
+      DeviceServiceAlarmDialogComponent,
+      ServiceAlarmDialogData,
+      Map<string, ModbusServiceFieldAlarm[]>
+    >({
+      // 标题不缀方法名：对话框第一行就写着是哪个方法（说了两遍是白说）
+      nzTitle: this.i18n.translate.instant('告警配置'),
+      nzContent: DeviceServiceAlarmDialogComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: { name: func.name, request: func.request, items, alarms: seeded },
+      // 六列固定宽度加起来 610px，再给「告警文本」留出余量
+      nzWidth: 960,
+      nzFooter: [
+        {
+          label: this.i18n.translate.instant('取消'),
+          onClick: (component) => component!.cancel(),
+        },
+        {
+          label: this.i18n.translate.instant('确认'),
+          type: 'primary',
+          onClick: (component) => component!.ok(),
+        },
+      ],
+    });
+
+    // 取消 / 关窗交回 undefined：一个字都不改（用户改到一半反悔，页面得原样）
+    modal.afterClose.subscribe((result) => {
+      if (result) {
+        this.applyAlarms(func, result);
       }
-      next.set(key, [...rules, defaultAlarm(item.kind, item.key)]);
-      return next;
     });
   }
 
   /**
-   * 删掉一条规则。**整组删空时把 key 也去掉**（而不是留一个空数组）：留空数组会让
-   * {@link withAlarms} 往定义里写 `alarms: []`，而空数组在 codec 与后端那里都读作「没配」，
-   * 白白在库里留个噪音。
-   */
-  protected onAlarmRemove(
-    func: ModbusServiceFunction,
-    item: ServiceAlarmItem,
-    rule: ModbusServiceFieldAlarm,
-  ): void {
-    const key = this.alarmKey(func, item);
-    this.alarms.update((map) => {
-      const next = new Map(map);
-      const rules = [...(next.get(key) ?? [])];
-      const at = rules.indexOf(rule);
-      if (at < 0) {
-        return next;
-      }
-      rules.splice(at, 1);
-      if (rules.length > 0) {
-        next.set(key, rules);
-      } else {
-        next.delete(key);
-      }
-      return next;
-    });
-  }
-
-  /**
-   * 改比较方式。比较方式决定「比的是状态还是数值」（见 {@link alarmUsesState}），
-   * 后端把这两个目标字段做成互斥的，故这一步顺手把用不上的那个清掉 ——
-   * 不清的话，从「= 制冷」切到「> 80」会同时带着 state，保存被后端拒。
-   */
-  protected onAlarmCompare(
-    func: ModbusServiceFunction,
-    item: ServiceAlarmItem,
-    rule: ModbusServiceFieldAlarm,
-    compare: string | null,
-  ): void {
-    const patch: Partial<ModbusServiceFieldAlarm> = { compare: compare ?? undefined };
-    if (alarmUsesState(item.kind, compare ?? undefined)) {
-      patch.threshold = undefined;
-    } else {
-      patch.state = undefined;
-    }
-    this.patchAlarm(func, item, rule, patch);
-  }
-
-  protected onAlarmThreshold(
-    func: ModbusServiceFunction,
-    item: ServiceAlarmItem,
-    rule: ModbusServiceFieldAlarm,
-    value: number | null,
-  ): void {
-    // 清空 = 还没填（后端会拒），不是 0：0 是个正经阈值，不能拿「没填」冒充它
-    this.patchAlarm(func, item, rule, {
-      threshold: value == null || !Number.isFinite(value) ? undefined : value,
-    });
-  }
-
-  protected onAlarmState(
-    func: ModbusServiceFunction,
-    item: ServiceAlarmItem,
-    rule: ModbusServiceFieldAlarm,
-    state: string | null,
-  ): void {
-    this.patchAlarm(func, item, rule, { state: state ?? undefined });
-  }
-
-  protected onAlarmLevel(
-    func: ModbusServiceFunction,
-    item: ServiceAlarmItem,
-    rule: ModbusServiceFieldAlarm,
-    level: string | null,
-  ): void {
-    this.patchAlarm(func, item, rule, { level: level ?? undefined });
-  }
-
-  protected onAlarmText(
-    func: ModbusServiceFunction,
-    item: ServiceAlarmItem,
-    rule: ModbusServiceFieldAlarm,
-    text: string,
-  ): void {
-    this.patchAlarm(func, item, rule, { text });
-  }
-
-  /**
-   * 改一组里的一条规则：**按对象身份定位**（模板交给我们的就是组里那个对象），不按数组下标。
+   * 把对话框交回来的规则表合进侧表：有规则的写回去，**空组把 key 删掉**
+   * （空数组会被 {@link withAlarms} 写进定义，而 codec 与后端都读作「没配」）。
    *
-   * 身份这条纪律在这里尤其要紧：这一组会连同它所在的数组被整份替换，下标只是「此刻的位置」，
-   * 而运行期判「这条开着的告警是哪条规则开的」看的是 `id`，两处必须认同一个人
-   * （见 {@link ModbusServiceFieldAlarm.id}）。
-   * 定位不到（模板还停在上一帧的数组上）就什么都不做，而不是往组里塞一条新的。
+   * 只碰这个方法自己的出值：别的出值不在这份清单里，也就不会被误删。
    */
-  private patchAlarm(
+  private applyAlarms(
     func: ModbusServiceFunction,
-    item: ServiceAlarmItem,
-    rule: ModbusServiceFieldAlarm,
-    patch: Partial<ModbusServiceFieldAlarm>,
+    alarms: Map<string, ModbusServiceFieldAlarm[]>,
   ): void {
-    const key = this.alarmKey(func, item);
     this.alarms.update((map) => {
       const next = new Map(map);
-      const rules = next.get(key) ?? [];
-      const at = rules.indexOf(rule);
-      if (at < 0) {
-        return next;
+      for (const item of alarmItems(func)) {
+        const key = this.alarmKey(func, item);
+        const rules = alarms.get(item.key) ?? [];
+        if (rules.length > 0) {
+          next.set(key, rules);
+        } else {
+          next.delete(key);
+        }
       }
-      const updated = [...rules];
-      updated[at] = { ...rule, ...patch };
-      next.set(key, updated);
       return next;
     });
   }
 
-  /** 该出值当前的规则组（没配过 = 空数组，模板按它决定出规则行还是「未配置告警」那一行） */
+  /** 该出值当前的规则组（没配过 = 空数组）：打开告警对话框时按它抄副本 */
   protected alarmRulesOf(
     func: ModbusServiceFunction,
     item: ServiceAlarmItem,
@@ -678,24 +575,20 @@ export abstract class DeviceServiceEditor implements OnInit {
   }
 
   /**
-   * 把该方法的告警**规则组**并进应答字段：字段自身一组、位清单里每一位各一组
-   * （位是独立的结果键，见 {@link ServiceAlarmItem}）。组内顺序原样带出去 —— 它参与运行期的裁决。
-   *
-   * 没配的出值**不出 `alarms` 键** —— 定义里绝大多数字段都没配告警，过一趟编辑页不该
-   * 在每个字段上多出一个空数组。写方法没有 response，这个循环自然什么也不做。
+   * 把该方法的告警**规则组**并进应答字段：本方法只管**取数** —— 按 `点表ID#序号#出值名`
+   * 从侧表把规则取出来，合并本身交给 {@link withAlarmsOf}（详情页那份走的是同一个合并规则，
+   * 只是取数来自服务定义而非侧表，两边各写一套的话「空组不出键」这种细节迟早会走岔）。
    */
   private withAlarms(func: ModbusServiceFunction): ModbusServiceFunction {
     const configId = this.selectedConfigId();
-    const groupOf = (name: string): ModbusServiceFieldAlarm[] | undefined => {
-      const rules = this.alarms().get(alarmKey(configId, func.index, name));
-      return rules != null && rules.length > 0 ? rules : undefined;
-    };
-    const response = (func.response ?? []).map((field: ModbusServiceField) => ({
-      ...field,
-      alarms: groupOf(field.field),
-      bitList: field.bitList?.map((bit) => ({ ...bit, alarms: groupOf(bit.field) })),
-    }));
-    return { ...func, response };
+    const groups = new Map<string, ModbusServiceFieldAlarm[]>();
+    for (const item of alarmItems(func)) {
+      const rules = this.alarms().get(alarmKey(configId, func.index, item.key));
+      if (rules != null && rules.length > 0) {
+        groups.set(item.key, rules);
+      }
+    }
+    return withAlarmsOf(func, groups);
   }
 
   /**
@@ -827,38 +720,5 @@ export abstract class DeviceServiceEditor implements OnInit {
   /** 一个方法的应答字段文案（模板用；写方法返回提示文案） */
   protected responseText(func: ModbusServiceFunction): string {
     return describeFunctionResponse(func) ?? this.i18n.translate.instant(WRITE_METHOD_REPLY_KEY);
-  }
-
-  /**
-   * 翻译 i18n 键。内部读取 currentLang 信号，使下面的下拉选项在语言切换时随视图重算
-   * （`instant` 不是响应式的，口径同 dashboard.component 的 `t`）。
-   */
-  private readonly t = (key: string): string => {
-    this.i18n.currentLang();
-    return this.i18n.translate.instant(key);
-  };
-
-  /** 比较方式下拉：「文案 + 符号」两样都给 —— 词是给不看符号的人，符号与定义里存的值逐字对齐 */
-  protected compareOptions(item: ServiceAlarmItem): { value: string; label: string }[] {
-    return alarmOperatorsOf(item.kind).map((op) => ({
-      value: op,
-      label: `${modbusAlarmOperatorLabel(op, this.t)} ${op}`,
-    }));
-  }
-
-  /** 级别下拉：顺序即「由轻到重」，与告警列表页的筛选同一个顺序 */
-  protected get alarmLevelOptions(): { value: string; label: string }[] {
-    return MODBUS_ALARM_LEVELS.map((level) => ({
-      value: level,
-      label: modbusAlarmLevelLabel(level, this.t),
-    }));
-  }
-
-  /**
-   * `=` 的比较目标：该字段取值表里的描述，**原样显示、不翻译** —— 它是点表里的数据，
-   * 与后端逐字比对的就是这个串，翻了保存就会被拒（见 AGENTS.md 的 i18n 一节）。
-   */
-  protected alarmStateOptions(field: ModbusServiceField): { value: string; label: string }[] {
-    return (field.valueList ?? []).map((v) => ({ value: v.description, label: v.description }));
   }
 }

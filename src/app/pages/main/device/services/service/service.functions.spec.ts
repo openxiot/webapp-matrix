@@ -4,18 +4,30 @@ import {
   ModbusServiceFunction,
 } from '../../../../../typedef/define/modbus/ModbusService';
 import {
+  MAX_ALARM_RULES,
+  alarmCompareOptions,
+  alarmCount,
   alarmItems,
   alarmKey,
+  alarmLevelOptions,
   alarmOperatorsOf,
   alarmSignature,
+  alarmStateOptions,
   alarmTargetKind,
   alarmUsesState,
   defaultAlarm,
+  definedAlarmCount,
+  describeFieldShape,
   describeFieldType,
   describeServiceField,
   pollSignature,
   primaryAlarm,
   serviceChanged,
+  withAlarmAdded,
+  withAlarmMoved,
+  withAlarmPatched,
+  withAlarmRemoved,
+  withAlarmsOf,
   type ServiceBaseline,
 } from './service.functions';
 
@@ -311,7 +323,7 @@ describe('service.functions', () => {
 
   describe('describeFieldType', () => {
     it('只讲类型，不提告警', () => {
-      // 展开行的「类型」列用它：右边紧挨着就是告警控件，缀一遍「→ 温度过高(>80)」
+      // 展开行里那一组的组头用它：下面紧挨着就是告警控件，缀一遍「→ 温度过高(>80)」
       // 是同一句话说两遍，而且会随用户敲字实时变
       const f = field({
         alarms: [{ enabled: true, compare: '>', threshold: 80, text: '温度过高' }],
@@ -328,6 +340,17 @@ describe('service.functions', () => {
       const f = field({ alarms: [{ enabled: true, compare: '>', threshold: 80, text: '温度过高' }] });
 
       expect(describeServiceField(f)).toBe(`${describeFieldType(f)} → 温度过高(>80)`);
+    });
+  });
+
+  describe('describeFieldShape', () => {
+    it('不带字段名：组头左边已经写着出值名了，不必让名字再当描述的第一个词', () => {
+      const f = field({ bitList: [{ offset: 0, field: '运行' }] });
+
+      expect(describeFieldShape(f)).toBe('uint16/2B ABCD ℃ 位: 运行@0');
+      expect(describeFieldShape(f)).not.toContain('进水温度');
+      // describeFieldType 就是「名字 + 这个」
+      expect(describeFieldType(f)).toBe(`进水温度 ${describeFieldShape(f)}`);
     });
   });
 
@@ -350,9 +373,234 @@ describe('service.functions', () => {
       expect(serviceChanged(base, { ...base })).toBe(false);
     });
   });
+
+  describe('withAlarmAdded / withAlarmPatched / withAlarmRemoved', () => {
+    const key = 'c#1#进水温度';
+
+    it('加一条返回新表：原表一个字节没动（调用方是信号更新）', () => {
+      const base = new Map<string, ModbusServiceFieldAlarm[]>();
+      const added = withAlarmAdded(base, key, 'numeric', '进水温度');
+
+      expect(base.size).toBe(0);
+      // id 是新生成的，只比形态：起步配置就是 defaultAlarm 那一份
+      expect(added.get(key)).toEqual([
+        { ...defaultAlarm('numeric', '进水温度'), id: expect.any(String) },
+      ]);
+    });
+
+    it('到上限就原样返回 —— 按钮禁了是给人看的，数据自己也不该越界', () => {
+      let map = new Map<string, ModbusServiceFieldAlarm[]>();
+      for (let i = 0; i < MAX_ALARM_RULES + 3; i++) {
+        map = withAlarmAdded(map, key, 'bit', '运行');
+      }
+
+      expect(map.get(key)).toHaveLength(MAX_ALARM_RULES);
+      expect(withAlarmAdded(map, key, 'bit', '运行').get(key)).toHaveLength(MAX_ALARM_RULES);
+    });
+
+    it('改一条按对象身份定位，不拿下标：前一条原样留着，改的是点名的那条', () => {
+      const first = defaultAlarm('numeric', '甲');
+      const second = defaultAlarm('numeric', '乙');
+      const map = new Map([[key, [first, second]]]);
+
+      const patched = withAlarmPatched(map, key, second, { threshold: 30 });
+
+      expect(patched.get(key)![0]).toBe(first);
+      expect(patched.get(key)![1]).toMatchObject({ id: second.id, threshold: 30 });
+      // 表里没有这条规则时什么都不做：既不该抛，更不该顺手改到别人头上
+      expect(withAlarmPatched(map, key, defaultAlarm('numeric', '丙'), { threshold: 1 })).toEqual(
+        map,
+      );
+    });
+
+    it('删一条：组里还有别人就留着，且不动别的组', () => {
+      const other = 'c#1#机组状态';
+      const a = defaultAlarm('numeric', '甲');
+      const b = defaultAlarm('bit', '运行');
+      const map = new Map([
+        [key, [a, b]],
+        [other, [defaultAlarm('state', '制冷')]],
+      ]);
+
+      const removed = withAlarmRemoved(map, key, a);
+
+      expect(removed.get(key)).toEqual([b]);
+      expect(removed.get(other)).toHaveLength(1);
+    });
+
+    it('删到一条不剩时把 key 也去掉（留个空数组会被写进服务定义当噪音）', () => {
+      const only = defaultAlarm('numeric', '甲');
+
+      expect(withAlarmRemoved(new Map([[key, [only]]]), key, only).has(key)).toBe(false);
+      expect(withAlarmRemoved(new Map(), key, only).has(key)).toBe(false);
+    });
+
+    it('拖动换位：顺序真的变了（同级并列时后端取靠后的那条，顺序不是排给人看的）', () => {
+      const a = defaultAlarm('numeric', '甲');
+      const b = defaultAlarm('numeric', '乙');
+      const c = defaultAlarm('numeric', '丙');
+      const map = new Map([
+        [key, [a, b, c]],
+        ['c#1#机组状态', [defaultAlarm('state', '制冷')]],
+      ]);
+
+      // 把第 0 条拖到末尾，与 cdk 的 previousIndex / currentIndex 同一口径
+      const moved = withAlarmMoved(map, key, 0, 2);
+
+      expect(moved.get(key)).toEqual([b, c, a]);
+      expect(map.get(key)).toEqual([a, b, c]); // 原表没动
+      expect(moved.get('c#1#机组状态')).toEqual(map.get('c#1#机组状态')); // 别的组不受影响
+      // 换个位置就是一次真改动
+      expect(alarmSignature(moved)).not.toBe(alarmSignature(map));
+    });
+
+    it('拖回原位 / 越界的下标都原样返回（宁可不动，也不能把整组规则弄丢）', () => {
+      const a = defaultAlarm('numeric', '甲');
+      const b = defaultAlarm('numeric', '乙');
+      const map = new Map([[key, [a, b]]]);
+
+      for (const [from, to] of [
+        [1, 1],
+        [-1, 0],
+        [0, -1],
+        [2, 0],
+        [0, 2],
+      ]) {
+        expect(withAlarmMoved(map, key, from, to)).toEqual(map);
+      }
+    });
+  });
+
+  describe('alarmCount', () => {
+    it('一个方法的全部出值加起来：位单独算一份，停用的也算', () => {
+      const func = functionWith([
+        field({
+          bitList: [
+            { offset: 0, field: '运行' },
+            { offset: 1, field: '故障' },
+          ],
+        }),
+      ]);
+      const alarms = new Map([
+        // 父字段两条（一条停用）
+        [alarmKey('c', 1, '进水温度'), [{ enabled: true }, { enabled: false }]],
+        // 位是独立的结果键，自己那份另算
+        [alarmKey('c', 1, '运行'), [{ enabled: true }]],
+      ]);
+
+      expect(alarmCount(func, 'c', alarms)).toBe(3);
+      // 换点表 ID 就一个都不认（key 带着点表 ID）
+      expect(alarmCount(func, 'other', alarms)).toBe(0);
+    });
+
+    it('写方法没有出值，恒为 0', () => {
+      const write = { index: 1, name: '写', request: '', response: [] };
+      const alarms = new Map([[alarmKey('c', 1, '写方法（应答为请求回显，无返回字段）'), [{}]]]);
+
+      expect(alarmCount(write, 'c', alarms)).toBe(0);
+    });
+  });
+
+  describe('definedAlarmCount', () => {
+    it('数的是定义本身：位单独算一份，停用的也算', () => {
+      const func = functionWith([
+        field({
+          alarms: [{ enabled: true }, { enabled: false }],
+          bitList: [
+            { offset: 0, field: '运行', alarms: [{ enabled: true }] },
+            { offset: 1, field: '故障' },
+          ],
+        }),
+      ]);
+
+      expect(definedAlarmCount(func)).toBe(3);
+    });
+
+    it('没配过 / 写方法：一个都没有，恒为 0', () => {
+      expect(definedAlarmCount(functionWith([field()]))).toBe(0);
+      expect(definedAlarmCount({ index: 1, name: '写', request: '', response: [] })).toBe(0);
+    });
+  });
+
+  describe('withAlarmsOf', () => {
+    it('按出值名并进字段与位，组内顺序原样带出去，原方法不动', () => {
+      const func = functionWith([field({ bitList: [{ offset: 0, field: '运行' }] })]);
+      const hot = { enabled: true, threshold: 30 };
+      const warm = { enabled: true, threshold: 26 };
+      const saved = withAlarmsOf(
+        func,
+        new Map([
+          ['进水温度', [hot]],
+          ['运行', [warm, hot]],
+        ]),
+      );
+
+      expect(saved.response![0].alarms).toEqual([hot]);
+      expect(saved.response![0].bitList![0].alarms).toEqual([warm, hot]);
+      // 交出的是新对象：页面上的原定义一个字没动
+      expect(func.response![0].alarms).toBeUndefined();
+      expect(saved.response![0]).not.toBe(func.response![0]);
+    });
+
+    it('没配的出值不出 alarms 键，别的属性一个不少', () => {
+      const func = functionWith([field({ bitList: [{ offset: 0, field: '运行' }] })]);
+      const saved = withAlarmsOf(func, new Map([['运行', []]]));
+
+      expect(saved.response![0].alarms).toBeUndefined();
+      expect(saved.response![0].bitList![0].alarms).toBeUndefined();
+      expect(saved.response![0].field).toBe('进水温度');
+      expect(saved.response![0].bitList![0].field).toBe('运行');
+    });
+
+    it('写方法没有应答字段，照跑不误', () => {
+      const write = { index: 1, name: '写', request: '', response: [] };
+      expect(withAlarmsOf(write, new Map([['进水温度', [{}]]])).response).toEqual([]);
+    });
+  });
+
+  describe('告警那几个下拉的选项', () => {
+    const t = (key: string) => `[[${key}]]`;
+
+    it('比较方式：文案 + 符号，符号与定义里存的值逐字对齐', () => {
+      const options = alarmCompareOptions({ key: '进水温度', field: field(), kind: 'numeric' }, t);
+
+      expect(options.map((o) => o.value)).toEqual(['>', '>=', '<', '<=', '=']);
+      expect(options[0].label.endsWith(' >')).toBe(true);
+    });
+
+    it('带取值表的字段只给 =（后端把状态与阈值做成互斥的）', () => {
+      const item = {
+        key: '机组状态',
+        field: field({ valueList: [{ value: 1, description: '制冷' }] }),
+        kind: 'state' as const,
+      };
+
+      expect(alarmCompareOptions(item, t).map((o) => o.value)).toEqual(['=']);
+    });
+
+    it('级别：顺序即由轻到重（与运行期「只留最严重的一条」同一个次序）', () => {
+      expect(alarmLevelOptions(t).map((o) => o.value)).toEqual(['INFO', 'WARN', 'CRITICAL']);
+    });
+
+    it('取值表描述原样给出、一个字不翻（后端逐字比对这个串）', () => {
+      const f = field({
+        valueList: [
+          { value: 1, description: '制冷' },
+          { value: 2, description: '制热' },
+        ],
+      });
+
+      expect(alarmStateOptions(f)).toEqual([
+        { value: '制冷', label: '制冷' },
+        { value: '制热', label: '制热' },
+      ]);
+      expect(alarmStateOptions(f)[0].label).not.toContain('[[');
+    });
+  });
 });
 
-/** 一个最小可用的应答字段（默认是可配数值告警的那种） */
+/**
+ * 一个最小可用的应答字段（默认是可配数值告警的那种） */
 function field(patch: Partial<ModbusServiceField> = {}): ModbusServiceField {
   return Object.assign(
     new ModbusServiceField(),

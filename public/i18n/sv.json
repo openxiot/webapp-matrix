@@ -420,5 +420,9 @@
   "未配置告警": "Inga larm konfigurerade",
   "值恢复": "Värde återställt",
   "定义变更": "Definition ändrad",
-  "被取代": "Ersatt"
+  "被取代": "Ersatt",
+  "告警配置": "Larmkonfiguration",
+  "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Ett utvärde kan ha flera regler; om flera stämmer samtidigt gäller bara regeln med högsta nivån. Vid samma nivå gäller regeln nedan.",
+  "拖动可调整顺序": "Dra för att ändra ordning",
+  "只有管理员可以修改告警配置": "Endast administratörer kan ändra larmkonfigurationen"
 }

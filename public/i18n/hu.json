@@ -420,5 +420,9 @@
   "未配置告警": "Nincsenek beállított riasztások",
   "值恢复": "Érték helyreállt",
   "定义变更": "Definíció módosult",
-  "被取代": "Lecserélve"
+  "被取代": "Lecserélve",
+  "告警配置": "Riasztás beállítása",
+  "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Egy kimeneti értékhez több szabály is tartozhat; ha egyszerre több is teljesül, csak a legmagasabb szintű lép életbe. Azonos szint esetén az alsó szabály érvényes.",
+  "拖动可调整顺序": "Húzza az átrendezéshez",
+  "只有管理员可以修改告警配置": "Csak a rendszergazda módosíthatja a riasztás beállítását"
 }

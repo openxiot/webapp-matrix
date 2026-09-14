@@ -420,5 +420,9 @@
   "未配置告警": "Alarmid pole seadistatud",
   "值恢复": "Väärtus taastunud",
   "定义变更": "Määratlus muudetud",
-  "被取代": "Asendatud"
+  "被取代": "Asendatud",
+  "告警配置": "Alarmi seadistus",
+  "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Ühel väljundväärtusel võib olla mitu reeglit; kui mitu neist kehtivad korraga, rakendub ainult kõrgeima tasemega reegel. Sama taseme korral kehtib allpool olev reegel.",
+  "拖动可调整顺序": "Järjestuse muutmiseks lohista",
+  "只有管理员可以修改告警配置": "Alarmi seadistust saavad muuta ainult administraatorid"
 }

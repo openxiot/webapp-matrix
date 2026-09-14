@@ -420,5 +420,9 @@
   "未配置告警": "Penggera belum dikonfigurasikan",
   "值恢复": "Nilai pulih",
   "定义变更": "Takrifan berubah",
-  "被取代": "Diganti"
+  "被取代": "Diganti",
+  "告警配置": "Konfigurasi Penggera",
+  "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Satu nilai output boleh mempunyai beberapa peraturan; jika beberapa sepadan serentak, hanya peraturan dengan tahap tertinggi berkuat kuasa. Jika tahapnya sama, peraturan di bawah yang berkuat kuasa.",
+  "拖动可调整顺序": "Seret untuk menyusun semula",
+  "只有管理员可以修改告警配置": "Hanya pentadbir boleh mengubah Konfigurasi Penggera"
 }

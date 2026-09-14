@@ -420,5 +420,9 @@
   "未配置告警": "Sense alarmes configurats",
   "值恢复": "Valor restablert",
   "定义变更": "Definició canviada",
-  "被取代": "Substituïda"
+  "被取代": "Substituïda",
+  "告警配置": "Configuració d'alarmes",
+  "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Un valor de sortida pot tenir diverses regles; si se n'activen diverses alhora, només s'aplica la de nivell més alt. Si el nivell és el mateix, s'aplica la regla de sota.",
+  "拖动可调整顺序": "Arrossegueu per reordenar",
+  "只有管理员可以修改告警配置": "Només els administradors poden modificar la configuració d'alarmes"
 }

@@ -420,5 +420,9 @@
   "未配置告警": "Chưa cấu hình cảnh báo",
   "值恢复": "Giá trị đã khôi phục",
   "定义变更": "Định nghĩa đã thay đổi",
-  "被取代": "Bị thay thế"
+  "被取代": "Bị thay thế",
+  "告警配置": "Cấu hình cảnh báo",
+  "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Một giá trị đầu ra có thể có nhiều quy tắc; nếu nhiều quy tắc cùng khớp một lúc, chỉ quy tắc có mức cao nhất có hiệu lực. Nếu cùng mức, quy tắc bên dưới có hiệu lực.",
+  "拖动可调整顺序": "Kéo để sắp xếp lại",
+  "只有管理员可以修改告警配置": "Chỉ quản trị viên mới có thể sửa cấu hình cảnh báo"
 }

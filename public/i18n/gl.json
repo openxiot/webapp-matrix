@@ -420,5 +420,9 @@
   "未配置告警": "Sen alarmas configuradas",
   "值恢复": "Valor restablecido",
   "定义变更": "Definición modificada",
-  "被取代": "Substituída"
+  "被取代": "Substituída",
+  "告警配置": "Configuración de alarmas",
+  "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Un valor de saída pode ter varias regras; se varias coinciden á vez, só se aplica a de nivel máis alto. Se o nivel é o mesmo, aplícase a regra de abaixo.",
+  "拖动可调整顺序": "Arrastra para reordenar",
+  "只有管理员可以修改告警配置": "Só os administradores poden modificar a configuración de alarmas"
 }

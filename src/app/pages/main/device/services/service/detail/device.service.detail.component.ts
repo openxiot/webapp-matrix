@@ -1,7 +1,16 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  ViewContainerRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { DatePipe, Location } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
+import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
@@ -27,9 +36,22 @@ import { SpaceEntity } from '../../../../../../typedef/define/space/SpaceEntity'
 import { OrganizationMember } from '../../../../../../typedef/define/user/UserOrganization';
 import {
   ModbusService as ModbusServiceDef,
+  ModbusServiceFieldAlarm,
   ModbusServiceFunction,
 } from '../../../../../../typedef/define/modbus/ModbusService';
-import { WRITE_METHOD_REPLY_KEY, describeFunctionResponse, isReadFunction } from '../service.functions';
+import { newAlarmId } from '../../../../../../typedef/define/modbus/ModbusAlarm';
+import {
+  WRITE_METHOD_REPLY_KEY,
+  alarmItems,
+  definedAlarmCount,
+  describeFunctionResponse,
+  isReadFunction,
+  withAlarmsOf,
+} from '../service.functions';
+import {
+  DeviceServiceAlarmDialogComponent,
+  type ServiceAlarmDialogData,
+} from '../editor/alarms/device.service.alarm.dialog.component';
 
 /** 一次调用的结果：调的是哪个方法、返回了什么 */
 interface InvokeResult {
@@ -49,12 +71,17 @@ interface ResultRow {
  * 并就地**调用**某个方法（POST /service/invoke，服务端把请求帧发给依赖设备、按应答规则解析）。
  *
  * 写方法（fc 05/06/0F/10）的应答是请求回显、没有返回字段，调用成功后返回空对象。
+ *
+ * 唯一能改的东西是**告警配置**（方法列表里的「告警配置」列，见 {@link openAlarmDialog}），
+ * 且只给空间管理员：其余人打开的是同一份配置的只读档。
  */
 @Component({
   selector: 'device-service-detail',
   templateUrl: './device.service.detail.component.html',
   styleUrls: ['./device.service.detail.component.less'],
   changeDetection: ChangeDetectionStrategy.Eager,
+  // 告警对话框由本页创建，服务得本页给（与编辑页同一条：谁开对话框谁提供）
+  providers: [NzModalService],
   imports: [
     DatePipe,
     RouterLink,
@@ -81,6 +108,9 @@ export class DeviceServiceDetailComponent implements OnInit {
   private readonly account = inject(AccountService);
   private readonly matrix = inject(MatrixService);
   private readonly modbus = inject(ModbusService);
+  private readonly modal = inject(NzModalService);
+  /** 告警对话框挂在本页的视图容器下：本页走了不该留一个悬着的对话框 */
+  private readonly viewContainerRef = inject(ViewContainerRef);
   protected readonly i18n = inject(MainI18nService);
 
   /** 依赖设备（DTU）did */
@@ -98,6 +128,9 @@ export class DeviceServiceDetailComponent implements OnInit {
   /** 正在调用的方法序号（按钮 loading） */
   readonly invoking = signal<number | null>(null);
   readonly result = signal<InvokeResult | null>(null);
+
+  /** 正在落库告警配置：这期间「告警配置」列上的按钮先别按（免得拿旧定义再开一次对话框） */
+  readonly saving = signal(false);
 
   readonly functions = computed<ModbusServiceFunction[]>(() => this.service()?.functions ?? []);
 
@@ -243,6 +276,117 @@ export class DeviceServiceDetailComponent implements OnInit {
   protected rawJson(): string {
     const result = this.result();
     return result ? JSON.stringify(result.data, null, 2) : '';
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * 告警配置（对话框）
+   * ----------------------------------------------------------------------------------------------*/
+
+  /**
+   * 该方法配了多少条告警规则：「告警配置」列上那个数字（见 {@link definedAlarmCount}）。
+   * 数的是**定义本身**：本页手上只有从服务端读回来的那一份，没有编辑页那份侧表。
+   */
+  protected readonly alarmCount = definedAlarmCount;
+
+  /** 模板拿得到 {@link isReadFunction}（模板里够不着模块内的函数，得挂在类上） */
+  protected readonly isReadFunction = isReadFunction;
+
+  /**
+   * 打开告警配置对话框：**能不能改看 {@link isAdmin}** —— 空间管理员看到的是可编辑的那一档，
+   * 其余人是同一份内容的只读档：控件禁着（但**不灰化**，值照常看得清）、没有「确认」。
+   *
+   * 规则**抄一份副本**进去（与编辑页同理）：改到一半取消 / 关窗，页面上的定义一个字都没动，
+   * 点「确认」才走 {@link saveAlarms} 落库。
+   *
+   * 副本按**出值名**作 key（对话框只认这一批出值，`点表ID#序号` 前缀对它没有意义），
+   * 并顺手补 `id`：行是按 `id` 认的，而更早配下的规则可能没有身份（见 {@link newAlarmId}）。
+   */
+  protected openAlarmDialog(func: ModbusServiceFunction): void {
+    const items = alarmItems(func);
+    const readOnly = !this.isAdmin();
+    const seeded = new Map<string, ModbusServiceFieldAlarm[]>();
+    for (const item of items) {
+      // 位行只看位自己那一组：父字段的告警是另一个出值的事，不能拿它冒充位上的配置
+      const rules = (item.bit ? item.bit.alarms : item.field.alarms) ?? [];
+      seeded.set(
+        item.key,
+        rules.map((rule) => (rule.id ? { ...rule } : { ...rule, id: newAlarmId() })),
+      );
+    }
+    const modal = this.modal.create<
+      DeviceServiceAlarmDialogComponent,
+      ServiceAlarmDialogData,
+      Map<string, ModbusServiceFieldAlarm[]>
+    >({
+      // 标题不缀方法名：对话框第一行就写着是哪个方法（说了两遍是白说）
+      nzTitle: this.i18n.translate.instant('告警配置'),
+      nzContent: DeviceServiceAlarmDialogComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: { name: func.name, request: func.request, items, alarms: seeded, readOnly },
+      nzWidth: 960,
+      nzFooter: readOnly
+        ? [
+            {
+              label: this.i18n.translate.instant('关闭'),
+              onClick: (component) => component!.cancel(),
+            },
+          ]
+        : [
+            {
+              label: this.i18n.translate.instant('取消'),
+              onClick: (component) => component!.cancel(),
+            },
+            {
+              label: this.i18n.translate.instant('确认'),
+              type: 'primary',
+              onClick: (component) => component!.ok(),
+            },
+          ],
+    });
+
+    // 只读档与「取消」都交回 undefined：一个字都不改
+    modal.afterClose.subscribe((result) => {
+      if (result) {
+        this.saveAlarms(func, result);
+      }
+    });
+  }
+
+  /**
+   * 把对话框交回来的规则表落库：请求体是**整份定义**（服务端接口就是整份覆盖），
+   * 只换这个方法的那几个出值，别的方法与字段原样带回去。
+   *
+   * 编辑页那边是先改页面上的侧表、再由用户点底部那个保存按钮；本页没有保存按钮（它是看的地方），
+   * 于是管理员在对话框里点「确认」即落库 —— 少一个「改完还得记得去别处按一下」的坑。
+   */
+  private saveAlarms(
+    func: ModbusServiceFunction,
+    alarms: Map<string, ModbusServiceFieldAlarm[]>,
+  ): void {
+    const service = this.service();
+    const spaceId = this.account.space().id;
+    if (!service?.id || !spaceId) {
+      return;
+    }
+    const body: ModbusServiceDef = {
+      ...service,
+      functions: (service.functions ?? []).map((f) =>
+        f.index === func.index ? withAlarmsOf(f, alarms) : f,
+      ),
+    };
+    this.saving.set(true);
+    this.modbus.updateService(spaceId, service.id, body).subscribe({
+      next: (saved) => {
+        this.saving.set(false);
+        // 用服务端回来的那一份：updater 与更新时间跟着刷新，页面上显示的才是库里现在的
+        this.service.set(saved);
+        this.msg.success(this.i18n.translate.instant('保存成功'));
+      },
+      error: (e) => {
+        this.saving.set(false);
+        this.msg.error(e?.message ?? e);
+      },
+    });
   }
 
   /* ----------------------------------------------------------------------------------------------

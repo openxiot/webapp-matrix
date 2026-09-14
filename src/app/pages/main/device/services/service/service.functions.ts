@@ -25,6 +25,8 @@ import {
 import {
   MODBUS_ALARM_LEVELS,
   MODBUS_ALARM_OPERATORS,
+  modbusAlarmLevelLabel,
+  modbusAlarmOperatorLabel,
   newAlarmId,
 } from '../../../../../typedef/define/modbus/ModbusAlarm';
 import { buildRequestFrame } from '../../../modbus/editor/request/request.frame';
@@ -238,11 +240,12 @@ export function alarmRank(level: string | undefined | null): number {
 }
 
 /**
- * 只看字段自身的类型描述，**不带告警**：展开行里的「类型」列用它 ——
- * 那一列右边就是告警的几个控件，再缀一遍「→ 温度过高(>80)」是同一句话说两遍。
+ * 只看类型的形态（`uint16/2B ABCD ℃ 位: 运行@0`），**不带字段名、不带告警**：
+ * 展开行里那一组的组头用它 —— 出值名已经在组头左边（见 {@link ServiceAlarmItem.key}），
+ * 让它再当描述的第一个词重复一遍是白说。
  */
-export function describeFieldType(field: ModbusServiceField): string {
-  const parts = [`${field.field}`, `${field.format}/${field.bytes}B`];
+export function describeFieldShape(field: ModbusServiceField): string {
+  const parts = [`${field.format}/${field.bytes}B`];
   if (field.byteOrder) {
     parts.push(field.byteOrder);
   }
@@ -257,6 +260,14 @@ export function describeFieldType(field: ModbusServiceField): string {
     parts.push(`位: ${field.bitList.map((bit) => `${bit.field}@${bit.offset}`).join(' ')}`);
   }
   return parts.join(' ');
+}
+
+/**
+ * 字段名 + 类型形态，**不带告警**：{@link describeServiceField} 的起始段用它 ——
+ * 那一行后面紧挨着就是告警的摘要，再缀一遍「→ 温度过高(>80)」是同一句话说两遍。
+ */
+export function describeFieldType(field: ModbusServiceField): string {
+  return `${field.field} ${describeFieldShape(field)}`;
 }
 
 /**
@@ -504,6 +515,206 @@ export function alarmSignature(alarms: Map<string, ModbusServiceFieldAlarm[]>): 
         ]),
       ]),
   );
+}
+
+/**
+ * 加一条规则后的新表；到 {@link MAX_ALARM_RULES} 就原样返回。
+ *
+ * 下面三个改动函数都返回**新 Map**（不原地改）：调用方是编辑页与告警对话框，两边都是信号更新，
+ * 原地改 Map 信号不会变、界面也不会动。
+ *
+ * 上限在这里也兜一次：按钮禁用了是给人看的，真正不该越界的是这份数据（与 `onAlarmAdd` 同一条）。
+ * `text` 是新规则的告警文本，调用方一律先填出值名（见 {@link defaultAlarm}）。
+ */
+export function withAlarmAdded(
+  alarms: Map<string, ModbusServiceFieldAlarm[]>,
+  key: string,
+  kind: AlarmTargetKind,
+  text: string,
+): Map<string, ModbusServiceFieldAlarm[]> {
+  const next = new Map(alarms);
+  const rules = next.get(key) ?? [];
+  if (rules.length >= MAX_ALARM_RULES) {
+    return next;
+  }
+  next.set(key, [...rules, defaultAlarm(kind, text)]);
+  return next;
+}
+
+/**
+ * 改一条规则后的新表：按**对象身份**定位这条规则，不拿下标。
+ *
+ * 下标不能当身份：删掉第 0 条之后，原本第 1 条的规则会被当成第 0 条改掉。让每条规则自己带 `id`
+ * 是同一个理由的另一半（见 {@link ModbusServiceFieldAlarm.id}）。
+ */
+export function withAlarmPatched(
+  alarms: Map<string, ModbusServiceFieldAlarm[]>,
+  key: string,
+  rule: ModbusServiceFieldAlarm,
+  patch: Partial<ModbusServiceFieldAlarm>,
+): Map<string, ModbusServiceFieldAlarm[]> {
+  const next = new Map(alarms);
+  const rules = next.get(key) ?? [];
+  const at = rules.indexOf(rule);
+  if (at < 0) {
+    return next;
+  }
+  const updated = [...rules];
+  updated[at] = { ...rule, ...patch };
+  next.set(key, updated);
+  return next;
+}
+
+/**
+ * 删一条规则后的新表。**整组删空时把 key 也去掉**（而不是留一个空数组）：空数组会被编辑器原样
+ * 写进服务定义（`withAlarms`），而 codec 与后端都读作「没配」，白白在库里留个噪音。
+ */
+export function withAlarmRemoved(
+  alarms: Map<string, ModbusServiceFieldAlarm[]>,
+  key: string,
+  rule: ModbusServiceFieldAlarm,
+): Map<string, ModbusServiceFieldAlarm[]> {
+  const next = new Map(alarms);
+  const rules = [...(next.get(key) ?? [])];
+  const at = rules.indexOf(rule);
+  if (at < 0) {
+    return next;
+  }
+  rules.splice(at, 1);
+  if (rules.length > 0) {
+    next.set(key, rules);
+  } else {
+    next.delete(key);
+  }
+  return next;
+}
+
+/**
+ * 把一条规则挪到组内新位置的**新表**（对话框里按住手柄拖出来的顺序）。
+ *
+ * 顺序不是排给人看的：后端在同级并列时取**靠后**的那条（`ModbusAlarmPolicy` 的裁决），
+ * 所以拖动是一次真改动 —— `alarmSignature` 组内按声明顺序摊平，保存按钮会亮。
+ *
+ * `moveItemInArray` 在 `@angular/cdk/drag-drop` 里就有，这里不引它：本文件是纯数据函数、
+ * 只认 typedef，引一个 UI 库进来只为挪一个元素不值当（四个下标判断而已）。
+ * 越界的 from / to 一律原样返回：cdk 不传这种值，但真传了也不该把整组规则弄丢。
+ */
+export function withAlarmMoved(
+  alarms: Map<string, ModbusServiceFieldAlarm[]>,
+  key: string,
+  from: number,
+  to: number,
+): Map<string, ModbusServiceFieldAlarm[]> {
+  const next = new Map(alarms);
+  const rules = next.get(key) ?? [];
+  if (from === to || from < 0 || to < 0 || from >= rules.length || to >= rules.length) {
+    return next;
+  }
+  const moved = [...rules];
+  const [rule] = moved.splice(from, 1);
+  moved.splice(to, 0, rule);
+  next.set(key, moved);
+  return next;
+}
+
+/**
+ * 一个方法配了多少条告警规则：全部出值（应答字段 + 各自的位）加起来的条数 ——
+ * 方法预览表「告警配置」列上那个数字就是它，点它开告警对话框。
+ *
+ * **停用的规则也算**：这一列数的是「配了几条」，不是「此刻有几条生效」—— 后者随值上下起伏，
+ * 不该出现在配置页上。写方法没有出值，恒为 0。
+ */
+export function alarmCount(
+  func: ModbusServiceFunction,
+  configId: string | null,
+  alarms: Map<string, ModbusServiceFieldAlarm[]>,
+): number {
+  return alarmItems(func).reduce(
+    (count, item) => count + (alarms.get(alarmKey(configId, func.index, item.key))?.length ?? 0),
+    0,
+  );
+}
+
+/**
+ * 一个方法配了多少条告警规则 —— 数的是**定义本身**（`field.alarms` / `bit.alarms`），
+ * 不是侧表：服务详情页手上只有从服务端读回来的那份定义（它没有、也不该有编辑页那份侧表），
+ * 「告警配置」列上那个数字就是它。
+ *
+ * 与 {@link alarmCount} 的分工只有一处：**读哪儿**。编辑页读侧表（用户可能刚在对话框里改过、
+ * 还没保存，数字得跟着变），详情页读定义（它展示的就是服务端现在这一份）。
+ * 口径本身是同一条：全部出值（应答字段 + 各自的位）加起来、**停用的也算**、写方法恒为 0。
+ */
+export function definedAlarmCount(func: ModbusServiceFunction): number {
+  return alarmItems(func).reduce(
+    (count, item) => count + ((item.bit ? item.bit.alarms : item.field.alarms)?.length ?? 0),
+    0,
+  );
+}
+
+/**
+ * 把按出值名分好组的规则组并进应答字段的**新方法**：字段自身一组、位清单里每一位各一组
+ * （位是独立的结果键，见 {@link ServiceAlarmItem}）。组内顺序原样带出去 —— 它参与运行期的裁决。
+ *
+ * 没配的出值**不出 `alarms` 键** —— 定义里绝大多数字段都没配告警，过一趟不该在每个字段上
+ * 多出一个空数组（codec 与后端都把空数组读作「没配」，但空键终究是白带出去的噪音）。
+ * 写方法没有 response，这个循环自然什么也不做。
+ *
+ * 编辑页的 `withAlarms` 是它的**取数**版：那边从侧表按 `点表ID#序号#出值名` 取，
+ * 取出来交给这里合并 —— 合并规则（空组不出键、位各算一组）只有这一份实现。
+ */
+export function withAlarmsOf(
+  func: ModbusServiceFunction,
+  groups: Map<string, ModbusServiceFieldAlarm[]>,
+): ModbusServiceFunction {
+  const groupOf = (name: string): ModbusServiceFieldAlarm[] | undefined => {
+    const rules = groups.get(name);
+    return rules != null && rules.length > 0 ? rules : undefined;
+  };
+  const response = (func.response ?? []).map((field: ModbusServiceField) => ({
+    ...field,
+    alarms: groupOf(field.field),
+    bitList: field.bitList?.map((bit) => ({ ...bit, alarms: groupOf(bit.field) })),
+  }));
+  return { ...func, response };
+}
+
+/** 告警那几个下拉的一个选项：值（落库的就是它）+ 界面标签 */
+export interface AlarmOption {
+  value: string;
+  label: string;
+}
+
+/**
+ * 比较方式下拉：「文案 + 符号」两样都给 —— 词是给不看符号的人，符号与定义里存的值逐字对齐。
+ *
+ * 标签要翻，故翻译函数由调用方传入（本文件是纯函数、不认识 i18n 服务，与
+ * `modbusAlarmOperatorLabel` 同一条做法）；调用方那个 `t` 顺带读一下当前语言的信号，
+ * 语言切换时下拉跟着重算。
+ */
+export function alarmCompareOptions(
+  item: ServiceAlarmItem,
+  t: (key: string) => string,
+): AlarmOption[] {
+  return alarmOperatorsOf(item.kind).map((operator) => ({
+    value: operator,
+    label: `${modbusAlarmOperatorLabel(operator, t)} ${operator}`,
+  }));
+}
+
+/** 级别下拉：顺序即「由轻到重」，与告警列表页的筛选同一个顺序 */
+export function alarmLevelOptions(t: (key: string) => string): AlarmOption[] {
+  return MODBUS_ALARM_LEVELS.map((level) => ({
+    value: level,
+    label: modbusAlarmLevelLabel(level, t),
+  }));
+}
+
+/**
+ * `=` 的比较目标：该字段取值表里的描述，**原样显示、不翻译** —— 它是点表里的数据，
+ * 与后端逐字比对的就是这个串，翻了保存就会被拒（见 AGENTS.md 的 i18n 一节）。
+ */
+export function alarmStateOptions(field: ModbusServiceField): AlarmOption[] {
+  return (field.valueList ?? []).map((v) => ({ value: v.description, label: v.description }));
 }
 
 /** 一个方法的应答字段文案；写方法（无 response）没有返回字段，返回 null 交给调用方给提示文案 */

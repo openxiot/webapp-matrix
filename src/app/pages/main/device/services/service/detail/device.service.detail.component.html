@@ -71,6 +71,7 @@
           <th nzWidth="320px">{{ '应答字段' | translate }}</th>
           <th nzWidth="110px">{{ '自动轮询' | translate }}</th>
           <th nzWidth="110px">{{ '调用周期' | translate }}</th>
+          <th nzWidth="90px">{{ '告警配置' | translate }}</th>
           <th nzWidth="100px">{{ '操作' | translate }}</th>
         </tr>
         </thead>
@@ -92,6 +93,25 @@
                 }
               </td>
               <td>{{ intervalText(func) }}</td>
+              <td>
+                <!--
+                  数的是定义里配了几条（含停用的），点开是配置本身 —— 能改不能改由对话框自己按
+                  isAdmin 分档。写方法没有出值，显示 —（与编辑页同口径），也不必给一个点不出东西的按钮。
+                -->
+                @if (isReadFunction(func)) {
+                  <button
+                    nz-button
+                    nzType="link"
+                    nzSize="small"
+                    [disabled]="saving()"
+                    (click)="openAlarmDialog(func)"
+                  >
+                    {{ alarmCount(func) }}
+                  </button>
+                } @else {
+                  <span class="service-detail-hint">—</span>
+                }
+              </td>
               <td>
                 <button
                   nz-button

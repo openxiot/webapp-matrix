@@ -420,5 +420,9 @@
   "未配置告警": "Nema konfiguriranih alarma",
   "值恢复": "Vrijednost oporavljena",
   "定义变更": "Definicija promijenjena",
-  "被取代": "Zamijenjeno"
+  "被取代": "Zamijenjeno",
+  "告警配置": "Konfiguracija alarma",
+  "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Jedna izlazna vrijednost može imati više pravila; ako se istovremeno aktivira više njih, vrijedi samo pravilo najviše razine. Kod iste razine vrijedi pravilo ispod.",
+  "拖动可调整顺序": "Povucite za promjenu redoslijeda",
+  "只有管理员可以修改告警配置": "Samo administratori mogu mijenjati konfiguraciju alarma"
 }

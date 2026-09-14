@@ -14,6 +14,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
+import { NzModalService } from 'ng-zorro-antd/modal';
 import { TranslatePipe } from '@ngx-translate/core';
 import { BreadcrumbTranslateDirective } from '../../../../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { DeviceServiceEditor } from '../editor/device.service.editor';
@@ -26,6 +27,9 @@ import { DeviceServiceEditor } from '../editor/device.service.editor';
   templateUrl: '../editor/device.service.editor.html',
   styleUrls: ['../editor/device.service.editor.less'],
   changeDetection: ChangeDetectionStrategy.Eager,
+  // 告警对话框走 NzModalService（口径同 device.services.component：本页自己提供一份，
+  // 对话框的生命周期跟着本页走）
+  providers: [NzModalService],
   imports: [
     FormsModule,
     NzPageHeaderModule,

@@ -420,5 +420,9 @@
   "未配置告警": "Aliarmai nesukonfigūruoti",
   "值恢复": "Reikšmė atkurta",
   "定义变更": "Apibrėžimas pakeistas",
-  "被取代": "Pakeista"
+  "被取代": "Pakeista",
+  "告警配置": "Aliarmų konfigūracija",
+  "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Viena išvesties reikšmė gali turėti kelias taisykles; jei vienu metu atitinka kelios, galioja tik aukščiausio lygio taisyklė. Esant tokiam pačiam lygiui, galioja žemiau esanti taisyklė.",
+  "拖动可调整顺序": "Vilkite, kad pakeistumėte tvarką",
+  "只有管理员可以修改告警配置": "Aliarmų konfigūraciją gali keisti tik administratorius"
 }

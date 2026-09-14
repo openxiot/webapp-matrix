@@ -420,5 +420,9 @@
   "未配置告警": "Niciun alarmă configurată",
   "值恢复": "Valoare restabilită",
   "定义变更": "Definiție modificată",
-  "被取代": "Înlocuită"
+  "被取代": "Înlocuită",
+  "告警配置": "Configurare alarme",
+  "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "O valoare de ieșire poate avea mai multe reguli; dacă mai multe se potrivesc simultan, se aplică doar cea cu nivelul cel mai înalt. La același nivel, se aplică regula de dedesubt.",
+  "拖动可调整顺序": "Trageți pentru a reordona",
+  "只有管理员可以修改告警配置": "Doar administratorii pot modifica configurarea alarmelor"
 }

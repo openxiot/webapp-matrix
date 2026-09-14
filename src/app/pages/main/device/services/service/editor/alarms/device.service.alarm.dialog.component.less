@@ -1,0 +1,130 @@
+// 这套样式与编辑页那份是**两处**：组件样式封在本组件内，编辑页的 `.service-editor-*`
+// 到不了这里（故类名也另起一套，免得看着像共用的）。改一处记得看另一处。
+
+.service-alarm-dialog-method {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+
+  .service-alarm-name {
+    color: rgba(0, 0, 0, 0.88);
+    font-weight: 500;
+  }
+}
+
+.service-alarm-frame {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #595959;
+  word-break: break-all;
+}
+
+.service-alarm-hint {
+  color: #8c8c8c;
+  font-size: 12px;
+}
+
+// 只读提示：一句「为什么改不动」。控件不再灰化之后这句更要看得见 ——
+// 值看着能动、其实动不了，得先有句话兜住，故用告警色底（与 antd 自己的警告条同色）。
+// （根节点上的 .service-alarm-readonly 是「这份对话框是只读档」，与这一句不是一回事。）
+.service-alarm-readonly-hint {
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border: 1px solid #ffe58f;
+  border-radius: 2px;
+  background: #fffbe6;
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 12px;
+}
+
+// 出值之间留出距离：块头那一行自己就是分隔，不必再画线
+.service-alarm-group + .service-alarm-group {
+  margin-top: 20px;
+}
+
+// 块头：出值名 / 类型形态 / 添加规则。表头、列宽、单元格内边距都归下面那张 nz-table
+.service-alarm-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+
+  .service-alarm-key {
+    color: rgba(0, 0, 0, 0.88);
+    font-weight: 500;
+  }
+
+  // 「添加规则」推到最右：右边缘与表头的「操作」、规则行里的「删除」对齐
+  button {
+    margin-left: auto;
+  }
+}
+
+// 位块缩进一级：位是父字段位区里的一位，但它是独立的结果键，各配各的告警。
+// 只缩块头，规则行照旧与别的出值同列 —— 缩进不该把控件推到另一条竖直线上。
+.service-alarm-head.service-alarm-nested {
+  padding-left: 24px;
+}
+
+// 拖拽手柄那一格：只有它可抓（整行可拖会与行里的下拉/输入框抢手势），故光标只在这一格变。
+.service-alarm-handle {
+  cursor: grab;
+  color: #bfbfbf;
+  text-align: center;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &:hover {
+    color: #595959;
+  }
+}
+
+/*
+ * 只读档：控件仍然**禁着**（一个字都改不了），但**不灰化** —— 值保持正常颜色。
+ * 顶上那句「只有管理员可以修改告警配置」已经把改不动的原因说清楚了，再灰成一片只会让人
+ * 看不清配的到底是什么，而这恰恰是只读的人唯一要看的东西。
+ * 与 modbus 命令对话框 read-only 那一档同一个做法（那边套在 :host 上，这里套在弹窗根节点上）。
+ * 注意只管只读档：可编辑时「停用的规则」照旧灰着 —— 那个灰是**信息**（配置留着、只是停用）。
+ */
+.service-alarm-dialog.service-alarm-readonly {
+  ::ng-deep {
+    input[disabled],
+    .ant-input[disabled],
+    .ant-select-disabled .ant-select-selector,
+    .ant-select-disabled.ant-select:not(.ant-select-customize-input) .ant-select-selector,
+    .ant-input-number-disabled,
+    .ant-input-number-disabled .ant-input-number-input {
+      background-color: #fff !important;
+      color: inherit !important;
+      -webkit-text-fill-color: currentColor;
+      cursor: default;
+    }
+
+    // 开关的「禁用」是靠透明度做的，不是靠颜色（开/关的状态色得留住）
+    .ant-switch-disabled {
+      opacity: 1 !important;
+    }
+  }
+}
+
+/*
+ * cdkDropList 拖拽行的占位与浮动层（照 modbus 编辑器那一份）。
+ * 占位符是 cdk 克隆的原行、被插回原位当「落点空隙」——透明即可露出表格，只留一个行高槽位；
+ * 浮动层（preview）跟着指针走，加深阴影与白底以区别于静止行。
+ * ::ng-deep 穿透组件封装（这两个元素由 cdk 挂到表格/body 上，不在组件样式范围内）。
+ */
+:ng-deep tr.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+:ng-deep .cdk-drag-preview {
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+
+  td {
+    background: #fff;
+  }
+}

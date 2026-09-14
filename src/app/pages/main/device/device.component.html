@@ -79,7 +79,7 @@
                 <td class="cell-ops">
                   @if (row.kind === 'device') {
                     <a [routerLink]="['/main/device/detail', row.device!.did]">{{ '详情' | translate }}</a>
-                    @if (isDtuDevice(row.device!) && isAdmin()) {
+                    @if (isDtuDevice(row.device!)) {
                       <nz-divider nzType="vertical"></nz-divider>
                       <a [routerLink]="['/main/device/services', row.device!.did]">{{ '服务' | translate }}</a>
                     }

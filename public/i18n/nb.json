@@ -420,5 +420,9 @@
   "未配置告警": "Ingen alarmer konfigurert",
   "值恢复": "Verdi gjenopprettet",
   "定义变更": "Definisjon endret",
-  "被取代": "Erstattet"
+  "被取代": "Erstattet",
+  "告警配置": "Alarmkonfigurasjon",
+  "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Én utgangsverdi kan ha flere regler; hvis flere utløses samtidig, gjelder bare regelen med høyeste nivå. Ved samme nivå gjelder regelen nedenfor.",
+  "拖动可调整顺序": "Dra for å endre rekkefølgen",
+  "只有管理员可以修改告警配置": "Kun administratorer kan endre alarmkonfigurasjonen"
 }

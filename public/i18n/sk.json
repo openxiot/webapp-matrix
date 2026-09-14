@@ -420,5 +420,9 @@
   "未配置告警": "Nie sú nastavené žiadne alarmy",
   "值恢复": "Hodnota obnovená",
   "定义变更": "Definícia zmenená",
-  "被取代": "Nahradené"
+  "被取代": "Nahradené",
+  "告警配置": "Konfigurácia alarmov",
+  "一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效": "Jedna výstupná hodnota môže mať viac pravidiel; ak sa ich súčasne aktivuje niekoľko, platí len pravidlo s najvyššou úrovňou. Pri rovnakej úrovni platí pravidlo nižšie.",
+  "拖动可调整顺序": "Presunutím zmeníte poradie",
+  "只有管理员可以修改告警配置": "Konfiguráciu alarmov môže upravovať iba správca"
 }

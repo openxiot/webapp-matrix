@@ -1,0 +1,221 @@
+<!-- 只读档在根上挂个修饰类：控件仍禁着、但样式上不灰化（见 .less 里那一段） -->
+<div class="service-alarm-dialog" [class.service-alarm-readonly]="readOnly">
+  <!-- 哪个方法在配：名称与请求帧都是服务端数据，原样显示（不翻译，见 AGENTS.md） -->
+  <div class="service-alarm-dialog-method">
+    <span class="service-alarm-name">{{ data.name }}</span>
+    <code class="service-alarm-frame">{{ data.request }}</code>
+  </div>
+
+  @if (readOnly) {
+    <!-- 只读的缘由写在最前面：改不动的原因就在这一句里，下面的值照常看得清 -->
+    <div class="service-alarm-readonly-hint">{{ '只有管理员可以修改告警配置' | translate }}</div>
+  }
+
+  @if (items.length === 0) {
+    <!-- 写方法：应答是请求回显、没有出值，也就没有可比的字段 -->
+    <div class="service-alarm-hint">{{ '只有读方法的字段可以配置告警' | translate }}</div>
+  }
+
+  <!-- 一个出值一块：块头 + 这个出值自己的规则表（nz-table 不再套在别的表里） -->
+  @for (item of items; track item.key) {
+    <div class="service-alarm-group">
+      <!-- 位块缩进一级：位是父字段位区里的一位，但它是独立的结果键，各配各的告警 -->
+      <div class="service-alarm-head" [class.service-alarm-nested]="item.bit != null">
+        <span class="service-alarm-key">{{ item.key }}</span>
+        @if (item.bit) {
+          <!-- 位的取值恒为 0/1（后端 parser 逐位取），写成符号不必进词典 -->
+          <code class="service-alarm-frame">0/1</code>
+        } @else {
+          <!-- 类型形态不带字段名（左边就是它）、不带告警（下面就是告警控件） -->
+          <span class="service-alarm-hint">{{ describeFieldShape(item.field) }}</span>
+        }
+        @if (item.kind === 'none') {
+          <!-- string 字段的值可能是任意文本，五种比较都无从谈起，后端直接拒 -->
+          <span class="service-alarm-hint">{{ '文本字段不能配置告警' | translate }}</span>
+        } @else {
+          @if (rulesOf(item).length === 0) {
+            <span class="service-alarm-hint">{{ '未配置告警' | translate }}</span>
+          }
+          <!-- 「添加规则」在块头上而不是某一条规则上 —— 一个出值可以配多条（分级） -->
+          <!-- 只读档整个按钮都不出：这一档下它是个动作，而灰着的动作按钮只会招人点 -->
+          @if (!readOnly) {
+            <button
+              nz-button
+              nzType="link"
+              nzSize="small"
+              [disabled]="rulesOf(item).length >= maxAlarmRules"
+              (click)="onAdd(item)"
+            >
+              {{ '添加规则' | translate }}
+            </button>
+          }
+        }
+      </div>
+
+      <!-- 一条规则都没有就不出这张表：空表只剩表头与一句「暂无数据」，白占地方 -->
+      @if (rulesOf(item).length > 0) {
+        <nz-table
+          [nzData]="rulesOf(item)"
+          [nzFrontPagination]="false"
+          [nzShowPagination]="false"
+          nzSize="small"
+          nzTableLayout="fixed"
+        >
+          <thead>
+            <tr>
+              <!-- 手柄列没有表头文字：这一列是动作、不是数据（拖出来的顺序就是末尾那句提示说的顺序） -->
+              @if (!readOnly) {
+                <th nzWidth="40px"></th>
+              }
+              <th nzWidth="70px">{{ '告警' | translate }}</th>
+              <th nzWidth="160px">{{ '比较方式' | translate }}</th>
+              <th nzWidth="170px">{{ '阈值' | translate }}</th>
+              <th nzWidth="120px">{{ '告警级别' | translate }}</th>
+              <th>{{ '告警文本' | translate }}</th>
+              <!-- 只读档连表头都不出：一列空白的「操作」比没有这一列更像坏了 -->
+              @if (!readOnly) {
+                <th nzWidth="90px">{{ '操作' | translate }}</th>
+              }
+            </tr>
+          </thead>
+          <!--
+            tbody 是拖拽容器、tr 是拖拽项。**整行不可拖**：这一行全是输入控件（开关/下拉/数字框/文本框），
+            整行可拖会和「点开下拉」抢手势 —— 抓取只能从左边那个手柄开始（cdkDragHandle）。
+            （modbus 编辑器那边敢整行拖，是因为那些行里全是只读文本。）
+          -->
+          <tbody
+            cdkDropList
+            [cdkDropListData]="rulesOf(item)"
+            [cdkDropListDisabled]="readOnly"
+            (cdkDropListDropped)="onRuleDropped(item, $event)"
+          >
+            <!--
+              按 `id` 认行（不是按对象）：改一下阈值就会换出一个新对象，
+              按对象认行的话每敲一个字都是「删一行、插一行」，输入框会跟着重建、光标丢掉。
+              `id` 由 defaultAlarm 生成、seedAlarms 补缺，到这儿一定有。
+            -->
+            @for (rule of rulesOf(item); track rule.id) {
+              <tr cdkDrag [cdkDragDisabled]="readOnly">
+                <!-- 只读档没有手柄这一格：抓不动的东西不该长着手柄的样子 -->
+                @if (!readOnly) {
+                  <td
+                    cdkDragHandle
+                    class="service-alarm-handle"
+                    [title]="'拖动可调整顺序' | translate"
+                  >
+                    <!-- 手柄图标不翻（它没有文字），title 翻：读屏与悬停都靠它 -->
+                    <nz-icon nzType="holder" nzTheme="outline"></nz-icon>
+                  </td>
+                }
+                <td>
+                  <!-- 开关不走 locked()：关着的规则得能再打开，它只服只读这一个命令 -->
+                  <nz-switch
+                    [ngModel]="rule.enabled === true"
+                    (ngModelChange)="onEnabled(item, rule, $event)"
+                    [nzDisabled]="readOnly"
+                  ></nz-switch>
+                </td>
+                <!--
+                  开关关掉后控件仍显示、只是灰着：配置是**留着**的（随时能再开），
+                  藏起来会让人以为关一下就把配好的东西弄丢了。
+                -->
+                <td>
+                  <nz-select
+                    [ngModel]="rule.compare ?? null"
+                    (ngModelChange)="onCompare(item, rule, $event)"
+                    [nzDisabled]="locked(rule)"
+                    [nzPlaceHolder]="'请选择' | translate"
+                    style="width: 100%"
+                  >
+                    @for (op of compareOptions(item); track op.value) {
+                      <nz-option [nzValue]="op.value" [nzLabel]="op.label"></nz-option>
+                    }
+                  </nz-select>
+                </td>
+                <td>
+                  @if (alarmUsesState(item.kind, rule.compare)) {
+                    <!-- 比状态：取值表里的描述，原样显示（数据、不翻译） -->
+                    <nz-select
+                      [ngModel]="rule.state ?? null"
+                      (ngModelChange)="onState(item, rule, $event)"
+                      [nzDisabled]="locked(rule)"
+                      [nzPlaceHolder]="'请选择' | translate"
+                      style="width: 100%"
+                    >
+                      @for (v of stateOptions(item.field); track v.value) {
+                        <nz-option [nzValue]="v.value" [nzLabel]="v.label"></nz-option>
+                      }
+                    </nz-select>
+                  } @else if (item.bit) {
+                    <!-- 位只有 0 / 1 两个候选，给下拉比给数字框更不容易填错 -->
+                    <nz-select
+                      [ngModel]="rule.threshold ?? null"
+                      (ngModelChange)="onThreshold(item, rule, $event)"
+                      [nzDisabled]="locked(rule)"
+                      style="width: 100%"
+                    >
+                      <nz-option [nzValue]="0" nzLabel="0"></nz-option>
+                      <nz-option [nzValue]="1" nzLabel="1"></nz-option>
+                    </nz-select>
+                  } @else {
+                    <nz-input-number
+                      [ngModel]="rule.threshold ?? null"
+                      (ngModelChange)="onThreshold(item, rule, $event)"
+                      [nzDisabled]="locked(rule)"
+                      nzAddonAfter="{{ item.field.unit }}"
+                      style="width: 100%"
+                    ></nz-input-number>
+                  }
+                </td>
+                <td>
+                  <nz-select
+                    [ngModel]="rule.level ?? null"
+                    (ngModelChange)="onLevel(item, rule, $event)"
+                    [nzDisabled]="locked(rule)"
+                    [nzPlaceHolder]="'请选择' | translate"
+                    style="width: 100%"
+                  >
+                    @for (lv of levelOptions; track lv.value) {
+                      <nz-option [nzValue]="lv.value" [nzLabel]="lv.label"></nz-option>
+                    }
+                  </nz-select>
+                </td>
+                <td>
+                  <!-- 告警文本是用户自己填的（如「温度过高」）：**数据，永不翻译** -->
+                  <input
+                    nz-input
+                    maxlength="64"
+                    [ngModel]="rule.text ?? ''"
+                    (ngModelChange)="onText(item, rule, $event)"
+                    [disabled]="locked(rule)"
+                    style="width: 100%"
+                  />
+                </td>
+                @if (!readOnly) {
+                  <td>
+                    <button
+                      nz-button
+                      nzType="link"
+                      nzSize="small"
+                      nzDanger
+                      (click)="onRemove(item, rule)"
+                    >
+                      {{ '删除' | translate }}
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </nz-table>
+      }
+    </div>
+  }
+
+  <div class="service-alarm-hint">
+    {{ '启用 = 出值越限时记一条告警；停用 = 不告警（配置保留）' | translate }}
+  </div>
+  <div class="service-alarm-hint">
+    {{ '一个出值可以配多条规则，同时命中时只有级别最高的那条生效；级别相同时排在下面的那条生效' | translate }}
+  </div>
+</div>
