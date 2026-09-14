@@ -1,5 +1,5 @@
 import { computed, Directive, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { Action, DeviceInstance, Service } from '@openxiot/xiot-core-spec-ts';
 import { AccountService } from '../../../../../../service/account.service';
@@ -41,6 +41,7 @@ import {
   type ServiceAlarmItem,
   type ServiceBaseline,
 } from '../service.functions';
+import { Location } from '@angular/common';
 
 /**
  * 自动调用周期的上下限（秒）：与后端 ModbusServiceValidator 的 MIN/MAX_INTERVAL_SECONDS 同口径 ——
@@ -81,10 +82,10 @@ export abstract class DeviceServiceEditor implements OnInit {
   /** create：新建服务；edit：编辑服务 */
   protected abstract get kind(): 'create' | 'edit';
 
+  protected readonly location = inject(Location);
   protected readonly i18n = inject(MainI18nService);
   protected readonly account = inject(AccountService);
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly msg = inject(NzMessageService);
   private readonly matrix = inject(MatrixService);
   private readonly product = inject(ProductService);
@@ -773,18 +774,16 @@ export abstract class DeviceServiceEditor implements OnInit {
     request$.subscribe({
       next: () => {
         this.saving.set(false);
-        this.msg.success(this.i18n.translate.instant(this.kind === 'edit' ? '保存成功' : '添加成功'));
-        this.back();
+        this.msg.success(
+          this.i18n.translate.instant(this.kind === 'edit' ? '保存成功' : '添加成功'),
+        );
+        this.location.back();
       },
       error: (e) => {
         this.saving.set(false);
         this.msg.error(e?.message ?? e);
       },
     });
-  }
-
-  protected back(): void {
-    this.router.navigate(['/main/device/services', this.did()]);
   }
 
   /* ----------------------------------------------------------------------------------------------
@@ -817,7 +816,8 @@ export abstract class DeviceServiceEditor implements OnInit {
 
   /** 源点表选项文案：厂家 型号 · (id) */
   protected configLabel(cfg: ModbusConfig): string {
-    const base = `${cfg.slave?.manufacturer?.trim() ?? ''} ${cfg.slave?.model?.trim() ?? ''}`.trim();
+    const base =
+      `${cfg.slave?.manufacturer?.trim() ?? ''} ${cfg.slave?.model?.trim() ?? ''}`.trim();
     if (base) {
       return cfg.id ? `${base} (${cfg.id})` : base;
     }

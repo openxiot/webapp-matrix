@@ -1,4 +1,4 @@
-<nz-page-header (nzBack)="back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
+<nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
   <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
   <ng-template #pageTitle>
     {{ (isCreate ? '添加 Modbus 服务' : '编辑 Modbus 服务') | translate }}
@@ -425,7 +425,7 @@
     </nz-card>
 
     <div class="service-editor-footer">
-      <button nz-button (click)="back()">{{ '取消' | translate }}</button>
+      <button nz-button (click)="location.back()">{{ '取消' | translate }}</button>
       <button nz-button nzType="primary" [nzLoading]="saving()" [disabled]="!canSave()" (click)="save()">
         {{ '保存' | translate }}
       </button>

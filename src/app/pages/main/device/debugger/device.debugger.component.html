@@ -1,5 +1,5 @@
 <nz-spin [nzSpinning]="loadingDetail() || loadingInstance()">
-    <nz-page-header (nzBack)="onBack()" nzBackIcon [nzTitle]="deviceTitle" [nzSubtitle]="deviceOnline" [nzGhost]="false">
+    <nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="deviceTitle" [nzSubtitle]="deviceOnline" [nzGhost]="false">
         <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
 
         <nz-page-header-content>

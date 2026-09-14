@@ -252,10 +252,6 @@ export class DeviceServicesComponent implements OnInit {
     });
   }
 
-  protected onBack(): void {
-    this.router.navigate(['/main/device']);
-  }
-
   /** 源点表显示名：厂家 型号（点表取不到时退回 id） */
   protected configLabel(configId?: string): string {
     if (!configId) {

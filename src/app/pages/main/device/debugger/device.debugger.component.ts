@@ -18,7 +18,8 @@ import {NzButtonModule} from 'ng-zorro-antd/button';
 import {NzCheckboxModule} from 'ng-zorro-antd/checkbox';
 import {NzFormModule} from 'ng-zorro-antd/form';
 import {NzInputModule} from 'ng-zorro-antd/input';
-import {ActivatedRoute, Router} from '@angular/router';
+import {Location} from '@angular/common';
+import {ActivatedRoute} from '@angular/router';
 import {NzTabsModule} from 'ng-zorro-antd/tabs';
 import {NzSpaceModule} from 'ng-zorro-antd/space';
 import {NzTagModule} from 'ng-zorro-antd/tag';
@@ -75,6 +76,12 @@ export class DeviceDebuggerComponent implements OnInit {
     /** 语言切换信号：nz-segmented 的选项文案只能在 TS 里翻，靠它驱动重算。 */
     private langChange = toSignal(inject(TranslateService).onLangChange);
 
+    /**
+     * 页头的返回箭头：退回**来处**（浏览器历史），不是写死的某个路由 ——
+     * 从设备列表、从空间树、从搜索结果点进来的都该回到各自那一条路径上。
+     */
+    protected readonly location = inject(Location);
+
     // 设备展现风格：nz-segmented 的 ngModel 绑定的是 option 的 value(非下标)，故选项需显式给出数值 value
     deviceDisplayOptions = computed(() => {
         this.langChange();
@@ -110,7 +117,6 @@ export class DeviceDebuggerComponent implements OnInit {
         protected i18n: MainI18nService,
         private route: ActivatedRoute,
         private msg: NzMessageService,
-        private router: Router,
         private matrix: MatrixService,
         private product: ProductService,
         private account: AccountService,
@@ -157,11 +163,6 @@ export class DeviceDebuggerComponent implements OnInit {
                 this.msg.warning('Failed to getInstance', error);
                 this.loadingInstance.set(false);
             }
-        });
-    }
-
-    protected onBack() {
-        this.router.navigate(['/main/device']).then(() => {
         });
     }
 
