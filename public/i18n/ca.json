@@ -385,5 +385,6 @@
   "服务配置错误": "Configuració del servei incorrecta",
   "未知失败": "Fallada desconeguda",
   "所有服务": "Tots els serveis",
-  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Hi ha massa camps seleccionats; el gràfic només en mostra els primers. Acota la selecció amb «Camp»"
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Hi ha massa camps seleccionats; el gràfic només en mostra els primers. Acota la selecció amb «Camp»",
+  "显示方式": "Mode de visualització"
 }

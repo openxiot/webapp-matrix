@@ -385,5 +385,6 @@
   "服务配置错误": "Błąd konfiguracji usługi",
   "未知失败": "Nieznany błąd",
   "所有服务": "Wszystkie usługi",
-  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Wybrano zbyt wiele pól; wykres pokazuje tylko pierwsze. Zawęź wybór za pomocą „Pole”"
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Wybrano zbyt wiele pól; wykres pokazuje tylko pierwsze. Zawęź wybór za pomocą „Pole”",
+  "显示方式": "Tryb wyświetlania"
 }

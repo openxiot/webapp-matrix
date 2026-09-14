@@ -48,6 +48,7 @@ import {
 import { isBucket } from '../../../../typedef/codec/modbus/ModbusHistoryCodec';
 import { isReadFunction } from '../../device/services/service/service.functions';
 import { historyFieldOption } from '../../device/services/service/history/device.service.history.charts';
+import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 
 /** 时间范围预设：三档「最近 N」+ 自定义（与另两个历史页同一个口径） */
 type RangePreset = '1h' | '24h' | '7d' | 'custom';
@@ -187,6 +188,8 @@ interface HistoryChart {
     BreadcrumbTranslateDirective,
     EChartsDirective,
     TranslatePipe,
+    NzRowDirective,
+    NzColDirective,
   ],
 })
 export class HistoryServicesComponent implements OnInit {

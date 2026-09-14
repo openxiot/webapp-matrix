@@ -3,11 +3,13 @@
 
   <nz-page-header-extra>
     <!-- 二级页：项目下所有服务的采集数据（表格 / 曲线图）；这一页只到「哪个服务不对」 -->
-    <a nz-button nzType="link" routerLink="/main/history/services">{{ '所有服务' | translate }}</a>
-    <button nz-button [nzLoading]="loading()" (click)="load()">
-      <span nz-icon nzType="reload"></span>
-      {{ '刷新' | translate }}
-    </button>
+    <nz-space>
+      <button *nzSpaceItem nz-button routerLink="/main/history/services">{{ '所有服务' | translate }}</button>
+      <button *nzSpaceItem nz-button [nzLoading]="loading()" (click)="load()">
+        <span nz-icon nzType="reload"></span>
+        {{ '刷新' | translate }}
+      </button>
+    </nz-space>
   </nz-page-header-extra>
 
   <nz-page-header-content>
@@ -35,9 +37,10 @@
     <nz-row [nzGutter]="[8, 8]">
       <nz-col nzSpan="24">
         <nz-card [nzBordered]="false">
+          <!-- 一行一项，两列网格（与二级页同一个写法）：标签列宽度取本语言最长的标签，控件列左边对齐 -->
           <div class="main-history-toolbar">
-            <div class="main-history-item">
-              <span class="main-history-label">{{ '时间范围' | translate }}</span>
+            <span class="main-history-label">{{ '时间范围' | translate }}</span>
+            <div class="main-history-controls">
               <nz-segmented
                 nzSize="small"
                 [nzOptions]="presetOptions()"
@@ -130,70 +133,79 @@
 
       <nz-col nzSpan="24">
         <nz-card [nzBordered]="false" nzTitle="{{ '采集异常' | translate }}">
-          @if (failureSummary().length > 0) {
-            <div class="main-history-summary">
-              @for (item of failureSummary(); track item.type) {
-                <!-- 汇总标签：title 给枚举名，排查时拿去搜后端日志 -->
-                <nz-tag nzColor="error" [title]="item.type"
-                >{{ failureLabel(item.type) }} × {{ item.count }}
-                </nz-tag
-                >
-              }
-            </div>
-          }
-          <nz-table
-            #failureTable
-            [nzData]="failureRows()"
-            [nzPageIndex]="failurePageIndex()"
-            (nzPageIndexChange)="failurePageIndex.set($event)"
-            [nzPageSize]="20"
-            [nzShowSizeChanger]="false"
-            [nzShowPagination]="failureRows().length > 20"
-            nzSize="small"
-          >
-            <thead>
-            <tr>
-              <th nzWidth="230px">{{ '采集时间' | translate }}</th>
-              <th nzWidth="180px">{{ '服务' | translate }}</th>
-              <th nzWidth="180px">{{ '设备' | translate }}</th>
-              <th nzWidth="80px">{{ '方法' | translate }}</th>
-              <th nzWidth="260px">{{ '类型' | translate }}</th>
-              <th>{{ '消息' | translate }}</th>
-            </tr>
-            </thead>
-            <tbody>
-              @for (row of failureTable.data; track row.key) {
+          <!-- 汇总、表格、截断提示各占一列：竖向间隔交给 gutter（横向留 0，别把表格挤离卡片标题） -->
+          <nz-row [nzGutter]="[0, 8]">
+            @if (failureSummary().length > 0) {
+              <nz-col nzSpan="24">
+                <div class="main-history-summary">
+                  @for (item of failureSummary(); track item.type) {
+                    <!-- 汇总标签：title 给枚举名，排查时拿去搜后端日志 -->
+                    <nz-tag nzColor="error" [title]="item.type"
+                    >{{ failureLabel(item.type) }} × {{ item.count }}
+                    </nz-tag
+                    >
+                  }
+                </div>
+              </nz-col>
+            }
+            <nz-col nzSpan="24">
+              <nz-table
+                #failureTable
+                [nzData]="failureRows()"
+                [nzPageIndex]="failurePageIndex()"
+                (nzPageIndexChange)="failurePageIndex.set($event)"
+                [nzPageSize]="20"
+                [nzShowSizeChanger]="false"
+                [nzShowPagination]="failureRows().length > 20"
+                nzSize="small"
+              >
+                <thead>
                 <tr>
-                  <!-- 记的是「这条错误第一次出现的时刻」，同一条错误持续存在不会重复记（见后端） -->
-                  <td>{{ row.item.at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
-                  <td>
-                    <!-- 服务还在空间图里就给条点得进去的链接；已被挪走/删掉（只有 id 认得出）时退成纯文本 -->
-                    @if (row.service; as service) {
-                      <a [routerLink]="serviceHistoryLink(service)">{{ service.name }}</a>
-                    } @else {
-                      {{ failureServiceName(row) }}
-                    }
-                  </td>
-                  <td>
-                    <code>{{ row.service?.did ?? '-' }}</code>
-                  </td>
-                  <td>#{{ row.item.functionIndex }}</td>
-                  <td>
-                    {{ failureType(row.item) }}
-                    @if (row.item.type) {
-                      <span class="main-history-enum">{{ row.item.type }}</span>
-                    }
-                  </td>
-                  <td class="main-history-message">{{ row.item.message }}</td>
+                  <th nzWidth="230px">{{ '采集时间' | translate }}</th>
+                  <th nzWidth="180px">{{ '服务' | translate }}</th>
+                  <th nzWidth="180px">{{ '设备' | translate }}</th>
+                  <th nzWidth="80px">{{ '方法' | translate }}</th>
+                  <th nzWidth="260px">{{ '类型' | translate }}</th>
+                  <th>{{ '消息' | translate }}</th>
                 </tr>
-              }
-            </tbody>
-          </nz-table>
-          @if (truncated()) {
-            <div class="main-history-hint">
-              {{ '异常记录超过上限，只列出最近的部分' | translate }}
-            </div>
-          }
+                </thead>
+                <tbody>
+                  @for (row of failureTable.data; track row.key) {
+                    <tr>
+                      <!-- 记的是「这条错误第一次出现的时刻」，同一条错误持续存在不会重复记（见后端） -->
+                      <td>{{ row.item.at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                      <td>
+                        <!-- 服务还在空间图里就给条点得进去的链接；已被挪走/删掉（只有 id 认得出）时退成纯文本 -->
+                        @if (row.service; as service) {
+                          <a [routerLink]="serviceHistoryLink(service)">{{ service.name }}</a>
+                        } @else {
+                          {{ failureServiceName(row) }}
+                        }
+                      </td>
+                      <td>
+                        <code>{{ row.service?.did ?? '-' }}</code>
+                      </td>
+                      <td>#{{ row.item.functionIndex }}</td>
+                      <td>
+                        {{ failureType(row.item) }}
+                        @if (row.item.type) {
+                          <span class="main-history-enum">{{ row.item.type }}</span>
+                        }
+                      </td>
+                      <td class="main-history-message">{{ row.item.message }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </nz-table>
+            </nz-col>
+            @if (truncated()) {
+              <nz-col nzSpan="24">
+                <div class="main-history-hint">
+                  {{ '异常记录超过上限，只列出最近的部分' | translate }}
+                </div>
+              </nz-col>
+            }
+          </nz-row>
         </nz-card>
       </nz-col>
     </nz-row>

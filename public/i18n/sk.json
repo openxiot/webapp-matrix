@@ -385,5 +385,6 @@
   "服务配置错误": "Chyba konfigurácie služby",
   "未知失败": "Neznáma chyba",
   "所有服务": "Všetky služby",
-  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Je vybraných príliš veľa polí; graf zobrazuje len prvé. Zúžte výber pomocou „Pole“"
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Je vybraných príliš veľa polí; graf zobrazuje len prvé. Zúžte výber pomocou „Pole“",
+  "显示方式": "Režim zobrazenia"
 }

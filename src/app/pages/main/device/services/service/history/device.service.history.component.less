@@ -1,13 +1,9 @@
 .service-history {
   padding: 20px 20px;
 
-  nz-card {
-    margin-bottom: 16px;
-  }
-
+  /* 卡片与提示条之间的间距由 nz-row 的 gutter 给（每个都是自己那一列里的直接子元素） */
   nz-alert {
     display: block;
-    margin-bottom: 16px;
   }
 
   code {
@@ -17,16 +13,11 @@
   }
 }
 
-/* 筛选条：一行放不下就换行，别把选择器挤没了 */
+/* 筛选条：一行一项，两列网格 —— 标签列宽度取本语言最长的标签，控件列左边对齐。
+   原来是一行 flex-wrap：多选控件互相压窄，标签一多就看不清选了什么 */
 .service-history-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 24px;
-}
-
-.service-history-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: max-content 1fr;
   align-items: center;
   gap: 8px;
 }
@@ -35,25 +26,28 @@
   color: #8c8c8c;
 }
 
-.service-history-select {
-  width: 220px;
+/* 一行里可能不止一个控件（时间范围：预设 + 自定义区间） */
+.service-history-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.service-history-select-wide {
+.service-history-select {
   width: 320px;
 }
 
+/* 字段：多选，勾几个画几张，比方法宽一些 */
+.service-history-select-wide {
+  width: 560px;
+}
+
 .service-history-hint {
-  margin-bottom: 12px;
   color: #8c8c8c;
   font-size: 12px;
 }
 
-/* 一个字段一张小图，竖向排开、共用同一条时间轴：图与图之间只留标题那点空隙 */
-.service-history-chart {
-  margin-bottom: 8px;
-}
-
+/* 一个字段一张小图，竖向排开、共用同一条时间轴：图与图之间的间隔由 nz-row 的 gutter 给 */
 .service-history-chart-head {
   display: flex;
   align-items: baseline;
@@ -73,12 +67,11 @@
   height: 160px;
 }
 
+/* 汇总标签：换行后的行距也用 gap 给，别指望 nz-tag 自带 margin（标签是数据宽度，行/列分不了） */
 .service-history-summary {
-  margin-bottom: 12px;
-
-  nz-tag {
-    margin-bottom: 4px;
-  }
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .service-history-message {

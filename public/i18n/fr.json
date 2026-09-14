@@ -385,5 +385,6 @@
   "服务配置错误": "Erreur de configuration du service",
   "未知失败": "Échec inconnu",
   "所有服务": "Tous les services",
-  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Trop de champs sélectionnés ; le graphique n’affiche que les premiers. Affinez la sélection avec « Champ »"
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Trop de champs sélectionnés ; le graphique n’affiche que les premiers. Affinez la sélection avec « Champ »",
+  "显示方式": "Mode d'affichage"
 }

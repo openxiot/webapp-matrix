@@ -26,6 +26,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
+import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { BreadcrumbTranslateDirective } from '../../../../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { EChartsDirective } from '../../../../../../common/components/echarts/echarts.directive';
@@ -159,6 +160,8 @@ interface HistoryChart {
     NzSegmentedModule,
     NzSelectModule,
     NzDatePickerModule,
+    NzRowDirective,
+    NzColDirective,
     BreadcrumbTranslateDirective,
     EChartsDirective,
     TranslatePipe,

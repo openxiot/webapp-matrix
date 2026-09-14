@@ -385,5 +385,6 @@
   "服务配置错误": "Pogreška u konfiguraciji usluge",
   "未知失败": "Nepoznata pogreška",
   "所有服务": "Sve usluge",
-  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Odabrano je previše polja; grafikon prikazuje samo prva. Suzite odabir poljem „Polje“"
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Odabrano je previše polja; grafikon prikazuje samo prva. Suzite odabir poljem „Polje“",
+  "显示方式": "Način prikaza"
 }

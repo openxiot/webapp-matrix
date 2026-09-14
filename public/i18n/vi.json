@@ -385,5 +385,6 @@
   "服务配置错误": "Lỗi cấu hình dịch vụ",
   "未知失败": "Lỗi không xác định",
   "所有服务": "Tất cả dịch vụ",
-  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Chọn quá nhiều trường; biểu đồ chỉ hiển thị vài trường đầu tiên. Thu hẹp lựa chọn bằng «Trường»"
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Chọn quá nhiều trường; biểu đồ chỉ hiển thị vài trường đầu tiên. Thu hẹp lựa chọn bằng «Trường»",
+  "显示方式": "Chế độ hiển thị"
 }

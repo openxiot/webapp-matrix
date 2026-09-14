@@ -30,172 +30,189 @@
 
 <div class="history-services">
   <nz-spin [nzSpinning]="loadingGraph()">
-    <nz-card [nzBordered]="false">
-      <div class="history-services-toolbar">
-        <div class="history-services-item">
-          <span class="history-services-label">{{ '时间范围' | translate }}</span>
-          <nz-segmented
-            nzSize="small"
-            [nzOptions]="presetOptions()"
-            [ngModel]="preset()"
-            (ngModelChange)="onPresetChange($event)"
-          ></nz-segmented>
-          @if (preset() === 'custom') {
-            <nz-range-picker
+    <nz-row [nzGutter]="[8, 8]">
+
+      <nz-col nzSpan="24">
+        <nz-card [nzBordered]="false">
+          <!-- 一行一项：标签与控件都是这两列网格的直接子元素，故标签列宽度取「本语言最长的那个标签」，
+               各语言都不断行、不截断（写死 px 的话，德语的「Zeitraum」、俄语的「Диапазон времени」会折成两行） -->
+          <div class="history-services-toolbar">
+            <span class="history-services-label">{{ '时间范围' | translate }}</span>
+            <div class="history-services-controls">
+              <nz-segmented
+                nzSize="small"
+                [nzOptions]="presetOptions()"
+                [ngModel]="preset()"
+                (ngModelChange)="onPresetChange($event)"
+              ></nz-segmented>
+              @if (preset() === 'custom') {
+                <nz-range-picker
+                  nzSize="small"
+                  nzShowTime
+                  [ngModel]="customRange()"
+                  (ngModelChange)="onCustomRangeChange($event)"
+                ></nz-range-picker>
+              }
+            </div>
+
+            <span class="history-services-label">{{ '服务' | translate }}</span>
+            <!-- 服务决定**取哪些数据**：去掉几个服务就是少发几十条请求（见类注释里的分工） -->
+            <nz-select
+              class="history-services-select"
+              nzMode="multiple"
               nzSize="small"
-              nzShowTime
-              [ngModel]="customRange()"
-              (ngModelChange)="onCustomRangeChange($event)"
-            ></nz-range-picker>
-          }
-        </div>
+              [nzMaxTagCount]="2"
+              [ngModel]="selectedServiceIds()"
+              (ngModelChange)="onServicesChange($event)"
+            >
+              @for (service of serviceOptions(); track service.value) {
+                <nz-option [nzValue]="service.value" [nzLabel]="service.label"></nz-option>
+              }
+            </nz-select>
 
-        <div class="history-services-item">
-          <span class="history-services-label">{{ '服务' | translate }}</span>
-          <!-- 服务决定**取哪些数据**：去掉几个服务就是少发几十条请求（见类注释里的分工） -->
-          <nz-select
-            class="history-services-select"
-            nzMode="multiple"
-            nzSize="small"
-            [nzMaxTagCount]="2"
-            [ngModel]="selectedServiceIds()"
-            (ngModelChange)="onServicesChange($event)"
-          >
-            @for (service of serviceOptions(); track service.value) {
-              <nz-option [nzValue]="service.value" [nzLabel]="service.label"></nz-option>
-            }
-          </nz-select>
-        </div>
+            <span class="history-services-label">{{ '字段' | translate }}</span>
+            <!-- 字段只筛**显示**：数据已经在手上，勾选不重取（要少发请求就去掉服务） -->
+            <nz-select
+              class="history-services-select-wide"
+              nzMode="multiple"
+              nzSize="small"
+              [nzMaxTagCount]="2"
+              [ngModel]="selectedFieldKeys()"
+              (ngModelChange)="onFieldsChange($event)"
+            >
+              @for (ref of fieldOptions(); track ref.value) {
+                <nz-option [nzValue]="ref.value" [nzLabel]="ref.label"></nz-option>
+              }
+            </nz-select>
 
-        <div class="history-services-item">
-          <span class="history-services-label">{{ '字段' | translate }}</span>
-          <!-- 字段只筛**显示**：数据已经在手上，勾选不重取（要少发请求就去掉服务） -->
-          <nz-select
-            class="history-services-select-wide"
-            nzMode="multiple"
-            nzSize="small"
-            [nzMaxTagCount]="2"
-            [ngModel]="selectedFieldKeys()"
-            (ngModelChange)="onFieldsChange($event)"
-          >
-            @for (ref of fieldOptions(); track ref.value) {
-              <nz-option [nzValue]="ref.value" [nzLabel]="ref.label"></nz-option>
-            }
-          </nz-select>
-        </div>
+            <span class="history-services-label">{{ '显示方式' | translate }}</span>
+            <nz-segmented
+              nzSize="small"
+              [nzOptions]="viewOptions()"
+              [ngModel]="view()"
+              (ngModelChange)="onViewChange($event)"
+            ></nz-segmented>
+          </div>
+        </nz-card>
+      </nz-col>
 
-        <div class="history-services-item">
-          <nz-segmented
-            nzSize="small"
-            [nzOptions]="viewOptions()"
-            [ngModel]="view()"
-            (ngModelChange)="onViewChange($event)"
-          ></nz-segmented>
-        </div>
-      </div>
-    </nz-card>
-
-    <!-- 某些服务/字段取不到数：那一格没有内容，原因统一提示在这，别把「没取到」看成「没有数据」 -->
-    @for (message of loadErrors(); track message) {
-      <nz-alert nzType="warning" nzShowIcon [nzMessage]="message"></nz-alert>
-    }
-    @if (downsampled()) {
-      <nz-alert
-        nzType="info"
-        nzShowIcon
-        [nzMessage]="
+      <!-- 某些服务/字段取不到数：那一格没有内容，原因统一提示在这，别把「没取到」看成「没有数据」 -->
+      @for (message of loadErrors(); track message) {
+        <nz-col nzSpan="24">
+          <nz-alert nzType="warning" nzShowIcon [nzMessage]="message"></nz-alert>
+        </nz-col>
+      }
+      @if (downsampled()) {
+        <nz-col nzSpan="24">
+          <nz-alert
+            nzType="info"
+            nzShowIcon
+            [nzMessage]="
           '数据点较多，已按时间区间降采样（值为该段平均值，括号内为最小~最大值）' | translate
         "
-      ></nz-alert>
-    }
-    @if (chartTruncated()) {
-      <nz-alert
-        nzType="info"
-        nzShowIcon
-        [nzMessage]="'选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择' | translate"
-      ></nz-alert>
-    }
+          ></nz-alert>
+        </nz-col>
+      }
+      @if (chartTruncated()) {
+        <nz-col nzSpan="24">
+          <nz-alert
+            nzType="info"
+            nzShowIcon
+            [nzMessage]="'选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择' | translate"
+          ></nz-alert>
+        </nz-col>
+      }
 
-    <!-- 取数进度：逐个字段地取，几十上百个请求时，进度比一个转圈有信息量 -->
-    <nz-spin [nzSpinning]="loading()" [nzTip]="progressText()">
-      @if (view() === 'table') {
-        <nz-card [nzBordered]="false">
-          <!-- 遍历的是 nz-table 的 data（当前页那一片），不是 rows()：直接遍历自己的数组，
-               前端分页只会翻页码、行还是一次画全（见 nz-table 的 data 注释） -->
-          <nz-table
-            #historyTable
-            [nzData]="rows()"
-            [nzPageIndex]="pageIndex()"
-            (nzPageIndexChange)="pageIndex.set($event)"
-            [nzPageSize]="50"
-            [nzShowSizeChanger]="false"
-            [nzShowPagination]="rows().length > 50"
-            nzSize="small"
-          >
-            <thead>
+      <!-- 取数进度：逐个字段地取，几十上百个请求时，进度比一个转圈有信息量。
+           spin 要待在 col **里**：row 的直接子元素只能是 col —— 塞在中间的组件会自己占一个
+           flex 行，里面的 col 失去 flex 父级，nzSpan 就成了摆设（渲染出来照样满行，不报错） -->
+      <nz-col nzSpan="24">
+        <nz-spin [nzSpinning]="loading()" [nzTip]="progressText()">
+          @if (view() === 'table') {
+            <!-- 表格不套卡片：它自己就有底色和边框，铺在页面底上即可（设备页、项目页、概览页都是这么放的） -->
+            <!-- 遍历的是 nz-table 的 data（当前页那一片），不是 rows()：直接遍历自己的数组，前端分页只会翻页码、行还是一次画全（见 nz-table 的 data 注释） -->
+            <nz-table
+              #historyTable
+              [nzData]="rows()"
+              [nzPageIndex]="pageIndex()"
+              (nzPageIndexChange)="pageIndex.set($event)"
+              [nzPageSize]="50"
+              [nzShowSizeChanger]="false"
+              [nzShowPagination]="rows().length > 50"
+              nzSize="small"
+            >
+              <!-- 不写 nzWidth：表是 table-layout: auto，nzWidth 落成 col 的 width + **min-width**，
+                   加起来（这里原来一千多 px）比窗口还宽时反而把列挤住。各列长短本就由服务端
+                   的字段名/值决定，交给浏览器按内容分更稳 -->
+              <thead>
               <tr>
-                <th nzWidth="230px">{{ '采集时间' | translate }}</th>
-                <th nzWidth="230px">{{ '服务' | translate }}</th>
-                <th nzWidth="200px">{{ '方法' | translate }}</th>
-                <th nzWidth="200px">{{ '字段' | translate }}</th>
-                <th nzWidth="200px">{{ '值' | translate }}</th>
-                <th nzWidth="90px">{{ '单位' | translate }}</th>
+                <th>{{ '采集时间' | translate }}</th>
+                <th>{{ '服务' | translate }}</th>
+                <th>{{ '方法' | translate }}</th>
+                <th>{{ '字段' | translate }}</th>
+                <th>{{ '值' | translate }}</th>
+                <th>{{ '单位' | translate }}</th>
                 <th>{{ '备注' | translate }}</th>
               </tr>
-            </thead>
-            <tbody>
-              @for (row of historyTable.data; track row.key) {
-                <tr>
-                  <td>{{ row.time }}</td>
-                  <td>
-                    <div>
-                      <a [routerLink]="serviceHistoryLink(row)">{{ row.serviceName }}</a>
-                    </div>
-                    <div class="history-services-device">
-                      <code>{{ row.did }}</code>
-                      @if (device(row.did); as d) {
-                        <nz-tag [nzColor]="d.online ? 'success' : 'default'">
-                          {{ d.online ? ('在线' | translate) : ('离线' | translate) }}
-                        </nz-tag>
-                      }
-                    </div>
-                  </td>
-                  <td>{{ row.functionIndex }} · {{ row.functionName }}</td>
-                  <td>{{ row.field }}</td>
-                  <td>{{ row.value }}</td>
-                  <td>{{ row.unit }}</td>
-                  <td>{{ row.note }}</td>
-                </tr>
-              }
-            </tbody>
-          </nz-table>
-        </nz-card>
-      } @else {
-        @if (charts().length === 0) {
-          <nz-card [nzBordered]="false">
-            <nz-empty></nz-empty>
-          </nz-card>
-        } @else {
-          <nz-card [nzBordered]="false">
-            @if (failures()?.items?.length) {
-              <div class="history-services-hint">{{ '竖线为采集失败时刻' | translate }}</div>
-            }
-            @for (chart of charts(); track chart.key) {
-              <div class="history-services-chart">
-                <div class="history-services-chart-head">
-                  <span class="history-services-chart-field">{{ chartTitle(chart) }}</span>
-                  <span class="history-services-chart-method">{{ chartSubtitle(chart) }}</span>
-                </div>
-                @if (chart.error) {
-                  <nz-alert nzType="warning" nzShowIcon [nzMessage]="chart.error"></nz-alert>
-                } @else if (chart.option; as option) {
-                  <div class="history-services-chart-body" [appEcharts]="option"></div>
+              </thead>
+              <tbody>
+                @for (row of historyTable.data; track row.key) {
+                  <tr>
+                    <td>{{ row.time }}</td>
+                    <td>
+                      <div>
+                        <a [routerLink]="serviceHistoryLink(row)">{{ row.serviceName }}</a>
+                      </div>
+                      <div class="history-services-device">
+                        <code>{{ row.did }}</code>
+                        @if (device(row.did); as d) {
+                          <nz-tag [nzColor]="d.online ? 'success' : 'default'">
+                            {{ d.online ? ('在线' | translate) : ('离线' | translate) }}
+                          </nz-tag>
+                        }
+                      </div>
+                    </td>
+                    <td>{{ row.functionIndex }} · {{ row.functionName }}</td>
+                    <td>{{ row.field }}</td>
+                    <td>{{ row.value }}</td>
+                    <td>{{ row.unit }}</td>
+                    <td>{{ row.note }}</td>
+                  </tr>
                 }
-              </div>
-            }
-          </nz-card>
-        }
-      }
-    </nz-spin>
+              </tbody>
+            </nz-table>
+          } @else if (charts().length === 0) {
+            <nz-card [nzBordered]="false">
+              <nz-empty></nz-empty>
+            </nz-card>
+          } @else {
+            <nz-card [nzBordered]="false">
+              <!-- 提示与逐字段的图各占一列，竖向间隔交给 gutter（横向留 0：卡片自己有 24px 内边距，
+                   再给列加左右内边距，图就跟卡片标题对不齐了） -->
+              <nz-row [nzGutter]="[0, 8]">
+                @if (failures()?.items?.length) {
+                  <nz-col nzSpan="24">
+                    <div class="history-services-hint">{{ '竖线为采集失败时刻' | translate }}</div>
+                  </nz-col>
+                }
+                @for (chart of charts(); track chart.key) {
+                  <nz-col nzSpan="24">
+                    <div class="history-services-chart-head">
+                      <span class="history-services-chart-field">{{ chartTitle(chart) }}</span>
+                      <span class="history-services-chart-method">{{ chartSubtitle(chart) }}</span>
+                    </div>
+                    @if (chart.error) {
+                      <nz-alert nzType="warning" nzShowIcon [nzMessage]="chart.error"></nz-alert>
+                    } @else if (chart.option; as option) {
+                      <div class="history-services-chart-body" [appEcharts]="option"></div>
+                    }
+                  </nz-col>
+                }
+              </nz-row>
+            </nz-card>
+          }
+        </nz-spin>
+      </nz-col>
+    </nz-row>
   </nz-spin>
 </div>

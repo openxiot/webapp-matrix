@@ -1,13 +1,8 @@
 .history-services {
   padding: 20px 20px;
 
-  nz-card {
-    margin-bottom: 16px;
-  }
-
   nz-alert {
     display: block;
-    margin-bottom: 16px;
   }
 
   code {
@@ -17,16 +12,11 @@
   }
 }
 
-/* 筛选条：一行放不下就换行，别把选择器挤没了 */
+/* 筛选条：一行一项，两列网格 —— 标签列宽度取本语言最长的标签，控件列左边对齐。
+   原来是一行 flex-wrap：服务与字段都是多选，标签一多就把彼此压窄，谁选了什么根本看不清 */
 .history-services-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 24px;
-}
-
-.history-services-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: max-content 1fr;
   align-items: center;
   gap: 8px;
 }
@@ -35,17 +25,21 @@
   color: #8c8c8c;
 }
 
-.history-services-select {
-  width: 260px;
+/* 一行里可能不止一个控件（时间范围：预设 + 自定义区间） */
+.history-services-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.history-services-select-wide {
+/* 服务：多选，各占一行后给足宽度，标签排得下 */
+.history-services-select {
   width: 360px;
 }
 
-.history-services-count {
-  color: #8c8c8c;
-  font-size: 12px;
+/* 字段：是「选中的服务」的字段全集，比服务还多，再宽一些 */
+.history-services-select-wide {
+  width: 560px;
 }
 
 /* 表格里服务那一格的第二行：依赖设备（与概览页同一个写法） */
@@ -56,16 +50,11 @@
 }
 
 .history-services-hint {
-  margin-bottom: 12px;
   color: #8c8c8c;
   font-size: 12px;
 }
 
-/* 一个字段一张小图，竖向排开、共用同一条时间轴：图与图之间只留标题那点空隙 */
-.history-services-chart {
-  margin-bottom: 8px;
-}
-
+/* 一个字段一张小图，竖向排开、共用同一条时间轴：图与图之间的间隔由 nz-row 的 gutter 给 */
 .history-services-chart-head {
   display: flex;
   align-items: baseline;

@@ -385,5 +385,6 @@
   "服务配置错误": "Feil i tjenestekonfigurasjonen",
   "未知失败": "Ukjent feil",
   "所有服务": "Alle tjenester",
-  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "For mange felt er valgt; kurven viser bare de første. Begrens valget med «Felt»"
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "For mange felt er valgt; kurven viser bare de første. Begrens valget med «Felt»",
+  "显示方式": "Visningsmodus"
 }

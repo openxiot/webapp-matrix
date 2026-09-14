@@ -385,5 +385,6 @@
   "服务配置错误": "Palvelun määritysvirhe",
   "未知失败": "Tuntematon virhe",
   "所有服务": "Kaikki palvelut",
-  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Kenttiä on valittu liikaa; kaavio näyttää vain ensimmäiset. Rajaa valintaa Kenttä-valinnalla"
+  "选中的字段太多，曲线图只展示前若干个；用「字段」缩小选择": "Kenttiä on valittu liikaa; kaavio näyttää vain ensimmäiset. Rajaa valintaa Kenttä-valinnalla",
+  "显示方式": "Näyttötapa"
 }
