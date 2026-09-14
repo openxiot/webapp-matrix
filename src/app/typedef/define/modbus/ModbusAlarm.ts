@@ -237,6 +237,31 @@ export class ModbusAlarmList {
 }
 
 /**
+ * 把「处理」成功后回来的那一条替进清单（**就地替换，不整页刷新**），并按「刚处理掉一条」修正计数。
+ *
+ * <p>两个地方容易错，故收成一个纯函数、单测钉住：**计数不能减两次**（后端把重复处理当成功，
+ * 一条本来就已经处理过的行再点一次不该让「未处理」变成负数），以及**只动会变的那一格** ——
+ * 处理既不改级别也不改告警文本，`byLevel` / `byText` 两份分布原样留着，仍以后端给的那一份为准。</p>
+ *
+ * <p>注意列表当前的筛选条件不被重新施加：筛「只看未处理」时，刚处理掉的那一行**仍留在表里**
+ * （显示成「已处理」）。这是有意的 —— 用户刚点过的那条要能看见结果，而不是点完就从眼前消失。</p>
+ */
+export function applyHandledAlarm(list: ModbusAlarmList, updated: ModbusAlarm): ModbusAlarmList {
+  const before = list.items.find((item) => item.id === updated.id);
+  // `before != null` 这一半不能省：清单里根本没有这一条时（筛选刚换过）什么都没变，
+  // 而 `before?.handled !== true` 在 before 为 undefined 时是**成立**的，会把计数白减一次
+  const justHandled = before != null && before.handled !== true && updated.handled === true;
+  return {
+    ...list,
+    items: list.items.map((item) => (item.id === updated.id ? updated : item)),
+    summary: {
+      ...list.summary,
+      unhandled: justHandled ? Math.max(0, list.summary.unhandled - 1) : list.summary.unhandled,
+    },
+  };
+}
+
+/**
  * 告警清单的筛选条件，与接口的查询参数一一对应（**不传 = 不限**）。
  *
  * `open` / `handled` 用 `boolean | null | undefined` 而不是 `boolean`：它们的「不传」与 `false`

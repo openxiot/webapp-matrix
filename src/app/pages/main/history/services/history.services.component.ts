@@ -46,6 +46,7 @@ import {
   ModbusHistoryRange,
 } from '../../../../typedef/define/modbus/ModbusHistory';
 import { isBucket } from '../../../../typedef/codec/modbus/ModbusHistoryCodec';
+import { numberText, valueText } from '../../../../typedef/utils/ValueUtils';
 import { isReadFunction } from '../../device/services/service/service.functions';
 import { historyFieldOption } from '../../device/services/service/history/device.service.history.charts';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
@@ -783,17 +784,6 @@ function byFieldOrder(results: FieldData[], refs: FieldRef[]): FieldData[] {
   );
 }
 
-/** 采样值的展示文案：数值收一收浮点误差，对象退化成 JSON，null 显示 - */
-function valueText(value: unknown): string {
-  if (value === null || value === undefined) {
-    return '-';
-  }
-  if (typeof value === 'number') {
-    return numberText(value);
-  }
-  return typeof value === 'object' ? JSON.stringify(value) : String(value);
-}
-
 /**
  * 降采样桶的展示文案：有统计量（数值字段）时给「均值 (最小 ~ 最大)」，与曲线图上
  * 「实线 + 两条虚线」是同三个数；非数值字段没有统计量，退回桶首尾的状态值。
@@ -809,11 +799,6 @@ function bucketText(bucket: ModbusHistoryBucket): string {
   const first = valueText(bucket.first);
   const last = valueText(bucket.last);
   return first === last ? first : `${first} ~ ${last}`;
-}
-
-/** 数值文案：整数不带小数点，浮点收到 4 位（0.30000000000000004 → 0.3） */
-function numberText(value: number): string {
-  return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(4)));
 }
 
 /** 采集时刻：桶写成「起点 ~ 终点」，跨天时终点写全，同一天只写时分秒 */

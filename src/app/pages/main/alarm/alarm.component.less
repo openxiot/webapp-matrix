@@ -1,0 +1,70 @@
+.main-alarm {
+  padding: 20px 20px;
+
+  /* 提示条之间的间距由 nz-row 的 gutter 给（每个 alert 都在自己的 nz-col 里），不留 margin */
+  nz-alert {
+    display: block;
+  }
+}
+
+/* 筛选条：一行一项，两列网格（与两个历史页同一个写法）—— 标签列宽度取本语言最长的标签，控件列左边对齐 */
+.main-alarm-toolbar {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.main-alarm-label {
+  color: #8c8c8c;
+}
+
+/* 一行里可能不止一个控件（时间范围：预设 + 自定义区间） */
+.main-alarm-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 服务名可长可短，给足宽度（下拉里还要带搜索） */
+.main-alarm-select {
+  width: 360px;
+}
+
+/* 级别 / 处理 / 状态三档：选项就那么两三个，窄一点，别把筛选条拉成一整行 */
+.main-alarm-select-narrow {
+  width: 160px;
+}
+
+/* 汇总标签：换行后的行距也用 gap 给，别指望 nz-tag 自带 margin（标签是数据宽度，行/列分不了） */
+.main-alarm-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 告警文本是用户自己填的一句话，可能很长：让它换行，别把整张表撑出去 */
+.main-alarm-text {
+  word-break: break-all;
+}
+
+/* 状态/处理两列里跟在标签后面的时刻与处理人：压小压灰，与历史页的写法一致 */
+.main-alarm-time {
+  margin-left: 6px;
+  color: #8c8c8c;
+  font-size: 12px;
+}
+
+/* 关闭方式后面缀的枚举名：排查时要拿它去搜后端日志，故留在明面上，但压小、压灰（同历史页） */
+.main-alarm-enum {
+  margin-left: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #bfbfbf;
+}
+
+.main-alarm-hint {
+  color: #8c8c8c;
+  font-size: 12px;
+}

@@ -1,11 +1,273 @@
 <nz-page-header [nzTitle]="pageTitle" [nzGhost]="false">
-  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+  <nz-breadcrumb
+    [nzAutoGenerate]="true"
+    nz-page-header-breadcrumb
+    appBreadcrumbTranslate
+  ></nz-breadcrumb>
+
+  <nz-page-header-extra>
+    <button nz-button [nzLoading]="loading()" (click)="load()">
+      <span nz-icon nzType="reload"></span>
+      {{ '刷新' | translate }}
+    </button>
+  </nz-page-header-extra>
+
+  <nz-page-header-content>
+    @if (summary(); as s) {
+      <nz-descriptions nzSize="small" [nzColumn]="3">
+        <nz-descriptions-item nzTitle="{{ '告警清单' | translate }}" [nzSpan]="1">
+          {{ s.total }} {{ '条' | translate }}
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="{{ '未处理' | translate }}" [nzSpan]="1">
+          {{ s.unhandled }}
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="{{ '未恢复' | translate }}" [nzSpan]="1">
+          {{ s.open }}
+        </nz-descriptions-item>
+      </nz-descriptions>
+    }
+  </nz-page-header-content>
+
+  <ng-template #pageTitle>
+    {{ '告警' | translate }}
+  </ng-template>
 </nz-page-header>
 
-<ng-template #pageTitle>
-  {{ '告警' | translate }}
-</ng-template>
+<div class="main-alarm">
+  <nz-spin [nzSpinning]="loadingGraph() || loading()">
+    <nz-row [nzGutter]="[8, 8]">
+      <nz-col nzSpan="24">
+        <nz-card [nzBordered]="false">
+          <!-- 一行一项，两列网格（与两个历史页同一个写法）：标签列宽度取本语言最长的标签，控件列左边对齐 -->
+          <div class="main-alarm-toolbar">
+            <span class="main-alarm-label">{{ '时间范围' | translate }}</span>
+            <div class="main-alarm-controls">
+              <nz-segmented
+                nzSize="small"
+                [nzOptions]="presetOptions()"
+                [ngModel]="preset()"
+                (ngModelChange)="onPresetChange($event)"
+              ></nz-segmented>
+              @if (preset() === 'custom') {
+                <nz-range-picker
+                  nzSize="small"
+                  nzShowTime
+                  [ngModel]="customRange()"
+                  (ngModelChange)="onCustomRangeChange($event)"
+                ></nz-range-picker>
+              }
+            </div>
 
-<div style="padding: 20px 20px">
-  {{ '待完成……' | translate }}
+            <!-- 四个筛选都不做「全部」那一项：不选就是全部，占位符说的正是这件事（见组件里 serviceOptions 的注释） -->
+            <span class="main-alarm-label">{{ '服务' | translate }}</span>
+            <nz-select
+              class="main-alarm-select"
+              nzSize="small"
+              nzAllowClear
+              nzShowSearch
+              [nzPlaceHolder]="'所有服务' | translate"
+              [ngModel]="serviceId()"
+              (ngModelChange)="onServiceChange($event)"
+            >
+              @for (service of serviceOptions(); track service.value) {
+                <nz-option [nzValue]="service.value" [nzLabel]="service.label"></nz-option>
+              }
+            </nz-select>
+
+            <span class="main-alarm-label">{{ '告警级别' | translate }}</span>
+            <nz-select
+              class="main-alarm-select-narrow"
+              nzSize="small"
+              nzAllowClear
+              [nzPlaceHolder]="'全部' | translate"
+              [ngModel]="level()"
+              (ngModelChange)="onLevelChange($event)"
+            >
+              @for (option of levelOptions(); track option.value) {
+                <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+              }
+            </nz-select>
+
+            <span class="main-alarm-label">{{ '处理' | translate }}</span>
+            <nz-select
+              class="main-alarm-select-narrow"
+              nzSize="small"
+              nzAllowClear
+              [nzPlaceHolder]="'全部' | translate"
+              [ngModel]="handled()"
+              (ngModelChange)="onHandledChange($event)"
+            >
+              @for (option of handledOptions(); track option.value) {
+                <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+              }
+            </nz-select>
+
+            <!-- 标签用「状态」（与表格里那一列同名）：两个下拉的分工是「谁处理了」与「值回来了没有」 -->
+            <span class="main-alarm-label">{{ '状态' | translate }}</span>
+            <nz-select
+              class="main-alarm-select-narrow"
+              nzSize="small"
+              nzAllowClear
+              [nzPlaceHolder]="'全部' | translate"
+              [ngModel]="open()"
+              (ngModelChange)="onOpenChange($event)"
+            >
+              @for (option of openOptions(); track option.value) {
+                <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+              }
+            </nz-select>
+          </div>
+        </nz-card>
+      </nz-col>
+
+      @if (error()) {
+        <nz-col nzSpan="24">
+          <nz-alert nzType="error" nzShowIcon [nzMessage]="error()"></nz-alert>
+        </nz-col>
+      }
+
+      <nz-col nzSpan="24">
+        <nz-card [nzBordered]="false" nzTitle="{{ '告警清单' | translate }}">
+          <!-- 汇总、表格、截断提示各占一列：竖向间隔交给 gutter（横向留 0，别把表格挤离卡片标题） -->
+          <nz-row [nzGutter]="[0, 8]">
+            @if (summary(); as s) {
+              @if (s.byLevel.length > 0) {
+                <nz-col nzSpan="24">
+                  <div class="main-alarm-summary">
+                    <span class="main-alarm-label">{{ '告警级别' | translate }}</span>
+                    @for (item of s.byLevel; track item.level) {
+                      <!-- 级别是后端枚举名，标签走词典；占比看条数（同一批行上数得出来的那个口径） -->
+                      <nz-tag [nzColor]="levelColor(item.level)" [title]="item.level">
+                        {{ levelLabel(item.level) }} × {{ item.count }}
+                      </nz-tag>
+                    }
+                  </div>
+                </nz-col>
+              }
+              @if (s.byText.length > 0) {
+                <nz-col nzSpan="24">
+                  <div class="main-alarm-summary">
+                    <span class="main-alarm-label">{{ '告警文本' | translate }}</span>
+                    @for (item of s.byText; track item.text) {
+                      <!-- 告警文本是用户自己填的：**原样显示、永不翻译**（翻译它等于改用户的数据） -->
+                      <nz-tag>{{ item.text }} × {{ item.count }}</nz-tag>
+                    }
+                  </div>
+                </nz-col>
+              }
+            }
+            <nz-col nzSpan="24">
+              <nz-table
+                #alarmTable
+                [nzData]="rows()"
+                [nzPageIndex]="pageIndex()"
+                (nzPageIndexChange)="pageIndex.set($event)"
+                [nzPageSize]="20"
+                [nzShowSizeChanger]="false"
+                [nzShowPagination]="rows().length > 20"
+                nzSize="small"
+              >
+                <!-- 不写 nzWidth：表是 table-layout: auto，nzWidth 落成 col 的 width + **min-width**，
+                     加起来比窗口还宽时反而把列挤住。各列长短本就由服务端的数据决定 -->
+                <thead>
+                  <tr>
+                    <th>{{ '告警时间' | translate }}</th>
+                    <th>{{ '服务' | translate }}</th>
+                    <th>{{ '方法' | translate }}</th>
+                    <th>{{ '字段' | translate }}</th>
+                    <th>{{ '触发条件' | translate }}</th>
+                    <th>{{ '告警文本' | translate }}</th>
+                    <th>{{ '当前值' | translate }}</th>
+                    <th>{{ '状态' | translate }}</th>
+                    <th>{{ '处理' | translate }}</th>
+                    <th>{{ '操作' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- 一条告警一个 id：就地替换那一行时靠它定位（历史行没有逐行动作，故那边不需要 id） -->
+                  @for (item of alarmTable.data; track item.id) {
+                    <tr>
+                      <!-- 越限**首次出现**的时刻：持续越限不重复记，回正常后再越限才是新的一条 -->
+                      <td>{{ item.at | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+                      <td>
+                        <!-- 服务还在空间图里就给条点得进去的链接；已被挪走/删掉（只有 id 认得出）时退成纯文本 -->
+                        @if (service(item); as s) {
+                          <a [routerLink]="serviceHistoryLink(s)">{{ s.name }}</a>
+                        } @else {
+                          {{ serviceName(item) }}
+                        }
+                      </td>
+                      <td>#{{ item.functionIndex }}</td>
+                      <!-- 字段（出值名）与下面的告警文本都是数据：原样显示 -->
+                      <td>{{ item.field }}</td>
+                      <!-- 触发条件是**行内快照**：定义改了不该改写历史告警的含义 -->
+                      <td>{{ condition(item) }}</td>
+                      <td class="main-alarm-text">{{ item.text || '-' }}</td>
+                      <td>{{ sampleText(item) }}</td>
+                      <td>
+                        <nz-tag [nzColor]="item.recoveredAt ? 'default' : 'error'">
+                          {{ (item.recoveredAt ? '已恢复' : '未恢复') | translate }}
+                        </nz-tag>
+                        @if (item.recoveredAt) {
+                          <span class="main-alarm-time" [title]="'恢复时间' | translate">
+                            {{ item.recoveredAt | date: 'MM-dd HH:mm:ss' }}
+                          </span>
+                          <!-- 怎么关掉的：DEFINITION = 定义不再覆盖这个键（字段被删/告警被关），不是值回来了。
+                               后端枚举名，原样显示（排查时要拿它去搜日志），与历史页露枚举名是同一个做法 -->
+                          @if (item.closeType === 'DEFINITION') {
+                            <span class="main-alarm-enum" title="{{ item.closeType }}">
+                              {{ item.closeType }}
+                            </span>
+                          }
+                        }
+                      </td>
+                      <td>
+                        <nz-tag [nzColor]="item.handled ? 'success' : 'warning'">
+                          {{ (item.handled ? '已处理' : '未处理') | translate }}
+                        </nz-tag>
+                        @if (item.handledBy?.name) {
+                          <span class="main-alarm-time">
+                            <!-- 处理人与处理时刻都是服务端给的（名字是账号数据），原样显示 -->
+                            <span [title]="'处理人' | translate">{{ item.handledBy?.name }}</span>
+                            @if (item.handledBy?.timestamp) {
+                              <span [title]="'处理时间' | translate">
+                                · {{ item.handledBy?.timestamp | date: 'MM-dd HH:mm:ss' }}
+                              </span>
+                            }
+                          </span>
+                        }
+                      </td>
+                      <td>
+                        <!-- 已处理的行不给按钮：那条路径是给「两个窗口同时开着、别人先处理了」留的，
+                             后点的人还是会成功（后端把重复处理当成功），但页面上没什么可再点的 -->
+                        @if (item.handled !== true) {
+                          <button
+                            nz-button
+                            nzSize="small"
+                            [nzLoading]="handling() === item.id"
+                            (click)="handle(item)"
+                          >
+                            {{ '处理' | translate }}
+                          </button>
+                        } @else {
+                          <span class="main-alarm-hint">-</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </nz-table>
+            </nz-col>
+            @if (truncated()) {
+              <nz-col nzSpan="24">
+                <div class="main-alarm-hint">
+                  {{ '异常记录超过上限，只列出最近的部分' | translate }}
+                </div>
+              </nz-col>
+            }
+          </nz-row>
+        </nz-card>
+      </nz-col>
+    </nz-row>
+  </nz-spin>
 </div>
