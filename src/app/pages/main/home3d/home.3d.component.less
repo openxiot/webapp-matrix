@@ -199,7 +199,7 @@
   background: #1677ff;
 }
 
-/* 角标：折叠在这个空间里的设备数，画在标签右上角 */
+/* 角标：这个空间拥有的设备数，画在标签右上角 */
 .scene-host ::ng-deep .h3d-marker--badged::after {
   position: absolute;
   top: -8px;
@@ -214,6 +214,95 @@
   line-height: 16px;
   text-align: center;
   content: attr(data-badge);
+}
+
+/*
+ * 悬停信息面板：鼠标停在某个标签上时，那个标签说的是什么。跟着标签走。
+ *
+ * **没有 top / left / right / bottom** —— 位置全部由模板上的样式绑定给
+ * （见 home3d.info.ts 的 placePanel），写死在这里会和它打架。
+ *
+ * 配色**照抄标记药丸**（`.h3d-marker` 那一套），不复用 `--hint-bg` / `--hint-fg`：
+ * 那两个是 45% 的黑，一两行字压在上面还行，多出一列字段名就对不上比度了；
+ * 而药丸那套在灰底黑底下都立得住（标记本来就一直这么显示）。何况面板看起来
+ * 就该是「你指的那个标记」延伸出来的一块。
+ *
+ * **不吃指针事件**：它贴在标签旁边，吃了就会抢走从它上面开始的拖拽旋转。
+ */
+.h3d-info {
+  position: absolute;
+  z-index: @scene-overlay-z;
+  /*
+   * ⚠️ 定宽，不是 min/max-width。placePanel 要提前算出「标签右边放不放得下这个
+   * 面板」才能决定往哪边摆，而量的代价是「先渲染再回流」—— 一个定值换掉一次回流。
+   * 改这里必须同时改 home3d.info.ts 里的 INFO_PANEL_WIDTH。
+   */
+  width: 200px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  background: rgba(24, 34, 48, 0.82);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-size: 12px;
+  line-height: 18px;
+  pointer-events: none;
+}
+
+.h3d-info-title {
+  font-size: 13px;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+/* 副标题（空间路径）压暗一档：它是标题的补充，不该跟标题抢注意力 */
+.h3d-info-subtitle {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.65);
+  word-break: break-all;
+}
+
+.h3d-info-row {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+/* 第一行与上面的标题/副标题之间多留一点，把「抬头」和「字段」分开 */
+.h3d-info-title + .h3d-info-row,
+.h3d-info-subtitle + .h3d-info-row {
+  margin-top: 8px;
+}
+
+.h3d-info-label {
+  color: rgba(255, 255, 255, 0.65);
+  white-space: nowrap;
+}
+
+.h3d-info-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  text-align: right;
+  word-break: break-all;
+}
+
+/* 在线状态的小圆点。颜色只是加强，状态本身写在旁边的字里（见 home3d.info.ts） */
+.h3d-info-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.h3d-info-dot--online {
+  background: #52c41a;
+}
+
+.h3d-info-dot--offline {
+  background: rgba(255, 255, 255, 0.45);
 }
 
 /* 提示条不吃指针事件，免得挡住在它上面开始的拖拽旋转 */

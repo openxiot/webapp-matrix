@@ -17,6 +17,45 @@
     </div>
   }
 
+  <!--
+    悬停信息面板：鼠标停在哪个标签上就说哪个是什么，移开立刻消失。**跟着标签走** ——
+    位置由引擎每帧报上来的标签矩形算出来（见 placePanel）。
+
+    只有一块：一次只有一样东西被指着，空间和设备永远不会同时悬停，本来就该是同一张
+    卡片换内容。
+
+    纯只读 —— 要改东西（调位置、取消标注）仍然走点击菜单。所以它不吃指针事件
+    （见样式表），既不会挡住从它上面开始的拖拽旋转，也不会出现「鼠标从标签划到
+    面板上」这种既没离开标签又没进入别的标签的中间态。
+
+    top / bottom 二选一，另一个是 null（Angular 会把那条样式摘掉，落回 CSS 的 auto）——
+    面板朝容器的内侧长，因此不必知道它自己多高。
+  -->
+  @if (hover(); as view) {
+    <div
+      class="h3d-info"
+      [style.left.px]="view.placement.left"
+      [style.top.px]="view.placement.top"
+      [style.bottom.px]="view.placement.bottom"
+    >
+      <div class="h3d-info-title">{{ view.panel.title }}</div>
+      @if (view.panel.subtitle) {
+        <div class="h3d-info-subtitle">{{ view.panel.subtitle }}</div>
+      }
+      @for (row of view.panel.rows; track row.label) {
+        <div class="h3d-info-row">
+          <span class="h3d-info-label">{{ row.label }}</span>
+          <span class="h3d-info-value">
+            @if (row.tone) {
+              <i class="h3d-info-dot h3d-info-dot--{{ row.tone }}"></i>
+            }
+            {{ row.value }}
+          </span>
+        </div>
+      }
+    </div>
+  }
+
   <div class="scene-actions">
     <!--
       两颗开关是「看什么」（图层），右边几颗是「做什么」（动作），所以放左边。
@@ -49,19 +88,22 @@
       <span>{{ '重置视角' | translate }}</span>
     </button>
     <!--
-      只在全屏里出现：它是「换个底看模型」的摆设性操作，平时不该占工具栏的位置。
+      只在全屏里**可用**，非全屏时可见但置灰（不是藏起来）：
+      它是「换个底看模型」的摆设性操作，平时不该能点；但藏着的话没人知道这个功能
+      存在，置灰才看得出「有这么个东西、得进全屏才能用」。
+
+      顺带一个好处：按钮位置固定，进出全屏时这一排不再因为多一颗少一颗而整体挪动。
+
       退出全屏会把背景复位成灰（见 onFullscreenChange），否则退出来就卡在「页面是
-      黑的、而唯一能切回来的按钮没了」。
+      黑的、而按钮已经点不动了」。
 
       文案说的是「点了会变成什么」，跟全屏那颗一致。灰底时按钮写「黑色背景」，
       黑底时写「灰色背景」—— 只写「切换背景」的话没人知道会切到哪儿去。
     -->
-    @if (isFullscreen()) {
-      <button nz-button (click)="toggleBackground()">
-        <nz-icon nzType="bg-colors" />
-        <span>{{ (background() === 'gray' ? '黑色背景' : '灰色背景') | translate }}</span>
-      </button>
-    }
+    <button nz-button [disabled]="!isFullscreen()" (click)="toggleBackground()">
+      <nz-icon nzType="bg-colors" />
+      <span>{{ (background() === 'gray' ? '黑色背景' : '灰色背景') | translate }}</span>
+    </button>
     <!-- 加载中也能进全屏：模型加载本来就要等几秒，想放大看进度是合理的 -->
     <button nz-button (click)="toggleFullscreen()">
       <nz-icon [nzType]="isFullscreen() ? 'fullscreen-exit' : 'fullscreen'" />

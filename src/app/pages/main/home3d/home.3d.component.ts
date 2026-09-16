@@ -21,15 +21,26 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { TranslatePipe } from '@ngx-translate/core';
 import { MainI18nService } from '../../../service/i18n.service';
 import { AccountService } from '../../../service/account.service';
+import { DeviceDisplayService } from '../../../service/device.display.service';
 import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
 import {
   Model3dScene,
+  type MarkerRect,
   type PickResult,
   type SceneBackground,
   type Vec3,
 } from './model3d.scene';
 import { Home3dData } from './home3d.data';
-import { type AnchorMarker, makeAnchor, spacePath } from './home3d.anchor';
+import { type AnchorMarker, devicesInSpace, makeAnchor, spacePath } from './home3d.anchor';
+import {
+  type InfoPanel,
+  type InfoText,
+  type PanelPlacement,
+  deviceInfo,
+  formatPoint,
+  placePanel,
+  spaceInfo,
+} from './home3d.info';
 import { Home3dMenuComponent, type Home3dMenuItem } from './menu/home3d.menu.component';
 import {
   AnchorBindComponent,
@@ -44,12 +55,6 @@ import {
 
 /** 压缩后的模型产物，路径相对于 index.html（见 3d/README.md 的生成管线） */
 const MODEL_URL = '3d/001/scene.glb';
-
-/** 坐标显示：三位小数够定位到厘米级，再长菜单里排不下 */
-function formatPoint(point: Vec3): string {
-  const round = (value: number) => value.toFixed(3);
-  return `${round(point.x)}, ${round(point.y)}, ${round(point.z)}`;
-}
 
 /** 菜单开在哪儿、对谁开 */
 interface MenuState {
@@ -99,10 +104,32 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
   /** 场景背景。只活在本次会话里，刷新回到默认的灰 */
   protected readonly background = signal<SceneBackground>('gray');
 
+  /**
+   * 鼠标停着的那个东西。空 = 没悬停，面板就不画。
+   *
+   * `id` 装的是**实体 id 而不是标记 id**：空间标记就是空间 id，设备标记是设备的
+   * **did**（不是标记 id —— 「显示设备」那份标记的 id 是 `空间id@did`，不能当 did 用）。
+   *
+   * 存 id 不存实体：空间图每次写完都整棵重拉，实体对象是新的，存实体的话面板会
+   * 一直指着上一版的那棵树。存 id 则每次都拿当下的图去查，实体真被删掉了就自然
+   * 查不到，面板跟着消失。
+   */
+  private readonly hovered = signal<{ kind: 'space' | 'device'; id: string } | null>(null);
+
+  /**
+   * 被悬停的那个标签此刻在画布上的矩形。引擎每帧跟着标签更新它，面板据此贴着走。
+   *
+   * 与 `hovered` 分开：标签一动（转视角）这个值就变一次，而面板的**内容**没变 ——
+   * 混成一个信号会让整块面板每帧重算重画一遍。
+   */
+  private readonly hoverRect = signal<MarkerRect | null>(null);
+
   private readonly sceneHost = viewChild.required<ElementRef<HTMLElement>>('sceneHost');
   private readonly sceneWrap = viewChild.required<ElementRef<HTMLElement>>('sceneWrap');
   private readonly i18n = inject(MainI18nService);
   private readonly account = inject(AccountService);
+  /** 信息面板要设备的显示名与型号。与 space.devices.component 一样直接注入 */
+  private readonly display = inject(DeviceDisplayService);
   private readonly modal = inject(NzModalService);
   private readonly viewContainerRef = inject(ViewContainerRef);
   protected readonly data = inject(Home3dData);
@@ -118,9 +145,9 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
    * `fullscreenchange`。自己记的布尔量在这种时候就跟浏览器说的不一致了，按钮会
    * 显示成「退出全屏」而实际已经不在全屏。
    *
-   * 退出全屏顺带把背景复位成灰：背景切换按钮**只在全屏里出现**，那它改出来的黑底
-   * 也只该活在全屏里 —— 不退的话页面就卡在「一片黑、而唯一能切回来的按钮不见了」。
-   * 再进全屏是灰的、得重新切一次，这是刻意的。
+   * 退出全屏顺带把背景复位成灰：背景切换按钮**只在全屏里可用**（非全屏时可见但
+   * 置灰），那它改出来的黑底也只该活在全屏里 —— 不退的话页面就卡在「一片黑、而
+   * 按钮已经点不动了」。再进全屏是灰的、得重新切一次，这是刻意的。
    *
    * ⚠️ `ngAfterViewInit` 会主动调一次本方法来对初值，那时通常不是全屏 → 会走到
    * 复位那一条。此刻背景本来就是灰的，所以无害；但要是以后有人把 `background` 的
@@ -149,6 +176,54 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
     this.i18n.currentLang();
     return this.i18n.translate.instant('点击模型上新的位置') + '：' + marker.name;
   });
+
+  /**
+   * 悬停面板：内容 + 该摆哪儿。查不到实体就整个不画（悬停的标记可能刚被删掉，
+   * 空间图也可能刚换过一轮）。
+   *
+   * 内容与位置**算在一起**，不拆成两个 computed：拆开的话模板会先看到「有内容、
+   * 没位置」的中间态，面板会闪一下在左上角（`.h3d-info` 是绝对定位且没有默认
+   * top/left，没给位置就落在容器的静态位置）。
+   *
+   * 用 computed 而不是在模板里调方法：设备显示名是**先返回占位名、随后异步补上**
+   * 的（见 DeviceDisplayService.name），computed 的依赖收集是确定的，名字到位后
+   * 这里会自己重算；模板里调方法就得指望模板那层的响应式上下文正好覆盖到它。
+   * （`markers()` 接异步名字用的也是这个办法。）
+   *
+   * `currentLang()` 那行不能省：面板上的标签是 instant 拼出来的，不读这个信号
+   * 切语言后面板不会重算，会停在上一种语言 —— 与上面 `movingHint` 同一个理由。
+   *
+   * 至于**为什么只有一块面板**：一次只有一样东西被指着（见 `onMarkerHover`），
+   * 空间面板和设备面板永远不会同时出现，所以它们本来就该是同一块卡片换内容。
+   */
+  protected readonly hover = computed<{ panel: InfoPanel; placement: PanelPlacement } | null>(
+    () => {
+      const hovered = this.hovered();
+      const rect = this.hoverRect();
+      if (!hovered || !rect) {
+        return null;
+      }
+      this.i18n.currentLang();
+
+      const panel = this.infoPanelFor(hovered);
+      if (!panel) {
+        return null;
+      }
+      // 面板跟着标签走，所以要按容器当前尺寸判断往哪边摆
+      const wrap = this.sceneWrap().nativeElement;
+      return { panel, placement: placePanel(rect, { width: wrap.clientWidth, height: wrap.clientHeight }) };
+    },
+  );
+
+  /** 悬停的东西对应的信息面板内容。实体查不到就 null */
+  private infoPanelFor(hovered: { kind: 'space' | 'device'; id: string }): InfoPanel | null {
+    if (hovered.kind === 'space') {
+      const space = this.data.spaceById().get(hovered.id);
+      return space ? spaceInfo(space, this.data.spaceById(), this.data.devices(), this.infoText()) : null;
+    }
+    const device = this.data.deviceById().get(hovered.id);
+    return device ? deviceInfo(device, this.data.spaceById(), this.infoText()) : null;
+  }
 
   /** 已加载的项目 id（与 account.space() 比对，变了才重载） */
   private currentSpaceId = '';
@@ -238,7 +313,7 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
    * 灰是默认，也是 `.scene-wrap` 的 CSS 底色。改 CSS 那层是为了 canvas 没铺满时
    * （首次布局、缩放瞬间、进出全屏的过渡帧）露出来的仍是同一个颜色，不闪。
    *
-   * 按钮只在全屏时出现（见模板），退出全屏会自动复位成灰（见 onFullscreenChange）。
+   * 按钮在非全屏时置灰不可用（见模板），退出全屏会自动复位成灰（见 onFullscreenChange）。
    */
   protected toggleBackground(): void {
     this.background.update((current) => (current === 'gray' ? 'black' : 'gray'));
@@ -250,7 +325,7 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
     this.onLayerToggle();
   }
 
-  /** 「显示设备」：把空间角标展开成设备列表 */
+  /** 「显示设备」：把这个空间里还没单独标点的设备逐行列出来，不再只出一个角标数 */
   protected toggleDevices(show: boolean): void {
     this.data.showDevices.set(show);
     this.onLayerToggle();
@@ -259,9 +334,13 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
   /**
    * 翻任一图层开关之后的收尾。
    *
-   * **菜单一律关掉。** 它是钉在被点那个标记上的：层一翻，菜单里的数字（「设备 N 台」
-   * 读的是角标快照）和它指的东西都可能对不上了，更糟的是「取消标注」这类写库操作
-   * 会落在一个已经看不见的标记上 —— 看不见的东西被改掉，用户没有任何线索。
+   * **菜单一律关掉。** 它是钉在被点那个标记上的，而层一翻，那个标记本身可能就没了
+   * （关「显示空间」收掉空间标签，关「显示设备」收掉列在空间下的那些行）——
+   * 更糟的是「取消标注」这类写库操作会落在一个已经看不见的标记上，
+   * 看不见的东西被改掉，用户没有任何线索。
+   *
+   * （菜单里的「设备 N 台」不在此列：它是现算的，不读任何快照，层开关也改不了
+   * 设备归属。要防的是「菜单指着一个没了的东西」。）
    *
    * **「调整位置」只在目标真的消失时才取消。** 目标还在的话，用户正在做的事完全没
    * 受影响，平白取消掉反而莫名其妙。信号是同步的，所以这里读到的 `markers()` 已经
@@ -338,7 +417,10 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
     // 两者语义不同，所以文案和能力都分开
     const items: Home3dMenuItem[] = isSpace
       ? [
-          { id: 'devices', label: this.t('设备 {{count}} 台', { count: this.deviceCount(marker) }) },
+          {
+            id: 'devices',
+            label: this.t('设备 {{count}} 台', { count: this.spaceDeviceCount(marker) }),
+          },
           { id: 'move', label: this.t('调整位置') },
           { id: 'unbind', label: this.t('取消标注'), danger: true },
           { id: 'dismiss', label: this.t('取消') },
@@ -354,6 +436,39 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
       marker,
       items,
     });
+  }
+
+  /**
+   * 鼠标停到一个标记上，或者移开（两个 `null`）。见 `Model3dScene.onMarkerHover`。
+   *
+   * 这个回调**同一个 id 会来很多次** —— 标签一动引擎就重报一次位置。所以位置每次都
+   * 写（面板要跟着走），而**目标只在真的换了的时候才写**：写的话 `hover()` 那个
+   * computed 会重算，转个视角就把面板内容每帧重拼一遍，纯属白干。
+   */
+  private onMarkerHover(id: string | null, rect: MarkerRect | null): void {
+    if (!id || !rect) {
+      this.hovered.set(null);
+      this.hoverRect.set(null);
+      return;
+    }
+    // 与 onMarkerClick 同一个写法：标记可能刚被删掉（另开一个标签页取消了标注之类），
+    // 查不到就当没悬停
+    const marker = this.data.markers().find((item) => item.id === id);
+    if (!marker) {
+      this.hovered.set(null);
+      this.hoverRect.set(null);
+      return;
+    }
+
+    // 一次只有一样东西被指着，所以这里直接覆盖就行，不用分别清
+    const kind = marker.kind === 'space' ? 'space' : 'device';
+    // ⚠️ 设备认 deviceId 不认 id：设备标记的 id 可能是 `空间id@did`
+    const entityId = kind === 'space' ? marker.spaceId : (marker.deviceId ?? '');
+    const current = this.hovered();
+    if (current?.kind !== kind || current.id !== entityId) {
+      this.hovered.set({ kind, id: entityId });
+    }
+    this.hoverRect.set(rect);
   }
 
   /**
@@ -463,13 +578,17 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * 这个标记「折叠」了几台设备。
+   * 这个空间下有几台设备。菜单上的「设备 N 台」用它。
    *
-   * 直接读角标，**不在这里重算一遍** —— 「哪些设备算折叠」的规则只该在
-   * `buildMarkers` 里有一份，两处实现迟早对不上（菜单说 3 台、角标画 2 台）。
+   * 与空间标记上那个角标**同一个口径**（都是 {@link devicesInSpace}，即「这个空间
+   * 拥有几台」，与设备有没有单独标点无关），也和悬停面板的「设备数量」、空间设备
+   * 弹窗同源 —— 四处必须永远是同一个数。
+   *
+   * ⚠️ 但仍然**不能改读角标**：角标只在「显示设备」关着时才画（展开了就不重复报数），
+   * 读它会在勾上开关后变回恒定的 0。早先就是栽在这里：菜单说 4 台、弹窗列了 7 台。
    */
-  private deviceCount(marker: AnchorMarker): number {
-    return marker.kind === 'device' ? 1 : Number(marker.spec.badge ?? 0);
+  private spaceDeviceCount(marker: AnchorMarker): number {
+    return devicesInSpace(this.data.devices(), marker.spaceId).length;
   }
 
   /* ----------------------------------------------------------------------------------------------
@@ -553,6 +672,21 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
     return this.i18n.translate.instant(key, params);
   }
 
+  /**
+   * 信息面板要的翻译与取名。
+   *
+   * 每次现造一个对象、**不缓存**：`deviceName` 背后是异步补名字的
+   * （`DeviceDisplayService.name`），缓存住这个对象就等于把「名字后来才到」这件事
+   * 挡在响应式之外了。反正只有悬停时才算，代价可以忽略。
+   */
+  private infoText(): InfoText {
+    return {
+      t: (key) => this.t(key),
+      deviceName: (device) => this.display.name(device),
+      deviceModel: (device) => this.display.model(device),
+    };
+  }
+
   private initScene(): void {
     const host = this.sceneHost().nativeElement;
     if (this.scene || host.clientWidth === 0 || host.clientHeight === 0) {
@@ -573,6 +707,13 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
       const marker = this.data.markers().find((item) => item.id === id);
       if (marker) {
         this.onMarkerPick(marker, screen);
+      }
+    });
+    // 悬停面板。这里的 destroyed 守卫是必须的：引擎 dispose() 会把标记逐个摘掉，
+    // 摘到正悬着的那个时会补发一个 null 过来。
+    scene.onMarkerHover((id, rect) => {
+      if (!this.destroyed) {
+        this.onMarkerHover(id, rect);
       }
     });
     this.scene = scene;

@@ -6,6 +6,7 @@ import {
   MODEL_REV,
   anchorIsValid,
   buildMarkers,
+  devicesInSpace,
   makeAnchor,
   resolveDeviceAnchor,
   spacePath,
@@ -14,13 +15,15 @@ import {
 /**
  * 锚点数据模型的规则。
  *
- * 这些函数错了**不会报错，只会悄悄不对**，而且两种错法方向相反、都很难看出来：
+ * 这些函数错了**不会报错，只会悄悄不对**，而且几种错法方向相反、都很难看出来：
  *
- * - **回退链**错了 → 没单独标点的设备集体从模型上消失（看起来像「设备没建好」）
- * - **折叠计数**错了 → 角标数字偏大或偏小（菜单说 3 台、角标画 2 台）
+ * - **位置的回退链**错了 → 没单独标点的设备集体从模型上消失（看起来像「设备没建好」），
+ *   或者反过来，同一台设备在画面上出现两次
+ * - **拥有数**错了 → 角标数字偏大或偏小（菜单说 7 台、角标画 4 台）
+ * - **归属**错了 → 上面这些数各说各的（`devicesInSpace` 只有一份实现，就是为了这个）
  *
- * 所以断言盯着三处：版本校验的边界（`rev` 差一位）、
- * 回退链的两级优先级、以及「角标之和 + 独立设备标记 = 设备总数」这条不变量。
+ * 所以断言盯着四处：版本校验的边界（`rev` 差一位）、回退链的两级优先级、
+ * 「一台设备只画一次」、以及「角标 = 这个空间拥有的设备数」。
  */
 
 function anchor(x: number, y: number, z: number, rev = MODEL_REV): ModelAnchor {
@@ -179,6 +182,26 @@ describe('spacePath', () => {
   });
 });
 
+describe('devicesInSpace', () => {
+  it('只挑这个空间下的设备', () => {
+    const devices = [device('a', 's1'), device('b', 's2'), device('c', 's1')];
+    expect(devicesInSpace(devices, 's1').map((d) => d.did)).toEqual(['a', 'c']);
+  });
+
+  it('空间 id 不认识时是空的，不是「全部」', () => {
+    expect(devicesInSpace([device('a', 's1')], '别的空间')).toEqual([]);
+  });
+
+  it('没挂空间的设备不会掉进任何一个空间', () => {
+    expect(devicesInSpace([device('a', '')], 's1')).toEqual([]);
+  });
+
+  it('自己标过点的也算这个空间的 —— 归属与位置是两件事', () => {
+    const devices = [device('a', 's1', anchor(1, 0, 0)), device('b', 's1')];
+    expect(devicesInSpace(devices, 's1').map((d) => d.did)).toEqual(['a', 'b']);
+  });
+});
+
 describe('buildMarkers', () => {
   it('只给标了点的空间画标记', () => {
     const a = space('s1', 'A栋', anchor(1, 0, 1));
@@ -190,7 +213,7 @@ describe('buildMarkers', () => {
     expect(markers[0].kind).toBe('space');
   });
 
-  it('角标数的是折叠进这个空间的设备', () => {
+  it('角标数的是这个空间**拥有**的设备', () => {
     const a = space('s1', 'A栋', anchor(1, 0, 1));
     const markers = buildMarkers([a], [device('d1', 's1'), device('d2', 's1')]);
 
@@ -198,7 +221,7 @@ describe('buildMarkers', () => {
     expect(markers[0].spec.badge).toBe('2');
   });
 
-  it('没有折叠设备时不出角标，而不是画一个 0', () => {
+  it('没有设备时不出角标，而不是画一个 0', () => {
     const a = space('s1', 'A栋', anchor(1, 0, 1));
     const markers = buildMarkers([a], [device('d1', 's2')]);
 
@@ -206,12 +229,12 @@ describe('buildMarkers', () => {
     expect(markers[0].spec.badge).toBeUndefined();
   });
 
-  it('自己标了点的设备单独出标记，且不再计入空间角标（不被数两遍）', () => {
+  it('自己标过点的设备照样计入角标 —— 角标说的是「有几台」，不是「有几台在这儿」', () => {
     const a = space('s1', 'A栋', anchor(1, 0, 1));
     const devices = [
-      device('d1', 's1', anchor(2, 0, 2)), // 自己标了
-      device('d2', 's1'), // 折叠
-      device('d3', 's1'), // 折叠
+      device('d1', 's1', anchor(2, 0, 2)), // 自己标了，画在自己的坐标上
+      device('d2', 's1'),
+      device('d3', 's1'),
     ];
 
     const markers = buildMarkers([a], devices);
@@ -219,27 +242,48 @@ describe('buildMarkers', () => {
 
     expect(d1?.kind).toBe('device');
     expect(d1?.spaceId).toBe('s1');
-    expect(badgeOf(markers, 's1')).toBe(2); // 不是 3
+    // 3 台都算 A栋 的。早先这里只数「没自己锚点的」，于是角标说 2、菜单说 3
+    expect(badgeOf(markers, 's1')).toBe(3);
   });
 
-  it('不变量：所有角标之和 + 独立设备标记数 = 有归属的设备总数', () => {
+  it('角标与 devicesInSpace 同源 —— 别处算出来的数必须一模一样', () => {
     const a = space('s1', 'A栋', anchor(1, 0, 1));
-    const b = space('s2', 'B栋', anchor(2, 0, 2));
     const devices = [
-      device('d1', 's1', anchor(3, 0, 3)),
-      device('d2', 's1'),
-      device('d3', 's1'),
-      device('d4', 's2'),
-      device('d5', 's2', anchor(4, 0, 4)),
+      device('d1', 's1', anchor(3, 0, 3)), // 自己标过点
+      device('d2', 's1'), // 没标
+      device('d3', 's1', anchor(4, 0, 4, '000.9')), // 锚点版本失效，等于没标
+      device('d4', 's2'), // 别的空间的，不算
     ];
 
-    const markers = buildMarkers([a, b], devices);
-    const badges = markers.reduce((sum, m) => sum + Number(m.spec.badge ?? 0), 0);
-    const alone = markers.filter((m) => m.kind === 'device').length;
+    // 三种情形（自有锚点 / 没有锚点 / 锚点作废）都算 A栋 的，共 3 台
+    expect(badgeOf(buildMarkers([a], devices), 's1')).toBe(
+      devicesInSpace(devices, 's1').length,
+    );
+    expect(badgeOf(buildMarkers([a], devices), 's1')).toBe(3);
+  });
 
-    expect(badges + alone).toBe(devices.length);
-    expect(badges).toBe(3); // s1 收到 d2、d3；s2 收到 d4
-    expect(alone).toBe(2); // d1、d5
+  it('设备全都自己标了点，角标照样出（拥有数不为 0）', () => {
+    const a = space('s1', 'A栋', anchor(1, 0, 1));
+    const devices = [device('d1', 's1', anchor(2, 0, 2)), device('d2', 's1', anchor(3, 0, 3))];
+
+    expect(badgeOf(buildMarkers([a], devices), 's1')).toBe(2);
+  });
+
+  it('不变量：空间下几行 + 该空间的独立标记数 = 这个空间拥有的设备数', () => {
+    const a = space('s1', 'A栋', anchor(1, 0, 1));
+    const devices = [
+      device('d1', 's1', anchor(3, 0, 3)), // 独立
+      device('d2', 's1'), // 列表
+      device('d3', 's1'), // 列表
+    ];
+
+    const markers = buildMarkers([a], devices, { showDevices: true });
+    const listed = markers.filter((m) => m.id.startsWith('s1@')).length;
+    const standalone = markers.filter((m) => m.id === 'd1').length;
+
+    expect(listed).toBe(2);
+    expect(standalone).toBe(1);
+    expect(listed + standalone).toBe(devicesInSpace(devices, 's1').length);
   });
 
   it('空间没标点时，里面的设备一个都不出现（回退链没有落点）', () => {
@@ -308,29 +352,51 @@ describe('buildMarkers · 显示设备', () => {
     }
   });
 
-  it('打开后空间标记不再出角标 —— 否则会「角标 2、下面列了 7 台」自相矛盾', () => {
+  it('打开后空间标记不再出角标 —— 列表已经把它说的事摊开了', () => {
     const s = space('s1', 'A栋', anchor(0, 0, 0));
     const ds = [device('d1', 's1'), device('d2', 's1')];
     expect(badgeOf(buildMarkers([s], ds, { showDevices: true }), 's1')).toBe(0);
   });
 
-  it('自己也有锚点的设备会出现在两处：id 不同、deviceId 相同、坐标各是各的', () => {
+  it('自己标过点的设备**不再**列在所属空间下 —— 一台设备只画一次', () => {
     const s = space('s1', 'A栋', anchor(0, 0, 0));
     const markers = buildMarkers([s], [device('d1', 's1', anchor(9, 9, 9))], {
       showDevices: true,
     });
 
-    // 顺序：pass ① 的独立标记、pass ③ 的空间标记、pass ④ 的空间下那份
-    expect(markers.map((m) => m.id)).toEqual(['d1', 's1', 's1@d1']);
+    // 顺序：pass ① 的独立标记、pass ② 的空间标记。没有 `s1@d1` ——
+    // d1 已经画在自己的坐标上了，挂在空间下会是同一台设备的第二个标签
+    expect(markers.map((m) => m.id)).toEqual(['d1', 's1']);
+    expect(markers.find((m) => m.id === 'd1')?.spec.point).toEqual({ x: 9, y: 9, z: 9 });
+  });
 
-    const standalone = markers.find((m) => m.id === 'd1');
-    const listed = markers.find((m) => m.id === 's1@d1');
-    // 两处位置不同，所以必须是两个标记 —— 引擎按 id 增删，同 id 会被合并成一个
-    expect(standalone?.spec.point).toEqual({ x: 9, y: 9, z: 9 });
-    expect(listed?.spec.point).toEqual({ x: 0, y: 0, z: 0 });
-    // 但写库认的是同一个 deviceId，两处都不能是 `空间id@did`
-    expect(standalone?.deviceId).toBe('d1');
-    expect(listed?.deviceId).toBe('d1');
+  it('不变量：勾上「显示设备」后，每台设备在画面上正好一次', () => {
+    const s = space('s1', 'A栋', anchor(0, 0, 0));
+    const ds = [
+      device('d1', 's1', anchor(9, 9, 9)), // 独立
+      device('d2', 's1'), // 列表
+      device('d3', 's1'), // 列表
+    ];
+
+    const markers = buildMarkers([s], ds, { showDevices: true });
+    const dids = markers
+      .filter((m) => m.kind === 'device')
+      .map((m) => m.deviceId)
+      .sort();
+
+    // 有重复就是同一台设备被画了两处（画面上两个标签、用户分不清哪个是真的）
+    expect(dids).toEqual(['d1', 'd2', 'd3']);
+    expect(new Set(dids).size).toBe(dids.length);
+  });
+
+  it('自己的锚点版本失效时退回空间列表 —— 老坐标不算数，它跟着空间走', () => {
+    const s = space('s1', 'A栋', anchor(0, 0, 0));
+    const stale = device('d1', 's1', anchor(9, 9, 9, '000.9'));
+    const markers = buildMarkers([s], [stale], { showDevices: true });
+
+    // 没有独立的 d1（老坐标不画），但在空间下有一行
+    expect(markers.map((m) => m.id)).toEqual(['s1', 's1@d1']);
+    expect(markers.find((m) => m.id === 's1@d1')?.spec.point).toEqual({ x: 0, y: 0, z: 0 });
   });
 
   it('anchorFrom 分清位置是自有的还是借空间的 —— 菜单据此给不同项', () => {
@@ -340,7 +406,23 @@ describe('buildMarkers · 显示设备', () => {
 
     expect(markers.find((m) => m.id === 'd2')?.anchorFrom).toBe('device');
     expect(markers.find((m) => m.id === 's1@d1')?.anchorFrom).toBe('space');
-    expect(markers.find((m) => m.id === 's1@d2')?.anchorFrom).toBe('device');
+    // d2 自己标了点，所以没有 `s1@d2` 这一份
+    expect(markers.find((m) => m.id === 's1@d2')).toBeUndefined();
+  });
+
+  it('标过点的设备不占列表的行号 —— 行与行之间不留空档', () => {
+    const s = space('s1', 'A栋', anchor(0, 0, 0));
+    const ds = [
+      device('d1', 's1', anchor(9, 9, 9)), // 自己标过点，不参与列表排版
+      device('d2', 's1'),
+      device('d3', 's1'),
+    ];
+
+    const rows = buildMarkers([s], ds, { showDevices: true })
+      .filter((m) => m.id.startsWith('s1@'))
+      .map((m) => m.spec.offset?.y);
+    // 26 / 52 是 DEVICE_ROW_PX 的 1、2 倍（第 0 格留给空间标签）
+    expect(rows).toEqual([26, 52]);
   });
 
   it('空间自己没锚点时，开关打开也一样一台都不出现（回退链没有落点）', () => {

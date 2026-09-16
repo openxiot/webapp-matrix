@@ -6,17 +6,23 @@ import type { MarkerSpec, Vec3 } from './model3d.scene';
 /**
  * 锚点数据模型的唯一权威。纯函数，不依赖 Angular，可单测。
  *
- * 三条规则在这里定死，别处不要再实现一遍：
+ * 四条规则在这里定死，别处不要再实现一遍：
  *
  * 1. **版本不符即失效**（{@link anchorIsValid}）—— 换了模型之后老坐标是无意义的，
  *    静默画到错误位置比不画难查得多，所以一律不渲染。
- * 2. **回退链**（{@link resolveDeviceAnchor}）—— 设备有自己的锚点用自己的，
- *    没有就落到所属空间的锚点。这让「给设备单独标点」变成纯增量：不标也已经在模型上了。
- * 3. **角标不重复计数**（{@link buildMarkers}）—— 单独标了点的设备不再计入
- *    所属空间的角标数字，否则会被数两遍。
+ * 2. **位置的回退链**（{@link buildMarkers}）—— 设备自己标了点就画在自己的坐标上；
+ *    **没有就跟着所属空间走**（挂在空间标签下）。所以「给设备单独标点」是纯增量动作，
+ *    不标也在模型上找得到它。
+ * 3. **一台设备只出现一次**（{@link buildMarkers}）—— 自己标过点的那些**不再**列进
+ *    所属空间的设备列表，否则同一台设备在画面上有两处、用户分不清哪个是真的。
+ * 4. **角标说的是「这个空间拥有几台」**（{@link buildMarkers}）—— 数的是
+ *    {@link devicesInSpace} 那批，与设备有没有单独标点**无关**。这和菜单的
+ *    「设备 N 台」、悬停面板的「设备数量」、空间设备弹窗是同一个口径，
+ *    四处必须永远一致。（角标只在「显示设备」关着时才画，理由见下。）
  *
- * （「显示设备」打开后同一台设备会在自己位置上和所属空间标签下各出现一次，那是
- * 刻意的展开，不算违反第 3 条 —— 它管的是角标那个数。详见 {@link AnchorMarker}。）
+ * 「哪个设备算在这个空间里」也只有一份实现，就是 {@link devicesInSpace} ——
+ * 它曾经在三个地方各写了一遍（角标计数、悬停面板、空间设备弹窗），
+ * 而口径一分家就会出现「角标说 4、菜单说 7」这种没人能解释的数字。
  */
 
 /** 模型标识。与 `public/3d/<id>/scene.glb` 的目录名一致 */
@@ -34,9 +40,10 @@ export const MODEL_REV = '001.1';
 /**
  * 「显示设备」列表的**屏幕**行距（CSS 像素）。
  *
- * 同一个空间下的设备锚点全都落在空间那一个点上，而 CSS2D 默认把标签**中心**钉在
- * 投影点，不给偏移的话它们会完全重叠成一个。这个值比一个标签的高度（12px 字 +
- * 6px 上下内边距 + 边框 ≈ 26px）略大一点，正好一行挨着一行。
+ * 列表里那几行**都落在空间这一个点**上（它们没有自己的锚点，位置是借的），
+ * 而 CSS2D 默认把标签**中心**钉在投影点，不给偏移的话它们会完全重叠成一个。
+ * 这个值比一个标签的高度（12px 字 + 6px 上下内边距 + 边框 ≈ 26px）略大一点，
+ * 正好一行挨着一行。
  *
  * 注意它是**屏幕**像素而不是模型坐标：无论镜头拉多近多远，行距都一样，
  * 不会被透视压扁或撑开。
@@ -87,6 +94,20 @@ export function makeAnchor(
     anchor.ry = ry;
   }
   return anchor;
+}
+
+/**
+ * 这个空间**拥有**的全部设备。
+ *
+ * 「哪个设备算在这个空间里」**只有这一份实现** —— 角标、空间菜单的「设备 N 台」、
+ * 悬停信息面板的「设备数量」、空间设备弹窗，四处说的必须是同一批设备。
+ *
+ * ⚠️ 它回答的是**归属**，与「设备画在哪儿」是两件事：位置归
+ * {@link anchorIsValid} / {@link resolveDeviceAnchor} 那条链管。所以一台单独标过点、
+ * 已经画在别处的设备**照样算在这个空间的拥有数里**。
+ */
+export function devicesInSpace(devices: DeviceEntity[], spaceId: string): DeviceEntity[] {
+  return devices.filter((device) => device.space?.spaceId === spaceId);
 }
 
 /** 空间的有效锚点（未标注或已失效都返回 null） */
@@ -156,10 +177,10 @@ export interface AnchorMarker {
   /**
    * 标记自身的唯一键，与 `spec.id` 相同。
    *
-   * ⚠️ **设备标记上它不一定等于 did。** 「显示设备」打开后，一台自己也有锚点的
-   * 设备会同时出现在两处（模型上它自己的位置 + 所属空间标签下的列表），两处位置
-   * 不同、必须是两个标记；而引擎 `setMarkers` 是按 id 做增删的，同 id 会被合并成
-   * 一个。所以空间下那份的 id 由 {@link spaceDeviceKey} 生成：`空间id@did`。
+   * ⚠️ **设备标记上它不一定等于 did。** 「显示设备」列在空间标签下的那些设备的 id
+   * 由 {@link spaceDeviceKey} 生成：`空间id@did`，为的是与设备**自己那份**标记
+   * （id 就是 did）永不撞脸 —— 引擎 `setMarkers` 是按 id 做增删的，同 id 会被
+   * 合并成一个。
    *
    * 要设备 did 请用 {@link AnchorMarker.deviceId}，不要用这个。
    */
@@ -174,6 +195,7 @@ export interface AnchorMarker {
   /**
    * 设备标记才有：位置是来自设备自己的锚点，还是借的所属空间的。
    *
+   * 与 {@link buildMarkers} 的趟次一一对应（① 一律 `'device'`、③ 一律 `'space'`），
    * 菜单据此分岔：借来的只能「在模型上单独标点」，自己的才能「调整位置 / 取消标注」。
    */
   anchorFrom?: 'device' | 'space';
@@ -185,8 +207,10 @@ export interface AnchorMarker {
 /**
  * 「显示设备」列表里，设备挂在所属空间标签下的那个标记 id。
  *
- * 为什么不直接用 did：一台自己也有锚点的设备会同时在两处，而引擎按 id 增删、
- * 同 id 会被合并成一个。加个空间前缀，两处就是两个互不相干的标记。
+ * 为什么不直接用 did：引擎 `setMarkers` 按 id 增删，**同 id 会被合并成一个**。
+ * 今天「列在空间下」与「自己单独标了点」是互斥的（见 {@link buildMarkers} 规则 3），
+ * 所以不加前缀也不会撞；但这个前缀让**列表行**与**设备自己的标记**永远是两个
+ * 命名空间 —— 将来哪一趟又画了两处，也不会被引擎悄悄并成一个。
  */
 export function spaceDeviceKey(spaceId: string, did: string): string {
   return `${spaceId}@${did}`;
@@ -204,18 +228,18 @@ export interface BuildMarkersOptions {
    * 默认值之所以放在「画」这一边，是因为本函数的职责是把数据算成标记，
    * **藏起来是调用方的选择**；应用层那个「默认勾选」归 `Home3dData.showSpaces` 管。
    *
-   * 为 false 时**只有 pass ③ 不画**：pass ① 和 ④ 都不受影响 —— 两层是独立的，
+   * 为 false 时**只有 pass ② 不画**：pass ① 和 ③ 都不受影响 —— 两层是独立的，
    * 空间标签关掉后，空间下那串设备名照常出现，只是头顶少了空间名。见 {@link buildMarkers}。
    */
   showSpaces?: boolean;
   /**
-   * 「显示设备」：把每个空间下的设备逐个列成标签，而不是只出一个角标数。
+   * 「显示设备」：把这个空间**还没单独标点**的设备逐个列成标签，而不是只出一个角标数。
    *
-   * 默认 false。为 false 时本函数的行为与加这个开关之前**完全一致**。
+   * 默认 false。为 false 时本函数的行为与加这个开关之前**完全一致**（都是只出角标）。
    *
    * ⚠️ 它**只管「把角标展开成列表」这一件事** —— 自己单独标过点的设备（pass ①）
    * 一直显示，这个开关和「显示空间」都管不着。两颗开关因此是**不对称**的，
-   * 这是刻意的：pass ① 的行为在加「显示设备」之前就存在，本次不动它。
+   * 这是刻意的：pass ① 的行为在加「显示设备」之前就存在，一直不动它。
    */
   showDevices?: boolean;
   model?: string;
@@ -225,26 +249,28 @@ export interface BuildMarkersOptions {
 /**
  * 把空间图算成一组标记。
  *
- * 四趟，各归各的开关管：
+ * 三趟，各归各的开关管：
  *
  * | 趟 | 画什么 | 谁管 |
  * |---|---|---|
- * | ① | 自己单独标过点的设备 | **一直显示**，两颗开关都管不着 |
- * | ② | 折叠计数 | 不给谁看，只为 ③ 的角标备数 |
- * | ③ | 空间标签（含角标） | `showSpaces` |
- * | ④ | 空间标签下的设备列表 | `showDevices`（位置借 ③ 的锚点） |
+ * | ① | 自己单独标过点的设备（在**自己的坐标**上） | **一直显示**，两颗开关都管不着 |
+ * | ② | 空间标签（含角标） | `showSpaces`（角标还要 `!showDevices`，见下） |
+ * | ③ | 空间标签下的设备列表（**位置借 ② 的锚点**） | `showDevices` |
  *
  * ⚠️ 两个开关**不是**一对对称的图层切换，这是刻意的：① 的行为在加这两个开关之前
  * 就存在，一直没动过；`showDevices` 只管「把角标展开成列表」这一件事。
  * 想「整张画面上一个标签都没有」是做不到的 —— 自己标过点的设备总在。
  *
- * 角标只算没有自己锚点的那些设备，所以「所有角标之和 + 独立设备标记数 = 设备总数」，
- * 一台设备不会在角标里被数两遍。
+ * **一台设备只会落到 ① 或 ③ 之一**（判据都是「自己有没有有效锚点」，共用 `placed`），
+ * 所以画面上它**正好出现一次**：标过点的在自己坐标上，没标过的跟着所属空间走。
+ * 于是「某空间下的行数 + 该空间里独立标记数 = 这个空间拥有的设备数」。
  *
- * ⚠️ 但 pass ④ 的展开列表是**全部**设备，所以一台自己也有锚点的设备会同时出现在
- * 自己的位置上和所属空间标签下 —— 这是刻意的（「这个空间里有哪些设备」要一个完整
- * 答案，不能因为它在模型上另有位置就不算这个空间的）。两处的 `id` 不同、`deviceId`
- * 相同，理由见 {@link AnchorMarker}。
+ * 角标数的是 {@link devicesInSpace} 那批 —— **拥有数**，与谁单独标过点无关，
+ * 因为用户问的是「这个空间里有几台设备」。它和菜单的「设备 N 台」、悬停面板的
+ * 「设备数量」、空间设备弹窗永远是同一个数。
+ *
+ * ⚠️ 但角标只在 `!showDevices` 时画：列表展开的时候角标还挂着，就会出现
+ * 「角标 7、下面只列了 4 行」（另外 3 台画在自己坐标上）这种看着像坏了的画面。
  */
 export function buildMarkers(
   spaces: SpaceEntity[],
@@ -261,7 +287,7 @@ export function buildMarkers(
   const markers: AnchorMarker[] = [];
   const placed = new Set<string>();
 
-  // ① 自己标了点的设备
+  // ① 自己标了点的设备，画在自己的坐标上
   for (const device of devices) {
     const anchor = deviceAnchor(device, model, rev);
     if (!anchor) {
@@ -286,34 +312,20 @@ export function buildMarkers(
     });
   }
 
-  // ② 没有自己点位的设备，按所属空间折叠计数。
-  // 只为 ③ 的角标备数 —— 「显示空间」关掉时这一趟是白算的，但它只是个 Map，
-  // 不值得为省它给下面加一层分支。
-  const collapsed = new Map<string, number>();
-  for (const device of devices) {
-    if (placed.has(device.did)) {
-      continue;
-    }
-    const spaceId = device.space?.spaceId;
-    if (spaceId) {
-      collapsed.set(spaceId, (collapsed.get(spaceId) ?? 0) + 1);
-    }
-  }
-
-  // ③ 标了点的空间
+  // ② 标了点的空间
   for (const space of spaces) {
     const anchor = spaceAnchor(space, model, rev);
-    // ⚠️ 这一跳**与 showSpaces 无关**：锚点是 ③④ 共同的**位置来源**，
-    // 空间标签不画的时候，④ 那串设备名仍然要落在它这个点上。
+    // ⚠️ 这一跳**与 showSpaces 无关**：锚点是 ②③ 共同的**位置来源**，
+    // 空间标签不画的时候，③ 那串设备名仍然要落在它这个点上。
     if (!anchor) {
       continue;
     }
     const point = toVec3(anchor);
 
-    // ③ 空间标签本身。⚠️「显示空间」只管这一趟，**管不着 ④** ——
+    // ② 空间标签本身。⚠️「显示空间」只管这一趟，**管不着 ③** ——
     // 两层是独立的：空间标签关掉后，那串设备名照常出现，只是头顶少了空间名。
     if (showSpaces) {
-      const count = collapsed.get(space.id) ?? 0;
+      const count = devicesInSpace(devices, space.id).length;
       markers.push({
         kind: 'space',
         id: space.id,
@@ -323,8 +335,6 @@ export function buildMarkers(
           id: space.id,
           point,
           label: space.name,
-          // 角标和展开的列表说的不是同一件事（角标只数没自己锚点的，列表是全部），
-          // 一起显示就会出现「角标 3、下面列了 7 台」的矛盾。列出来了就不要角标。
           badge: !showDevices && count > 0 ? String(count) : undefined,
           kind: 'space',
           tone: space.id === activeId ? 'active' : 'default',
@@ -332,13 +342,20 @@ export function buildMarkers(
       });
     }
 
-    // ④ 「显示设备」：这个空间下的每一台都单出一行
+    // ③ 「显示设备」：这个空间里**还没单独标点**的每一台单出一行
     if (!showDevices) {
       continue;
     }
     let row = 0;
     for (const device of devices) {
       if (device.space?.spaceId !== space.id) {
+        continue;
+      }
+      // ⚠️ 自己标过点的那些画在自己的坐标上（见 ①），不再列在这里 ——
+      //    一台设备只出现一次。它仍然算在这个空间的「拥有数」里，角标照数它。
+      //    判据与 ① 共用 `placed`：两处一旦分家，就会出现「既不在自己位置上、
+      //    也不在列表里」的隐身设备。
+      if (placed.has(device.did)) {
         continue;
       }
       row += 1;
@@ -348,8 +365,8 @@ export function buildMarkers(
         kind: 'device',
         id,
         deviceId: device.did,
-        // 自己也有锚点的那些，两处都出现；这里标明白位置是从哪来的
-        anchorFrom: placed.has(device.did) ? 'device' : 'space',
+        // 走到这里就说明它没有自己的锚点，位置是借空间的
+        anchorFrom: 'space',
         name,
         spaceId: space.id,
         spec: {

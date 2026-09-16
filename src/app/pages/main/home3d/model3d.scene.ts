@@ -77,6 +77,30 @@ export interface MarkerSpec {
 }
 
 /**
+ * 画面上一个标记的运行时条目：three 那边的对象 + 它的 DOM 标签。
+ *
+ * `id` 与 {@link MarkerSpec.id} 是同一个值，在这里存一份是为了摘除时能知道
+ * 「摘的是谁」—— 悬停中的那个标记被摘掉时要补发一次 leave，见 {@link removeMarker}。
+ */
+interface MarkerEntry {
+  id: string;
+  object: CSS2DObject;
+  element: HTMLElement;
+}
+
+/**
+ * 一个标记的标签在画布上占的矩形，CSS 像素、相对画布左上角。
+ *
+ * 给调用方摆悬停信息面板用 —— 面板要贴着标签走，就得知道标签此刻在哪儿。
+ */
+export interface MarkerRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
  * 场景背景可选值。
  *
  * `gray` 是默认值，也是 `.scene-wrap` 的 CSS 背景色。两边必须一致 ——
@@ -134,7 +158,7 @@ export class Model3dScene {
   private readonly labelRenderer: CSS2DRenderer;
   private readonly markerGroup = new THREE.Group();
   /** id → 该标记的 DOM 与 three 对象。按 id 复用，不整批重建 */
-  private readonly markers = new Map<string, { object: CSS2DObject; element: HTMLElement }>();
+  private readonly markers = new Map<string, MarkerEntry>();
 
   private root?: THREE.Object3D;
   /** 已排队的渲染帧；按需渲染靠它去重 */
@@ -143,6 +167,18 @@ export class Model3dScene {
 
   private pickHandler: ((result: PickResult | null) => void) | null = null;
   private markerHandler: ((id: string, screen: { x: number; y: number }) => void) | null = null;
+  private hoverHandler: ((id: string | null, rect: MarkerRect | null) => void) | null = null;
+  /**
+   * 此刻鼠标停着的标记，没有就是 null。
+   *
+   * 引擎自己记着这个，是因为**有些情况下 `mouseleave` 永远不会来**：标记被摘掉时
+   * 元素已经不在 DOM 里了，浏览器不会再派发 leave。见 {@link removeMarker}。
+   *
+   * 存整个 entry 而不是 id：跟着标签走的那些东西要能量它的 DOM，见 {@link syncHoverRect}。
+   */
+  private hovered: MarkerEntry | null = null;
+  /** 上一次播出去的悬停矩形，用来判断这一帧位置有没有动 */
+  private hoverRect: MarkerRect | null = null;
   /** 模型还没加载完就来的 setMarkers：先存着，load 成功后再灌 */
   private pendingMarkers: MarkerSpec[] | null = null;
   private highlighted: { mesh: THREE.Mesh; original: THREE.Material } | null = null;
@@ -253,6 +289,24 @@ export class Model3dScene {
   }
 
   /**
+   * 注册标记悬停回调；鼠标停到某个标记上给它的 id 和标签此刻的矩形，离开给两个 `null`。
+   *
+   * ⚠️ 用 `mouseenter` / `mouseleave` 而不是 `pointerenter` / `pointerleave`：
+   * 悬停是**鼠标**的概念。pointer 事件在触摸屏上点一下就会触发 enter，而此后
+   * 再也不会来一个对应的 leave —— 那会让悬停面板永久卡在屏幕上，触摸设备上
+   * 没有「把鼠标移开」这个动作可以救回来。
+   *
+   * 回调**会来很多次**：同一个 id 在标签动的时候会反复报，矩形一变就报一次。
+   * 所以别把它当成「换了目标」的信号，要按 id 自己判断是不是同一个东西。
+   *
+   * 两个 `null` 也**不一定**来自鼠标离开：标记被摘掉、按着鼠标要转视角，都会走
+   * 这里补发一次。调用方只管「最后一次收到的是什么」就行。
+   */
+  onMarkerHover(handler: (id: string | null, rect: MarkerRect | null) => void): void {
+    this.hoverHandler = handler;
+  }
+
+  /**
    * 全量替换标记。
    *
    * 不用 add/remove/update 三个方法：标记只有几十个，全量替换消灭了「删一半状态不同步」
@@ -275,7 +329,9 @@ export class Model3dScene {
         // 父层是 pointer-events:none，这里必须显式打开，否则标签点不到
         element.style.pointerEvents = 'auto';
         element.addEventListener('click', this.onMarkerDomClick);
-        entry = { object: new CSS2DObject(element), element };
+        element.addEventListener('mouseenter', this.onMarkerDomEnter);
+        element.addEventListener('mouseleave', this.onMarkerDomLeave);
+        entry = { id: spec.id, object: new CSS2DObject(element), element };
         this.markerGroup.add(entry.object);
         this.markers.set(spec.id, entry);
       }
@@ -542,11 +598,24 @@ export class Model3dScene {
       // 必须紧跟其后、同一帧。分开渲染的话，damping 尾段标签会「追着」模型跑，
       // 而且机器越慢越明显 —— 很容易被误判成坐标算错了。
       this.labelRenderer.render(this.scene, this.camera);
+      // 标签刚被摆到新位置，赶紧把悬停面板也跟着挪过去 —— 必须在这一帧之后量，
+      // 量早了拿到的是上一帧的位置，面板会慢半拍
+      this.syncHoverRect();
     });
   };
 
   private readonly onPointerDown = (event: PointerEvent): void => {
     this.pointerDownAt = { x: event.clientX, y: event.clientY };
+    /*
+     * 按下就收起悬停面板。
+     *
+     * 能走到这里说明按的是画布而不是标签（按在标签上事件不会冒泡到画布），
+     * 正常情况下那时鼠标早就不在标签上了、leave 已经清过。但**标签是会动的** ——
+     * 转完视角还有阻尼，元素每帧都被 CSS2DRenderer 重新摆位，可能从静止的指针
+     * 底下挪走而浏览器并不补发 `mouseleave`（悬停态要等鼠标动了才重算）。
+     * 这一下按下正好把那种残留清掉。
+     */
+    this.setHovered(null);
   };
 
   private readonly onPointerUp = (event: PointerEvent): void => {
@@ -637,11 +706,93 @@ export class Model3dScene {
   }
 
   /** 摘掉一个标记的 DOM 与监听。CSS2DRenderer 没有 dispose()，这些得自己清 */
-  private removeMarker(entry: { object: CSS2DObject; element: HTMLElement }): void {
+  private removeMarker(entry: MarkerEntry): void {
     entry.element.removeEventListener('click', this.onMarkerDomClick);
+    entry.element.removeEventListener('mouseenter', this.onMarkerDomEnter);
+    entry.element.removeEventListener('mouseleave', this.onMarkerDomLeave);
     entry.element.remove();
     this.markerGroup.remove(entry.object);
+
+    /*
+     * ⚠️ 摘掉的正好是鼠标停着的那个时，`mouseleave` **永远不会来** ——
+     * 元素已经不在 DOM 里，浏览器不会再为它派发任何事件。这里必须补发一个 null，
+     * 否则「悬停空间标签 → 顺手取消勾选『显示空间』」会把面板永久留在那块空间上：
+     * 标签没了，再也没有事件能让它消失。
+     */
+    if (this.hovered === entry) {
+      this.setHovered(null);
+    }
   }
+
+  /**
+   * 换一个悬停目标，并把它的矩形一并播出去。
+   *
+   * 重复设同一个目标不重播：`mouseenter` 本来就不会连着来两次，但摘除路径与鼠标
+   * 路径可能撞在一起。
+   */
+  private setHovered(entry: MarkerEntry | null): void {
+    if (this.hovered === entry) {
+      return;
+    }
+    this.hovered = entry;
+    this.hoverRect = entry ? this.measureMarker(entry.element) : null;
+    this.hoverHandler?.(entry?.id ?? null, this.hoverRect);
+  }
+
+  /**
+   * 标签是会动的，所以悬停期间每一帧都重新量一次，位置变了就再报一次。
+   *
+   * 只在**真的渲染了的帧**上跑（`requestRender` 那一趟），所以镜头不动时它一次都
+   * 不执行 —— 也就没有「静止画面每帧强制回流」那笔开销。转视角时才会连着来，
+   * 而那正是需要它跟着走的时候。
+   */
+  private syncHoverRect(): void {
+    const entry = this.hovered;
+    if (!entry) {
+      return;
+    }
+    const rect = this.measureMarker(entry.element);
+    const last = this.hoverRect;
+    if (
+      last &&
+      last.x === rect.x &&
+      last.y === rect.y &&
+      last.width === rect.width &&
+      last.height === rect.height
+    ) {
+      return;
+    }
+    this.hoverRect = rect;
+    this.hoverHandler?.(entry.id, rect);
+  }
+
+  /** 标签此刻在画布上的位置。用 DOM 实测而不是自己投影：字号、内边距、行偏移全都算在内 */
+  private measureMarker(element: HTMLElement): MarkerRect {
+    const host = this.renderer.domElement.getBoundingClientRect();
+    const box = element.getBoundingClientRect();
+    return {
+      x: box.left - host.left,
+      y: box.top - host.top,
+      width: box.width,
+      height: box.height,
+    };
+  }
+
+  private readonly onMarkerDomEnter = (event: MouseEvent): void => {
+    // 正按着鼠标（转视角）时指针会扫过一串标签，不抑制的话面板一路闪
+    if (this.pointerDownAt) {
+      return;
+    }
+    const id = (event.currentTarget as HTMLElement).dataset['spaceId'];
+    const entry = id ? this.markers.get(id) : undefined;
+    if (entry) {
+      this.setHovered(entry);
+    }
+  };
+
+  private readonly onMarkerDomLeave = (): void => {
+    this.setHovered(null);
+  };
 
   private readonly onMarkerDomClick = (event: MouseEvent): void => {
     event.stopPropagation();
