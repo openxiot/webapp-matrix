@@ -457,5 +457,7 @@
   "请填写空间名称": "Introduceți un nume de spațiu",
   "请选择空间": "Selectați un spațiu",
   "请选择父空间": "Selectați un spațiu părinte",
-  "空间已创建，但没有返回空间 ID，标注未生效": "Spațiu creat, dar nu a fost returnat niciun ID — marcajul nu a fost aplicat"
+  "空间已创建，但没有返回空间 ID，标注未生效": "Spațiu creat, dar nu a fost returnat niciun ID — marcajul nu a fost aplicat",
+  "全屏": "Ecran complet",
+  "退出全屏": "Ieși din ecran complet"
 }

@@ -457,5 +457,7 @@
   "请填写空间名称": "Raumnamen eingeben",
   "请选择空间": "Raum auswählen",
   "请选择父空间": "Übergeordneten Raum auswählen",
-  "空间已创建，但没有返回空间 ID，标注未生效": "Raum erstellt, aber keine Raum-ID zurückgegeben – Markierung nicht übernommen"
+  "空间已创建，但没有返回空间 ID，标注未生效": "Raum erstellt, aber keine Raum-ID zurückgegeben – Markierung nicht übernommen",
+  "全屏": "Vollbild",
+  "退出全屏": "Vollbild beenden"
 }

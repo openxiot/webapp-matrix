@@ -457,5 +457,7 @@
   "请填写空间名称": "Inserisci un nome per lo spazio",
   "请选择空间": "Seleziona uno spazio",
   "请选择父空间": "Seleziona uno spazio superiore",
-  "空间已创建，但没有返回空间 ID，标注未生效": "Spazio creato, ma nessun ID restituito: annotazione non applicata"
+  "空间已创建，但没有返回空间 ID，标注未生效": "Spazio creato, ma nessun ID restituito: annotazione non applicata",
+  "全屏": "Schermo intero",
+  "退出全屏": "Esci da schermo intero"
 }

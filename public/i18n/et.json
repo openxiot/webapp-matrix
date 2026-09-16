@@ -457,5 +457,7 @@
   "请填写空间名称": "Sisestage ruumi nimi",
   "请选择空间": "Valige ruum",
   "请选择父空间": "Valige ülemruum",
-  "空间已创建，但没有返回空间 ID，标注未生效": "Ruum loodi, kuid ruumi ID-d ei tagastatud – märgis jäi rakendamata"
+  "空间已创建，但没有返回空间 ID，标注未生效": "Ruum loodi, kuid ruumi ID-d ei tagastatud – märgis jäi rakendamata",
+  "全屏": "Täisekraan",
+  "退出全屏": "Välju täisekraanilt"
 }

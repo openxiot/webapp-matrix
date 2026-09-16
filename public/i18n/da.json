@@ -457,5 +457,7 @@
   "请填写空间名称": "Indtast et rumnavn",
   "请选择空间": "Vælg et rum",
   "请选择父空间": "Vælg et overordnet rum",
-  "空间已创建，但没有返回空间 ID，标注未生效": "Rum oprettet, men intet rum-ID returneret – markeringen blev ikke anvendt"
+  "空间已创建，但没有返回空间 ID，标注未生效": "Rum oprettet, men intet rum-ID returneret – markeringen blev ikke anvendt",
+  "全屏": "Fuldskærm",
+  "退出全屏": "Afslut fuldskærm"
 }

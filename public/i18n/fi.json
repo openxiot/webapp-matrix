@@ -457,5 +457,7 @@
   "请填写空间名称": "Anna tilan nimi",
   "请选择空间": "Valitse tila",
   "请选择父空间": "Valitse ylätason tila",
-  "空间已创建，但没有返回空间 ID，标注未生效": "Tila luotu, mutta tila-ID:tä ei palautettu – merkintää ei otettu käyttöön"
+  "空间已创建，但没有返回空间 ID，标注未生效": "Tila luotu, mutta tila-ID:tä ei palautettu – merkintää ei otettu käyttöön",
+  "全屏": "Koko näyttö",
+  "退出全屏": "Poistu koko näytöstä"
 }

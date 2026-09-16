@@ -457,5 +457,7 @@
   "请填写空间名称": "Masukkan nama ruang",
   "请选择空间": "Pilih ruang",
   "请选择父空间": "Pilih ruang induk",
-  "空间已创建，但没有返回空间 ID，标注未生效": "Ruang dicipta, tetapi ID ruang tidak dikembalikan — tanda tidak digunakan"
+  "空间已创建，但没有返回空间 ID，标注未生效": "Ruang dicipta, tetapi ID ruang tidak dikembalikan — tanda tidak digunakan",
+  "全屏": "Skrin penuh",
+  "退出全屏": "Keluar skrin penuh"
 }

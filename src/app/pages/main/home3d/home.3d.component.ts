@@ -85,8 +85,11 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
   protected readonly menu = signal<MenuState | null>(null);
   /** 「调整位置」选中的标记：下一次点模型表面是给它换位置，而不是弹表面菜单 */
   protected readonly moving = signal<AnchorMarker | null>(null);
+  /** 3D 区域是否处于全屏 */
+  protected readonly isFullscreen = signal(false);
 
   private readonly sceneHost = viewChild.required<ElementRef<HTMLElement>>('sceneHost');
+  private readonly sceneWrap = viewChild.required<ElementRef<HTMLElement>>('sceneWrap');
   private readonly i18n = inject(MainI18nService);
   private readonly account = inject(AccountService);
   private readonly modal = inject(NzModalService);
@@ -96,6 +99,17 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
   private scene?: Model3dScene;
   private resizeObserver?: ResizeObserver;
   private destroyed = false;
+
+  /**
+   * 全屏状态只能从 `document.fullscreenElement` 读，不能自己维护一个布尔量。
+   *
+   * 用户按 Esc、或者浏览器因为别的原因退出全屏时，我们收不到任何回调 —— 只有
+   * `fullscreenchange`。自己记的布尔量在这种时候就跟浏览器说的不一致了，按钮会
+   * 显示成「退出全屏」而实际已经不在全屏。
+   */
+  private readonly onFullscreenChange = (): void => {
+    this.isFullscreen.set(document.fullscreenElement === this.sceneWrap().nativeElement);
+  };
 
   /** 读一下 currentLang 让它在 zoneless 下跟着语言切换重算 */
   private readonly errorTitle = computed(() => {
@@ -144,6 +158,10 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     const host = this.sceneHost().nativeElement;
 
+    // 挂上监听顺便对一次现状：初值可能是 true（比如热重载后元素仍在全屏）
+    document.addEventListener('fullscreenchange', this.onFullscreenChange);
+    this.onFullscreenChange();
+
     // 首次渲染时容器可能还没完成布局（clientWidth/clientHeight 为 0），
     // 此时建 WebGL 上下文会拿到 0×0 的绘制缓冲、白白吃一个 context 名额。
     // 跟 echarts 指令一样，交给 ResizeObserver 在尺寸非零后再初始化。
@@ -160,16 +178,37 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroyed = true;
+    document.removeEventListener('fullscreenchange', this.onFullscreenChange);
     this.resizeObserver?.disconnect();
     this.resizeObserver = undefined;
     this.scene?.dispose();
     this.scene = undefined;
+
+    // 全屏元素被移出 DOM 时浏览器通常自己会退出全屏，但「通常」不够 ——
+    // 万一没退，用户看到的就是一块摘不掉的空白全屏，而且已经没有任何按钮了。
+    // 只处理自己这个元素：全局还有别处全屏时不该由我们来退。
+    if (document.fullscreenElement === this.sceneWrap().nativeElement) {
+      void document.exitFullscreen().catch(() => undefined);
+    }
   }
 
   protected resetView(): void {
     this.scene?.resetView();
     this.scene?.clearSelection();
     this.closeMenu();
+  }
+
+  /** 全屏 / 退出全屏。全屏的是 `.scene-wrap`，所以遮罩、菜单、提示都跟着一起进去 */
+  protected toggleFullscreen(): void {
+    if (document.fullscreenElement === this.sceneWrap().nativeElement) {
+      void document.exitFullscreen().catch(() => undefined);
+      return;
+    }
+    // 进全屏的请求可能被拒（比如不是用户手势触发的）。吞掉异常即可：
+    // 状态由 fullscreenchange 说话，这里报错也没有别的补救动作。
+    void this.sceneWrap()
+      .nativeElement.requestFullscreen()
+      .catch(() => undefined);
   }
 
   /* ----------------------------------------------------------------------------------------------

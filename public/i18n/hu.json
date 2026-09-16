@@ -457,5 +457,7 @@
   "请填写空间名称": "Adja meg a tér nevét",
   "请选择空间": "Válasszon egy teret",
   "请选择父空间": "Válasszon szülő teret",
-  "空间已创建，但没有返回空间 ID，标注未生效": "A tér létrejött, de nem érkezett tér-azonosító – a jelölés nem került alkalmazásra"
+  "空间已创建，但没有返回空间 ID，标注未生效": "A tér létrejött, de nem érkezett tér-azonosító – a jelölés nem került alkalmazásra",
+  "全屏": "Teljes képernyő",
+  "退出全屏": "Kilépés a teljes képernyőből"
 }

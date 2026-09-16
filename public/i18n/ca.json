@@ -457,5 +457,7 @@
   "请填写空间名称": "Introdueix un nom d'espai",
   "请选择空间": "Selecciona un espai",
   "请选择父空间": "Selecciona un espai pare",
-  "空间已创建，但没有返回空间 ID，标注未生效": "Espai creat, però no s'ha retornat cap ID — l'anotació no s'ha aplicat"
+  "空间已创建，但没有返回空间 ID，标注未生效": "Espai creat, però no s'ha retornat cap ID — l'anotació no s'ha aplicat",
+  "全屏": "Pantalla completa",
+  "退出全屏": "Surt de pantalla completa"
 }

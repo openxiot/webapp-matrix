@@ -457,5 +457,7 @@
   "请填写空间名称": "Vnesite ime prostora",
   "请选择空间": "Izberite prostor",
   "请选择父空间": "Izberite nadrejeni prostor",
-  "空间已创建，但没有返回空间 ID，标注未生效": "Prostor je ustvarjen, vendar ID prostora ni bil vrnjen – oznaka ni bila uporabljena"
+  "空间已创建，但没有返回空间 ID，标注未生效": "Prostor je ustvarjen, vendar ID prostora ni bil vrnjen – oznaka ni bila uporabljena",
+  "全屏": "Celoten zaslon",
+  "退出全屏": "Izhod iz celotnega zaslona"
 }

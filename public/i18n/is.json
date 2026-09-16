@@ -457,5 +457,7 @@
   "请填写空间名称": "Sláðu inn heiti rýmis",
   "请选择空间": "Veldu rými",
   "请选择父空间": "Veldu yfirrými",
-  "空间已创建，但没有返回空间 ID，标注未生效": "Rými búið til, en ekkert rými-ID skilaðist – merkingin var ekki sett í gagn"
+  "空间已创建，但没有返回空间 ID，标注未生效": "Rými búið til, en ekkert rými-ID skilaðist – merkingin var ekki sett í gagn",
+  "全屏": "Fullskjár",
+  "退出全屏": "Hætta í fullskjá"
 }

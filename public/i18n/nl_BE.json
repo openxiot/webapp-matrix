@@ -457,5 +457,7 @@
   "请填写空间名称": "Voer een naam voor de ruimte in",
   "请选择空间": "Selecteer een ruimte",
   "请选择父空间": "Selecteer een bovenliggende ruimte",
-  "空间已创建，但没有返回空间 ID，标注未生效": "Ruimte aangemaakt, maar er is geen ruimte-ID teruggegeven: de markering is niet toegepast"
+  "空间已创建，但没有返回空间 ID，标注未生效": "Ruimte aangemaakt, maar er is geen ruimte-ID teruggegeven: de markering is niet toegepast",
+  "全屏": "Volledig scherm",
+  "退出全屏": "Volledig scherm sluiten"
 }

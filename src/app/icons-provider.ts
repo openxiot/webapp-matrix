@@ -45,6 +45,8 @@ import {
   BugOutline,
   ApartmentOutline,
   HolderOutline,
+  FullscreenOutline,
+  FullscreenExitOutline,
 } from '@ant-design/icons-angular/icons';
 
 export const icons = [
@@ -94,4 +96,6 @@ export const icons = [
   BugOutline,
   ApartmentOutline,
   HolderOutline,
+  FullscreenOutline,
+  FullscreenExitOutline,
 ];

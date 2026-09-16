@@ -457,5 +457,7 @@
   "请填写空间名称": "Nhập tên không gian",
   "请选择空间": "Chọn một không gian",
   "请选择父空间": "Chọn không gian cha",
-  "空间已创建，但没有返回空间 ID，标注未生效": "Đã tạo không gian nhưng không nhận được ID — đánh dấu chưa được áp dụng"
+  "空间已创建，但没有返回空间 ID，标注未生效": "Đã tạo không gian nhưng không nhận được ID — đánh dấu chưa được áp dụng",
+  "全屏": "Toàn màn hình",
+  "退出全屏": "Thoát toàn màn hình"
 }

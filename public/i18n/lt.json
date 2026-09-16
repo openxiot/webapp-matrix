@@ -457,5 +457,7 @@
   "请填写空间名称": "Įveskite erdvės pavadinimą",
   "请选择空间": "Pasirinkite erdvę",
   "请选择父空间": "Pasirinkite tėvinę erdvę",
-  "空间已创建，但没有返回空间 ID，标注未生效": "Erdvė sukurta, bet erdvės ID negrąžintas – žyma nepritaikyta"
+  "空间已创建，但没有返回空间 ID，标注未生效": "Erdvė sukurta, bet erdvės ID negrąžintas – žyma nepritaikyta",
+  "全屏": "Visas ekranas",
+  "退出全屏": "Išeiti iš viso ekrano"
 }

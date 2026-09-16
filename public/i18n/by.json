@@ -457,5 +457,7 @@
   "请填写空间名称": "Enter a space name",
   "请选择空间": "Select a space",
   "请选择父空间": "Select a parent space",
-  "空间已创建，但没有返回空间 ID，标注未生效": "Space created, but no space ID was returned, so the annotation was not applied"
+  "空间已创建，但没有返回空间 ID，标注未生效": "Space created, but no space ID was returned, so the annotation was not applied",
+  "全屏": "Fullscreen",
+  "退出全屏": "Exit fullscreen"
 }

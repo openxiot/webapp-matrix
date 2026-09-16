@@ -1,4 +1,4 @@
-<div class="scene-wrap">
+<div #sceneWrap class="scene-wrap">
   <div #sceneHost class="scene-host"></div>
 
   @if (error(); as failure) {
@@ -17,10 +17,17 @@
     </div>
   }
 
-  <button nz-button class="scene-reset" [disabled]="loading() || !!error()" (click)="resetView()">
-    <nz-icon nzType="reload" />
-    <span>{{ '重置视角' | translate }}</span>
-  </button>
+  <div class="scene-actions">
+    <button nz-button [disabled]="loading() || !!error()" (click)="resetView()">
+      <nz-icon nzType="reload" />
+      <span>{{ '重置视角' | translate }}</span>
+    </button>
+    <!-- 加载中也能进全屏：模型加载本来就要等几秒，想放大看进度是合理的 -->
+    <button nz-button (click)="toggleFullscreen()">
+      <nz-icon [nzType]="isFullscreen() ? 'fullscreen-exit' : 'fullscreen'" />
+      <span>{{ (isFullscreen() ? '退出全屏' : '全屏') | translate }}</span>
+    </button>
+  </div>
 
   <!--
     宿主就是 .scene-wrap（position: relative），所以菜单的 left/top 与

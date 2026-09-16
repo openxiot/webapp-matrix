@@ -457,5 +457,7 @@
   "请填写空间名称": "Zadajte názov priestoru",
   "请选择空间": "Vyberte priestor",
   "请选择父空间": "Vyberte nadradený priestor",
-  "空间已创建，但没有返回空间 ID，标注未生效": "Priestor bol vytvorený, ale nebolo vrátené ID priestoru – označenie sa nepoužilo"
+  "空间已创建，但没有返回空间 ID，标注未生效": "Priestor bol vytvorený, ale nebolo vrátené ID priestoru – označenie sa nepoužilo",
+  "全屏": "Celá obrazovka",
+  "退出全屏": "Ukončiť celú obrazovku"
 }

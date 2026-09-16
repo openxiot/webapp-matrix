@@ -65,11 +65,26 @@
   font-size: 14px;
 }
 
-.scene-reset {
+.scene-actions {
   position: absolute;
   top: 12px;
   right: 12px;
   z-index: @scene-overlay-z;
+  display: flex;
+  gap: 8px;
+}
+
+/*
+ * 全屏时的尺寸。
+ *
+ * `.scene-wrap` 常态高度是「视口 − 页头 − 页脚」，而 `:fullscreen` 的 UA 样式表
+ * 给的是 position:fixed + inset:0。作者写的 height 优先级高于 UA 样式表，
+ * 不覆盖的话全屏后仍然会空出 134px，底下漏出页面背景。
+ *
+ * 高度交给 ResizeObserver 去通知 three 重算，这里只负责让盒子铺满。
+ */
+.scene-wrap:fullscreen {
+  height: 100vh;
 }
 
 /*
