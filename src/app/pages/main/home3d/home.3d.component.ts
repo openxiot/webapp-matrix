@@ -20,7 +20,12 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { MainI18nService } from '../../../service/i18n.service';
 import { AccountService } from '../../../service/account.service';
 import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
-import { Model3dScene, type PickResult, type Vec3 } from './model3d.scene';
+import {
+  Model3dScene,
+  type PickResult,
+  type SceneBackground,
+  type Vec3,
+} from './model3d.scene';
 import { Home3dData } from './home3d.data';
 import { type AnchorMarker, makeAnchor, spacePath } from './home3d.anchor';
 import { Home3dMenuComponent, type Home3dMenuItem } from './menu/home3d.menu.component';
@@ -87,6 +92,8 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
   protected readonly moving = signal<AnchorMarker | null>(null);
   /** 3D 区域是否处于全屏 */
   protected readonly isFullscreen = signal(false);
+  /** 场景背景。只活在本次会话里，刷新回到默认的灰 */
+  protected readonly background = signal<SceneBackground>('gray');
 
   private readonly sceneHost = viewChild.required<ElementRef<HTMLElement>>('sceneHost');
   private readonly sceneWrap = viewChild.required<ElementRef<HTMLElement>>('sceneWrap');
@@ -153,6 +160,17 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
       const markers = this.data.markers();
       this.scene?.setMarkers(markers.map((marker) => marker.spec));
     });
+
+    // 同上：换背景也要等场景建好，initScene 会补上当前值。
+    //
+    // ⚠️ 信号必须**无条件**读到，不能写成 `this.scene?.setBackground(this.background())` ——
+    // 可选链会把参数一起短路掉，场景还没建好时 `this.background()` 压根不会被执行，
+    // effect 就一条依赖都没记上，从此再也不会重跑（点按钮自然毫无反应）。
+    // 而场景恰恰总是后建的：initScene() 在容器尺寸为 0 时直接返回，等 ResizeObserver 来叫。
+    effect(() => {
+      const background = this.background();
+      this.scene?.setBackground(background);
+    });
   }
 
   ngAfterViewInit(): void {
@@ -196,6 +214,16 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
     this.scene?.resetView();
     this.scene?.clearSelection();
     this.closeMenu();
+  }
+
+  /**
+   * 黑 / 灰背景互切。
+   *
+   * 灰是默认，也是 `.scene-wrap` 的 CSS 底色。改 CSS 那层是为了 canvas 没铺满时
+   * （首次布局、缩放瞬间、进出全屏的过渡帧）露出来的仍是同一个颜色，不闪。
+   */
+  protected toggleBackground(): void {
+    this.background.update((current) => (current === 'gray' ? 'black' : 'gray'));
   }
 
   /** 全屏 / 退出全屏。全屏的是 `.scene-wrap`，所以遮罩、菜单、提示都跟着一起进去 */
@@ -460,6 +488,8 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
     // 空间图可能比场景先到。markers() 是 computed，这里读到的是当前值；
     // 此刻 root 还没载入，引擎会把它缓存下来，模型到位后再灌。
     scene.setMarkers(this.data.markers().map((marker) => marker.spec));
+    // 引擎默认就是灰的，这行是为了「先切了背景、场景后来才建好」也能对上
+    scene.setBackground(this.background());
     scene.resize();
     void this.loadModel(scene);
   }

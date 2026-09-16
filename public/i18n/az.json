@@ -459,5 +459,7 @@
   "请选择父空间": "Üst məkan seçin",
   "空间已创建，但没有返回空间 ID，标注未生效": "Məkan yaradıldı, lakin məkan ID-si qaytarılmadı — işarə tətbiq olunmadı",
   "全屏": "Tam ekran",
-  "退出全屏": "Tam ekrandan çıx"
+  "退出全屏": "Tam ekrandan çıx",
+  "黑色背景": "Qara fon",
+  "灰色背景": "Boz fon"
 }

@@ -1,4 +1,4 @@
-<div #sceneWrap class="scene-wrap">
+<div #sceneWrap class="scene-wrap" [class.scene-wrap--dark]="background() === 'black'">
   <div #sceneHost class="scene-host"></div>
 
   @if (error(); as failure) {
@@ -21,6 +21,14 @@
     <button nz-button [disabled]="loading() || !!error()" (click)="resetView()">
       <nz-icon nzType="reload" />
       <span>{{ '重置视角' | translate }}</span>
+    </button>
+    <!--
+      文案说的是「点了会变成什么」，跟全屏那颗一致。灰底时按钮写「黑色背景」，
+      黑底时写「灰色背景」—— 只写「切换背景」的话没人知道会切到哪儿去。
+    -->
+    <button nz-button (click)="toggleBackground()">
+      <nz-icon nzType="bg-colors" />
+      <span>{{ (background() === 'gray' ? '黑色背景' : '灰色背景') | translate }}</span>
     </button>
     <!-- 加载中也能进全屏：模型加载本来就要等几秒，想放大看进度是合理的 -->
     <button nz-button (click)="toggleFullscreen()">

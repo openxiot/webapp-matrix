@@ -459,5 +459,7 @@
   "请选择父空间": "Velg et overordnet rom",
   "空间已创建，但没有返回空间 ID，标注未生效": "Rommet ble opprettet, men ingen rom-ID ble returnert – merkingen ble ikke brukt",
   "全屏": "Fullskjerm",
-  "退出全屏": "Avslutt fullskjerm"
+  "退出全屏": "Avslutt fullskjerm",
+  "黑色背景": "Svart bakgrunn",
+  "灰色背景": "Grå bakgrunn"
 }

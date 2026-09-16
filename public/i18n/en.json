@@ -459,5 +459,7 @@
   "请选择父空间": "Select a parent space",
   "空间已创建，但没有返回空间 ID，标注未生效": "Space created, but no space ID was returned, so the annotation was not applied",
   "全屏": "Fullscreen",
-  "退出全屏": "Exit fullscreen"
+  "退出全屏": "Exit fullscreen",
+  "黑色背景": "Black background",
+  "灰色背景": "Gray background"
 }

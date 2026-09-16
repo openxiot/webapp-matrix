@@ -14,7 +14,37 @@
   height: calc(100vh - @header-height - @footer-height);
   min-height: 420px;
   overflow: hidden;
+
+  /*
+   * 提示条和加载遮罩的配色跟着背景走。
+   *
+   * 这两层都是压在模型上的半透明底：深色药丸在纯黑背景上没有轮廓，浅色药丸压在
+   * 浅色模型上同样没有，所以不能钉死一个色，得跟着背景翻。
+   *
+   * 用自定义属性而不是两组后代选择器，是为了绕开一个优先级坑 ——
+   * `.scene-wrap--dark .scene-hint` 会连 `.scene-hint--action` 的蓝底一起盖掉。
+   */
+  --hint-bg: rgba(0, 0, 0, 0.45);
+  --hint-fg: #fff;
+  --mask-bg: rgba(255, 255, 255, 0.72);
+  --mask-fg: rgba(0, 0, 0, 0.65);
+
   background: #eef1f5;
+}
+
+/*
+ * 纯黑背景。灰是默认，不另写一条。
+ *
+ * 这里必须是 #000，跟引擎里 `SCENE_BACKGROUND.black` 是同一个值：canvas 在首次
+ * 布局、缩放瞬间、进出全屏的过渡帧里都可能没铺满，露出来的就是这一层。
+ */
+.scene-wrap--dark {
+  --hint-bg: rgba(255, 255, 255, 0.92);
+  --hint-fg: #182230;
+  --mask-bg: rgba(0, 0, 0, 0.72);
+  --mask-fg: rgba(255, 255, 255, 0.75);
+
+  background: #000;
 }
 
 /*
@@ -56,12 +86,12 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--mask-bg);
 }
 
 .scene-mask-text {
   margin: 0;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--mask-fg);
   font-size: 14px;
 }
 
@@ -147,13 +177,18 @@
   padding: 6px 14px;
   transform: translateX(-50%);
   border-radius: 4px;
-  background: rgba(0, 0, 0, 0.45);
-  color: #fff;
+  background: var(--hint-bg);
+  color: var(--hint-fg);
   font-size: 13px;
   pointer-events: none;
 }
 
-/* 「调整位置」进行中：换个色，让人注意到下一次点击会被吃掉 */
+/*
+ * 「调整位置」进行中：换个色，让人注意到下一次点击会被吃掉。
+ * 这个蓝在两种背景下都立得住，所以跟着变的是上面那条，这里连字色一起钉死 ——
+ * 黑背景下 `--hint-fg` 是深色，不覆盖就会变成深字压蓝底。
+ */
 .scene-hint--action {
   background: #1677ff;
+  color: #fff;
 }

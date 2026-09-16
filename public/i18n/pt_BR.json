@@ -459,5 +459,7 @@
   "请选择父空间": "Selecione um espaço pai",
   "空间已创建，但没有返回空间 ID，标注未生效": "Espaço criado, mas nenhum ID retornado: a anotação não foi aplicada",
   "全屏": "Tela cheia",
-  "退出全屏": "Sair da tela cheia"
+  "退出全屏": "Sair da tela cheia",
+  "黑色背景": "Fundo preto",
+  "灰色背景": "Fundo cinza"
 }

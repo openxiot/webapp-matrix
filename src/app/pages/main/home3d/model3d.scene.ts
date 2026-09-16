@@ -61,6 +61,23 @@ export interface MarkerSpec {
   tone?: 'default' | 'active';
 }
 
+/**
+ * 场景背景可选值。
+ *
+ * `gray` 是默认值，也是 `.scene-wrap` 的 CSS 背景色。两边必须一致 ——
+ * CSS 那层在 canvas 还没铺满时（首次布局、缩放瞬间）会露出来，颜色不一样就会闪。
+ * `black` 对应 `.scene-wrap--dark`，提示条与加载遮罩在那里会换成浅色，见样式表。
+ *
+ * 值是 sRGB 十六进制，和 CSS 写的是同一个数：three 的 `scene.background`
+ * 只做颜色空间转换、不过 tone mapping，所以写多少就显示多少。
+ */
+export const SCENE_BACKGROUND = {
+  gray: 0xeef1f5,
+  black: 0x000000,
+} as const;
+
+export type SceneBackground = keyof typeof SCENE_BACKGROUND;
+
 /** glTF JSON 里我们真正用到的那几段 */
 interface GLTFParserJson {
   meshes?: { name?: string }[];
@@ -83,6 +100,8 @@ export class Model3dScene {
   private readonly host: HTMLElement;
   private readonly renderer: THREE.WebGLRenderer;
   private readonly scene = new THREE.Scene();
+  /** 当前背景。默认灰，与 `.scene-wrap` 的 CSS 背景同色 */
+  private background: SceneBackground = 'gray';
   private readonly camera: THREE.PerspectiveCamera;
   private readonly controls: OrbitControls;
   private readonly raycaster = new THREE.Raycaster();
@@ -139,7 +158,7 @@ export class Model3dScene {
     this.scene.environmentIntensity = 0.8;
     room.dispose();
 
-    this.scene.background = new THREE.Color(0xeef1f5);
+    this.scene.background = new THREE.Color(SCENE_BACKGROUND[this.background]);
     this.scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa2ad, 0.6));
     const sun = new THREE.DirectionalLight(0xffffff, 1.8);
     sun.position.set(60, 100, 40);
@@ -268,6 +287,21 @@ export class Model3dScene {
       }
     }
 
+    this.requestRender();
+  }
+
+  /**
+   * 换背景色。
+   *
+   * 必须自己叫一帧 —— 按需渲染只在相机动了或 marker 变了的时候重绘，
+   * 光改 `scene.background` 没人会去画，画面会一直停在旧底色上。
+   */
+  setBackground(background: SceneBackground): void {
+    if (this.background === background) {
+      return;
+    }
+    this.background = background;
+    this.scene.background = new THREE.Color(SCENE_BACKGROUND[background]);
     this.requestRender();
   }
 

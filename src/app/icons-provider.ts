@@ -47,6 +47,7 @@ import {
   HolderOutline,
   FullscreenOutline,
   FullscreenExitOutline,
+  BgColorsOutline,
 } from '@ant-design/icons-angular/icons';
 
 export const icons = [
@@ -98,4 +99,5 @@ export const icons = [
   HolderOutline,
   FullscreenOutline,
   FullscreenExitOutline,
+  BgColorsOutline,
 ];

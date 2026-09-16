@@ -459,5 +459,7 @@
   "请选择父空间": "Wybierz przestrzeń nadrzędną",
   "空间已创建，但没有返回空间 ID，标注未生效": "Przestrzeń utworzona, ale nie zwrócono identyfikatora — oznaczenie nie zostało zastosowane",
   "全屏": "Pełny ekran",
-  "退出全屏": "Zamknij pełny ekran"
+  "退出全屏": "Zamknij pełny ekran",
+  "黑色背景": "Czarne tło",
+  "灰色背景": "Szare tło"
 }

@@ -459,5 +459,7 @@
   "请选择父空间": "Veldu yfirrými",
   "空间已创建，但没有返回空间 ID，标注未生效": "Rými búið til, en ekkert rými-ID skilaðist – merkingin var ekki sett í gagn",
   "全屏": "Fullskjár",
-  "退出全屏": "Hætta í fullskjá"
+  "退出全屏": "Hætta í fullskjá",
+  "黑色背景": "Svartur bakgrunnur",
+  "灰色背景": "Grár bakgrunnur"
 }

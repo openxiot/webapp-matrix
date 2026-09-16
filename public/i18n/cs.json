@@ -459,5 +459,7 @@
   "请选择父空间": "Vyberte nadřazený prostor",
   "空间已创建，但没有返回空间 ID，标注未生效": "Prostor vytvořen, ale nebylo vráceno ID prostoru – označení nebylo použito",
   "全屏": "Celá obrazovka",
-  "退出全屏": "Ukončit celou obrazovku"
+  "退出全屏": "Ukončit celou obrazovku",
+  "黑色背景": "Černé pozadí",
+  "灰色背景": "Šedé pozadí"
 }

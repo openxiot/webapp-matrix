@@ -459,5 +459,7 @@
   "请选择父空间": "Selecteer een bovenliggende ruimte",
   "空间已创建，但没有返回空间 ID，标注未生效": "Ruimte aangemaakt, maar er is geen ruimte-ID teruggegeven: de markering is niet toegepast",
   "全屏": "Volledig scherm",
-  "退出全屏": "Volledig scherm sluiten"
+  "退出全屏": "Volledig scherm sluiten",
+  "黑色背景": "Zwarte achtergrond",
+  "灰色背景": "Grijze achtergrond"
 }
