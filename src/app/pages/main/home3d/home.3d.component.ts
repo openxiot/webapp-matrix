@@ -213,9 +213,18 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
    * **放组件里，不放 `Home3dData`**，理由与 `showInfo` 完全相同 —— 它一个标记都不增删，
    * 只决定左列画不画，所以是纯展示层的事，也不走 `onLayerToggle()`。
    *
-   * 默认关：开着一列半透明的框压在模型上，平时不该是默认样子。只活在本次会话里。
+   * **默认开**（与「显示空间」一致；「显示设备」「显示信息」默认关）。这个页面是挂墙上
+   * 盯着一片场地的，出事的时候没人会去翻告警页那张表格 —— 进页面就该看得见。
+   * 没有未处理的告警时这一列是个**空壳**（没有框、没有标题、自己也透明），
+   * 画面上什么都不会多出来，所以默认开着不脏。
+   *
+   * ⚠️ 默认开**必须配 constructor 里那一次 `loadAlarms()`**，光把这里改成 true 是不够的：
+   * 取数原先只挂在 `toggleAlarms()` 上，那样默认勾着的开关底下会是一条空列，
+   * 一直等到用户自己去关一下再开才出现。
+   *
+   * 只活在本次会话里。
    */
-  protected readonly showAlarms = signal(false);
+  protected readonly showAlarms = signal(true);
 
   /**
    * 正在处理的那条告警 id（按钮转圈，同时挡住重复点）。空串 = 没有在处理的。
@@ -366,6 +375,11 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
   constructor() {
     this.currentSpaceId = this.account.space().id;
     this.data.load(this.currentSpaceId);
+    // 左列默认开着（见 showAlarms），所以进页面就得取一次告警 —— 少了这一句，
+    // 那颗默认勾上的开关底下会是一条空列，要等用户自己关一下再开才出得来。
+    // **必须在 `load()` 之后**：`loadAlarms()` 查的是 `load()` 设进去的 `rootId`，
+    // 反过来写的话第一次请求会因为「没选项目」被直接挡掉（而且挡得静悄悄）。
+    this.data.loadAlarms();
 
     // 切换项目（或退出到未选中）时跟着换空间图
     effect(() => {
@@ -507,6 +521,7 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
    * **只在勾上时取一次**（`loadAlarms`），之后画面不动 —— 不轮询、也没有刷新按钮，
    * 想看最新的就关一下再开。这是与用户确认过的取舍：全站还没有一个定时器，
    * 加它得一并管好销毁、以及「正在处理某一条时又来了一批」的竞争。
+   * （进页面时还会取一次 —— 这颗开关默认开着，见 `showAlarms` 与 constructor。）
    *
    * **关掉时把清单丢掉**：留着的话再打开会先闪一下上一轮的旧告警，然后才被新响应替掉。
    * 顺带把「正在处理」也复位 —— 关掉开关之后那颗转圈的按钮已经不在画面上了。
