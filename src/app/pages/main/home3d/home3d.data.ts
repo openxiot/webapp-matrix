@@ -3,12 +3,32 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { Observable } from 'rxjs';
 import { DeviceEntity } from '../../../typedef/define/device/DeviceEntity';
 import { MoveDeviceRequest } from '../../../typedef/define/device/MoveDeviceRequest';
+import { ModbusAlarmList, applyHandledAlarm } from '../../../typedef/define/modbus/ModbusAlarm';
 import { ModelAnchor } from '../../../typedef/define/model/ModelAnchor';
+import { GenericService } from '../../../typedef/define/service/GenericService';
 import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
 import { MatrixService } from '../../../service/matrix.service';
+import { ModbusService } from '../../../service/modbus.service';
 import { DeviceDisplayService } from '../../../service/device.display.service';
 import { MainI18nService } from '../../../service/i18n.service';
 import { type AnchorMarker, buildMarkers } from './home3d.anchor';
+
+/**
+ * 查告警的起点。**语义上等于「不限时间」**。
+ *
+ * 之所以不传 `0`：`getAlarms` 的文档写明「`from` 必填，后端拒无起点的查询」，
+ * 而 `0` 算不算「给了起点」得看后端的实现（`!= null` 还是真值判断），是它一句话的事。
+ * 给一个明确早于任何一条告警的时刻，就没有这层解释空间了 —— 代价只是它看上去像魔法数。
+ *
+ * 2000-01-01 UTC：早于本项目所有部署，也早于任何一台设备可能上报的时刻。
+ */
+const ALARM_FROM = Date.UTC(2000, 0, 1);
+
+/**
+ * 一次取多少条。够铺一屏还多；超出的部分后端用 `truncated` 说话，页面照实提示
+ * （见模板里那句「异常记录超过上限，只列出最近的部分」）。
+ */
+const ALARM_LIMIT = 100;
 
 /**
  * 3D 页面的数据面：空间图 + 锚点读写 + 设备搬运。
@@ -20,12 +40,21 @@ import { type AnchorMarker, buildMarkers } from './home3d.anchor';
 @Injectable()
 export class Home3dData {
   private readonly matrix = inject(MatrixService);
+  private readonly modbus = inject(ModbusService);
   private readonly display = inject(DeviceDisplayService);
   private readonly msg = inject(NzMessageService);
   private readonly i18n = inject(MainI18nService);
 
   readonly spaces = signal<SpaceEntity[]>([]);
   readonly devices = signal<DeviceEntity[]>([]);
+  /**
+   * 这个项目下的全部服务（精简视图）。
+   *
+   * 本页自己不用它，纯粹是**告警要归位**才留的：一条告警只带 `serviceId`，得靠
+   * `服务 → 服务所在空间 → 空间名` 这条链才说得清「在哪儿出事了」（见 home3d.alarm.ts）。
+   * `getSpaceGraph` 本来就把 `services` 带回来了，接住它**不加任何请求**。
+   */
+  readonly services = signal<GenericService[]>([]);
   /** 首次拉图进行中（写操作后的静默重载不算） */
   readonly loading = signal(false);
 
@@ -36,6 +65,34 @@ export class Home3dData {
 
   /** 设备 did → 设备。标记菜单要按 did 反查 */
   readonly deviceById = computed(() => new Map(this.devices().map((device) => [device.did, device])));
+
+  /** 服务 id → 服务。告警靠它找到自己属于哪个空间 */
+  readonly serviceById = computed(() => new Map(this.services().map((service) => [service.id, service])));
+
+  /**
+   * 当前项目里**未处理**的告警清单。`null` = 还没取过（开关关着就是 null）。
+   *
+   * 由组件在勾上「显示告警」时调 {@link loadAlarms} 取一次，之后**不再自动变新** ——
+   * 不轮询、也没有刷新按钮（这是刻意的取舍：全站还没有一个定时器，加它得一并管好
+   * 销毁与「正好在处理某一条」的竞争）。关掉开关时组件会把它置回 null。
+   */
+  readonly alarms = signal<ModbusAlarmList | null>(null);
+
+  /**
+   * 告警取数中。
+   *
+   * **与页面那个 `loading` 分开**：那一个是模型的加载态，管着整屏遮罩。告警取不到
+   * 不该把模型那层搅乱，模型照常能看、能转。
+   */
+  readonly alarmsLoading = signal(false);
+
+  /**
+   * 告警取数失败的提示，空串 = 没失败。
+   *
+   * 在左列里显示一行，**不弹 message**：这一列是挂在墙上的，弹一串提示出来既没人点
+   * 也挡模型。但也不能不显示 —— 那样用户会以为「没有告警」，那是错的。
+   */
+  readonly alarmsError = signal('');
 
   /** 当前高亮的标记 id。点开标记菜单时设上，用来把它画成选中态 */
   readonly activeMarkerId = signal('');
@@ -87,6 +144,7 @@ export class Home3dData {
     if (!rootId) {
       this.spaces.set([]);
       this.devices.set([]);
+      this.services.set([]);
       this.loading.set(false);
       return;
     }
@@ -101,6 +159,9 @@ export class Home3dData {
         }
         this.spaces.set(graph.spaces);
         this.devices.set(graph.devices);
+        // `?? []` 不能省：老后端 / 异常响应里可能没有这个键。它只喂告警的归位，
+        // 空着最多是告警框少显示一个空间名，不该让整页崩在一条 undefined 上
+        this.services.set(graph.services ?? []);
         this.loading.set(false);
         // 名字是异步补的，标记和列表会自己重算
         this.display.resolve(graph.devices);
@@ -112,6 +173,7 @@ export class Home3dData {
         this.loading.set(false);
         this.spaces.set([]);
         this.devices.set([]);
+        this.services.set([]);
         this.msg.error(e?.message ?? e);
       },
     });
@@ -120,6 +182,95 @@ export class Home3dData {
   /** 重新拉一次当前项目的图。写完之后用 */
   reload(): void {
     this.load(this.rootId());
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * 告警。取数与处理都只动本页左列，不碰空间图
+   * ----------------------------------------------------------------------------------------------*/
+
+  /**
+   * 取一次当前项目里**未处理**的告警。
+   *
+   * `handled: false` 就是「只看未处理的」—— 后端把「不传」与「传 false」当两件事，
+   * 传 null 会连已处理的一起回来。
+   *
+   * `from` 与 `limit` 见上面两个常量的注释。**不传 `to`**（= 到现在）。
+   *
+   * 形状照抄 `load()`：`subscribe` + 同一个 `rootId` 过期守卫。切项目时先发的那个请求
+   * 可能后到，不守的话左列会显示上一个项目的告警 —— 而且这种错**看起来完全正常**，
+   * 只是内容不对。
+   */
+  loadAlarms(): void {
+    const rootId = this.rootId();
+    if (!rootId) {
+      // 没选项目就没有可查的地址。loading 也一并复位 —— 上一次请求可能是给另一个
+      // 项目发的，那个响应回来时会被下面的守卫丢掉，不复位就永远停在 true 上
+      this.alarms.set(null);
+      this.alarmsError.set('');
+      this.alarmsLoading.set(false);
+      return;
+    }
+
+    this.alarmsLoading.set(true);
+    this.alarmsError.set('');
+    this.modbus
+      .getAlarms(rootId, ALARM_FROM, null, { handled: false, limit: ALARM_LIMIT })
+      .subscribe({
+        next: (list) => {
+          if (this.rootId() !== rootId) {
+            return;
+          }
+          this.alarms.set(list);
+          this.alarmsLoading.set(false);
+        },
+        error: (e: unknown) => {
+          if (this.rootId() !== rootId) {
+            return;
+          }
+          this.alarms.set(null);
+          this.alarmsLoading.set(false);
+          this.alarmsError.set((e as { message?: string })?.message ?? String(e));
+        },
+      });
+  }
+
+  /**
+   * 处理一条告警（回执，不是改配置）。成功后**就地换掉那一行、不重取整列**。
+   *
+   * 「就地换」走 {@link applyHandledAlarm}（告警页同一个函数）：那一行被换成后端回的新行，
+   * 于是 `handled` 变成 true，左列就不再画它了（见 `buildAlarmCards`）—— **框的消失是
+   * 数据变了的结果，不是展示层记了一笔「这条摘掉了」**，所以切语言、重算 computed
+   * 都不会把它放回来。
+   *
+   * 不重取整列有两个理由：**重取慢**，而且会把用户没碰过的那些框也一起换掉
+   * （顺序变了、框会跳）。**也不走 `write()`** —— 那个是锚点写入的收尾器，成功后
+   * `reload()` 重拉整张空间图；处理告警一个字都没改空间图，走它等于白拉一次全量图。
+   *
+   * `onDone` **成功与失败都会调一次**，组件拿它复位按钮的转圈。做成回调而不是让组件
+   * 自己订阅：`msg` 与 `i18n` 都在本类里，提示该和 `write()` 一个出处。
+   */
+  handleAlarm(id: string, onDone: () => void): void {
+    const spaceId = this.rootId();
+    if (!spaceId || !id) {
+      onDone();
+      return;
+    }
+    this.modbus.handleAlarm(spaceId, id).subscribe({
+      // 这里**不做 rootId 过期守卫**：这个动作与「当前是哪个项目」无关，切了项目也该让
+      // 按钮停止转圈。真处理到别处去了后端自己会拒（告警不属于该空间子树时它不认）
+      next: (updated) => {
+        const list = this.alarms();
+        if (list) {
+          this.alarms.set(applyHandledAlarm(list, updated));
+        }
+        this.msg.success(this.i18n.translate.instant('操作成功'));
+        onDone();
+      },
+      error: (e: unknown) => {
+        this.msg.error((e as { message?: string })?.message ?? String(e));
+        onDone();
+      },
+    });
   }
 
   /* ----------------------------------------------------------------------------------------------

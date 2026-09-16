@@ -11,7 +11,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -33,6 +33,7 @@ import {
 } from './model3d.scene';
 import { Home3dData } from './home3d.data';
 import { type AnchorMarker, devicesInSpace, makeAnchor, spacePath } from './home3d.anchor';
+import { type AlarmCard, buildAlarmCards } from './home3d.alarm';
 import {
   type InfoPanel,
   type InfoText,
@@ -82,6 +83,7 @@ interface MenuState {
   // NzModalService 与 project.component 同样列在这里，让弹窗跟随本页生命周期。
   providers: [Home3dData, NzModalService],
   imports: [
+    DatePipe,
     FormsModule,
     Home3dMenuComponent,
     NgTemplateOutlet,
@@ -191,6 +193,49 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
    * 默认关：开着是给大屏看的，平时刷一下页面就铺一片面板反而碍事。只活在本次会话里。
    */
   protected readonly showInfo = signal(false);
+
+  /**
+   * 「显示告警」：左侧竖排一列**未处理**的告警框。
+   *
+   * **放组件里，不放 `Home3dData`**，理由与 `showInfo` 完全相同 —— 它一个标记都不增删，
+   * 只决定左列画不画，所以是纯展示层的事，也不走 `onLayerToggle()`。
+   *
+   * 默认关：开着一列半透明的框压在模型上，平时不该是默认样子。只活在本次会话里。
+   */
+  protected readonly showAlarms = signal(false);
+
+  /**
+   * 正在处理的那条告警 id（按钮转圈，同时挡住重复点）。空串 = 没有在处理的。
+   *
+   * 一条一条地处理：转圈期间其他框的按钮照点不误，但同一个框点不出第二发。
+   */
+  protected readonly handling = signal('');
+
+  /**
+   * 左列要画的那一排框。
+   *
+   * `currentLang()` 那行不能省，理由与 `hover` 里那行一样：级别文案（提示/警告/严重）
+   * 是 instant 拼出来的，不读这个信号切语言后这一列不会重算。**告警文本本身不翻**
+   * （它是用户数据，见 home3d.alarm.ts）。
+   */
+  protected readonly alarmCards = computed<AlarmCard[]>(() => {
+    this.i18n.currentLang();
+    const list = this.data.alarms();
+    if (!list) {
+      return [];
+    }
+    return buildAlarmCards(list.items, this.data.serviceById(), this.data.spaceById(), (key) =>
+      this.t(key),
+    );
+  });
+
+  /**
+   * 这一批里还有更早的告警没取回来（见 `Home3dData` 的 `ALARM_LIMIT`）。
+   *
+   * 列内滚动只在**已取回的这批**里滚，所以必须说一句 —— 否则用户以为「就这么多」。
+   * 不给跳转告警页的链接：那是另一件事，要做再说。
+   */
+  protected readonly alarmsTruncated = computed(() => this.data.alarms()?.truncated === true);
 
   /**
    * 全部标记此刻在画布上的矩形，由引擎每帧报上来（见引擎的 `setRectSync`）。
@@ -319,6 +364,12 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
         this.menu.set(null);
         this.moving.set(null);
         this.data.activeMarkerId.set('');
+        // 左列的告警也得跟着换。**只在开关开着时取** —— 关着时清单本来就是 null，
+        // 不该为了一列不显示的东西去打一次请求。服务清单不用另外触发：
+        // 它跟着上面的 load() 一起回来（`services` 就是空间图的一部分）。
+        if (this.showAlarms()) {
+          this.data.loadAlarms();
+        }
       }
     });
 
@@ -433,6 +484,46 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
     // 丢掉之后，第一帧就没有面板（没有矩形），引擎报上来才画，位置天生是对的。
     this.rects.set(new Map());
     this.scene?.setRectSync(show);
+  }
+
+  /**
+   * 「显示告警」：在画面左侧竖着铺一列未处理的告警框。
+   *
+   * **同样不走 `onLayerToggle()`**：这一列一个标记都不增删，也没有菜单指着它。
+   *
+   * **只在勾上时取一次**（`loadAlarms`），之后画面不动 —— 不轮询、也没有刷新按钮，
+   * 想看最新的就关一下再开。这是与用户确认过的取舍：全站还没有一个定时器，
+   * 加它得一并管好销毁、以及「正在处理某一条时又来了一批」的竞争。
+   *
+   * **关掉时把清单丢掉**：留着的话再打开会先闪一下上一轮的旧告警，然后才被新响应替掉。
+   * 顺带把「正在处理」也复位 —— 关掉开关之后那颗转圈的按钮已经不在画面上了。
+   */
+  protected toggleAlarms(show: boolean): void {
+    this.showAlarms.set(show);
+    if (show) {
+      this.data.loadAlarms();
+      return;
+    }
+    this.data.alarms.set(null);
+    this.data.alarmsError.set('');
+    this.handling.set('');
+  }
+
+  /**
+   * 处理一条告警。与告警页一致：**不弹二次确认**，按钮转圈 + 「操作成功」提示。
+   *
+   * 成功之后那一张框会自己消失 —— 消失的机制在数据层（那一条的 `handled` 被就地换成
+   * true，`buildAlarmCards` 据此不画它），这里只负责转圈。
+   */
+  protected onHandleAlarm(card: AlarmCard): void {
+    // 没有 id 的框压根不画按钮（见 AlarmCard.canHandle），这一句是形式上兜底；
+    // 挡重复点则交给 handling：转圈期间同一个框点不出第二发
+    if (!card.canHandle || this.handling()) {
+      return;
+    }
+    this.handling.set(card.id);
+    // onDone 成功与失败都会来一次，转圈一定停得下来
+    this.data.handleAlarm(card.id, () => this.handling.set(''));
   }
 
   /**

@@ -69,18 +69,86 @@
     <ng-container [ngTemplateOutlet]="infoPanel" [ngTemplateOutletContext]="{ $implicit: view }" />
   }
 
+  <!--
+    左侧那一列告警。**排在上面那两块信息面板之后**：两者都是 @scene-overlay-z，
+    同层级时由 DOM 顺序决定谁压谁 —— 而这一列是贴边的固定栏，让它压住偶然翻到左边
+    来的信息面板更合理（面板本来就会跟着标签挪）。
+
+    只有开关开着才画。**没有告警时这一列是个空壳**（没有框、没有标题，自己也透明），
+    画面上什么都不会多出来 —— 「一条告警都没有」就应该是干干净净的。
+
+    「处理」按钮：转圈 → 成功后那一张**自己消失**。消失靠的是数据层把那一条的 handled
+    换成了 true（不复用本地记一笔的方式），所以切语言、重算都不会把它放回来。
+
+    时间用短格式：不限时间之后日期是必须的，秒也要 —— 同一分钟里连报几条是常态。
+    完整时刻与级别枚举名放 title 上（排查时拿枚举名去搜后端日志）。
+  -->
+  @if (showAlarms()) {
+    <div class="h3d-alarms">
+      <!--
+        track 用 `card.id || $index` 而不是光 `card.id`：后端理论上每条都有 id，
+        但类型上它是可选的（见 ModbusAlarm）。真碰上两条都没 id 的，光用 id 就是两个
+        空串撞在一起 —— Angular 只 console.warn（NG0955）然后画错位，是静默的。
+        有 id 时按下标兜底的那一半永远用不上。
+      -->
+      @for (card of alarmCards(); track card.id || $index) {
+        <div
+          class="h3d-alarm h3d-alarm--{{ card.tone }}"
+          [title]="
+            (card.level ? card.level + ' · ' : '') +
+            (card.at | date: 'yyyy-MM-dd HH:mm:ss') +
+            (card.recovered ? ' · ' + ('已恢复' | translate) : '')
+          "
+        >
+          <div class="h3d-alarm-head">
+            <span class="h3d-alarm-level">{{ card.levelLabel }}</span>
+            <span class="h3d-alarm-text">{{ card.text }}</span>
+            @if (card.canHandle) {
+              <button
+                class="h3d-alarm-handle"
+                nz-button
+                nzSize="small"
+                [nzLoading]="handling() === card.id"
+                (click)="onHandleAlarm(card)"
+              >
+                {{ '处理' | translate }}
+              </button>
+            }
+          </div>
+          @if (card.where) {
+            <div class="h3d-alarm-where">{{ card.where }}</div>
+          }
+          <div class="h3d-alarm-meta">
+            <span>{{ card.condition }}</span>
+            <span>{{ card.at | date: 'MM-dd HH:mm:ss' }}</span>
+          </div>
+        </div>
+      }
+      @if (data.alarmsError(); as failure) {
+        <div class="h3d-alarm-error">{{ failure }}</div>
+      }
+      @if (alarmsTruncated()) {
+        <div class="h3d-alarm-truncated">
+          {{ '异常记录超过上限，只列出最近的部分' | translate }}
+        </div>
+      }
+    </div>
+  }
+
   <div class="scene-actions">
     <!--
-      三颗开关是「看什么」（图层），右边几颗是「做什么」（动作），所以放左边。
-      从粗到细排：空间 → 设备 → 信息。
+      四颗开关是「看什么」（图层），下面三颗是「做什么」（动作），所以开关排在上面。
+      开关里从粗到细排：空间 → 设备 → 信息 → 告警。
+
+      这一列竖着贴在**右边**（样式表里 .scene-actions），与左边那一列告警一左一右。
 
       前两颗绑 data 上的信号而不是本组件的 —— 它们要喂给 markers() 那个 computed，
       那个在 Home3dData 里。但走的是本组件的方法而不是直接 `.set()`：
       翻图层之后菜单和「调整位置」可能就悬空了，得一并收尾，见 onLayerToggle。
 
-      第三颗「显示信息」是**本组件**的信号：它一个标记都不增删，只决定标记的信息
-      画不画，所以没必要进 data。也正因为它不动标记，走的是 toggleInfo 而不是
-      onLayerToggle —— 没有要收尾的东西。
+      后两颗（「显示信息」「显示告警」）是**本组件**的信号：它们一个标记都不增删，
+      只决定标记旁边、屏幕边上画不画东西，所以没必要进 data。也正因为不动标记，
+      走的是 toggleInfo / toggleAlarms 而不是 onLayerToggle —— 没有要收尾的东西。
     -->
     <label
       class="scene-toggle"
@@ -108,6 +176,16 @@
       [ngModelOptions]="{ standalone: true }"
     >
       {{ '显示信息' | translate }}
+    </label>
+    <!-- 与上面那颗同一个分工：不动标记，开关只决定左侧那一列画不画 -->
+    <label
+      class="scene-toggle"
+      nz-checkbox
+      [ngModel]="showAlarms()"
+      (ngModelChange)="toggleAlarms($event)"
+      [ngModelOptions]="{ standalone: true }"
+    >
+      {{ '显示告警' | translate }}
     </label>
     <button nz-button [disabled]="loading() || !!error()" (click)="resetView()">
       <nz-icon nzType="reload" />
