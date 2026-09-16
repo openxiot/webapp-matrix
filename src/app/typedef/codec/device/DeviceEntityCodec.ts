@@ -1,4 +1,5 @@
 import { DeviceEntity } from '../../define/device/DeviceEntity';
+import { ModelAnchorCodec } from '../model/ModelAnchorCodec';
 import { SpaceRefCodec } from '../space/SpaceRefCodec';
 
 export class DeviceEntityCodec {
@@ -15,6 +16,7 @@ export class DeviceEntityCodec {
     x.lastOffline = o.lastOffline || '';
 
     x.space = SpaceRefCodec.decode(o.space);
+    x.anchor = ModelAnchorCodec.decode(o.anchor);
 
     return x;
   }
@@ -30,6 +32,7 @@ export class DeviceEntityCodec {
       lastOnline: x.lastOnline,
       lastOffline: x.lastOffline,
       space: SpaceRefCodec.encode(x.space),
+      anchor: ModelAnchorCodec.encode(x.anchor),
     };
   }
 

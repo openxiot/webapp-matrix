@@ -1,0 +1,43 @@
+<div class="space-devices">
+  @if (current().length === 0) {
+    <p class="space-devices-empty">{{ '该空间暂无设备' | translate }}</p>
+  } @else {
+    <nz-table #currentTable nzSize="small" [nzData]="current()" [nzShowPagination]="false">
+      <thead>
+        <tr>
+          <th>{{ '设备名称' | translate }}</th>
+          <th nzWidth="72px">{{ '状态' | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (device of currentTable.data; track device.did) {
+          <tr>
+            <td>{{ label(device) }}</td>
+            <td>
+              <!-- 在线状态用颜色区分，但不只靠颜色：文字本身也说明状态 -->
+              <nz-tag [nzColor]="device.online ? 'green' : 'default'">
+                {{ (device.online ? '在线' : '离线') | translate }}
+              </nz-tag>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+  }
+
+  <div class="space-devices-bind">
+    <span class="space-devices-label">{{ '绑定设备' | translate }}</span>
+    <nz-select
+      class="space-devices-select"
+      nzMode="multiple"
+      nzShowSearch
+      [nzPlaceHolder]="'选择要绑定的设备' | translate"
+      [ngModel]="selected()"
+      (ngModelChange)="selected.set($event)"
+    >
+      @for (option of candidates(); track option.value) {
+        <nz-option [nzValue]="option.value" [nzLabel]="option.label" />
+      }
+    </nz-select>
+  </div>
+</div>

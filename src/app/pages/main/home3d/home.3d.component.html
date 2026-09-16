@@ -1,0 +1,46 @@
+<div class="scene-wrap">
+  <div #sceneHost class="scene-host"></div>
+
+  @if (error(); as failure) {
+    <div class="scene-mask">
+      <nz-alert
+        nzType="error"
+        nzShowIcon
+        [nzMessage]="failure.message"
+        [nzDescription]="failure.detail"
+      />
+    </div>
+  } @else if (loading()) {
+    <div class="scene-mask">
+      <nz-spin [nzSpinning]="true" />
+      <p class="scene-mask-text">{{ '模型加载中' | translate }} {{ progress() }}%</p>
+    </div>
+  }
+
+  <button nz-button class="scene-reset" [disabled]="loading() || !!error()" (click)="resetView()">
+    <nz-icon nzType="reload" />
+    <span>{{ '重置视角' | translate }}</span>
+  </button>
+
+  <!--
+    宿主就是 .scene-wrap（position: relative），所以菜单的 left/top 与
+    PickResult.screen / 标记点击位置同一套坐标，不需要 portal。
+  -->
+  @if (menu(); as open) {
+    <main-home3d-menu
+      [x]="open.x"
+      [y]="open.y"
+      [title]="open.title"
+      [subtitle]="open.subtitle"
+      [items]="open.items"
+      (picked)="onMenuPick($event)"
+      (dismissed)="closeMenu()"
+    />
+  }
+
+  @if (movingHint(); as hint) {
+    <div class="scene-hint scene-hint--action">{{ hint }}</div>
+  } @else if (!loading() && !error() && !menu()) {
+    <div class="scene-hint">{{ '点击模型表面可标注空间' | translate }}</div>
+  }
+</div>

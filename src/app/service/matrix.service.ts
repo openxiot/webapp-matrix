@@ -11,6 +11,8 @@ import { SpaceGraph } from '../typedef/define/device/SpaceGraph';
 import { SpaceGraphCodec } from '../typedef/codec/device/SpaceGraphCodec';
 import { DeviceRegistration } from '../typedef/define/device/DeviceRegistration';
 import { MoveDeviceRequest } from '../typedef/define/device/MoveDeviceRequest';
+import { ModelAnchor } from '../typedef/define/model/ModelAnchor';
+import { ModelAnchorCodec } from '../typedef/codec/model/ModelAnchorCodec';
 import { OrganizationMember } from '../typedef/define/user/UserOrganization';
 import { OrganizationMemberCodec } from '../typedef/codec/user/UserOrganizationCodec';
 import {
@@ -62,6 +64,45 @@ export class MatrixService {
   deleteSpace(spaceId: string): Observable<void> {
     return this.http
       .delete<OxResponse>(`${this.server}/matrix/v1/space/one/${spaceId}`)
+      .pipe(map(() => undefined));
+  }
+
+  /**------------------------------------------------------------------------------------------------
+   * 3D 锚点（ModelAnchor）
+   *
+   * 走专用端点，**不走 `PUT /space/one`**：那个接口是整体语义，不认识 anchor 的客户端
+   * （比如安卓只发 id + name）改一次空间名就会把锚点抹成 null。下面四条只动 anchor 一个字段。
+   *------------------------------------------------------------------------------------------------*/
+  setSpaceAnchor(spaceId: string, anchor: ModelAnchor): Observable<void> {
+    return this.http
+      .put<OxResponse>(
+        `${this.server}/matrix/v1/space/one/${spaceId}/anchor`,
+        ModelAnchorCodec.encode(anchor),
+      )
+      .pipe(map(() => undefined));
+  }
+
+  /** 只清锚点字段，不删空间。 */
+  clearSpaceAnchor(spaceId: string): Observable<void> {
+    return this.http
+      .delete<OxResponse>(`${this.server}/matrix/v1/space/one/${spaceId}/anchor`)
+      .pipe(map(() => undefined));
+  }
+
+  /** spaceId 仅用于管理员鉴权，按 did 落锚点。 */
+  setDeviceAnchor(spaceId: string, did: string, anchor: ModelAnchor): Observable<void> {
+    return this.http
+      .put<OxResponse>(
+        `${this.server}/matrix/v1/device/one/${spaceId}/${did}/anchor`,
+        ModelAnchorCodec.encode(anchor),
+      )
+      .pipe(map(() => undefined));
+  }
+
+  /** 清设备锚点 = 退回它所属空间的锚点。 */
+  clearDeviceAnchor(spaceId: string, did: string): Observable<void> {
+    return this.http
+      .delete<OxResponse>(`${this.server}/matrix/v1/device/one/${spaceId}/${did}/anchor`)
       .pipe(map(() => undefined));
   }
 

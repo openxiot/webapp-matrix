@@ -1,6 +1,7 @@
 import { SpaceEntity } from '../../define/space/SpaceEntity';
 import { SpaceAccess } from '../../define/space/SpaceAccess';
 import { DeviceEntityCodec } from '../device/DeviceEntityCodec';
+import { ModelAnchorCodec } from '../model/ModelAnchorCodec';
 
 export class SpaceEntityCodec {
   static decode(o: any): SpaceEntity {
@@ -18,6 +19,7 @@ export class SpaceEntityCodec {
     x.children = SpaceEntityCodec.decodeArray(o.children);
     x.devices = DeviceEntityCodec.decodeArray(o.devices);
     x.accesses = SpaceEntityCodec.decodeAccesses(o.accesses);
+    x.anchor = ModelAnchorCodec.decode(o.anchor);
     x.createTime = o.createTime || '';
     x.updateTime = o.updateTime || '';
 
@@ -37,6 +39,7 @@ export class SpaceEntityCodec {
       sortOrder: x.sortOrder,
       children: SpaceEntityCodec.encodeArray(x.children),
       devices: DeviceEntityCodec.encodeArray(x.devices),
+      anchor: ModelAnchorCodec.encode(x.anchor),
       createTime: x.createTime,
       updateTime: x.updateTime,
     };

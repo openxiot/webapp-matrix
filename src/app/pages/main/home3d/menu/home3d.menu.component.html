@@ -1,0 +1,29 @@
+<div
+  #menu
+  class="h3d-menu"
+  role="menu"
+  [style.left.px]="left()"
+  [style.top.px]="top()"
+  (keydown)="onKeydown($event)"
+>
+  @if (title()) {
+    <div class="h3d-menu-head">
+      <span class="h3d-menu-title">{{ title() }}</span>
+      @if (subtitle()) {
+        <span class="h3d-menu-subtitle">{{ subtitle() }}</span>
+      }
+    </div>
+  }
+
+  @for (item of items(); track item.id) {
+    <button
+      type="button"
+      role="menuitem"
+      class="h3d-menu-item"
+      [class.h3d-menu-item--danger]="item.danger"
+      (click)="picked.emit(item.id)"
+    >
+      {{ item.label }}
+    </button>
+  }
+</div>

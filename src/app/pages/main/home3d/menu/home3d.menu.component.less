@@ -1,0 +1,75 @@
+/*
+ * 压在标签层之上（同样留 z-index: auto 的是 CSS2D 那层，见 home.3d.component.less
+ * 里 @scene-overlay-z 的说明）。菜单必须比标记高，否则会被自己点的那个标记盖住。
+ */
+.h3d-menu {
+  position: absolute;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  min-width: 132px;
+  padding: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+}
+
+/* 标题区只是说明「这个菜单在说谁」，不可点，所以不吃指针事件 */
+.h3d-menu-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 12px 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 4px;
+  pointer-events: none;
+}
+
+.h3d-menu-title {
+  overflow: hidden;
+  max-width: 220px;
+  color: rgba(0, 0, 0, 0.88);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 路径可能很长，允许折行 —— 截断了就分不清是哪个同名房间 */
+.h3d-menu-subtitle {
+  max-width: 220px;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.h3d-menu-item {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.85);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.h3d-menu-item:hover,
+.h3d-menu-item:focus-visible {
+  background: rgba(0, 0, 0, 0.04);
+  outline: none;
+}
+
+.h3d-menu-item--danger {
+  color: #ff4d4f;
+}
+
+.h3d-menu-item--danger:hover,
+.h3d-menu-item--danger:focus-visible {
+  background: rgba(255, 77, 79, 0.1);
+}

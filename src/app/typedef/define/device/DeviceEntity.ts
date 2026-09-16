@@ -1,3 +1,4 @@
+import { ModelAnchor } from '../model/ModelAnchor';
 import { SpaceRef } from '../space/SpaceRef';
 
 export class DeviceEntity {
@@ -13,4 +14,9 @@ export class DeviceEntity {
   lastOffline: string = '';
   /** 设备所在的空间（与 Modbus 服务的 SpaceRef 同一个类，见 define/space/SpaceRef） */
   space: SpaceRef = new SpaceRef();
+  /**
+   * 这台设备在 3D 模型里的位置。为空时落到 `space` 那个空间的锚点上
+   * （回退链见 pages/main/home3d/home3d.anchor.ts）。
+   */
+  anchor: ModelAnchor | null = null;
 }

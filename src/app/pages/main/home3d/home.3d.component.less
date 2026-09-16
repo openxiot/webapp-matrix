@@ -1,0 +1,144 @@
+/*
+ * 可用高度 = 视口 − 页头 64px − 页脚 70px（`nz-content` 才是滚动区，页脚也在里面）。
+ * 这笔账跟 dashboard 那边是同一个，页头/页脚高度变了要一起改。
+ */
+@header-height: 64px;
+@footer-height: 70px;
+
+:host {
+  display: block;
+}
+
+.scene-wrap {
+  position: relative;
+  height: calc(100vh - @header-height - @footer-height);
+  min-height: 420px;
+  overflow: hidden;
+  background: #eef1f5;
+}
+
+/*
+ * 绝对定位撑满外层：这样它的 clientWidth/Height 有确定值，
+ * ResizeObserver 量得到真实尺寸，canvas 也跟着外层一起变。
+ */
+.scene-host {
+  position: absolute;
+  inset: 0;
+}
+
+/*
+ * canvas 是 three 在运行时 append 进来的，不在模板里 —— Angular 的样式封装
+ * 不会给它加 _ngcontent 属性，普通选择器匹配不到，所以必须走 ::ng-deep。
+ * 尺寸交给 CSS，绘制缓冲由 renderer.setSize(w, h, false) 单独管。
+ */
+.scene-host ::ng-deep canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
+/*
+ * CSS2DRenderer 那层 div 没有设 z-index，故意留在 auto —— 这样下面这几个
+ * 显式写了 z-index 的元素能稳稳压住它。标签层要是被设了 z-index，
+ * 加载遮罩和重置按钮就会被标签穿透，点不着。
+ */
+@scene-overlay-z: 20;
+
+/* 加载与报错共用一层遮罩，盖在 canvas 上但不拦鼠标（加载完就没了） */
+.scene-mask {
+  position: absolute;
+  inset: 0;
+  z-index: @scene-overlay-z;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.scene-mask-text {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 14px;
+}
+
+.scene-reset {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: @scene-overlay-z;
+}
+
+/*
+ * 标记是 three 在运行时 createElement 出来的，不在模板里 —— 拿不到 Angular 的
+ * _ngcontent 属性，普通选择器匹配不到，只能走 ::ng-deep。
+ */
+.scene-host ::ng-deep .h3d-marker {
+  position: relative;
+  display: block;
+  padding: 3px 10px;
+  /*
+   * ⚠️ 不要在这里写 transform。CSS2DRenderer 每帧直接改 `element.style.transform`
+   * （内联样式盖过样式表），写了也不生效，还会让人以为居中是自己做出来的。
+   * 居中是 CSS2DObject.center 的默认值 (0.5, 0.5) 给的 —— 要改去引擎里设 center。
+   */
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  background: rgba(24, 34, 48, 0.82);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.scene-host ::ng-deep .h3d-marker:hover {
+  background: rgba(24, 34, 48, 0.95);
+}
+
+/* 选中的标记。与拾取高亮同一个蓝，让人一眼看出「菜单说的是它」 */
+.scene-host ::ng-deep .h3d-marker--active {
+  border-color: #1677ff;
+  background: #1677ff;
+}
+
+/* 角标：折叠在这个空间里的设备数，画在标签右上角 */
+.scene-host ::ng-deep .h3d-marker--badged::after {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #ff4d4f;
+  color: #fff;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  content: attr(data-badge);
+}
+
+/* 提示条不吃指针事件，免得挡住在它上面开始的拖拽旋转 */
+.scene-hint {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  padding: 6px 14px;
+  transform: translateX(-50%);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 13px;
+  pointer-events: none;
+}
+
+/* 「调整位置」进行中：换个色，让人注意到下一次点击会被吃掉 */
+.scene-hint--action {
+  background: #1677ff;
+}

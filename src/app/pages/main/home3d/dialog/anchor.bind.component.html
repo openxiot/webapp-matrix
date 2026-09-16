@@ -1,0 +1,64 @@
+<nz-tabs [(nzSelectedIndex)]="tab">
+  <nz-tab [nzTitle]="'关联到已有空间' | translate">
+    <nz-form-item>
+      <nz-form-label [nzSpan]="5">{{ '选择空间' | translate }}</nz-form-label>
+      <nz-form-control [nzSpan]="19">
+        <nz-select
+          class="bind-control"
+          nzShowSearch
+          [nzPlaceHolder]="'请选择空间' | translate"
+          [ngModel]="spaceId()"
+          (ngModelChange)="spaceId.set($event)"
+        >
+          @for (option of options(); track option.value) {
+            <nz-option [nzValue]="option.value" [nzLabel]="option.label" />
+          }
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+  </nz-tab>
+
+  <nz-tab [nzTitle]="'新建空间' | translate">
+    <nz-form-item>
+      <nz-form-label [nzSpan]="5">{{ '空间名称' | translate }}</nz-form-label>
+      <nz-form-control [nzSpan]="19">
+        <input
+          nz-input
+          class="bind-control"
+          [ngModel]="name()"
+          (ngModelChange)="name.set($event)"
+          [placeholder]="'请填写空间名称' | translate"
+        />
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+      <nz-form-label [nzSpan]="5">{{ '父空间' | translate }}</nz-form-label>
+      <nz-form-control [nzSpan]="19">
+        <nz-select
+          class="bind-control"
+          nzShowSearch
+          [nzPlaceHolder]="'请选择父空间' | translate"
+          [ngModel]="parentId()"
+          (ngModelChange)="onParentChange($event)"
+        >
+          @for (option of options(); track option.value) {
+            <nz-option [nzValue]="option.value" [nzLabel]="option.label" />
+          }
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+      <nz-form-label [nzSpan]="5">{{ '空间类型' | translate }}</nz-form-label>
+      <nz-form-control [nzSpan]="19">
+        <nz-radio-group [ngModel]="type()" (ngModelChange)="type.set($event)">
+          <label nz-radio nzValue="building">{{ '楼栋' | translate }}</label>
+          <label nz-radio nzValue="floor">{{ '楼层' | translate }}</label>
+          <label nz-radio nzValue="room">{{ '房间' | translate }}</label>
+          <label nz-radio nzValue="zone">{{ '区域' | translate }}</label>
+        </nz-radio-group>
+      </nz-form-control>
+    </nz-form-item>
+  </nz-tab>
+</nz-tabs>

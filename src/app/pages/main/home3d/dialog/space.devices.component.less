@@ -1,0 +1,35 @@
+.space-devices {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 表格区域自己滚，弹窗高度就不会被设备数量撑破 */
+.space-devices nz-table {
+  display: block;
+  overflow-y: auto;
+  max-height: 260px;
+}
+
+.space-devices-empty {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 13px;
+}
+
+.space-devices-bind {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.space-devices-label {
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 13px;
+}
+
+.space-devices-select {
+  width: 100%;
+}
