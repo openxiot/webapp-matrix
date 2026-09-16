@@ -387,3 +387,65 @@ describe('buildMarkers · 显示设备', () => {
     expect(markers.find((m) => m.id === 's1@d1')?.spec.kind).toBe('device');
   });
 });
+
+describe('buildMarkers · 显示空间', () => {
+  it('不传 showSpaces 时空间标记照出 —— 默认是「画」，锁住这条', () => {
+    const s = space('s1', 'A栋', anchor(0, 0, 0));
+    expect(buildMarkers([s], [device('d1', 's1')]).map((m) => m.id)).toEqual(['s1']);
+  });
+
+  it('关掉后标了锚点的空间一个标记都不出，角标也没了', () => {
+    const s = space('s1', 'A栋', anchor(0, 0, 0));
+    const ds = [device('d1', 's1'), device('d2', 's1')];
+    expect(buildMarkers([s], ds, { showSpaces: false })).toEqual([]);
+  });
+
+  it('关掉后**不影响**自己单独标过点的设备 —— 它们不挂在任何空间标签下', () => {
+    const s = space('s1', 'A栋', anchor(0, 0, 0));
+    const own = device('d1', 's1', anchor(9, 9, 9));
+    const markers = buildMarkers([s], [own], { showSpaces: false });
+
+    expect(markers.map((m) => m.id)).toEqual(['d1']);
+    expect(markers[0].kind).toBe('device');
+    expect(markers[0].deviceId).toBe('d1');
+  });
+
+  it('两层独立：空间标签关掉后，空间下的设备列表照常出，只是头顶没有空间名', () => {
+    const s = space('s1', 'A栋', anchor(1, 2, 3));
+    const ds = [device('d1', 's1'), device('d2', 's1')];
+    const markers = buildMarkers([s], ds, { showSpaces: false, showDevices: true });
+
+    // 空间标记没了，但两台设备都还在
+    expect(markers.map((m) => m.id)).toEqual(['s1@d1', 's1@d2']);
+    for (const m of markers) {
+      expect(m.kind).toBe('device');
+      // 位置仍然落在空间那个锚点上 —— 空间标签不画了，锚点还是 ④ 的位置来源
+      expect(m.spec.point).toEqual({ x: 1, y: 2, z: 3 });
+    }
+  });
+
+  it('关掉空间标签不改设备行的行号 —— 第 0 格是留给空间标签的，不能往上挪', () => {
+    const s = space('s1', 'A栋', anchor(0, 0, 0));
+    const ds = [device('d1', 's1'), device('d2', 's1')];
+    const open = buildMarkers([s], ds, { showDevices: true });
+    const closed = buildMarkers([s], ds, { showSpaces: false, showDevices: true });
+
+    const rowsOf = (list: ReturnType<typeof buildMarkers>) =>
+      list.filter((m) => m.kind === 'device').map((m) => m.spec.offset?.y);
+    // 两边一模一样：勾一下开关整串列表不该跳 26px
+    expect(rowsOf(closed)).toEqual([26, 52]);
+    expect(rowsOf(closed)).toEqual(rowsOf(open));
+  });
+
+  it('没有锚点的空间，开关开着也本来就不出 —— 关掉不改变这一点', () => {
+    const s = space('s1', 'A栋', null);
+    expect(buildMarkers([s], [], { showSpaces: false })).toEqual([]);
+    expect(buildMarkers([s], [], { showSpaces: true })).toEqual([]);
+  });
+
+  it('多个空间一起关，一个都不剩', () => {
+    const a = space('s1', 'A栋', anchor(0, 0, 0));
+    const b = space('s2', 'B栋', anchor(1, 0, 0));
+    expect(buildMarkers([a, b], [], { showSpaces: false })).toEqual([]);
+  });
+});

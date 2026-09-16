@@ -198,9 +198,24 @@ export interface BuildMarkersOptions {
   /** 当前选中的标记 id */
   activeId?: string;
   /**
+   * 「显示空间」：空间标签（连带角标）画不画。
+   *
+   * **默认 `true`** —— 空间标签本来就是一直显示的，这个开关给的是「关掉」的能力。
+   * 默认值之所以放在「画」这一边，是因为本函数的职责是把数据算成标记，
+   * **藏起来是调用方的选择**；应用层那个「默认勾选」归 `Home3dData.showSpaces` 管。
+   *
+   * 为 false 时**只有 pass ③ 不画**：pass ① 和 ④ 都不受影响 —— 两层是独立的，
+   * 空间标签关掉后，空间下那串设备名照常出现，只是头顶少了空间名。见 {@link buildMarkers}。
+   */
+  showSpaces?: boolean;
+  /**
    * 「显示设备」：把每个空间下的设备逐个列成标签，而不是只出一个角标数。
    *
    * 默认 false。为 false 时本函数的行为与加这个开关之前**完全一致**。
+   *
+   * ⚠️ 它**只管「把角标展开成列表」这一件事** —— 自己单独标过点的设备（pass ①）
+   * 一直显示，这个开关和「显示空间」都管不着。两颗开关因此是**不对称**的，
+   * 这是刻意的：pass ① 的行为在加「显示设备」之前就存在，本次不动它。
    */
   showDevices?: boolean;
   model?: string;
@@ -210,9 +225,18 @@ export interface BuildMarkersOptions {
 /**
  * 把空间图算成一组标记。
  *
- * - 标了有效锚点的空间 → 一个标记，角标是**「折叠」进来的设备数**
- * - 自己标了有效锚点的设备 → 各自一个标记
- * - `showDevices` 打开时，每个空间标签下再逐行列出该空间的**全部**设备
+ * 四趟，各归各的开关管：
+ *
+ * | 趟 | 画什么 | 谁管 |
+ * |---|---|---|
+ * | ① | 自己单独标过点的设备 | **一直显示**，两颗开关都管不着 |
+ * | ② | 折叠计数 | 不给谁看，只为 ③ 的角标备数 |
+ * | ③ | 空间标签（含角标） | `showSpaces` |
+ * | ④ | 空间标签下的设备列表 | `showDevices`（位置借 ③ 的锚点） |
+ *
+ * ⚠️ 两个开关**不是**一对对称的图层切换，这是刻意的：① 的行为在加这两个开关之前
+ * 就存在，一直没动过；`showDevices` 只管「把角标展开成列表」这一件事。
+ * 想「整张画面上一个标签都没有」是做不到的 —— 自己标过点的设备总在。
  *
  * 角标只算没有自己锚点的那些设备，所以「所有角标之和 + 独立设备标记数 = 设备总数」，
  * 一台设备不会在角标里被数两遍。
@@ -230,6 +254,7 @@ export function buildMarkers(
   const model = options.model ?? MODEL_ID;
   const rev = options.rev ?? MODEL_REV;
   const activeId = options.activeId ?? '';
+  const showSpaces = options.showSpaces ?? true;
   const showDevices = options.showDevices ?? false;
   const deviceName = options.deviceName ?? ((device: DeviceEntity) => device.did);
 
@@ -261,7 +286,9 @@ export function buildMarkers(
     });
   }
 
-  // ② 没有自己点位的设备，按所属空间折叠计数
+  // ② 没有自己点位的设备，按所属空间折叠计数。
+  // 只为 ③ 的角标备数 —— 「显示空间」关掉时这一趟是白算的，但它只是个 Map，
+  // 不值得为省它给下面加一层分支。
   const collapsed = new Map<string, number>();
   for (const device of devices) {
     if (placed.has(device.did)) {
@@ -276,27 +303,34 @@ export function buildMarkers(
   // ③ 标了点的空间
   for (const space of spaces) {
     const anchor = spaceAnchor(space, model, rev);
+    // ⚠️ 这一跳**与 showSpaces 无关**：锚点是 ③④ 共同的**位置来源**，
+    // 空间标签不画的时候，④ 那串设备名仍然要落在它这个点上。
     if (!anchor) {
       continue;
     }
-    const count = collapsed.get(space.id) ?? 0;
     const point = toVec3(anchor);
-    markers.push({
-      kind: 'space',
-      id: space.id,
-      name: space.name,
-      spaceId: space.id,
-      spec: {
-        id: space.id,
-        point,
-        label: space.name,
-        // 角标和展开的列表说的不是同一件事（角标只数没自己锚点的，列表是全部），
-        // 一起显示就会出现「角标 3、下面列了 7 台」的矛盾。列出来了就不要角标。
-        badge: !showDevices && count > 0 ? String(count) : undefined,
+
+    // ③ 空间标签本身。⚠️「显示空间」只管这一趟，**管不着 ④** ——
+    // 两层是独立的：空间标签关掉后，那串设备名照常出现，只是头顶少了空间名。
+    if (showSpaces) {
+      const count = collapsed.get(space.id) ?? 0;
+      markers.push({
         kind: 'space',
-        tone: space.id === activeId ? 'active' : 'default',
-      },
-    });
+        id: space.id,
+        name: space.name,
+        spaceId: space.id,
+        spec: {
+          id: space.id,
+          point,
+          label: space.name,
+          // 角标和展开的列表说的不是同一件事（角标只数没自己锚点的，列表是全部），
+          // 一起显示就会出现「角标 3、下面列了 7 台」的矛盾。列出来了就不要角标。
+          badge: !showDevices && count > 0 ? String(count) : undefined,
+          kind: 'space',
+          tone: space.id === activeId ? 'active' : 'default',
+        },
+      });
+    }
 
     // ④ 「显示设备」：这个空间下的每一台都单出一行
     if (!showDevices) {
@@ -323,7 +357,14 @@ export function buildMarkers(
           point,
           label: name,
           kind: 'device',
-          // 全都叠在空间这一个点上，靠屏幕像素偏移一行行往下排开
+          /*
+           * 全都叠在空间这一个点上，靠屏幕像素偏移一行行往下排开。
+           *
+           * ⚠️ 行号**从 1 起算、与 showSpaces 无关**：第 0 格是留着给空间标签的位置。
+           * 所以「显示空间」关掉时第一行上面会空一格 —— 这是刻意留的，行号是「设备在
+           * 这个空间列表里的序号」，不该因为空间标签恰好没画就变；否则勾一下开关
+           * 整串列表会跳 26px。
+           */
           offset: { x: 0, y: row * DEVICE_ROW_PX },
           tone: id === activeId ? 'active' : 'default',
         },

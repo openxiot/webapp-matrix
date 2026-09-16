@@ -117,9 +117,21 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
    * 用户按 Esc、或者浏览器因为别的原因退出全屏时，我们收不到任何回调 —— 只有
    * `fullscreenchange`。自己记的布尔量在这种时候就跟浏览器说的不一致了，按钮会
    * 显示成「退出全屏」而实际已经不在全屏。
+   *
+   * 退出全屏顺带把背景复位成灰：背景切换按钮**只在全屏里出现**，那它改出来的黑底
+   * 也只该活在全屏里 —— 不退的话页面就卡在「一片黑、而唯一能切回来的按钮不见了」。
+   * 再进全屏是灰的、得重新切一次，这是刻意的。
+   *
+   * ⚠️ `ngAfterViewInit` 会主动调一次本方法来对初值，那时通常不是全屏 → 会走到
+   * 复位那一条。此刻背景本来就是灰的，所以无害；但要是以后有人把 `background` 的
+   * 初值改成别的颜色，这次复位就会把它抹掉 —— 那行初值得跟着一起改。
    */
   private readonly onFullscreenChange = (): void => {
-    this.isFullscreen.set(document.fullscreenElement === this.sceneWrap().nativeElement);
+    const fullscreen = document.fullscreenElement === this.sceneWrap().nativeElement;
+    this.isFullscreen.set(fullscreen);
+    if (!fullscreen) {
+      this.background.set('gray');
+    }
   };
 
   /** 读一下 currentLang 让它在 zoneless 下跟着语言切换重算 */
@@ -225,9 +237,42 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
    *
    * 灰是默认，也是 `.scene-wrap` 的 CSS 底色。改 CSS 那层是为了 canvas 没铺满时
    * （首次布局、缩放瞬间、进出全屏的过渡帧）露出来的仍是同一个颜色，不闪。
+   *
+   * 按钮只在全屏时出现（见模板），退出全屏会自动复位成灰（见 onFullscreenChange）。
    */
   protected toggleBackground(): void {
     this.background.update((current) => (current === 'gray' ? 'black' : 'gray'));
+  }
+
+  /** 「显示空间」。关掉后空间标签和角标一起没了，但自己标过点的设备仍在 */
+  protected toggleSpaces(show: boolean): void {
+    this.data.showSpaces.set(show);
+    this.onLayerToggle();
+  }
+
+  /** 「显示设备」：把空间角标展开成设备列表 */
+  protected toggleDevices(show: boolean): void {
+    this.data.showDevices.set(show);
+    this.onLayerToggle();
+  }
+
+  /**
+   * 翻任一图层开关之后的收尾。
+   *
+   * **菜单一律关掉。** 它是钉在被点那个标记上的：层一翻，菜单里的数字（「设备 N 台」
+   * 读的是角标快照）和它指的东西都可能对不上了，更糟的是「取消标注」这类写库操作
+   * 会落在一个已经看不见的标记上 —— 看不见的东西被改掉，用户没有任何线索。
+   *
+   * **「调整位置」只在目标真的消失时才取消。** 目标还在的话，用户正在做的事完全没
+   * 受影响，平白取消掉反而莫名其妙。信号是同步的，所以这里读到的 `markers()` 已经
+   * 是新状态了。
+   */
+  private onLayerToggle(): void {
+    this.closeMenu();
+    const moving = this.moving();
+    if (moving && !this.data.markers().some((marker) => marker.id === moving.id)) {
+      this.moving.set(null);
+    }
   }
 
   /** 全屏 / 退出全屏。全屏的是 `.scene-wrap`，所以遮罩、菜单、提示都跟着一起进去 */

@@ -41,21 +41,37 @@ export class Home3dData {
   readonly activeMarkerId = signal('');
 
   /**
+   * 「显示空间」：空间标签（连带角标）画不画。
+   *
+   * **默认 true** —— 空间标签本来就是一直显示的，这个开关给的是「关掉」的能力：
+   * 关掉之后是一张干净的模型，用来把模型本身给人看。
+   *
+   * ⚠️ 它管的是空间标签这一层，**管不着自己单独标过点的设备** —— 那些设备有自己的
+   * 锚点、不挂在任何空间标签下，一直显示。想「一个标签都没有」是做不到的。
+   * 详见 `buildMarkers` 上面那张分工表。
+   */
+  readonly showSpaces = signal(true);
+
+  /**
    * 「显示设备」：把每个空间下的设备逐个列成标签，而不是只出一个角标数。
    *
    * 放在这里而不是组件里，是因为它要喂给下面的 `markers()` —— 那是本类的 computed。
    * 只活在本次会话里，刷新回到关闭。
+   *
+   * ⚠️ 与 `showSpaces` **不是**一对对称的图层切换：它只管「把角标展开成列表」，
+   * 自己单独标过点的设备不受它管。
    */
   readonly showDevices = signal(false);
 
   /**
-   * 场景标记。空间图、设备显示名、当前选中项、设备开关任一变化都会重算 ——
+   * 场景标记。空间图、设备显示名、当前选中项、两个图层开关任一变化都会重算 ——
    * 设备名是异步补的，所以这个 computed 在名字到位后自己会再算一遍。
    */
   readonly markers = computed<AnchorMarker[]>(() =>
     buildMarkers(this.spaces(), this.devices(), {
       deviceName: (device) => this.display.name(device),
       activeId: this.activeMarkerId(),
+      showSpaces: this.showSpaces(),
       showDevices: this.showDevices(),
     }),
   );

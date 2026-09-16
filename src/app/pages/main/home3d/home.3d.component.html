@@ -19,15 +19,27 @@
 
   <div class="scene-actions">
     <!--
-      「显示设备」是「看什么」的开关，右边三颗是「做什么」的动作，所以放最左边。
-      绑的是 data.showDevices 而不是本组件的信号 —— 它要喂给 markers() 那个 computed，
-      那个在 Home3dData 里。
+      两颗开关是「看什么」（图层），右边几颗是「做什么」（动作），所以放左边。
+      从粗到细排：空间是更大的那一层，在左。
+
+      都绑 data 上的信号而不是本组件的 —— 它们要喂给 markers() 那个 computed，
+      那个在 Home3dData 里。但走的是本组件的方法而不是直接 `.set()`：
+      翻图层之后菜单和「调整位置」可能就悬空了，得一并收尾，见 onLayerToggle。
     -->
     <label
       class="scene-toggle"
       nz-checkbox
+      [ngModel]="data.showSpaces()"
+      (ngModelChange)="toggleSpaces($event)"
+      [ngModelOptions]="{ standalone: true }"
+    >
+      {{ '显示空间' | translate }}
+    </label>
+    <label
+      class="scene-toggle"
+      nz-checkbox
       [ngModel]="data.showDevices()"
-      (ngModelChange)="data.showDevices.set($event)"
+      (ngModelChange)="toggleDevices($event)"
       [ngModelOptions]="{ standalone: true }"
     >
       {{ '显示设备' | translate }}
@@ -37,13 +49,19 @@
       <span>{{ '重置视角' | translate }}</span>
     </button>
     <!--
+      只在全屏里出现：它是「换个底看模型」的摆设性操作，平时不该占工具栏的位置。
+      退出全屏会把背景复位成灰（见 onFullscreenChange），否则退出来就卡在「页面是
+      黑的、而唯一能切回来的按钮没了」。
+
       文案说的是「点了会变成什么」，跟全屏那颗一致。灰底时按钮写「黑色背景」，
       黑底时写「灰色背景」—— 只写「切换背景」的话没人知道会切到哪儿去。
     -->
-    <button nz-button (click)="toggleBackground()">
-      <nz-icon nzType="bg-colors" />
-      <span>{{ (background() === 'gray' ? '黑色背景' : '灰色背景') | translate }}</span>
-    </button>
+    @if (isFullscreen()) {
+      <button nz-button (click)="toggleBackground()">
+        <nz-icon nzType="bg-colors" />
+        <span>{{ (background() === 'gray' ? '黑色背景' : '灰色背景') | translate }}</span>
+      </button>
+    }
     <!-- 加载中也能进全屏：模型加载本来就要等几秒，想放大看进度是合理的 -->
     <button nz-button (click)="toggleFullscreen()">
       <nz-icon [nzType]="isFullscreen() ? 'fullscreen-exit' : 'fullscreen'" />
