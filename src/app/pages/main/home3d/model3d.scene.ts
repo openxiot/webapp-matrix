@@ -50,7 +50,11 @@ type MeshInfo = Omit<PickResult, 'point' | 'screen'>;
  * `label` / `badge` 由调用方给业务数据（空间名、设备数），**引擎不做任何翻译**。
  */
 export interface MarkerSpec {
-  /** 业务 id（空间 id / 设备 did），点击回调用它反查 */
+  /**
+   * 标记的唯一键（空间 id / 设备 did / `空间id@did`），点击回调用它反查。
+   *
+   * **必须唯一** —— `setMarkers` 按它做增删，同 id 的两个 spec 会互相覆盖成一个。
+   */
   id: string;
   /** 模型根节点的局部坐标 */
   point: Vec3;
@@ -58,6 +62,17 @@ export interface MarkerSpec {
   label: string;
   /** 角标，如设备数。空则不显示 */
   badge?: string;
+  /** 标记种类。设备标签画得小一号、淡一点，好跟空间标签分开 */
+  kind?: 'space' | 'device';
+  /**
+   * 屏幕像素偏移。
+   *
+   * CSS2D 把标签的**中心**钉在投影点上，所以锚点相同的多个标签会完全重叠 ——
+   * 「显示设备」那份列表就靠它一行行排开。
+   *
+   * 落在 `margin` 而不是 `transform` 上是有原因的，见 `setMarkers` 里的注释。
+   */
+  offset?: { x: number; y: number };
   tone?: 'default' | 'active';
 }
 
@@ -267,12 +282,31 @@ export class Model3dScene {
 
       const { element, object } = entry;
       element.dataset['spaceId'] = spec.id;
-      element.className = `h3d-marker h3d-marker--${spec.tone ?? 'default'}`;
+      element.className = `h3d-marker h3d-marker--${spec.kind ?? 'space'} h3d-marker--${
+        spec.tone ?? 'default'
+      }`;
       element.textContent = spec.label;
       if (spec.badge) {
         element.dataset['badge'] = spec.badge;
         element.classList.add('h3d-marker--badged');
+      } else {
+        // 元素是按 id 复用的，角标没了得连属性一起清掉，
+        // 否则 DOM 上会留一个看不见的旧 data-badge
+        delete element.dataset['badge'];
       }
+      /*
+       * 屏幕位移只能走 margin，不能走 transform。
+       *
+       * CSS2DRenderer 每一帧都直接改写 `element.style.transform`（见样式表里
+       * `.h3d-marker` 那条同样的警告），写在 transform 上的偏移会被立刻冲掉。
+       * 而标签元素是内联的 `position: absolute` 且没设 top/left，margin 会把整个
+       * 盒子推开一些，渲染器又从不碰 margin —— 正好补上「标签中心钉在投影点上」
+       * 缺的那个位移。
+       *
+       * 没有 offset 时置空串复位：元素是复用的，上一轮的行偏移得擦掉。
+       */
+      element.style.marginTop = spec.offset ? `${spec.offset.y}px` : '';
+      element.style.marginLeft = spec.offset ? `${spec.offset.x}px` : '';
       // 局部坐标 → 世界坐标。今天 root 没有变换，两者相同；写成换算将来给 root 加
       // 居中/缩放时标记不会跟着错位。
       object.position.copy(

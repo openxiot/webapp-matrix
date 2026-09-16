@@ -461,5 +461,7 @@
   "全屏": "Pantalla completa",
   "退出全屏": "Salir de pantalla completa",
   "黑色背景": "Fondo negro",
-  "灰色背景": "Fondo gris"
+  "灰色背景": "Fondo gris",
+  "显示设备": "Mostrar dispositivos",
+  "在模型上单独标点": "Marcar en el modelo"
 }

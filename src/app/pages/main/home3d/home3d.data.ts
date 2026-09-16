@@ -41,13 +41,22 @@ export class Home3dData {
   readonly activeMarkerId = signal('');
 
   /**
-   * 场景标记。空间图、设备显示名、当前选中项任一变化都会重算 ——
+   * 「显示设备」：把每个空间下的设备逐个列成标签，而不是只出一个角标数。
+   *
+   * 放在这里而不是组件里，是因为它要喂给下面的 `markers()` —— 那是本类的 computed。
+   * 只活在本次会话里，刷新回到关闭。
+   */
+  readonly showDevices = signal(false);
+
+  /**
+   * 场景标记。空间图、设备显示名、当前选中项、设备开关任一变化都会重算 ——
    * 设备名是异步补的，所以这个 computed 在名字到位后自己会再算一遍。
    */
   readonly markers = computed<AnchorMarker[]>(() =>
     buildMarkers(this.spaces(), this.devices(), {
       deviceName: (device) => this.display.name(device),
       activeId: this.activeMarkerId(),
+      showDevices: this.showDevices(),
     }),
   );
 

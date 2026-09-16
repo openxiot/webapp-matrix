@@ -12,8 +12,11 @@ import type { MarkerSpec, Vec3 } from './model3d.scene';
  *    静默画到错误位置比不画难查得多，所以一律不渲染。
  * 2. **回退链**（{@link resolveDeviceAnchor}）—— 设备有自己的锚点用自己的，
  *    没有就落到所属空间的锚点。这让「给设备单独标点」变成纯增量：不标也已经在模型上了。
- * 3. **一台设备只出现一次**（{@link buildMarkers}）—— 单独标了点的设备不再计入
+ * 3. **角标不重复计数**（{@link buildMarkers}）—— 单独标了点的设备不再计入
  *    所属空间的角标数字，否则会被数两遍。
+ *
+ * （「显示设备」打开后同一台设备会在自己位置上和所属空间标签下各出现一次，那是
+ * 刻意的展开，不算违反第 3 条 —— 它管的是角标那个数。详见 {@link AnchorMarker}。）
  */
 
 /** 模型标识。与 `public/3d/<id>/scene.glb` 的目录名一致 */
@@ -27,6 +30,18 @@ export const MODEL_ID = '001';
  * 递增后所有已有锚点都需要重新标注，这是刻意的：宁可让人重标，也不画错位置。
  */
 export const MODEL_REV = '001.1';
+
+/**
+ * 「显示设备」列表的**屏幕**行距（CSS 像素）。
+ *
+ * 同一个空间下的设备锚点全都落在空间那一个点上，而 CSS2D 默认把标签**中心**钉在
+ * 投影点，不给偏移的话它们会完全重叠成一个。这个值比一个标签的高度（12px 字 +
+ * 6px 上下内边距 + 边框 ≈ 26px）略大一点，正好一行挨着一行。
+ *
+ * 注意它是**屏幕**像素而不是模型坐标：无论镜头拉多近多远，行距都一样，
+ * 不会被透视压扁或撑开。
+ */
+export const DEVICE_ROW_PX = 26;
 
 /**
  * 锚点是否可用：模型对得上、版本对得上、坐标是有限数。
@@ -138,11 +153,43 @@ export function spacePath(space: SpaceEntity, spaceById: Map<string, SpaceEntity
 export interface AnchorMarker {
   spec: MarkerSpec;
   kind: 'space' | 'device';
-  /** 空间 id 或设备 did，与 spec.id 相同 */
+  /**
+   * 标记自身的唯一键，与 `spec.id` 相同。
+   *
+   * ⚠️ **设备标记上它不一定等于 did。** 「显示设备」打开后，一台自己也有锚点的
+   * 设备会同时出现在两处（模型上它自己的位置 + 所属空间标签下的列表），两处位置
+   * 不同、必须是两个标记；而引擎 `setMarkers` 是按 id 做增删的，同 id 会被合并成
+   * 一个。所以空间下那份的 id 由 {@link spaceDeviceKey} 生成：`空间id@did`。
+   *
+   * 要设备 did 请用 {@link AnchorMarker.deviceId}，不要用这个。
+   */
   id: string;
+  /**
+   * 设备标记才有：真正的设备 did。
+   *
+   * 所有写库操作（`setDeviceAnchor` / `clearDeviceAnchor`）只认它 —— 拿 `id` 去写
+   * 会静默地把锚点存到一台不存在的设备上，而且看不出错。
+   */
+  deviceId?: string;
+  /**
+   * 设备标记才有：位置是来自设备自己的锚点，还是借的所属空间的。
+   *
+   * 菜单据此分岔：借来的只能「在模型上单独标点」，自己的才能「调整位置 / 取消标注」。
+   */
+  anchorFrom?: 'device' | 'space';
   name: string;
   /** 这个标记所属的空间 id（设备标记也有；空间标记就是它自己） */
   spaceId: string;
+}
+
+/**
+ * 「显示设备」列表里，设备挂在所属空间标签下的那个标记 id。
+ *
+ * 为什么不直接用 did：一台自己也有锚点的设备会同时在两处，而引擎按 id 增删、
+ * 同 id 会被合并成一个。加个空间前缀，两处就是两个互不相干的标记。
+ */
+export function spaceDeviceKey(spaceId: string, did: string): string {
+  return `${spaceId}@${did}`;
 }
 
 export interface BuildMarkersOptions {
@@ -150,6 +197,12 @@ export interface BuildMarkersOptions {
   deviceName?: (device: DeviceEntity) => string;
   /** 当前选中的标记 id */
   activeId?: string;
+  /**
+   * 「显示设备」：把每个空间下的设备逐个列成标签，而不是只出一个角标数。
+   *
+   * 默认 false。为 false 时本函数的行为与加这个开关之前**完全一致**。
+   */
+  showDevices?: boolean;
   model?: string;
   rev?: string;
 }
@@ -159,9 +212,15 @@ export interface BuildMarkersOptions {
  *
  * - 标了有效锚点的空间 → 一个标记，角标是**「折叠」进来的设备数**
  * - 自己标了有效锚点的设备 → 各自一个标记
+ * - `showDevices` 打开时，每个空间标签下再逐行列出该空间的**全部**设备
  *
- * 该设备数只算没有自己锚点的那些设备，所以「所有角标之和 + 独立设备标记数 = 设备总数」，
- * 一台设备不会既在角标里、又在自己点位上被数两遍。
+ * 角标只算没有自己锚点的那些设备，所以「所有角标之和 + 独立设备标记数 = 设备总数」，
+ * 一台设备不会在角标里被数两遍。
+ *
+ * ⚠️ 但 pass ④ 的展开列表是**全部**设备，所以一台自己也有锚点的设备会同时出现在
+ * 自己的位置上和所属空间标签下 —— 这是刻意的（「这个空间里有哪些设备」要一个完整
+ * 答案，不能因为它在模型上另有位置就不算这个空间的）。两处的 `id` 不同、`deviceId`
+ * 相同，理由见 {@link AnchorMarker}。
  */
 export function buildMarkers(
   spaces: SpaceEntity[],
@@ -171,6 +230,7 @@ export function buildMarkers(
   const model = options.model ?? MODEL_ID;
   const rev = options.rev ?? MODEL_REV;
   const activeId = options.activeId ?? '';
+  const showDevices = options.showDevices ?? false;
   const deviceName = options.deviceName ?? ((device: DeviceEntity) => device.did);
 
   const markers: AnchorMarker[] = [];
@@ -187,12 +247,15 @@ export function buildMarkers(
     markers.push({
       kind: 'device',
       id: device.did,
+      deviceId: device.did,
+      anchorFrom: 'device',
       name,
       spaceId: device.space?.spaceId ?? '',
       spec: {
         id: device.did,
         point: toVec3(anchor),
         label: name,
+        kind: 'device',
         tone: device.did === activeId ? 'active' : 'default',
       },
     });
@@ -217,6 +280,7 @@ export function buildMarkers(
       continue;
     }
     const count = collapsed.get(space.id) ?? 0;
+    const point = toVec3(anchor);
     markers.push({
       kind: 'space',
       id: space.id,
@@ -224,12 +288,47 @@ export function buildMarkers(
       spaceId: space.id,
       spec: {
         id: space.id,
-        point: toVec3(anchor),
+        point,
         label: space.name,
-        badge: count > 0 ? String(count) : undefined,
+        // 角标和展开的列表说的不是同一件事（角标只数没自己锚点的，列表是全部），
+        // 一起显示就会出现「角标 3、下面列了 7 台」的矛盾。列出来了就不要角标。
+        badge: !showDevices && count > 0 ? String(count) : undefined,
+        kind: 'space',
         tone: space.id === activeId ? 'active' : 'default',
       },
     });
+
+    // ④ 「显示设备」：这个空间下的每一台都单出一行
+    if (!showDevices) {
+      continue;
+    }
+    let row = 0;
+    for (const device of devices) {
+      if (device.space?.spaceId !== space.id) {
+        continue;
+      }
+      row += 1;
+      const name = deviceName(device);
+      const id = spaceDeviceKey(space.id, device.did);
+      markers.push({
+        kind: 'device',
+        id,
+        deviceId: device.did,
+        // 自己也有锚点的那些，两处都出现；这里标明白位置是从哪来的
+        anchorFrom: placed.has(device.did) ? 'device' : 'space',
+        name,
+        spaceId: space.id,
+        spec: {
+          id,
+          point,
+          label: name,
+          kind: 'device',
+          // 全都叠在空间这一个点上，靠屏幕像素偏移一行行往下排开
+          offset: { x: 0, y: row * DEVICE_ROW_PX },
+          tone: id === activeId ? 'active' : 'default',
+        },
+      });
+    }
   }
 
   return markers;

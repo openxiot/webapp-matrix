@@ -11,8 +11,10 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
@@ -72,9 +74,11 @@ interface MenuState {
   // NzModalService 与 project.component 同样列在这里，让弹窗跟随本页生命周期。
   providers: [Home3dData, NzModalService],
   imports: [
+    FormsModule,
     Home3dMenuComponent,
     NzAlertModule,
     NzButtonModule,
+    NzCheckboxModule,
     NzIconModule,
     NzSpinModule,
     TranslatePipe,
@@ -282,33 +286,68 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
     this.data.activeMarkerId.set(marker.id);
 
     const space = this.data.spaceById().get(marker.spaceId);
-    const subtitle = space ? spacePath(space, this.data.spaceById()) : '';
+    const path = space ? spacePath(space, this.data.spaceById()) : '';
+    const isSpace = marker.kind === 'space';
 
     // 空间标记才有「设备 N 台」和「取消标注」；设备标记的「取消标注」是退回所属空间，
     // 两者语义不同，所以文案和能力都分开
-    const items: Home3dMenuItem[] =
-      marker.kind === 'space'
-        ? [
-            { id: 'devices', label: this.t('设备 {{count}} 台', { count: this.deviceCount(marker) }) },
-            { id: 'move', label: this.t('调整位置') },
-            { id: 'unbind', label: this.t('取消标注'), danger: true },
-            { id: 'dismiss', label: this.t('取消') },
-          ]
-        : [
-            { id: 'move', label: this.t('调整位置') },
-            { id: 'unbind', label: this.t('取消标注'), danger: true },
-            { id: 'dismiss', label: this.t('取消') },
-          ];
+    const items: Home3dMenuItem[] = isSpace
+      ? [
+          { id: 'devices', label: this.t('设备 {{count}} 台', { count: this.deviceCount(marker) }) },
+          { id: 'move', label: this.t('调整位置') },
+          { id: 'unbind', label: this.t('取消标注'), danger: true },
+          { id: 'dismiss', label: this.t('取消') },
+        ]
+      : this.deviceItems(marker);
 
     this.menu.set({
       x: screen.x,
       y: screen.y,
       title: marker.name,
-      subtitle,
+      subtitle: isSpace ? path : this.deviceSubtitle(marker, path),
       point: null,
       marker,
       items,
     });
+  }
+
+  /**
+   * 设备标记的菜单项。
+   *
+   * 分两种，看位置是哪儿来的：
+   *
+   * - **借的**（`anchorFrom === 'space'`，就是「显示设备」列在空间标签下的那些）——
+   *   它自己根本没有锚点，所以没有位置可调、也没有标注可取消，只能去「单独标点」。
+   * - **自有的** —— 和以前一样，调整位置 / 取消标注。
+   *
+   * 两者走的是同一个 `'move'` 分支（→ `moving` → 点表面 → `applyAnchor`），
+   * 只是文案不同，不用新写一套流程。
+   */
+  private deviceItems(marker: AnchorMarker): Home3dMenuItem[] {
+    if (marker.anchorFrom === 'space') {
+      return [
+        { id: 'move', label: this.t('在模型上单独标点') },
+        { id: 'dismiss', label: this.t('取消') },
+      ];
+    }
+    return [
+      { id: 'move', label: this.t('调整位置') },
+      { id: 'unbind', label: this.t('取消标注'), danger: true },
+      { id: 'dismiss', label: this.t('取消') },
+    ];
+  }
+
+  /**
+   * 设备标记的副标题：在线状态 + 空间路径。
+   *
+   * 设备实体要用 `deviceId` 反查 —— `AnchorMarker` 只带 did 不带实体，而且带的是
+   * `deviceId` 那个字段，不是 `id`（空间标签下那份的 id 是 `空间id@did`）。
+   * 查不到就只显示能显示的部分：设备可能刚在别处被删掉。
+   */
+  private deviceSubtitle(marker: AnchorMarker, path: string): string {
+    const device = marker.deviceId ? this.data.deviceById().get(marker.deviceId) : undefined;
+    const online = device ? this.t(device.online ? '在线' : '离线') : '';
+    return [online, path].filter((part) => part).join(' · ');
   }
 
   protected onMenuPick(id: string): void {
@@ -358,16 +397,23 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
     const anchor = makeAnchor(point);
     if (marker.kind === 'space') {
       this.data.setSpaceAnchor(marker.id, anchor);
-    } else {
-      this.data.setDeviceAnchor(marker.spaceId, marker.id, anchor);
+      return;
+    }
+    // ⚠️ 第二参必须是 deviceId，不能是 id。「显示设备」列在空间标签下的那份标记
+    // 的 id 是 `空间id@did`，拿它当 did 写进去会静默存到一台不存在的设备上。
+    if (marker.deviceId) {
+      this.data.setDeviceAnchor(marker.spaceId, marker.deviceId, anchor);
     }
   }
 
   private clearAnchor(marker: AnchorMarker): void {
     if (marker.kind === 'space') {
       this.data.clearSpaceAnchor(marker.id);
-    } else {
-      this.data.clearDeviceAnchor(marker.spaceId, marker.id);
+      return;
+    }
+    // 同上，认 deviceId
+    if (marker.deviceId) {
+      this.data.clearDeviceAnchor(marker.spaceId, marker.deviceId);
     }
   }
 

@@ -18,6 +18,20 @@
   }
 
   <div class="scene-actions">
+    <!--
+      「显示设备」是「看什么」的开关，右边三颗是「做什么」的动作，所以放最左边。
+      绑的是 data.showDevices 而不是本组件的信号 —— 它要喂给 markers() 那个 computed，
+      那个在 Home3dData 里。
+    -->
+    <label
+      class="scene-toggle"
+      nz-checkbox
+      [ngModel]="data.showDevices()"
+      (ngModelChange)="data.showDevices.set($event)"
+      [ngModelOptions]="{ standalone: true }"
+    >
+      {{ '显示设备' | translate }}
+    </label>
     <button nz-button [disabled]="loading() || !!error()" (click)="resetView()">
       <nz-icon nzType="reload" />
       <span>{{ '重置视角' | translate }}</span>

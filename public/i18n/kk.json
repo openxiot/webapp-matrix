@@ -461,5 +461,7 @@
   "全屏": "Fullscreen",
   "退出全屏": "Exit fullscreen",
   "黑色背景": "Black background",
-  "灰色背景": "Gray background"
+  "灰色背景": "Gray background",
+  "显示设备": "Show devices",
+  "在模型上单独标点": "Place on model"
 }

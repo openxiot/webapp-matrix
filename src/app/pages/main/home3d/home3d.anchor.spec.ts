@@ -280,3 +280,110 @@ describe('buildMarkers', () => {
     expect(buildMarkers([a], [])[0].spec.point).toEqual({ x: 1.5, y: -2.25, z: 3 });
   });
 });
+
+describe('buildMarkers · 显示设备', () => {
+  it('默认关闭：和加这个开关之前的行为一模一样（一台设备都没有、只出角标）', () => {
+    const s = space('s1', 'A栋', anchor(0, 0, 0));
+    const ds = [device('d1', 's1'), device('d2', 's1')];
+    const markers = buildMarkers([s], ds);
+
+    expect(markers.map((m) => m.id)).toEqual(['s1']);
+    expect(badgeOf(markers, 's1')).toBe(2);
+  });
+
+  it('打开后每台设备各一行，都挂在空间锚点上、靠屏幕偏移逐行往下排', () => {
+    const s = space('s1', 'A栋', anchor(1, 2, 3));
+    const ds = [device('d1', 's1'), device('d2', 's1'), device('d3', 's1')];
+    const markers = buildMarkers([s], ds, { showDevices: true });
+
+    const listed = markers.filter((m) => m.kind === 'device');
+    expect(listed.map((m) => m.id)).toEqual(['s1@d1', 's1@d2', 's1@d3']);
+    // 26 是 DEVICE_ROW_PX，和样式表里设备标签那 22px 的高度是配套的。
+    // 这里写死数字是故意的：改了行距就得同时确认样式表还对不对得上。
+    expect(listed.map((m) => m.spec.offset?.y)).toEqual([26, 52, 78]);
+    // 模型坐标还是空间那一个点，区别只在屏幕像素上 ——
+    // 所以它们是「排开」而不是「散落在模型各处」
+    for (const m of listed) {
+      expect(m.spec.point).toEqual({ x: 1, y: 2, z: 3 });
+    }
+  });
+
+  it('打开后空间标记不再出角标 —— 否则会「角标 2、下面列了 7 台」自相矛盾', () => {
+    const s = space('s1', 'A栋', anchor(0, 0, 0));
+    const ds = [device('d1', 's1'), device('d2', 's1')];
+    expect(badgeOf(buildMarkers([s], ds, { showDevices: true }), 's1')).toBe(0);
+  });
+
+  it('自己也有锚点的设备会出现在两处：id 不同、deviceId 相同、坐标各是各的', () => {
+    const s = space('s1', 'A栋', anchor(0, 0, 0));
+    const markers = buildMarkers([s], [device('d1', 's1', anchor(9, 9, 9))], {
+      showDevices: true,
+    });
+
+    // 顺序：pass ① 的独立标记、pass ③ 的空间标记、pass ④ 的空间下那份
+    expect(markers.map((m) => m.id)).toEqual(['d1', 's1', 's1@d1']);
+
+    const standalone = markers.find((m) => m.id === 'd1');
+    const listed = markers.find((m) => m.id === 's1@d1');
+    // 两处位置不同，所以必须是两个标记 —— 引擎按 id 增删，同 id 会被合并成一个
+    expect(standalone?.spec.point).toEqual({ x: 9, y: 9, z: 9 });
+    expect(listed?.spec.point).toEqual({ x: 0, y: 0, z: 0 });
+    // 但写库认的是同一个 deviceId，两处都不能是 `空间id@did`
+    expect(standalone?.deviceId).toBe('d1');
+    expect(listed?.deviceId).toBe('d1');
+  });
+
+  it('anchorFrom 分清位置是自有的还是借空间的 —— 菜单据此给不同项', () => {
+    const s = space('s1', 'A栋', anchor(0, 0, 0));
+    const ds = [device('d1', 's1'), device('d2', 's1', anchor(9, 9, 9))];
+    const markers = buildMarkers([s], ds, { showDevices: true });
+
+    expect(markers.find((m) => m.id === 'd2')?.anchorFrom).toBe('device');
+    expect(markers.find((m) => m.id === 's1@d1')?.anchorFrom).toBe('space');
+    expect(markers.find((m) => m.id === 's1@d2')?.anchorFrom).toBe('device');
+  });
+
+  it('空间自己没锚点时，开关打开也一样一台都不出现（回退链没有落点）', () => {
+    const s = space('s1', 'A栋', null);
+    expect(buildMarkers([s], [device('d1', 's1')], { showDevices: true })).toEqual([]);
+  });
+
+  it('没有空间的孤儿设备不进任何列表', () => {
+    const s = space('s1', 'A栋', anchor(0, 0, 0));
+    const markers = buildMarkers([s], [device('d1', '')], { showDevices: true });
+    expect(markers.map((m) => m.id)).toEqual(['s1']);
+  });
+
+  it('每个空间只列自己的设备，设备夹在自己的空间标记后面', () => {
+    const a = space('s1', 'A栋', anchor(0, 0, 0));
+    const b = space('s2', 'B栋', anchor(1, 0, 0));
+    const ds = [device('d1', 's1'), device('d2', 's2')];
+    const markers = buildMarkers([a, b], ds, { showDevices: true });
+    expect(markers.map((m) => m.id)).toEqual(['s1', 's1@d1', 's2', 's2@d2']);
+  });
+
+  it('勾选态按标记 id 走，空间下那份和设备自己那份互不影响', () => {
+    const s = space('s1', 'A栋', anchor(0, 0, 0));
+    const ds = [device('d1', 's1'), device('d2', 's1')];
+    const markers = buildMarkers([s], ds, { showDevices: true, activeId: 's1@d2' });
+
+    expect(markers.find((m) => m.id === 's1@d2')?.spec.tone).toBe('active');
+    expect(markers.find((m) => m.id === 's1@d1')?.spec.tone).toBe('default');
+  });
+
+  it('空间下那份也用 deviceName 解析出来的名字，不是 did', () => {
+    const s = space('s1', 'A栋', anchor(0, 0, 0));
+    const markers = buildMarkers([s], [device('d1', 's1')], {
+      showDevices: true,
+      deviceName: (d) => `名-${d.did}`,
+    });
+    expect(markers.find((m) => m.id === 's1@d1')?.spec.label).toBe('名-d1');
+  });
+
+  it('设备标记的 kind 是 device，空间标记是 space（样式表据此分大小）', () => {
+    const s = space('s1', 'A栋', anchor(0, 0, 0));
+    const markers = buildMarkers([s], [device('d1', 's1')], { showDevices: true });
+    expect(markers.find((m) => m.id === 's1')?.spec.kind).toBe('space');
+    expect(markers.find((m) => m.id === 's1@d1')?.spec.kind).toBe('device');
+  });
+});

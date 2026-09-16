@@ -105,6 +105,33 @@
 }
 
 /*
+ * 「显示设备」开关。
+ *
+ * 尺寸和配色照抄旁边的 `nz-button` 默认态（32px 高 / 白底 / #d9d9d9 边框），
+ * 一排看起来才是一套东西。特意**不用** `--hint-bg` / `--hint-fg` 那两个跟着背景
+ * 翻的属性：右边三颗按钮本来就是白的、两种背景下都白，开关跟着翻反而突兀。
+ *
+ * 顺带一个大好处：白底 + 深字正好是 nz-checkbox 自己的默认配色，所以它的
+ * 文字色和复选框方框一个都不用覆盖 —— 否则 `.ant-checkbox-wrapper` 上那条写死的
+ * `color: rgba(0, 0, 0, 0.85)` 得靠 ::ng-deep 去压，还得小心别把选中态的蓝底一起压掉。
+ */
+.scene-toggle {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 15px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  user-select: none;
+}
+
+.scene-toggle:hover {
+  border-color: #4096ff;
+}
+
+/*
  * 全屏时的尺寸。
  *
  * `.scene-wrap` 常态高度是「视口 − 页头 − 页脚」，而 `:fullscreen` 的 UA 样式表
@@ -140,6 +167,26 @@
   line-height: 18px;
   white-space: nowrap;
   cursor: pointer;
+}
+
+/*
+ * 设备标签。比空间标签小一号、淡一点 —— 「显示设备」打开后一个空间下面会挂一串，
+ * 不区分主次就成了一堵墙，看不出哪个是空间。
+ *
+ * ⚠️ 位置有讲究，这两条都不能挪：
+ *   1. 必须写在 `.h3d-marker--active` **前面**。两者优先级相同（都是
+ *      `.scene-host[_ngcontent]` + 一个类），选中的设备标签要靠后写的 --active 才盖得住。
+ *   2. 必须写在 `:hover` **前面**。同理，否则悬停的深色反馈会被这里的背景色压掉。
+ *
+ * 高度 22px（16px 行高 + 4px 内边距 + 2px 边框），对应 anchor.ts 里的
+ * `DEVICE_ROW_PX = 26`，一行挨着一行还留 4px 缝。
+ */
+.scene-host ::ng-deep .h3d-marker--device {
+  padding: 2px 8px;
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(24, 34, 48, 0.68);
+  font-size: 11px;
+  line-height: 16px;
 }
 
 .scene-host ::ng-deep .h3d-marker:hover {
