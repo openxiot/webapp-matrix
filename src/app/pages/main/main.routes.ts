@@ -51,11 +51,13 @@ export const routes: Routes = [
   },
   {
     path: 'dashboard',
+    canActivate: [authGuard],
     data: { breadcrumb: '首页' },
     loadChildren: () => import('./dashboard/dashboard.routes').then((m) => m.DASHBOARD_ROUTES),
   },
   {
     path: 'alarm',
+    canActivate: [authGuard],
     data: { breadcrumb: '告警' },
     loadChildren: () => import('./alarm/alarm.routes').then((m) => m.ALARM_ROUTES),
   },
