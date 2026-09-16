@@ -184,6 +184,19 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
   });
 
   /**
+   * 全屏时顶部中间那条项目名。空串 = 不画。
+   *
+   * 读的就是 `account.space()` —— **当前项目本身就是一个 `SpaceEntity`**（见
+   * account.service 的 space 信号），所以不加请求、不新增状态，切项目这里跟着变。
+   *
+   * 只读 `name` 不读 `id`：项目没选中时 `space()` 是一个空的 `SpaceEntity`，
+   * 名字自然是空串，一条空的深色底片比不画更难看。
+   *
+   * **这个名字不是文案，不翻译**：它和空间名、设备名一样是用户起的。
+   */
+  protected readonly projectName = computed(() => this.account.space().name);
+
+  /**
    * 「显示信息」：不悬停也把每个标记的信息面板铺开。
    *
    * **放组件里，不放 `Home3dData`。** 「显示空间」「显示设备」那两颗在 data 里，
