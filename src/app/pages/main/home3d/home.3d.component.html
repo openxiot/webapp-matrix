@@ -18,20 +18,25 @@
   }
 
   <!--
-    悬停信息面板：鼠标停在哪个标签上就说哪个是什么，移开立刻消失。**跟着标签走** ——
-    位置由引擎每帧报上来的标签矩形算出来（见 placePanel）。
+    一块信息面板长什么样。**两条来路共用这一份**，所以悬停看到的那块和铺开时看到的
+    那块必然是同一个样子，不会两处两样：
 
-    只有一块：一次只有一样东西被指着，空间和设备永远不会同时悬停，本来就该是同一张
-    卡片换内容。
+      1. 「显示信息」铺开的一片 —— @for 把每个标记的那块都画出来（见 infoViews）
+      2. 悬停的那一块 —— 鼠标停在哪个标签上就说哪个是什么，移开立刻消失（见 hover）
+
+    两块**不会同时出现**：勾上「显示信息」时 hover 那边直接返回 null，否则悬停的
+    那个标记会被画两遍、两块面板叠在一起。
+
+    **跟着标签走** —— 位置由引擎每帧报上来的标签矩形算出来（见 placePanel）。
 
     纯只读 —— 要改东西（调位置、取消标注）仍然走点击菜单。所以它不吃指针事件
-    （见样式表），既不会挡住从它上面开始的拖拽旋转，也不会出现「鼠标从标签划到
-    面板上」这种既没离开标签又没进入别的标签的中间态。
+    （见样式表）：铺开一片的时候压在面板上的地方照样能拖动旋转、点模型标注，
+    也不会出现「鼠标从标签划到面板上」这种既没离开标签又没进入别的标签的中间态。
 
     top / bottom 二选一，另一个是 null（Angular 会把那条样式摘掉，落回 CSS 的 auto）——
     面板朝容器的内侧长，因此不必知道它自己多高。
   -->
-  @if (hover(); as view) {
+  <ng-template #infoPanel let-view>
     <div
       class="h3d-info"
       [style.left.px]="view.placement.left"
@@ -54,16 +59,28 @@
         </div>
       }
     </div>
+  </ng-template>
+
+  @for (view of infoViews(); track view.id) {
+    <ng-container [ngTemplateOutlet]="infoPanel" [ngTemplateOutletContext]="{ $implicit: view }" />
+  }
+
+  @if (hover(); as view) {
+    <ng-container [ngTemplateOutlet]="infoPanel" [ngTemplateOutletContext]="{ $implicit: view }" />
   }
 
   <div class="scene-actions">
     <!--
-      两颗开关是「看什么」（图层），右边几颗是「做什么」（动作），所以放左边。
-      从粗到细排：空间是更大的那一层，在左。
+      三颗开关是「看什么」（图层），右边几颗是「做什么」（动作），所以放左边。
+      从粗到细排：空间 → 设备 → 信息。
 
-      都绑 data 上的信号而不是本组件的 —— 它们要喂给 markers() 那个 computed，
+      前两颗绑 data 上的信号而不是本组件的 —— 它们要喂给 markers() 那个 computed，
       那个在 Home3dData 里。但走的是本组件的方法而不是直接 `.set()`：
       翻图层之后菜单和「调整位置」可能就悬空了，得一并收尾，见 onLayerToggle。
+
+      第三颗「显示信息」是**本组件**的信号：它一个标记都不增删，只决定标记的信息
+      画不画，所以没必要进 data。也正因为它不动标记，走的是 toggleInfo 而不是
+      onLayerToggle —— 没有要收尾的东西。
     -->
     <label
       class="scene-toggle"
@@ -82,6 +99,15 @@
       [ngModelOptions]="{ standalone: true }"
     >
       {{ '显示设备' | translate }}
+    </label>
+    <label
+      class="scene-toggle"
+      nz-checkbox
+      [ngModel]="showInfo()"
+      (ngModelChange)="toggleInfo($event)"
+      [ngModelOptions]="{ standalone: true }"
+    >
+      {{ '显示信息' | translate }}
     </label>
     <button nz-button [disabled]="loading() || !!error()" (click)="resetView()">
       <nz-icon nzType="reload" />

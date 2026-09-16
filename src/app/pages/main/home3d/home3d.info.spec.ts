@@ -1,19 +1,22 @@
 import { DeviceEntity } from '../../../typedef/define/device/DeviceEntity';
 import { ModelAnchor } from '../../../typedef/define/model/ModelAnchor';
 import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
-import { MODEL_ID, MODEL_REV, buildMarkers } from './home3d.anchor';
+import { type AnchorMarker, MODEL_ID, MODEL_REV, buildMarkers } from './home3d.anchor';
 import {
   type InfoPanel,
   type InfoText,
+  buildPanels,
   deviceInfo,
   formatPoint,
+  isMarkerVisible,
   placePanel,
+  placePanels,
   spaceInfo,
 } from './home3d.info';
 import type { MarkerRect } from './model3d.scene';
 
 /**
- * 悬停信息面板的内容。
+ * 信息面板的内容与摆位。
  *
  * 这些行错了也**不会报错，只是显示成另一个数**，所以用例盯的是三处最容易走偏的：
  *
@@ -180,6 +183,273 @@ describe('deviceInfo', () => {
 describe('formatPoint', () => {
   it('三位小数，负数保留符号', () => {
     expect(formatPoint({ x: 1.23456, y: -2.25, z: 3 })).toBe('1.235, -2.250, 3.000');
+  });
+});
+
+/**
+ * 「显示信息」铺开的那一片：给每个标记配一块面板。
+ *
+ * 盯的是两件事：**认哪个 id**（设备标记的 id 可能是 `空间id@did`，拿它去查设备必然
+ * 查不到，而且是静默地少画一块），以及**查不到实体时不画**（空间图每次写完都整棵重拉，
+ * 标记和实体之间有短暂空档）。
+ */
+describe('buildPanels', () => {
+  function marker(
+    kind: 'space' | 'device',
+    id: string,
+    spaceId: string,
+    deviceId?: string,
+  ): AnchorMarker {
+    return {
+      spec: { id, point: { x: 0, y: 0, z: 0 }, label: id, kind },
+      kind,
+      id,
+      deviceId,
+      name: id,
+      spaceId,
+    };
+  }
+
+  const s1 = space('s1', 'A栋', anchor(0, 0, 0));
+
+  it('空间标记出空间面板，设备标记出设备面板', () => {
+    const panels = buildPanels(
+      [marker('space', 's1', 's1'), marker('device', 'd1', 's1', 'd1')],
+      spaceMap(s1),
+      new Map([['d1', device('d1', 's1')]]),
+      [device('d1', 's1')],
+      TEXT,
+    );
+    expect(panels.map((item) => item.id)).toEqual(['s1', 'd1']);
+    expect(panels[0].panel.title).toBe('A栋');
+    expect(panels[1].panel.title).toBe('名:d1');
+  });
+
+  it('设备认 deviceId 不认 id —— 列表行的 id 是 `空间id@did`', () => {
+    // 「显示设备」列在 A栋 下面的那一行。id 是 s1@d1，**不是** did
+    const listed = marker('device', 's1@d1', 's1', 'd1');
+    const panels = buildPanels(
+      [listed],
+      spaceMap(s1),
+      new Map([['d1', device('d1', 's1')]]),
+      [device('d1', 's1')],
+      TEXT,
+    );
+    // 面板 id 仍然是标记 id（摆位要按它查矩形），但内容来自 d1
+    expect(panels).toHaveLength(1);
+    expect(panels[0].id).toBe('s1@d1');
+    expect(panels[0].panel.title).toBe('名:d1');
+  });
+
+  it('拿不到 deviceId 的设备标记不画，也不炸', () => {
+    const panels = buildPanels(
+      [marker('device', 's1@d1', 's1')],
+      spaceMap(s1),
+      new Map([['d1', device('d1', 's1')]]),
+      [],
+      TEXT,
+    );
+    expect(panels).toEqual([]);
+  });
+
+  it('实体查不到的标记跳过 —— 空间图刚换过一轮时会碰上', () => {
+    const panels = buildPanels(
+      [marker('space', 's1', 's1'), marker('space', '早没了', '早没了')],
+      spaceMap(s1),
+      new Map(),
+      [],
+      TEXT,
+    );
+    expect(panels.map((item) => item.id)).toEqual(['s1']);
+  });
+
+  it('顺序与标记一致 —— 铺开时面板的先后要跟画面上的一致', () => {
+    const s2 = space('s2', 'B栋', anchor(1, 0, 0));
+    const panels = buildPanels(
+      [
+        marker('space', 's2', 's2'),
+        marker('device', 'd1', 's1', 'd1'),
+        marker('space', 's1', 's1'),
+      ],
+      spaceMap(s1, s2),
+      new Map([['d1', device('d1', 's1')]]),
+      [device('d1', 's1')],
+      TEXT,
+    );
+    expect(panels.map((item) => item.id)).toEqual(['s2', 'd1', 's1']);
+  });
+
+  it('没有标记就没有面板', () => {
+    expect(buildPanels([], spaceMap(s1), new Map(), [], TEXT)).toEqual([]);
+  });
+
+  it('空间面板里的「设备数量」与角标同源，不另算一套', () => {
+    // 铺开的那块和悬停的那块必须是同一个数 —— 两处都走 spaceInfo
+    const devices = [device('d1', 's1'), device('d2', 's1'), device('别家的', 's2')];
+    const panels = buildPanels([marker('space', 's1', 's1')], spaceMap(s1), new Map(), devices, TEXT);
+    expect(rowValue(panels[0].panel, '设备数量')).toBe('2');
+  });
+
+  it('同一个 id 只出一块 —— 模板按 id 跟踪，重复会静默少画一块', () => {
+    // 引擎那边 markers 是 Map，天生去重；这里要是直出两条，
+    // `@for ... track view.id` 撞键只会 console.warn，然后丢掉一块
+    const panels = buildPanels(
+      [marker('space', 's1', 's1'), marker('space', 's1', 's1'), marker('device', 'd1', 's1', 'd1')],
+      spaceMap(s1),
+      new Map([['d1', device('d1', 's1')]]),
+      [device('d1', 's1')],
+      TEXT,
+    );
+    expect(panels.map((item) => item.id)).toEqual(['s1', 'd1']);
+  });
+});
+
+/**
+ * 摆位。核心那条是**没有矩形的面板不许画** —— 引擎还没报第一帧时表是空的，
+ * 放过去的话面板会闪在容器左上角。
+ */
+describe('placePanels', () => {
+  const CONTAINER = { width: 1000, height: 600 };
+
+  function entry(id: string): { id: string; panel: InfoPanel } {
+    return { id, panel: { title: id, subtitle: '', rows: [] } };
+  }
+
+  const rect = (x: number, y: number, width = 80, height = 22): MarkerRect => ({
+    x,
+    y,
+    width,
+    height,
+  });
+
+  it('没有矩形的面板直接丢掉 —— 不能画在 (0,0)', () => {
+    const views = placePanels([entry('a')], new Map(), CONTAINER);
+    expect(views).toEqual([]);
+  });
+
+  it('只丢掉没有矩形的那几块，其余照画', () => {
+    const views = placePanels(
+      [entry('a'), entry('b')],
+      new Map([['b', rect(100, 100)]]),
+      CONTAINER,
+    );
+    expect(views.map((view) => view.id)).toEqual(['b']);
+  });
+
+  it('摆位就是 placePanel 的结果（靠上的标签锚 top）', () => {
+    const r = rect(100, 100);
+    const views = placePanels([entry('a')], new Map([['a', r]]), CONTAINER);
+    expect(views[0].placement).toEqual(placePanel(r, CONTAINER));
+    expect(views[0].placement.top).toBe(100);
+  });
+
+  it('摆位就是 placePanel 的结果（靠下的标签锚 bottom）', () => {
+    const r = rect(100, 500);
+    const views = placePanels([entry('a')], new Map([['a', r]]), CONTAINER);
+    expect(views[0].placement).toEqual(placePanel(r, CONTAINER));
+    expect(views[0].placement.bottom).toBe(78); // 600 - 500 - 22
+  });
+
+  it('矩形比面板多是正常的（标记刚被删、这帧还没重报），不影响输出', () => {
+    const views = placePanels(
+      [entry('a')],
+      new Map([
+        ['a', rect(100, 100)],
+        ['已经没了的标记', rect(0, 0)],
+      ]),
+      CONTAINER,
+    );
+    expect(views.map((view) => view.id)).toEqual(['a']);
+  });
+
+  it('零尺寸的矩形丢掉 —— 那是转到镜头背后的标记', () => {
+    // CSS2DRenderer 给镜头背后的标记 display:none，量出来四个数全是 0，
+    // 减掉画布原点就是一对负数。放过去会摆出一块没有主的空面板
+    const views = placePanels(
+      [entry('a')],
+      new Map([['a', { x: -120, y: -60, width: 0, height: 0 }]]),
+      CONTAINER,
+    );
+    expect(views).toEqual([]);
+  });
+
+  it('整个在容器外的矩形丢掉 —— 否则会夹出一块没有标签的面板', () => {
+    // 标签在画布右边外面：placePanel 的「翻到左边」分支会把它夹回容器内，
+    // 摆出一块位置正当、附近却没有标签的面板
+    const outside = placePanels([entry('a')], new Map([['a', rect(1100, 100)]]), CONTAINER);
+    expect(outside).toEqual([]);
+
+    // 同一批里容器内的那块照画，只丢出界的那块
+    const mixed = placePanels(
+      [entry('a'), entry('b')],
+      new Map([
+        ['a', rect(1100, 100)],
+        ['b', rect(100, 100)],
+      ]),
+      CONTAINER,
+    );
+    expect(mixed.map((view) => view.id)).toEqual(['b']);
+  });
+
+  it('内容原样带过去，不重算', () => {
+    const panel: InfoPanel = {
+      title: 'A栋',
+      subtitle: '园区 / A栋',
+      rows: [{ label: '设备数量', value: '7' }],
+    };
+    const views = placePanels([{ id: 's1', panel }], new Map([['s1', rect(1, 2)]]), CONTAINER);
+    expect(views[0].panel).toBe(panel);
+  });
+
+  it('没有面板就没有视图', () => {
+    expect(placePanels([], new Map([['a', rect(1, 2)]]), CONTAINER)).toEqual([]);
+  });
+});
+
+/**
+ * 一个矩形算不算「画面上真看得见的一个标签」。
+ *
+ * 这是铺开那一片的看门人：漏掉哪一条，画面上就会多出一块**没有主的空面板**
+ * —— 而且只在特定角度/位置才看得见，靠肉眼很难发现。
+ */
+describe('isMarkerVisible', () => {
+  const CONTAINER = { width: 1000, height: 600 };
+  const at = (x: number, y: number, width = 80, height = 22): MarkerRect => ({
+    x,
+    y,
+    width,
+    height,
+  });
+
+  it('零尺寸一律不算 —— 那是被 display:none 掉的标记', () => {
+    expect(isMarkerVisible({ x: -120, y: -60, width: 0, height: 0 }, CONTAINER)).toBe(false);
+    // 只塌了一边也不算：半个标签不该摆出一块完整面板
+    expect(isMarkerVisible({ x: 100, y: 100, width: 0, height: 22 }, CONTAINER)).toBe(false);
+    expect(isMarkerVisible({ x: 100, y: 100, width: 80, height: 0 }, CONTAINER)).toBe(false);
+  });
+
+  it('在容器里就算', () => {
+    expect(isMarkerVisible(at(100, 100), CONTAINER)).toBe(true);
+    expect(isMarkerVisible(at(0, 0), CONTAINER)).toBe(true);
+  });
+
+  it('整个滑出右边不算', () => {
+    // 左边正好在 1000 上（容器右边缘）也算出去了：一个像素都没露
+    expect(isMarkerVisible(at(1000, 100), CONTAINER)).toBe(false);
+    expect(isMarkerVisible(at(1100, 100), CONTAINER)).toBe(false);
+  });
+
+  it('露一个像素就算 —— 半张标签压在边上时面板还得跟着', () => {
+    expect(isMarkerVisible(at(999, 100), CONTAINER)).toBe(true);
+    expect(isMarkerVisible(at(-79, 100), CONTAINER)).toBe(true);
+    expect(isMarkerVisible(at(-80, 100), CONTAINER)).toBe(false);
+  });
+
+  it('纵向同理', () => {
+    expect(isMarkerVisible(at(100, 600), CONTAINER)).toBe(false);
+    expect(isMarkerVisible(at(100, 599), CONTAINER)).toBe(true);
+    expect(isMarkerVisible(at(100, -22), CONTAINER)).toBe(false);
+    expect(isMarkerVisible(at(100, -21), CONTAINER)).toBe(true);
   });
 });
 

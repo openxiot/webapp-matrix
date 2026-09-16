@@ -11,6 +11,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -36,9 +37,11 @@ import {
   type InfoPanel,
   type InfoText,
   type PanelPlacement,
+  buildPanels,
   deviceInfo,
   formatPoint,
   placePanel,
+  placePanels,
   spaceInfo,
 } from './home3d.info';
 import { Home3dMenuComponent, type Home3dMenuItem } from './menu/home3d.menu.component';
@@ -81,6 +84,7 @@ interface MenuState {
   imports: [
     FormsModule,
     Home3dMenuComponent,
+    NgTemplateOutlet,
     NzAlertModule,
     NzButtonModule,
     NzCheckboxModule,
@@ -178,6 +182,58 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
   });
 
   /**
+   * 「显示信息」：不悬停也把每个标记的信息面板铺开。
+   *
+   * **放组件里，不放 `Home3dData`。** 「显示空间」「显示设备」那两颗在 data 里，
+   * 是因为它们要喂 `markers()` —— 它们决定画面上**有哪些标记**。这一颗不增删任何
+   * 标记，只决定那些标记的信息画不画，所以是纯展示层的事。
+   *
+   * 默认关：开着是给大屏看的，平时刷一下页面就铺一片面板反而碍事。只活在本次会话里。
+   */
+  protected readonly showInfo = signal(false);
+
+  /**
+   * 全部标记此刻在画布上的矩形，由引擎每帧报上来（见引擎的 `setRectSync`）。
+   *
+   * 只有「显示信息」打开时引擎才会报，所以关着的时候这个信号是空的、也不会被写 ——
+   * 不转视角、不铺面板时一次变更检测都不多跑。
+   */
+  private readonly rects = signal<ReadonlyMap<string, MarkerRect>>(new Map());
+
+  /**
+   * 铺开的面板**内容**。只跟标记、语言、设备名走，**不读 `rects`**。
+   *
+   * 与下面的 `infoViews` 拆成两个 computed 是这里唯一的性能要点：`rects` 每帧都可能
+   * 变，混成一个的话**每块面板的内容**都会跟着每帧重算一遍 —— 而 `spaceInfo` 要
+   * 遍历祖先链、还要 filter 整个设备表（`devicesInSpace`）。几十个标记 × 60fps 白烧。
+   * 拆开之后，每帧只重跑 `placePanel` 那点算术。
+   */
+  private readonly infoEntries = computed(() => {
+    if (!this.showInfo()) {
+      return [];
+    }
+    this.i18n.currentLang();
+    return buildPanels(
+      this.data.markers(),
+      this.data.spaceById(),
+      this.data.deviceById(),
+      this.data.devices(),
+      this.infoText(),
+    );
+  });
+
+  /**
+   * 铺开的面板：内容 + 该摆哪儿。模板 `@for` 的就是它。
+   *
+   * 空列表直接返回，**不去读容器尺寸**：`containerSize()` 要读 `clientWidth`，
+   * 那是一次强制回流。没面板可摆的时候（开关关着，这是绝大多数时候）不该为它付钱。
+   */
+  protected readonly infoViews = computed(() => {
+    const entries = this.infoEntries();
+    return entries.length === 0 ? [] : placePanels(entries, this.rects(), this.containerSize());
+  });
+
+  /**
    * 悬停面板：内容 + 该摆哪儿。查不到实体就整个不画（悬停的标记可能刚被删掉，
    * 空间图也可能刚换过一轮）。
    *
@@ -193,11 +249,22 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
    * `currentLang()` 那行不能省：面板上的标签是 instant 拼出来的，不读这个信号
    * 切语言后面板不会重算，会停在上一种语言 —— 与上面 `movingHint` 同一个理由。
    *
-   * 至于**为什么只有一块面板**：一次只有一样东西被指着（见 `onMarkerHover`），
-   * 空间面板和设备面板永远不会同时出现，所以它们本来就该是同一块卡片换内容。
+   * **「显示信息」打开时这里返回 null。** 那时每块标记的面板都已经由 `infoViews`
+   * 铺出来了，悬停的那块自然也在里面；这里再画一块，同一个标记就被画两遍，
+   * 而且两块会重叠在一起 —— 看着像重影。
+   *
+   * 至于**悬停这条路径为什么只有一块面板**：一次只有一样东西被指着（见
+   * `onMarkerHover`），空间面板和设备面板永远不会同时出现，所以它们本来就该是
+   * 同一块卡片换内容。铺开那条路径（`infoViews`）不受此限，一次画 N 块。
    */
   protected readonly hover = computed<{ panel: InfoPanel; placement: PanelPlacement } | null>(
     () => {
+      // 这一行必须在读 hovered / hoverRect **之前**：computed 的依赖是这次求值
+      // 真的读到的那些信号。放在后面的话，铺开期间引擎每帧写 hoverRect 都会把
+      // 这个 computed 拖起来重算一遍，只为了走到下面立刻返回 null。
+      if (this.showInfo()) {
+        return null;
+      }
       const hovered = this.hovered();
       const rect = this.hoverRect();
       if (!hovered || !rect) {
@@ -209,11 +276,21 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
       if (!panel) {
         return null;
       }
-      // 面板跟着标签走，所以要按容器当前尺寸判断往哪边摆
-      const wrap = this.sceneWrap().nativeElement;
-      return { panel, placement: placePanel(rect, { width: wrap.clientWidth, height: wrap.clientHeight }) };
+      return { panel, placement: placePanel(rect, this.containerSize()) };
     },
   );
+
+  /**
+   * 摆面板用的容器尺寸。
+   *
+   * ⚠️ 两条路径（悬停一块、铺开一片）**必须都读这里**。引擎量矩形用的是画布
+   * （`renderer.domElement`）的矩形，而这里是 `.scene-wrap` 的 —— 两者若有细微差别
+   * （边框之类），也该让两条路径**一起**偏；各读各的会出现「悬停时贴这边、铺开时贴那边」。
+   */
+  private containerSize(): { width: number; height: number } {
+    const wrap = this.sceneWrap().nativeElement;
+    return { width: wrap.clientWidth, height: wrap.clientHeight };
+  }
 
   /** 悬停的东西对应的信息面板内容。实体查不到就 null */
   private infoPanelFor(hovered: { kind: 'space' | 'device'; id: string }): InfoPanel | null {
@@ -329,6 +406,33 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
   protected toggleDevices(show: boolean): void {
     this.data.showDevices.set(show);
     this.onLayerToggle();
+  }
+
+  /**
+   * 「显示信息」：把每个标记的信息面板铺开，不用鼠标去碰标签。
+   *
+   * **不走 `onLayerToggle()`** —— 那个的职责是「层翻了之后菜单和『调整位置』可能悬空」，
+   * 因为翻那两颗开关会增删标记。这一颗一个标记都不动，菜单指着的那个还在原处，
+   * 没有要收尾的东西。
+   *
+   * 引擎那边要跟着打开/关闭矩形上报：铺开的面板全靠每帧的矩形摆位，
+   * 而渲染是按需的 —— 关着时引擎一帧都不出，也就没有矩形。
+   */
+  protected toggleInfo(show: boolean): void {
+    this.showInfo.set(show);
+    // 把记着的悬停清掉。**两个方向都需要**：
+    //  - 关掉时，若这里还记着「刚才指着谁」（开着的时候照样在记，见 onMarkerHover），
+    //    面板会凭一个早就过期的位置突然冒出来，而鼠标可能根本不在那儿；
+    //  - 打开时，留着它也没有意义 —— 铺开的列表已经涵盖所有标记了。
+    // 清掉之后，关掉开关画面就是干净的；真要再看某一块，把鼠标移上去自然会重新记。
+    this.hovered.set(null);
+    this.hoverRect.set(null);
+    // 记着的矩形也一起丢掉。**两个方向都需要**：关着的时候画面照样在动，
+    // 重新打开时若还留着上一轮的表，那一片面板会先按**旧镜头**的位置画一帧、
+    // 下一帧再集体跳到正确的位置上 —— 一片面板同时抖一下，比晚一帧出现难看得多。
+    // 丢掉之后，第一帧就没有面板（没有矩形），引擎报上来才画，位置天生是对的。
+    this.rects.set(new Map());
+    this.scene?.setRectSync(show);
   }
 
   /**
@@ -716,7 +820,12 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
         this.onMarkerHover(id, rect);
       }
     });
+    // 铺开的信息面板。这条**不需要** destroyed 守卫：引擎只在渲染帧里报，
+    // 而 dispose() 第一件事就是取消已排队的帧，之后再没有任何上报路径。
+    scene.onMarkerRects((rects) => this.rects.set(rects));
     this.scene = scene;
+    // 用户的勾选可能比场景先到（场景要等模型列表出来才建）。补一次，别让状态分家。
+    scene.setRectSync(this.showInfo());
     // 空间图可能比场景先到。markers() 是 computed，这里读到的是当前值；
     // 此刻 root 还没载入，引擎会把它缓存下来，模型到位后再灌。
     scene.setMarkers(this.data.markers().map((marker) => marker.spec));

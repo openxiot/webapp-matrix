@@ -91,7 +91,8 @@ interface MarkerEntry {
 /**
  * 一个标记的标签在画布上占的矩形，CSS 像素、相对画布左上角。
  *
- * 给调用方摆悬停信息面板用 —— 面板要贴着标签走，就得知道标签此刻在哪儿。
+ * 给调用方摆信息面板用 —— 面板要贴着标签走，就得知道标签此刻在哪儿。
+ * 悬停的那一块和「显示信息」铺开的那一片都吃它。
  */
 export interface MarkerRect {
   x: number;
@@ -168,6 +169,23 @@ export class Model3dScene {
   private pickHandler: ((result: PickResult | null) => void) | null = null;
   private markerHandler: ((id: string, screen: { x: number; y: number }) => void) | null = null;
   private hoverHandler: ((id: string | null, rect: MarkerRect | null) => void) | null = null;
+  private rectsHandler: ((rects: ReadonlyMap<string, MarkerRect>) => void) | null = null;
+  /**
+   * 是否每帧上报**全部**标记的矩形（「显示信息」铺开时打开）。
+   *
+   * 默认关着：那是一项每个标记一次 DOM 测量 + 一次逐项比较的活儿，
+   * 只有铺开面板时才有人要。
+   */
+  private rectSync = false;
+  /**
+   * 上一次播出去的全量矩形，用来判断这一帧有没有东西动过。
+   *
+   * 每个键都可能是**零尺寸**的：标记转到镜头背后时 CSS2DRenderer 给它
+   * `display: none`，量出来四个数全是 0。这里不筛，原样报上去 —— 哪些矩形算
+   * 「真看得见」是摆位那边的规矩（见 `isMarkerVisible`），引擎只管如实上报，
+   * 而且筛了反而会让「标记转到背后」这件事不算变化、少报一帧。
+   */
+  private lastRects: ReadonlyMap<string, MarkerRect> | null = null;
   /**
    * 此刻鼠标停着的标记，没有就是 null。
    *
@@ -304,6 +322,43 @@ export class Model3dScene {
    */
   onMarkerHover(handler: (id: string | null, rect: MarkerRect | null) => void): void {
     this.hoverHandler = handler;
+  }
+
+  /**
+   * 注册「全部标记的矩形」回调。**只有 {@link setRectSync} 打开时才会被调用。**
+   *
+   * 与 {@link onMarkerHover} 是两条**平行**的通道，互不影响：悬停那条答的是
+   * 「鼠标指着哪一个」，这条答的是「每个标记此刻各自在哪儿」。铺开信息面板用后者；
+   * 前者一次只报一个，正好够悬停面板用。
+   *
+   * 每一帧最多回调一次，且**只在真有矩形变了的时候**才回调 —— 镜头停住时一次都不来，
+   * 于是上层的信号不会被写、变更检测也不会被惊动。
+   *
+   * 传出去的表是**只读**的：引擎自己留着它当下一帧的比较基准，谁要是就地改一笔，
+   * 下一帧的差值就算错了。
+   */
+  onMarkerRects(handler: (rects: ReadonlyMap<string, MarkerRect>) => void): void {
+    this.rectsHandler = handler;
+  }
+
+  /**
+   * 打开/关闭「每帧上报全部标记的矩形」。
+   *
+   * ⚠️ 打开时**必须**自己踢一帧：渲染是按需的（见 {@link requestRender}），镜头不动
+   * 就一帧都不出，而这里恰恰要在「用户什么都没做」的时候拿到第一份矩形 ——
+   * 不踢这一脚，勾上开关后面板要等到用户转一下视角才出现，看着像坏了。
+   *
+   * 关掉时把缓存丢掉：下次打开重新报一份完整的，不必去猜这中间变了什么。
+   */
+  setRectSync(on: boolean): void {
+    if (this.rectSync === on) {
+      return;
+    }
+    this.rectSync = on;
+    this.lastRects = null;
+    if (on) {
+      this.requestRender();
+    }
   }
 
   /**
@@ -601,6 +656,8 @@ export class Model3dScene {
       // 标签刚被摆到新位置，赶紧把悬停面板也跟着挪过去 —— 必须在这一帧之后量，
       // 量早了拿到的是上一帧的位置，面板会慢半拍
       this.syncHoverRect();
+      // 同理，「显示信息」铺开的那一片也得跟着这一帧的新位置走
+      this.syncAllRects();
     });
   };
 
@@ -735,7 +792,7 @@ export class Model3dScene {
       return;
     }
     this.hovered = entry;
-    this.hoverRect = entry ? this.measureMarker(entry.element) : null;
+    this.hoverRect = entry ? this.measureMarker(entry.element, this.hostRect()) : null;
     this.hoverHandler?.(entry?.id ?? null, this.hoverRect);
   }
 
@@ -751,7 +808,7 @@ export class Model3dScene {
     if (!entry) {
       return;
     }
-    const rect = this.measureMarker(entry.element);
+    const rect = this.measureMarker(entry.element, this.hostRect());
     const last = this.hoverRect;
     if (
       last &&
@@ -766,9 +823,18 @@ export class Model3dScene {
     this.hoverHandler?.(entry.id, rect);
   }
 
-  /** 标签此刻在画布上的位置。用 DOM 实测而不是自己投影：字号、内边距、行偏移全都算在内 */
-  private measureMarker(element: HTMLElement): MarkerRect {
-    const host = this.renderer.domElement.getBoundingClientRect();
+  /** 画布此刻的位置。所有标记的坐标都以它为原点 */
+  private hostRect(): DOMRect {
+    return this.renderer.domElement.getBoundingClientRect();
+  }
+
+  /**
+   * 标签此刻在画布上的位置。用 DOM 实测而不是自己投影：字号、内边距、行偏移全都算在内。
+   *
+   * 画布的矩形**由调用方传进来**，不在这里查：铺开那条路径一帧要量几十个标记，
+   * 每个都去查同一个画布矩形是白费的。量一个标记的悬停路径顺手查一次即可。
+   */
+  private measureMarker(element: HTMLElement, host: DOMRect): MarkerRect {
     const box = element.getBoundingClientRect();
     return {
       x: box.left - host.left,
@@ -776,6 +842,53 @@ export class Model3dScene {
       width: box.width,
       height: box.height,
     };
+  }
+
+  /**
+   * 「显示信息」铺开时每帧重报一次**全部**标记的矩形。见 {@link setRectSync}。
+   *
+   * 与 {@link syncHoverRect} 一样只在真的渲染了的帧上跑，所以镜头停住时它一次都不执行。
+   *
+   * **只在真有矩形变了的时候才回调。** 少了这道比较，转完视角松手后的阻尼尾段、
+   * 乃至任何一次多余的渲染帧，都会往上写一次信号 —— 上面那个铺开列表就得整片重算重画。
+   * 比较本身只是几十次数字对比，比一次变更检测便宜得多。
+   *
+   * 「少了一个标记」也算变化：每次都拿 `this.markers` 现攒，被摘掉的自然不在新表里，
+   * 再比一下 size 就知道。不这么比的话，删掉一个标记后上面会一直留着一块没有主的面板。
+   */
+  private syncAllRects(): void {
+    if (!this.rectSync) {
+      return;
+    }
+    const host = this.hostRect();
+    const rects = new Map<string, MarkerRect>();
+    for (const entry of this.markers.values()) {
+      rects.set(entry.id, this.measureMarker(entry.element, host));
+    }
+
+    const last = this.lastRects;
+    if (last && last.size === rects.size) {
+      let same = true;
+      for (const [id, rect] of rects) {
+        const before = last.get(id);
+        if (
+          !before ||
+          before.x !== rect.x ||
+          before.y !== rect.y ||
+          before.width !== rect.width ||
+          before.height !== rect.height
+        ) {
+          same = false;
+          break;
+        }
+      }
+      if (same) {
+        return;
+      }
+    }
+
+    this.lastRects = rects;
+    this.rectsHandler?.(rects);
   }
 
   private readonly onMarkerDomEnter = (event: MouseEvent): void => {
