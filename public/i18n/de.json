@@ -466,5 +466,6 @@
   "在模型上单独标点": "Auf dem Modell verorten",
   "显示空间": "Bereiche anzeigen",
   "显示信息": "Informationen anzeigen",
-  "显示告警": "Alarme anzeigen"
+  "显示告警": "Alarme anzeigen",
+  "处理后再报": "Nach Bearbeitung erneut gemeldet"
 }

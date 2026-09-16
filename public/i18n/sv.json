@@ -466,5 +466,6 @@
   "在模型上单独标点": "Placera på modellen",
   "显示空间": "Visa utrymmen",
   "显示信息": "Visa information",
-  "显示告警": "Visa larm"
+  "显示告警": "Visa larm",
+  "处理后再报": "Larmat igen efter åtgärd"
 }

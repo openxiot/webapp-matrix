@@ -466,5 +466,6 @@
   "在模型上单独标点": "Marcar no modelo",
   "显示空间": "Mostrar espaços",
   "显示信息": "Mostrar informações",
-  "显示告警": "Mostrar alarmes"
+  "显示告警": "Mostrar alarmes",
+  "处理后再报": "Realertado após tratamento"
 }

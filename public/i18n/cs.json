@@ -466,5 +466,6 @@
   "在模型上单独标点": "Označit v modelu",
   "显示空间": "Zobrazit prostory",
   "显示信息": "Zobrazit informace",
-  "显示告警": "Zobrazit alarmy"
+  "显示告警": "Zobrazit alarmy",
+  "处理后再报": "Opětovné hlášení po vyřízení"
 }

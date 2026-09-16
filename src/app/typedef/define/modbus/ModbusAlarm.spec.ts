@@ -81,10 +81,12 @@ describe('modbusAlarmCloseLabel', () => {
   // 假翻译函数：把词典键原样回显，于是断言里既能看到「查了哪个键」也能看到「没查到时给什么」
   const t = (key: string) => `译:${key}`;
 
-  it('三个关闭原因各自译出', () => {
+  it('四个关闭原因各自译出', () => {
     expect(modbusAlarmCloseLabel('VALUE', t)).toBe('译:值恢复');
     expect(modbusAlarmCloseLabel('DEFINITION', t)).toBe('译:定义变更');
     expect(modbusAlarmCloseLabel('SUPERSEDED', t)).toBe('译:被取代');
+    // 处理过之后仍在越限：关掉旧行、另开一条新的（后端 CLOSE_HANDLED）
+    expect(modbusAlarmCloseLabel('HANDLED', t)).toBe('译:处理后再报');
   });
 
   it('没收录的枚举名原样给出，不空白', () => {

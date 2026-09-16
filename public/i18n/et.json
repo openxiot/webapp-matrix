@@ -466,5 +466,6 @@
   "在模型上单独标点": "Märgi mudelil",
   "显示空间": "Kuva alad",
   "显示信息": "Kuva teave",
-  "显示告警": "Kuva alarmid"
+  "显示告警": "Kuva alarmid",
+  "处理后再报": "Uuesti teatatud pärast käsitlemist"
 }

@@ -466,5 +466,6 @@
   "在模型上单独标点": "Plasser på modellen",
   "显示空间": "Vis områder",
   "显示信息": "Vis informasjon",
-  "显示告警": "Vis alarmer"
+  "显示告警": "Vis alarmer",
+  "处理后再报": "Varslet på nytt etter behandling"
 }
