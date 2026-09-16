@@ -25,7 +25,7 @@ import { DeviceEntity } from '../typedef/define/device/DeviceEntity';
  * Modbus 设备点表服务。
  *
  * 目标 service-matrix 后端，端点统一为 /matrix/v1/modbus/config；
- * 组织通过拦截器附加的 X-Org-Id 请求头携带，方法不再传 orgId。
+ * 点表本身按组织存，组织通过拦截器附加的 X-Org-Id 请求头携带，方法不再传 orgId。
  *
  * 另一半是 Modbus 服务（点表映射成可调用的方法，ModbusServiceResource），
  * 端点 /matrix/v1/modbus/service，方法名统一带 Service 后缀以便与点表那批区分：
@@ -102,8 +102,8 @@ export class ModbusService {
   /**------------------------------------------------------------------------------------------------
    * Modbus 服务（点表映射成一组可调用的方法，ModbusServiceResource）
    * 权限按**空间**判（与设备接口同一口径）：查询与 invoke 需空间成员，增删改需空间管理员；
-   * 空间 ID 在 Path 上，统一传当前项目根空间（account.space().id）。组织经 X-Org-Id 携带，
-   * 只在空间 accesses 里的组织条目命中时起作用。
+   * 空间 ID 在 Path 上，统一传当前项目根空间（account.space().id）。判定只看空间 accesses 里的
+   * 那条组织条目，**不看** X-Org-Id。
    *------------------------------------------------------------------------------------------------*/
 
   /** 按空间列出服务（GET /service/many/{spaceId}，筛的是服务里记的设备落点） */

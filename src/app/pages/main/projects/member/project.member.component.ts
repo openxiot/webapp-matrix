@@ -26,7 +26,7 @@ import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
 
 /**
  * 项目成员管理：展示项目（根空间）的成员列表（访问条目 type = user）。
- * 项目管理员（自己的 user 条目 role = admin，或当前组织命中 organization 条目且本人为组织管理员）
+ * 项目管理员（自己的 user 条目 role = admin，或该空间挂在当前组织下且本人为组织管理员）
  * 可添加 / 移除其他成员、调整角色；所有成员可退出项目（最后一个管理员不可退出）。
  */
 @Component({
@@ -63,7 +63,13 @@ export class ProjectMemberComponent implements OnInit {
   /**
    * 当前账号是否为项目管理员（决定能否添加/移除/调整成员）：
    * 1. 项目角色：自己在成员列表中的 user 条目 role = admin；
-   * 2. 组织兜底：当前组织（X-Org-Id）命中该空间的 organization 条目，且自己在该组织中为管理员。
+   * 2. 组织兜底：该空间的 organization 条目就是当前组织，且自己在该组织中为管理员。
+   *
+   * <p>后端的判定只看空间上那条组织条目、不看请求头（OrgAccessService.checkSpaceAdmin）；
+   * 这里多要求「就是当前选中的组织」，比后端**更严**，不会出现「界面给了按钮、后端拒绝」。
+   * 反过来「后端允许而界面不给」理论上存在：一个组织的项目只有在选中该组织时才会出现在项目
+   * 列表里（GET /space/all 按 X-Org-Id 分流），所以能走到这一页就说明组织已经选中 —— 除非是
+   * 直接敲 URL 进来的，那种情况下按钮不显示，页面退化成只读，不影响判定。</p>
    */
   readonly isAdmin = computed(() => {
     const me = this.account.user();
