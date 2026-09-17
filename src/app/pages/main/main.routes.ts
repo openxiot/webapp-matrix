@@ -21,6 +21,12 @@ export const routes: Routes = [
       import('./organization/organization.routes').then((m) => m.ORGANIZATION_ROUTES),
   },
   {
+    path: 'home',
+    canActivate: [authGuard],
+    data: { breadcrumb: '测试首页' },
+    loadChildren: () => import('./home/home.routes').then((m) => m.HOME_ROUTES),
+  },
+  {
     path: 'home3d',
     canActivate: [authGuard],
     data: { breadcrumb: '3D' },
