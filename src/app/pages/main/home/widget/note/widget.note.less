@@ -1,0 +1,27 @@
+/*
+ * 占位与失败态：一句话居中，卡片再小也读得出来。
+ *
+ * `:host` 自己撑满卡身子（`flex: 1`）：这是「卡片里没有别的东西可显示」时的**唯一**内容，
+ * 它要是只占一行高，那句话就贴在卡片顶上而下面空一大片。
+ */
+:host {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.widget-note {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  text-align: center;
+  /* 服务端那句英文可能比卡片宽：让它换行，不要撑破卡片 */
+  overflow-wrap: anywhere;
+  padding: 0 4px;
+}

@@ -167,6 +167,33 @@ export function modbusFailureLabel(
 }
 
 /**
+ * 采集到的一个值的展示文案。
+ *
+ * **值可能不是数字**：取值表命中时字段值直接是描述串，位是 0/1，某些点表给的是字符串。
+ * 所以这不是「格式化数字」而是一次类型分派：数值收一收浮点误差、对象退化成 JSON、
+ * `null` / `undefined` 给 `-`。
+ *
+ * 「`null` 说 `-`」与「`0` 说 `0`」必须分得开 —— 后者是真实读数，前者是这一轮没采到。
+ *
+ * 放在本文件（而不是某个页面里）：历史表格、服务卡片、将来的字段曲线都要说同一种话，
+ * 各写一套迟早会走样 —— 与 {@link modbusFailureLabel} 同一个理由。
+ */
+export function modbusValueText(value: ModbusValue): string {
+  if (value === null || value === undefined) {
+    return '-';
+  }
+  if (typeof value === 'number') {
+    return modbusNumberText(value);
+  }
+  return typeof value === 'object' ? JSON.stringify(value) : String(value);
+}
+
+/** 数值文案：整数不带小数点，浮点收到 4 位（`0.30000000000000004` → `0.3`） */
+export function modbusNumberText(value: number): string {
+  return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(4)));
+}
+
+/**
  * 一条采集失败。同一条消息（message 相同）**只记第一次**，故这列的是「错误首次出现的时刻」，
  * 不是每次失败都有一行 —— 与曲线上的竖线含义一致。
  */

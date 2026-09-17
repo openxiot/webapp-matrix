@@ -1,0 +1,349 @@
+<!-- 卡片配置表单。整套按钮自己出（对话框那层不挂 footer）：点「确定」只 emit 一张改好的卡片，
+     落库由看板页决定，这里不该知道保存这件事 -->
+
+<nz-form-item>
+  <nz-form-label [nzSpan]="5">{{ '卡片标题' | translate }}</nz-form-label>
+  <nz-form-control>
+    <input
+      nz-input
+      type="text"
+      [ngModel]="title()"
+      (ngModelChange)="setTitle($event)"
+      [placeholder]="'留空则用默认名称' | translate"
+    />
+  </nz-form-control>
+</nz-form-item>
+
+<!-- ── 按类型分叉的配置。这里是 DASHBOARD_EDITABLE_TYPES 那几种，库里万一存着别的
+       类型（老版本写的、或后端新加的），给一句说明而不是一个空表单 ── -->
+@switch (type()) {
+  @case ('stat') {
+    <nz-form-item>
+      <nz-form-label [nzSpan]="5" [nzRequired]="true">{{ '指标' | translate }}</nz-form-label>
+      <nz-form-control>
+        <nz-select [ngModel]="metric()" (ngModelChange)="setMetric($event)">
+          @for (option of metricOptions(); track option.value) {
+            <nz-option [nzValue]="option.value" [nzLabel]="option.label" />
+          }
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+  }
+  @case ('line') {
+    <nz-form-item>
+      <nz-form-label [nzSpan]="5">{{ '数据源' | translate }}</nz-form-label>
+      <nz-form-control>
+        <!-- 二选一，不是下拉框：两条分支下面接的表单差得远（一条只有一个点数，
+             另一条是一整套级联），单选按钮的横排正好把这件事摆在明面上 -->
+        <nz-radio-group [ngModel]="lineSource()" (ngModelChange)="setLineSource($event)">
+          <label nz-radio-button nzValue="alarmCount">{{ '告警次数' | translate }}</label>
+          <label nz-radio-button nzValue="serviceField">{{ '服务字段' | translate }}</label>
+        </nz-radio-group>
+      </nz-form-control>
+    </nz-form-item>
+    @if (lineSource() === 'serviceField') {
+      <!-- 与服务卡同形的三级级联（服务 → 方法 → 字段），候选也来自同一份清单与同一份展开
+           实现。差别只在最后一级：**一条曲线只画一个字段**，故这里是单选而不是多选 -->
+      <nz-form-item>
+        <nz-form-label [nzSpan]="5" [nzRequired]="true">{{ '服务' | translate }}</nz-form-label>
+        <nz-form-control>
+          <nz-select
+            [ngModel]="serviceId()"
+            (ngModelChange)="setServiceId($event)"
+            [nzPlaceHolder]="'请选择' | translate"
+          >
+            @for (option of serviceOptions(); track option.value) {
+              <nz-option [nzValue]="option.value" [nzLabel]="option.label" />
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="5" [nzRequired]="true">{{ '方法' | translate }}</nz-form-label>
+        <nz-form-control>
+          <nz-select
+            [ngModel]="functionIndex()"
+            (ngModelChange)="setFunctionIndex($event)"
+            [nzDisabled]="!selectedService()"
+            [nzPlaceHolder]="'请选择' | translate"
+          >
+            @for (option of functionOptions(); track option.value) {
+              <nz-option [nzValue]="option.value" [nzLabel]="option.label" />
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="5" [nzRequired]="true">{{ '字段' | translate }}</nz-form-label>
+        <nz-form-control>
+          <nz-select
+            [ngModel]="curveField()"
+            (ngModelChange)="setCurveField($event)"
+            [nzDisabled]="!functionIndex()"
+            [nzPlaceHolder]="'请选择' | translate"
+          >
+            @for (option of fieldOptions(); track option.key) {
+              <nz-option [nzValue]="option.value" [nzLabel]="option.label" />
+            }
+          </nz-select>
+          <!-- 非数值字段**只提示、不从下拉里剔除**（与历史页同一口径）：那种曲线是一串断点，
+               但断点本身说明了「这段读到了东西」，比选不到它更有信息 -->
+          @if (fieldIsNotNumeric()) {
+            <div class="hint">{{ '该字段为非数值，曲线上会是断点' | translate }}</div>
+          }
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="5">{{ '显示采集失败竖线' | translate }}</nz-form-label>
+        <nz-form-control>
+          <!-- 竖线说的是「这个方法的采集什么时候失败过」，与读数本身是两件事 -->
+          <nz-switch [ngModel]="showFailureShadow()" (ngModelChange)="setShowFailureShadow($event)" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="5">{{ '最大点数' | translate }}</nz-form-label>
+        <nz-form-control>
+          <!-- 降采样只对服务字段那一支存在：告警条数曲线是后端按整点**零填充**的，每个整点都在
+               数组里，没有「点太多」这回事（取数时也不读这个键）。摆一个改了没反应的控件比不摆
+               更糟 —— 用户会以为「我限制了点数」 -->
+          <nz-input-number
+            [ngModel]="maxPoints()"
+            (ngModelChange)="setMaxPoints($event)"
+            [nzMin]="2"
+            [nzStep]="12"
+            [nzPlaceHolder]="'不限制' | translate"
+          />
+        </nz-form-control>
+      </nz-form-item>
+    }
+  }
+  @case ('distribution') {
+    <nz-form-item>
+      <nz-form-label [nzSpan]="5" [nzRequired]="true">{{ '维度' | translate }}</nz-form-label>
+      <nz-form-control>
+        <nz-select [ngModel]="dimension()" (ngModelChange)="setDimension($event)">
+          @for (option of dimensionOptions(); track option.value) {
+            <nz-option [nzValue]="option.value" [nzLabel]="option.label" />
+          }
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+    <nz-form-item>
+      <nz-form-label [nzSpan]="5">{{ '显示片数' | translate }}</nz-form-label>
+      <nz-form-control>
+        <nz-input-number
+          [ngModel]="limit()"
+          (ngModelChange)="setLimit($event)"
+          [nzMin]="1"
+          [nzStep]="1"
+          [nzPlaceHolder]="'不限制' | translate"
+        />
+        <div class="hint">{{ '超过这个数量时，其余合并为「其他」' | translate }}</div>
+      </nz-form-control>
+    </nz-form-item>
+  }
+  @case ('service') {
+    <!-- 三级级联：服务 → 方法 → 字段。**每一级都靠上一级**，故后两级在上一级没选时禁用
+         （不是隐藏）：隐藏会让表单的高度跳一下，而禁用说明了「还差上一级」 -->
+    <nz-form-item>
+      <nz-form-label [nzSpan]="5" [nzRequired]="true">{{ '服务' | translate }}</nz-form-label>
+      <nz-form-control>
+        <nz-select
+          [ngModel]="serviceId()"
+          (ngModelChange)="setServiceId($event)"
+          [nzPlaceHolder]="'请选择' | translate"
+        >
+          @for (option of serviceOptions(); track option.value) {
+            <nz-option [nzValue]="option.value" [nzLabel]="option.label" />
+          }
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+    <nz-form-item>
+      <nz-form-label [nzSpan]="5" [nzRequired]="true">{{ '方法' | translate }}</nz-form-label>
+      <nz-form-control>
+        <!-- 字段是**方法的**应答字段，所以一张卡只能有一个方法（§5.7）：这里单选，不是多选 -->
+        <nz-select
+          [ngModel]="functionIndex()"
+          (ngModelChange)="setFunctionIndex($event)"
+          [nzDisabled]="!selectedService()"
+          [nzPlaceHolder]="'请选择' | translate"
+        >
+          @for (option of functionOptions(); track option.value) {
+            <nz-option [nzValue]="option.value" [nzLabel]="option.label" />
+          }
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+    <nz-form-item>
+      <nz-form-label [nzSpan]="5" [nzRequired]="true">{{ '字段' | translate }}</nz-form-label>
+      <nz-form-control>
+        <!-- 多选：一张卡显示哪几行。位（`bit-list` 展开出来的那些）也在候选里，
+             与历史页同一份展开实现 —— 位是独立的结果键，不是父字段的一部分 -->
+        <nz-select
+          nzMode="multiple"
+          [ngModel]="fields()"
+          (ngModelChange)="setFields($event)"
+          [nzDisabled]="!functionIndex()"
+          [nzPlaceHolder]="'请选择' | translate"
+        >
+          @for (option of fieldOptions(); track option.key) {
+            <nz-option [nzValue]="option.value" [nzLabel]="option.label" />
+          }
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+    <nz-form-item>
+      <nz-form-label [nzSpan]="5">{{ '显示单位' | translate }}</nz-form-label>
+      <nz-form-control>
+        <!-- 单位是用户填的点表数据、原样显示，这个开关只管「显不显示」 -->
+        <nz-switch [ngModel]="showUnit()" (ngModelChange)="setShowUnit($event)" />
+      </nz-form-control>
+    </nz-form-item>
+  }
+  @case ('device') {
+    <!-- 两级级联：设备 → 属性。**只看一个属性**（§5.6，卡片要回答的是「这台设备的这个数
+         现在是多少」），故第二级是单选而不是多选。两级都比服务卡浅一级 —— 属性直接挂在
+         设备型号下（没有「方法」那一层） -->
+    <nz-form-item>
+      <nz-form-label [nzSpan]="5" [nzRequired]="true">{{ '设备' | translate }}</nz-form-label>
+      <nz-form-control>
+        <nz-select
+          [ngModel]="did()"
+          (ngModelChange)="setDid($event)"
+          [nzPlaceHolder]="'请选择' | translate"
+        >
+          @for (option of deviceOptions(); track option.value) {
+            <nz-option [nzValue]="option.value" [nzLabel]="option.label" />
+          }
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+    <nz-form-item>
+      <nz-form-label [nzSpan]="5" [nzRequired]="true">{{ '属性' | translate }}</nz-form-label>
+      <nz-form-control>
+        <!-- 候选来自产品规格（按所选设备的型号查）。**规格还没到时清单是空的，此时禁用** ——
+             空清单既可以读成「这台设备没有属性」，也可以读成「还没取到」，禁用让它只可能是后者 -->
+        <nz-select
+          [ngModel]="pid()"
+          (ngModelChange)="setPid($event)"
+          [nzDisabled]="!did()"
+          [nzPlaceHolder]="'请选择' | translate"
+        >
+          @for (option of propertyOptions(); track option.value) {
+            <nz-option [nzValue]="option.value" [nzLabel]="option.label" />
+          }
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+    <nz-form-item>
+      <nz-form-label [nzSpan]="5">{{ '显示单位' | translate }}</nz-form-label>
+      <nz-form-control>
+        <!-- 单位是产品规格里的数据（`Property.unit`），原样显示；这个开关只管「显不显示」 -->
+        <nz-switch [ngModel]="showUnit()" (ngModelChange)="setShowUnit($event)" />
+      </nz-form-control>
+    </nz-form-item>
+  }
+  @default {
+    <nz-form-item>
+      <nz-form-label [nzSpan]="5">{{ '指标' | translate }}</nz-form-label>
+      <nz-form-control>
+        <span class="fixed-value">{{ '该卡片类型暂不支持编辑' | translate }}</span>
+      </nz-form-control>
+    </nz-form-item>
+  }
+}
+
+<!-- ── 候选清单没取到：明说一句，而不是画一个空的下拉框（空的下拉框看着像「本空间没有服务」）── -->
+@if (needsCatalog() && catalogError(); as message) {
+  <nz-form-item>
+    <nz-form-label [nzSpan]="5"></nz-form-label>
+    <nz-form-control>
+      <!-- 服务端原话（英文），不翻译 —— 与其他接口的 message 同口径 -->
+      <div class="hint">{{ message }}</div>
+    </nz-form-control>
+  </nz-form-item>
+}
+
+<!-- ── 时间窗口：统计卡、曲线卡、分布卡都有这一项，形状也一样（`config.window`）。
+     服务卡没有 —— 它显示的是此刻的值与采集时刻，与窗口无关（见 `hasWindow`） ── -->
+@if (hasWindow()) {
+  <nz-form-item>
+    <!-- 曲线卡这一项**必填**：后端 `validateLine` 两个数据源都要求 `config.window`
+         （服务端都不知道要画哪段时间，就画不出曲线）。统计卡与分布卡里它可有可无 ——
+         要不要窗口取决于指标/维度，那一层判断在服务端 -->
+    <nz-form-label [nzSpan]="5" [nzRequired]="type() === 'line'">{{ '时间窗口' | translate }}</nz-form-label>
+    <nz-form-control>
+      <nz-radio-group [ngModel]="windowKind()" (ngModelChange)="setWindowKind($event)">
+        <label nz-radio-button nzValue="none">{{ '无' | translate }}</label>
+        <label nz-radio-button nzValue="last">{{ '相对时间' | translate }}</label>
+        <label nz-radio-button nzValue="range">{{ '绝对区间' | translate }}</label>
+      </nz-radio-group>
+
+      @if (windowKind() === 'last') {
+        <!-- 相对窗口存的是「语义」（最近 N 小时），取数时由服务端按它的「现在」解析：
+             存绝对时刻的话，这份布局第二天打开还是昨天那个区间 -->
+        <div class="window-detail">
+          <nz-input-number
+            [ngModel]="windowHours()"
+            (ngModelChange)="setWindowHours($event)"
+            [nzMin]="1"
+            [nzStep]="1"
+          />
+          <span class="unit">{{ '小时' | translate }}</span>
+        </div>
+      } @else if (windowKind() === 'range') {
+        <div class="window-detail">
+          <nz-range-picker
+            [ngModel]="range()"
+            (ngModelChange)="setRange($event)"
+            [nzShowTime]="{ nzFormat: 'HH:mm' }"
+            nzFormat="yyyy-MM-dd HH:mm"
+          />
+        </div>
+      }
+    </nz-form-control>
+  </nz-form-item>
+}
+
+<!-- ── 排版与刷新：与类型无关，放最后 ── -->
+<nz-form-item>
+  <nz-form-label [nzSpan]="5">{{ '尺寸' | translate }}</nz-form-label>
+  <nz-form-control>
+    <nz-select [ngModel]="size()" (ngModelChange)="setSize($event)">
+      @for (size of sizes; track size) {
+        <nz-option [nzValue]="size" [nzLabel]="size" />
+      }
+    </nz-select>
+  </nz-form-control>
+</nz-form-item>
+<nz-form-item>
+  <nz-form-label [nzSpan]="5">{{ '刷新间隔' | translate }}</nz-form-label>
+  <nz-form-control>
+    <nz-input-number [ngModel]="refresh()" (ngModelChange)="setRefresh($event)" [nzMin]="0" [nzStep]="10" />
+    <span class="unit">{{ '秒' | translate }}</span>
+    @if (refresh() <= 0) {
+      <div class="hint">{{ '不自动刷新' | translate }}</div>
+    }
+  </nz-form-control>
+</nz-form-item>
+
+<div class="editor-actions">
+  <!-- 删除在**左边**、其余两个在右边：它与「取消 / 确认」不是一类动作（那两下决定这次编辑算不算数，
+       这一下是把这张卡整个拿掉），隔开一段距离才不会被误点。
+       不套确认气泡：删的只是草稿，点「退出编辑」就是撤销；而库里那份要到「保存布局」才改 -->
+  <button nz-button nzDanger type="button" (click)="remove()">{{ '删除' | translate }}</button>
+  <span class="editor-actions-gap"></span>
+  <button nz-button type="button" (click)="cancel()">{{ '取消' | translate }}</button>
+  <!-- 必填项没填齐时禁用（`canCommit`）：存下一张取不到数的卡，失败要到下一个刷新周期
+       才以服务端英文原话出现，那时用户已经不在这个对话框里了 -->
+  <button
+    nz-button
+    nzType="primary"
+    type="button"
+    [disabled]="!canCommit()"
+    (click)="commit()"
+  >
+    {{ '确认' | translate }}
+  </button>
+</div>

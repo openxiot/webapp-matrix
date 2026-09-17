@@ -1,0 +1,50 @@
+/*
+ * 卡片配置表单。它是 nz-modal 的内容，宽度由对话框给（见 home.component.ts 的 nzWidth），
+ * 所以这里只排内部的疏密，不设宽度。
+ *
+ * 表单用的是仓库里既有的写法：不套 <nz-form>，直接一列 <nz-form-item> + [nzSpan] 标签
+ * （见 common/dialog/member/*、projects/member/role/*）。
+ */
+
+/* 表单最后一行与按钮行之间留一口气：nz-form-item 自己带下边距，但按钮不是表单项 */
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* 「删除」留在左端、其余两个留在右端（`flex: 1 1 auto` 把两边撑开）。两下隔开一段，
+   免得「取消 / 确认」那一带的肌肉记忆把手带到删除上 */
+.editor-actions-gap {
+  flex: 1 1 auto;
+}
+
+/*
+ * 只读的「值」（曲线卡的数据源）。做成灰字而不是禁用输入框：它不是一个「暂时不能改的字段」，
+ * 而是这个版本只有这一种可选 —— 画成输入框会让人一直去找那个改不动的原因。
+ */
+.fixed-value {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+/* 单位跟在数字后面，与输入框同一行 */
+.unit {
+  margin-left: 8px;
+}
+
+/* 控件下面的一行小字（「不自动刷新」「其余合并为其他」） */
+.hint {
+  margin-top: 4px;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/*
+ * 时间窗口的明细（「N 小时」或区间选择器）。它属于上面那组单选，所以另起一行、
+ * 与选项之间留一点距离，读起来才是「选了相对时间 → 于是要填 N」。
+ */
+.window-detail {
+  margin-top: 8px;
+}

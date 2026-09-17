@@ -37,7 +37,6 @@ import { MainI18nService } from '../../../../../../service/i18n.service';
 import { DeviceEntity } from '../../../../../../typedef/define/device/DeviceEntity';
 import {
   ModbusService as ModbusServiceDef,
-  ModbusServiceField,
   ModbusServiceFunction,
 } from '../../../../../../typedef/define/modbus/ModbusService';
 import {
@@ -46,8 +45,11 @@ import {
   ModbusHistoryFailures,
   ModbusHistoryRange,
   modbusFailureLabel,
+  modbusNumberText,
+  modbusValueText,
 } from '../../../../../../typedef/define/modbus/ModbusHistory';
 import { isBucket } from '../../../../../../typedef/codec/modbus/ModbusHistoryCodec';
+import { ServiceFieldRef as FieldRef, serviceFieldsOf } from '../service.fields';
 import { isReadFunction } from '../service.functions';
 import { historyFieldOption } from './device.service.history.charts';
 
@@ -80,20 +82,6 @@ const FAILURE_LIMIT = 200;
  * 只是**默认**选择：字段选择框里能改，且不做数量上限 —— 勾了几张就画几张。
  */
 const DEFAULT_CHART_FIELDS = 12;
-
-/** 一个能取数的字段（应答字段本身，或位区展开出来的某一位） */
-interface FieldRef {
-  /** 同一个字段名可以出现在不同方法里，故缓存键带上方法序号 */
-  key: string;
-  functionIndex: number;
-  functionName: string;
-  field: string;
-  unit: string;
-  /** 开关量（位区逐位展开出来的 0/1）：曲线走阶梯，不走直连 */
-  step: boolean;
-  /** 数值才画得出来（取值表命中的描述串画不了曲线，但表格照样列） */
-  numeric: boolean;
-}
 
 /** 一个字段的取数结果：失败时只留 ref 与 error，其余字段不参与展示 */
 interface FieldData {
@@ -234,32 +222,15 @@ export class DeviceServiceHistoryComponent implements OnInit {
     this.functions().filter((func) => isReadFunction(func)),
   );
 
-  /** 当前方法筛选下的全部字段（表格列的就是这些；曲线图只用其中数值的那部分） */
-  readonly fields = computed<FieldRef[]>(() => {
-    const pick = this.functionIndex();
-    const refs: FieldRef[] = [];
-    for (const func of this.readFunctions()) {
-      if (pick > 0 && func.index !== pick) {
-        continue;
-      }
-      for (const field of func.response ?? []) {
-        refs.push(fieldRef(func, field, false));
-        for (const bit of field.bitList ?? []) {
-          // 位区展开出来的位是同一次调用的另外几个取值，各自也有一条历史
-          refs.push({
-            key: refKey(func.index, bit.field),
-            functionIndex: func.index,
-            functionName: func.name,
-            field: bit.field,
-            unit: '',
-            step: true,
-            numeric: true,
-          });
-        }
-      }
-    }
-    return refs;
-  });
+  /**
+   * 当前方法筛选下的全部字段（表格列的就是这些；曲线图只用其中数值的那部分）。
+   *
+   * 展开本身在 `../service.fields`：看板编辑器与字段曲线用的是同一份——三处各写一套的代价
+   * 不是多几行，而是「历史页列得出、编辑器选不到」这种要盯很久才发现的错。
+   */
+  readonly fields = computed<FieldRef[]>(() =>
+    serviceFieldsOf(this.readFunctions(), this.functionIndex()),
+  );
 
   /** 画得出曲线的字段：取值表命中的字符串字段只能进表格 */
   readonly numericFields = computed<FieldRef[]>(() => this.fields().filter((ref) => ref.numeric));
@@ -299,7 +270,7 @@ export class DeviceServiceHistoryComponent implements OnInit {
           ...head,
           key: `${point.at}#${item.ref.key}`,
           time: timeText(point.at),
-          value: valueText(point.value),
+          value: modbusValueText(point.value),
           // 值没变、按 keep-alive 时限补记的一条：与「变了才记」区分开
           note: point.keepalive === true ? keepalive : '',
         });
@@ -624,56 +595,23 @@ export class DeviceServiceHistoryComponent implements OnInit {
   }
 }
 
-/** 缓存键：字段名在方法之间可能重名，故带上方法序号 */
-function refKey(functionIndex: number, field: string): string {
-  return `${functionIndex}#${field}`;
-}
-
-/** 应答字段 → 可取数的字段；数值判定见 {@link fieldRef} 里的说明 */
-function fieldRef(func: ModbusServiceFunction, field: ModbusServiceField, step: boolean): FieldRef {
-  return {
-    key: refKey(func.index, field.field),
-    functionIndex: func.index,
-    functionName: func.name,
-    field: field.field,
-    unit: field.unit ?? '',
-    step,
-    // 取值表命中时字段值直接是描述串（不再缩放），画不成曲线；string 同理
-    numeric: field.format !== 'string' && (field.valueList ?? []).length === 0,
-  };
-}
-
-/** 采样值的展示文案：数值收一收浮点误差，对象退化成 JSON，null 显示 - */
-function valueText(value: unknown): string {
-  if (value === null || value === undefined) {
-    return '-';
-  }
-  if (typeof value === 'number') {
-    return numberText(value);
-  }
-  return typeof value === 'object' ? JSON.stringify(value) : String(value);
-}
-
 /**
  * 降采样桶的展示文案：有统计量（数值字段）时给「均值 (最小 ~ 最大)」，与曲线图上
  * 「实线 + 两条虚线」是同三个数；非数值字段没有统计量，退回桶首尾的状态值。
+ *
+ * 单个值的文案走 {@link modbusValueText}（服务卡片与将来的字段曲线说的是同一句话）。
  */
 function bucketText(bucket: ModbusHistoryBucket): string {
   if (bucket.avg != null) {
     const rangeText =
       bucket.min != null && bucket.max != null
-        ? ` (${numberText(bucket.min)} ~ ${numberText(bucket.max)})`
+        ? ` (${modbusNumberText(bucket.min)} ~ ${modbusNumberText(bucket.max)})`
         : '';
-    return `${numberText(bucket.avg)}${rangeText}`;
+    return `${modbusNumberText(bucket.avg)}${rangeText}`;
   }
-  const first = valueText(bucket.first);
-  const last = valueText(bucket.last);
+  const first = modbusValueText(bucket.first);
+  const last = modbusValueText(bucket.last);
   return first === last ? first : `${first} ~ ${last}`;
-}
-
-/** 数值文案：整数不带小数点，浮点收到 4 位（0.30000000000000004 → 0.3） */
-function numberText(value: number): string {
-  return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(4)));
 }
 
 /** 采集时刻：桶写成「起点 ~ 终点」，跨天时终点写全，同一天只写时分秒 */

@@ -1,0 +1,43 @@
+<nz-card nzSize="small" [nzHoverable]="hoverable()" [nzTitle]="titleTpl" [nzExtra]="headTpl" [style.height.px]="height()">
+  <ng-template #titleTpl>
+    <!-- 截断那三条规则 antd 已经写在 `.ant-card-head-title` 上了，不再自起类名；[title] 是悬停看全 -->
+    <span [title]="title()">{{ title() }}</span>
+  </ng-template>
+
+  <!-- 卡头右端：只有读取失败时才有那个图标。**没有窗口** —— 设备卡显示的是此刻的读数，
+       与时间窗口无关（编辑器里也不给它这一项） -->
+  <ng-template #headTpl>
+    @if (errorText(); as error) {
+      <!-- 无字图标的 `aria-label` 是它唯一的可读名字（悬停才有的 tooltip 对读屏与键盘用户
+           都不可达）。tooltip 里那句是**服务端原文**，不翻译；aria-label 说的是画面上的事，
+           那是界面文案，故翻译 -->
+      <nz-icon
+        nzType="exclamation-circle"
+        nzTheme="outline"
+        nz-tooltip
+        [nzTooltipTitle]="error"
+        [attr.aria-label]="'采集失败' | translate"
+      />
+    }
+  </ng-template>
+
+  @switch (state()) {
+    @case ('ok') {
+      <!-- 一行：属性名在左（可截断，悬停看全），值在右。`-` 表示这台设备还没上报过这个属性
+           —— 与服务卡同一个说法，也同样是「没有读数」的唯一说法（见 `device.state.ts`） -->
+      <div class="device-row">
+        <span class="device-field" [title]="line().name">{{ line().name }}</span>
+        <span class="device-value">
+          <span class="device-number">{{ line().text }}</span>
+          @if (line().unit) {
+            <span class="device-unit">{{ line().unit }}</span>
+          }
+        </span>
+      </div>
+    }
+    @default {
+      <!-- 「还没取到」时整段不渲染（卡片留白）；取数失败时显示服务端那句话 -->
+      <home-widget-note [item]="item()" />
+    }
+  }
+</nz-card>

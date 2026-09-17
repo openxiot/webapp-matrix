@@ -1,0 +1,151 @@
+<div class="home">
+  <!-- 工具条。看模式两套按钮，互不重叠：编辑态里没有「刷新」（它会把草稿冲掉），
+       非编辑态里没有那几个编辑动作（非管理员连编辑入口都看不到） -->
+  <div class="toolbar">
+    @if (!editing()) {
+      <button nz-button type="button" [disabled]="!account.space().id" (click)="load()">
+        {{ '刷新' | translate }}
+      </button>
+      @if (canEdit()) {
+        <button nz-button nzType="primary" type="button" [disabled]="!layout()" (click)="startEdit()">
+          {{ '编辑布局' | translate }}
+        </button>
+      }
+    } @else {
+      <!-- 一个「添加卡片」按钮 + 一个类型选择对话框，而不是把类型摊成一排按钮：
+           卡片类型会越加越多，摊开来工具条会被撑满；而且「选类型」与「填配置」本来就是
+           两步，分成两个框之后每一步都只有一件事要做（见 editor/widget.picker） -->
+      <button nz-button nzType="primary" type="button" (click)="openPicker()">
+        {{ '添加卡片' | translate }}
+      </button>
+      <span class="toolbar-gap"></span>
+      <button
+        nz-button
+        type="button"
+        nz-popconfirm
+        [nzPopconfirmTitle]="'确认恢复默认布局？' | translate"
+        [nzOkText]="'确认' | translate"
+        [nzCancelText]="'取消' | translate"
+        [nzLoading]="saving()"
+        (nzOnConfirm)="reset()"
+      >
+        {{ '恢复默认' | translate }}
+      </button>
+      <button
+        nz-button
+        type="button"
+        nz-popconfirm
+        [nzPopconfirmTitle]="'未保存的修改将丢失，确认退出编辑？' | translate"
+        [nzOkText]="'确认' | translate"
+        [nzCancelText]="'取消' | translate"
+        (nzOnConfirm)="cancelEdit()"
+      >
+        {{ '退出编辑' | translate }}
+      </button>
+      <button nz-button nzType="primary" type="button" [nzLoading]="saving()" (click)="save()">
+        {{ '保存布局' | translate }}
+      </button>
+    }
+  </div>
+
+  <nz-spin [nzSpinning]="loading()">
+    @if (error(); as message) {
+      <!-- 取数失败就明说：静默留一屏空白，看板就成了「这个项目一张卡片都没有」 -->
+      <nz-alert nzType="error" nzShowIcon [nzMessage]="message"></nz-alert>
+    } @else if (!account.space().id) {
+      <nz-empty [nzNotFoundContent]="'请先在项目列表中选择一个项目' | translate"></nz-empty>
+    } @else if (placements().length > 0) {
+      <!-- 一屏卡片：**扁平的一层**，24 列 CSS Grid。列数与间距都来自 DashboardLayout 的那两个
+           常量（这里绑上去，样式表里不抄第二处）；占几列由每格自己的 `grid-column: span N`
+           决定，放不下就换行 —— 「让位 / 重排」正是浏览器按这个规则自己算的。
+
+           扁平是**拖拽的前提**：CDK 的让位是把占位块在兄弟节点之间搬来搬去，所有卡片必须是
+           同一个容器的直接子节点。所以这里不再有 nz-row / nz-col 那两层嵌套。
+
+           编辑态挂 cdkDropList 并把每一格变成可拖的；非编辑态 [cdkDropListDisabled] 让拖拽
+           整个失效（**不是**不渲染指令 —— 那样进出编辑会重建一遍整屏卡片，八张图会重画） -->
+      <div
+        class="board"
+        [style.gap.px]="gap"
+        [style.grid-template-columns]="'repeat(' + columns + ', 1fr)'"
+        cdkDropList
+        cdkDropListOrientation="mixed"
+        [cdkDropListDisabled]="!editing()"
+        (cdkDropListDropped)="dropWidget($event)"
+      >
+        @for (p of placements(); track p.widget.id) {
+          <!-- 高度按这张卡自己的档位给像素。**不给 `.cell`**：统计卡一个高度值都不要
+               （见 widget/stat/stat.widget.less），格子（S 档 200px）比它高 —— `.cell` 带着
+               高度的话，多出来的那截就空在卡片下面，一整行看起来像没对齐。
+
+               编辑态与看数据时**传的是同一个 height、渲染的是同一张卡**：尺寸一致是构造上
+               成立的，不是两套样式对齐出来的 -->
+          <div
+            class="cell"
+            [class.cell-editing]="editing()"
+            [style.grid-column]="'span ' + p.span"
+            cdkDrag
+            [cdkDragDisabled]="!editing()"
+            (click)="editing() && editWidget(p.widget)"
+          >
+            <!-- 拖拽时飘着的那张卡。**必须自己给**：默认实现是把真卡片深拷贝一份
+                 （`deepCloneNode`），而卡片里那块 ECharts 画在 canvas 上 —— 拷出来是一张
+                 白身子的卡。`matchSize` 让它与真卡片同尺寸，光标抓在卡上的哪一点就还是那一点。
+
+                 数据走 `[data]` 显式传：这个模板被 CDK 用 `createEmbeddedView` 自己实例化，
+                 上下文是它给的那个对象，**不是** `@for` 的作用域 —— 直接写 `p.title` 读不到。
+                 `[data]` 这个绑定本身仍在 `@for` 里求值，所以 `p` 在那儿是有的 -->
+            <ng-template cdkDragPreview matchSize [data]="{ title: p.title }" let-title="title">
+              <div class="drag-ghost">{{ title }}</div>
+            </ng-template>
+
+            <!-- 按 id 对应读数（下标会随拖拽变化，id 不会）；还没取到就传 undefined，卡片留白。
+                 编辑态多传一个 `hoverable`：悬停浮起，提示「这一整块可以点」 -->
+            <home-widget
+              [widget]="p.widget"
+              [item]="p.item"
+              [configs]="configs()"
+              [height]="p.height"
+              [hoverable]="editing()"
+            />
+          </div>
+        }
+      </div>
+    } @else if (!loading()) {
+      <!-- 正常路径上到不了这里：从没配过的空间，服务端给的是预置布局而不是空布局（§6.5），
+           而编辑态里删光了卡片也确实该看到这句话。
+           首屏那几百毫秒里也不显示它 —— 转圈的时候说「暂无数据」是一句还没查完的话 -->
+      <nz-empty [nzNotFoundContent]="'暂无看板数据' | translate"></nz-empty>
+    }
+  </nz-spin>
+</div>
+
+<!-- 卡片类型选择框。选定类型之后由看板页接着开配置框（见 pickWidget） -->
+<home-widget-picker
+  [nzVisible]="pickerOpen()"
+  (picked)="pickWidget($event)"
+  (cancelled)="closePicker()"
+/>
+
+<!-- 卡片配置对话框。footer 交给编辑器自己出（它要点「确认」把手里的副本交回来、
+     点「删除」把这张卡撤掉），故这里 [nzFooter]="null" —— 走 nzOnCancel 的只有 ESC 与右上角那个叉 -->
+<nz-modal
+  [nzVisible]="editingWidget() !== null"
+  [nzTitle]="'编辑卡片' | translate"
+  [nzFooter]="null"
+  [nzWidth]="540"
+  (nzOnCancel)="cancelEditor()"
+>
+  <ng-container *nzModalContent>
+    @if (editingWidget(); as widget) {
+      <home-widget-editor
+        [widget]="widget"
+        [catalog]="catalog()"
+        [catalogError]="catalogError()"
+        (committed)="commitEditor($event)"
+        (removed)="removeFromEditor()"
+        (cancelled)="cancelEditor()"
+      />
+    }
+  </ng-container>
+</nz-modal>

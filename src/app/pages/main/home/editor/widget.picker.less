@@ -1,0 +1,21 @@
+/*
+ * 类型选择框。它是 nz-modal 的内容，宽度由对话框给（见模板的 nzWidth），
+ * 所以这里只排格子，不设宽度。
+ */
+
+/* 一列一种类型。竖排而不是网格：五种类型、每种一句名字，横排会让长短不一的词各占一块，
+   而竖排读下来就是一个清单 —— 与「选一个」这个动作同形 */
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 整格可点，鼠标形状跟上（`nz-card` 自己不设光标 —— 它不是可点的东西） */
+.picker-item {
+  cursor: pointer;
+}
+
+.picker-name {
+  font-weight: 500;
+}

@@ -1,0 +1,7 @@
+@if (text(); as message) {
+  <div class="widget-note">
+    <!-- 服务端那句话原样显示：它分得清「这个组合还没做」与「配置错了」，翻译会把这两句抹成一句 -->
+    <nz-icon nzType="exclamation-circle" nzTheme="outline" />
+    <span>{{ message }}</span>
+  </div>
+}

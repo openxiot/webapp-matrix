@@ -1,0 +1,21 @@
+<!-- 类型选择框。footer 整个不要（[nzFooter]="null"）：点一张卡就是选定，没有「确定」这一步 -->
+
+<nz-modal
+  [nzVisible]="nzVisible()"
+  [nzTitle]="'添加卡片' | translate"
+  [nzFooter]="null"
+  [nzWidth]="520"
+  (nzOnCancel)="close()"
+>
+  <ng-container *nzModalContent>
+    <div class="picker">
+      @for (type of types; track type) {
+        <!-- 一格一种类型。整格可点、悬停浮起（`nzHoverable` 是 antd 自己的浮起效果，
+             不另抄一份阴影值），与板上那些卡片同一套手感 -->
+        <nz-card class="picker-item" nzHoverable (click)="pick(type)">
+          <span class="picker-name">{{ titles[type] | translate }}</span>
+        </nz-card>
+      }
+    </div>
+  </ng-container>
+</nz-modal>

@@ -1,0 +1,9 @@
+@if (timeWindow(); as win) {
+  <span class="widget-window">
+    @if (win.kind === 'last') {
+      {{ win.key | translate: { hours: win.hours } }}
+    } @else {
+      {{ win.from | date: 'MM-dd HH:mm' }} ~ {{ win.to | date: 'MM-dd HH:mm' }}
+    }
+  </span>
+}
