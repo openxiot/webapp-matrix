@@ -1,0 +1,26 @@
+<nz-card nzSize="small" [nzHoverable]="hoverable()" [nzTitle]="titleTpl" [nzExtra]="windowTpl" [style.height.px]="height()">
+  <ng-template #titleTpl>
+    <!-- 截断那三条规则 antd 已经写在 `.ant-card-head-title` 上了，不再自起类名；[title] 是悬停看全 -->
+    <span [title]="title()">{{ title() }}</span>
+  </ng-template>
+
+  <!-- 窗口挂在卡头右端（nzExtra）：它说的是「这些片是哪段时间的」，与标题同属
+       「这张卡是什么」这一层；落进身子里会和饼抢位置。没配窗口时它自己整段不渲染 -->
+  <ng-template #windowTpl>
+    <dashboard-widget-window [widget]="widget()" />
+  </ng-template>
+
+  @if (item()?.success) {
+    @if (option(); as chart) {
+      <!-- 这个 div 占满卡身子里剩下的高度（见 less）。卡片自己的高度来自 `height` 输入
+           （档位给的像素），echarts 按容器实际尺寸初始化，指令里那个 ResizeObserver
+           会跟着卡片尺寸（换档位、折到窄屏）自动 resize -->
+      <div class="chart" [appEcharts]="chart"></div>
+    } @else {
+      <!-- 空态文案由 ng-zorro 自己的语言包给（随当前语言），不另外造一个词条 -->
+      <nz-empty nzNotFoundImage="simple" />
+    }
+  } @else {
+    <dashboard-widget-note [item]="item()" />
+  }
+</nz-card>

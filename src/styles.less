@@ -99,11 +99,11 @@ body.dark-theme {
   }
 
   /*
-   * 自定义看板（/main/home）。这一页的字色全写在各自的组件样式里（`rgba(0, 0, 0, .45)` 这类，
-   * 与其它页面同一个写法），而深色模式是 `body.dark-theme` 下的一份覆盖清单 —— 不在这里补一笔，
-   * 卡片里的窗口与失败提示就是**深底上的深字**，等于没有。
+   * 自定义看板（首页 `/main/dashboard`）。这一页的字色全写在各自的组件样式里
+   * （`rgba(0, 0, 0, .45)` 这类，与其它页面同一个写法），而深色模式是 `body.dark-theme` 下的一份
+   * 覆盖清单 —— 不在这里补一笔，卡片里的窗口与失败提示就是**深底上的深字**，等于没有。
    *
-   * `.tile` 与 `.cell-editing` 是编辑态自己的表面：磁贴铺在页面底色上（不是 nz-card 里），
+   * `.cell-editing` 是编辑态自己的表面：卡片外壳铺在页面底色上（不是 nz-card 里），
    * 不覆盖的话深色模式下会是一块块白板。
    *
    * 图上（ECharts）的文字颜色不在这里管：全仓库的 option 都没给 textStyle，
@@ -111,8 +111,6 @@ body.dark-theme {
    */
   .widget-window,
   .widget-note,
-  .tile-window,
-  .tile-meta,
   .fixed-value,
   .hint {
     color: rgba(255, 255, 255, 0.45);
@@ -123,7 +121,7 @@ body.dark-theme {
    * 各给一次 `rgba(0, 0, 0, …)`），继承不到 `body` 那一笔 —— 不点着类名覆盖，深色底上的
    * 统计数字就是深色字。子元素各自带色，所以三条都要写。
    *
-   * 这一笔同时修好了 `/main/dashboard` 那一屏：那里的四个统计数字也是同一个组件。
+   * 首页那屏的四个统计数字也是同一个组件，一并受益。
    */
   .ant-statistic,
   .ant-statistic-content {
@@ -132,10 +130,6 @@ body.dark-theme {
 
   .ant-statistic-title {
     color: rgba(255, 255, 255, 0.45);
-  }
-
-  .tile {
-    background: #1f1f1f;
   }
 
   .cell-editing {

@@ -1,24 +1,28 @@
 import type { EChartsCoreOption } from 'echarts/core';
-import type { ModbusConfig } from '../../../typedef/define/modbus/Modbus';
-import type { OverviewStatistics } from '../../../typedef/define/statistics/OverviewStatistics';
-import type { EnergyStats } from './dashboard.mock';
-import { ChartPoint, distributionData, hourLabels, serviceTypeData } from './dashboard.functions';
+import type { StatisticsBucket } from '../../../typedef/define/statistics/OverviewStatistics';
+import { ChartPoint, hourLabels } from './dashboard.folding';
 
 /**
- * 数据看板图表 option 构造（纯函数）。
+ * 看板 schema 的两张图（纯函数，无注入）。
  *
- * **没有翻译器参数**：三张饼里的每一片都是**服务端数据**（设备类型段 / 点表厂家型号 / 告警文本），
- * 一律原样显示。可翻译的是卡片标题，那是页面文案，在模板上走 `| translate`。
+ * **本文件只画 P1 这两种**：告警曲线（`line(alarmCount)`）与分布饼图（`distribution(pie)`）。
+ * `bar` / `gauge` 排在 P3，届时要在 `echarts.directive.ts` 补注册组件（见 doc §5.5）——
+ * 那之前校验器也不接受它们，所以这里没有对应函数不是遗漏。
  *
- * 后端没数据（窗口内没有告警、项目里没有设备）时传入空数据即得空图，模板另用 `nz-empty` 兜着
- * —— 这里的函数不替页面决定「空了显示什么」。
+ * **没有翻译器参数**：图上每一个字都是服务端/用户数据（设备类型段、点表厂家型号、告警文本、
+ * 字段名、单位），一律原样显示。可翻译的只有卡片标题，那是页面文案，在模板上走 `| translate`
+ * （§7.5）。饼里那片「其他」的名字也一样 —— 由调用方翻译好再折进 `points`。
+ *
+ * 版式**刻意与被删掉的那张老首页一致**（同款环形饼、同款面积渐变折线）：§6.5 定的口径是
+ * 「预置布局 = 当时那张首页」，好让这一屏接替上去时用户看到的是同一屏，只是从此可以改。
+ * （老首页已于 2026-09-17 删除，这一屏就是首页 —— 见 doc §7.6。）
  */
 
-/** 环形饼图（legend 右侧） */
+/** 环形饼图（legend 在右）。片名过长时 legend 会自动换行，不额外截断 */
 function pieOption(data: ChartPoint[]): EChartsCoreOption {
   return {
     tooltip: { trigger: 'item', formatter: '{b}: {c}' },
-    legend: { orient: 'vertical', right: 8, top: 'middle' },
+    legend: { orient: 'vertical', right: 8, top: 'middle', type: 'scroll' },
     series: [
       {
         type: 'pie',
@@ -26,6 +30,7 @@ function pieOption(data: ChartPoint[]): EChartsCoreOption {
         center: ['38%', '50%'],
         avoidLabelOverlap: true,
         itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 1 },
+        // 片名在 legend 里，扇区上不再标一遍：`S` / `M` 档的卡片放不下扇区标签
         label: { show: false },
         data,
       },
@@ -33,13 +38,18 @@ function pieOption(data: ChartPoint[]): EChartsCoreOption {
   };
 }
 
-/** 折线图（面积渐变） */
-function lineOption(xData: string[], yData: number[]): EChartsCoreOption {
+/** 折线图（面积渐变）。`interval` 按横向空间给：24 个整点标签全画出来会糊成一片 */
+function lineOption(xData: string[], yData: number[], labelInterval: number): EChartsCoreOption {
   return {
     tooltip: { trigger: 'axis' },
     grid: { left: 44, right: 16, top: 24, bottom: 24 },
-    xAxis: { type: 'category', boundaryGap: false, data: xData, axisLabel: { interval: 4 } },
-    yAxis: { type: 'value', splitLine: { lineStyle: { type: 'dashed' } } },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: xData,
+      axisLabel: { interval: labelInterval, hideOverlap: true },
+    },
+    yAxis: { type: 'value', minInterval: 1, splitLine: { lineStyle: { type: 'dashed' } } },
     series: [
       {
         type: 'line',
@@ -53,38 +63,32 @@ function lineOption(xData: string[], yData: number[]): EChartsCoreOption {
   };
 }
 
-/** 设备类型分布：按 URN 类型段（如 `dtu`）—— 服务端数据，原样显示 */
-export function deviceTypeOption(o: OverviewStatistics | null): EChartsCoreOption {
-  return pieOption(distributionData(o?.devices.byType ?? []));
-}
-
-/** 服务类型分布：按所配点表的「厂家 型号」，同名合并（见 {@link serviceTypeData}） */
-export function serviceTypeOption(
-  o: OverviewStatistics | null,
-  configs: ModbusConfig[],
-  undefinedLabel: string,
-): EChartsCoreOption {
-  return pieOption(serviceTypeData(o?.services.byConfig ?? [], configs, undefinedLabel));
-}
-
-/** 告警类型分布：按用户填的告警文本（缺文本的行后端归到 `UNKNOWN`）—— 原样显示 */
-export function alarmTypeOption(o: OverviewStatistics | null): EChartsCoreOption {
-  return pieOption(distributionData(o?.alarms.byText ?? []));
-}
-
-/** 告警曲线：近 24 小时整点桶（后端密集零填充，没发生的整点是 0） */
-export function alarmCurveOption(o: OverviewStatistics | null): EChartsCoreOption {
-  const hourly = o?.alarms.hourly ?? [];
+/**
+ * 告警曲线：整点桶。
+ *
+ * `bucket` 只有 `hour` 一种（`line(alarmCount)` 的校验器只认它），所以横轴就是整点标签。
+ * 曲线用的是**后端密集零填充**的桶：没有告警的整点是 0 且在数组里，直接连线即可 ——
+ * 前端不必猜「这段是没有告警还是没有数据」。
+ *
+ * 标签间隔取「让轴上有 6 个左右的刻度」：24 个桶每 4 个标一个，168 个桶（一周）每 28 个标一个
+ * —— 固定间隔会让长窗口的轴糊掉、短窗口的轴过疏。
+ */
+export function alarmCurveOption(buckets: StatisticsBucket[]): EChartsCoreOption {
+  const rows = buckets ?? [];
   return lineOption(
-    hourLabels(hourly),
-    hourly.map((b) => b.count),
+    hourLabels(rows),
+    rows.map((bucket) => bucket.count),
+    Math.max(0, Math.round(rows.length / 6) - 1),
   );
 }
 
-/** 日能耗曲线（仍是 mock，见 dashboard.mock.ts） */
-export function energyOption(s: EnergyStats): EChartsCoreOption {
-  return lineOption(
-    s.daily.map((d) => d.date),
-    s.daily.map((d) => d.value),
-  );
+/**
+ * 分布饼图。
+ *
+ * 传进来的 `points` **应当已经过「前 N + 其他」的截断**（`truncatePoints`）：截断是显示决策，
+ * 放在折算那一层，切 `limit` 不必重新请求。这里不管片数多少、也不管空不空 ——
+ * 空数据即得空图，页面另用 `nz-empty` 兜着，本函数不替页面决定「空了显示什么」。
+ */
+export function distributionOption(points: ChartPoint[]): EChartsCoreOption {
+  return pieOption(points ?? []);
 }

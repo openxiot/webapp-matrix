@@ -1,0 +1,22 @@
+<!--
+  唯一一张**无卡头**的卡片：`nz-card` 不给 `nzTitle`，卡名落在 `nz-statistic` 自己的标题行里
+  （`nzTitle` 收 `TemplateRef`）。两边都给的话卡名会印两遍 —— 卡头一行、数字上方一行。
+-->
+<nz-card nzSize="small" [nzHoverable]="hoverable()">
+    <!-- 数字空着就是空着：nz-statistic 内部是 String(nzValue)，把 null 递进去卡片上会印出「null」 -->
+  <nz-statistic [nzTitle]="headTpl" [nzValue]="valueText()" [nzSuffix]="unit()" />
+</nz-card>
+
+<!-- 卡名与窗口同一行：窗口说「这个数字是哪段时间的」，是这个数字口径的一部分，不该另起一行 -->
+<ng-template #headTpl>
+  <span class="stat-head">
+    <span class="stat-head-title" [title]="title()">{{ title() }}</span>
+    <dashboard-widget-window [widget]="widget()" />
+    <!-- 取数失败时才有这个图标：那时数字是 `-`，而「为什么是 -」只有服务端那句话答得上来。
+         用 `nz-icon` 元件（不是给 span 挂属性）—— `stat.widget.less` 里是按元件选的
+         `nz-icon`，挂属性的写法选不中 -->
+    @if (errorText(); as error) {
+      <nz-icon nzType="exclamation-circle" nzTheme="outline" nz-tooltip [nzTooltipTitle]="error" />
+    }
+  </span>
+</ng-template>

@@ -1,0 +1,32 @@
+<nz-card nzSize="small" [nzHoverable]="hoverable()" [nzTitle]="titleTpl" [nzExtra]="windowTpl" [style.height.px]="height()">
+  <ng-template #titleTpl>
+    <!-- 卡名过长时那三条截断规则（overflow / white-space / text-overflow）antd 已经在
+         `.ant-card-head-title` 上写了，这里不再自己起个类名抄一遍；[title] 是悬停看全 -->
+    <span [title]="title()">{{ title() }}</span>
+  </ng-template>
+
+  <!-- 窗口挂在卡头右端（nzExtra）：它说的是「这条曲线是哪段时间的」，与标题同属
+       「这张卡是什么」这一层；落进身子里会和图抢位置。没配窗口时它自己整段不渲染 -->
+  <ng-template #windowTpl>
+    <dashboard-widget-window [widget]="widget()" />
+  </ng-template>
+
+  @if (item()?.success) {
+    @if (option(); as chart) {
+      <!-- 这个 div 占满卡身子里剩下的高度（见 less）。卡片自己的高度来自 `height` 输入
+           （档位给的像素），echarts 按容器实际尺寸初始化，指令里那个 ResizeObserver
+           会跟着卡片尺寸（换档位、折到窄屏）自动 resize -->
+      <div class="chart" [appEcharts]="chart"></div>
+    } @else if (emptyMessageKey(); as message) {
+      <!-- **必须走 `[message]`**：这一态 `success` 是 true（卡取到数了，只是这个点位这段时间
+           没采到），只传 `[item]` 的话 note 整段不渲染，卡片会是一张白卡 -->
+      <dashboard-widget-note [message]="message | translate" />
+    } @else {
+      <!-- 有样本却画不出来（非数值字段整条线都是断点）与告警曲线的空窗口都走这里；
+           文案由 ng-zorro 自己的语言包给（随当前语言），不另外造一个词条 -->
+      <nz-empty nzNotFoundImage="simple" />
+    }
+  } @else {
+    <dashboard-widget-note [item]="item()" />
+  }
+</nz-card>

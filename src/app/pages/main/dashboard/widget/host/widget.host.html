@@ -1,0 +1,60 @@
+@switch (widget().type) {
+  @case ('stat') {
+    <!-- 统计卡不要 `height`：一个高度值都不给它，卡片多高就是多高（见 stat.widget.less） -->
+    <dashboard-stat
+      [widget]="widget()"
+      [item]="item()"
+      [title]="title()"
+      [hoverable]="hoverable()"
+    />
+  }
+  @case ('line') {
+    <dashboard-line
+      [widget]="widget()"
+      [item]="item()"
+      [title]="title()"
+      [height]="height()"
+      [hoverable]="hoverable()"
+    />
+  }
+  @case ('distribution') {
+    <dashboard-distribution
+      [widget]="widget()"
+      [item]="item()"
+      [title]="title()"
+      [configs]="configs()"
+      [height]="height()"
+      [hoverable]="hoverable()"
+    />
+  }
+  @case ('device') {
+    <dashboard-device
+      [widget]="widget()"
+      [item]="item()"
+      [title]="title()"
+      [height]="height()"
+      [hoverable]="hoverable()"
+    />
+  }
+  @case ('service') {
+    <dashboard-service
+      [widget]="widget()"
+      [item]="item()"
+      [title]="title()"
+      [height]="height()"
+      [hoverable]="hoverable()"
+    />
+  }
+  @default {
+    <!-- 前端不认识的类型（P2 之后新加的）：`item` 里没有可显示的话，那就明说一句「开发中」。
+         高度照档位给 —— 这种卡长什么样还不知道，格子高度是唯一能拿到的口径 -->
+    <nz-card
+      nzSize="small"
+      [nzTitle]="title()"
+      [nzHoverable]="hoverable()"
+      [style.height.px]="height()"
+    >
+      <dashboard-widget-note [message]="'开发中' | translate" />
+    </nz-card>
+  }
+}

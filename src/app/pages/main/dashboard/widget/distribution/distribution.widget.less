@@ -1,0 +1,33 @@
+/*
+ * 数据分布卡。`nz-card` 在本组件的模板里，元素选择器直接命中，不需要 `::ng-deep`；
+ * 卡身子接住卡头剩下高度那一条（`.ant-card-body`）在 `../host/widget.host.less`。
+ *
+ * 高度由模板按档位绑上来（`[style.height.px]="height()"`，`h × 38 + (h−1) × 16`，见 dashboard.grid）：
+ * echarts 的容器必须是**有确定高度**的盒子，而档位一变高度就变，写死在样式表里就成了第二处。
+ */
+nz-card {
+  display: flex;
+  flex-direction: column;
+}
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+/* 图占满卡身子剩下的高度（父级是 flex 列容器，见上） */
+.chart {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+/* 空态居中：nz-empty 默认顶上留白，小卡片里会顶出卡片外 */
+nz-empty {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}

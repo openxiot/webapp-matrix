@@ -1,51 +1,122 @@
 /*
- * 数字卡的标题行：左端是卡名，右端可以再挂一个小口径的数 —— 现在只有设备总量卡用它
- * 挂「在线设备」，那是一张被并掉的原独立卡片。
+ * 看板一屏。
  *
- * 为什么挂在标题行而不是另起一行：高度账。数字卡这一行每高 1px，下面两行图就得让出 1px
- * （见文件末尾的图表高度注释），而标题行右端挂字是**不涨行高**的 —— 字号与标题同为 14px。
- * 层次靠字重与颜色拉，不靠字号。窄屏一张卡只剩 2/行时让它换行，不挤成一团。
+ * 外层的 20px 内边距与主框架里其余各屏一致 —— 换屏时留白不该跳一下。
+ * 这里**没有页头**：主框架已经给了面包屑与项目切换，看板要的是全部的纵向空间。
  */
-.stat-title {
+:host {
+  display: block;
+}
+
+.dashboard {
+  padding: 20px;
+}
+
+/* 工具条。按钮右对齐、与网格之间留一口气；只有一排按钮时也不要塌成贴着顶边 */
+.toolbar {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0 8px;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
-/* 整块不拆行：「在线设备 9台」拆开读起来像两件事 */
-.stat-title-extra {
-  white-space: nowrap;
+/* 「恢复默认 / 退出编辑 / 保存布局」与前面那个「添加卡片」拉开距离：前者是整份布局上的动作，
+   后者是往布局里添东西，挨在一起会被当成同一组 */
+.toolbar-gap {
+  flex: 1 1 auto;
 }
 
-.stat-title-value {
-  color: rgba(0, 0, 0, 0.85);
-  font-weight: 600;
+/* 没有工具条内容时（未选项目、非管理员且未编辑）那一行不留空档 */
+.toolbar:empty {
+  display: none;
 }
 
 /*
- * 图表高度按视口给，不写死。
+ * 一屏卡片：24 列网格，**扁平的一层**。
  *
- * 一屏要塞下「4 张数字卡 + 3 张饼 + 2 条曲线」三行，而可用高度 = 视口 − 页头 64px − 页脚 70px
- * （`nz-content` 才是滚动区，页脚也在里面）。其中约 292px 是三行的固定开销：
- *   外层上下 20×2 + 数字卡行 88（small 卡：内边距 12×2 + 标题 26 + 数值 38）
- *   + 行间距 16×2 + 两张图卡的卡头与内边距 (39 + 24)×2 + 三行卡片自身的上下边框 3×2
- * 扣掉它，剩下的才是这两行图 —— 所以图越高，越容易溢出成滚动条。故用 vh 配 clamp：
- * 矮屏按比例缩到下限（再矮就让它滚），高屏到上限封顶（不再无限长高）。
+ * 这里**不写死任何尺寸**：列数（`grid-template-columns`）、间距（`gap`）全来自模板上的绑定，
+ * 而那两个常量（`GRID_COLUMNS` / `GRID_GAP`）与卡片高度（`h × 38 + (h − 1) × 16`）都在
+ * `DashboardLayout` / `dashboard.grid` 里 —— 抄进样式表就是第二处。
  *
- * 26vh 是按 1080p 全屏（视口约 940~990）配的：两行合计约 490px，给 `视口 − 426`
- * 留了约 25px 余量 —— 不厚，故**视口矮于约 900px 会重新出现滚动条**。真遇到了两条路：
- * 往下调一档（24vh），或把外层那个 20px 的内边距收回 12px（省 16px）。
- * **要调大小就改这两个数**：调大图更高，但余量随之变薄。
- *
- * 两条规则现在值一样，仍分两个类是为了留住这个区分：饼下面还压着一圈 legend
- * （折线的图例在上面），真觉得饼挤了可以单独调高。
+ * `align-items: start`：一行里矮的卡片**不拉伸**到最高那张的高度（统计卡撑成 400px 高只会
+ * 中间一个孤零零的数字）。行高本身仍由最高的那张决定，这正是流式排布要的。
  */
-.chart-pie {
-  height: clamp(180px, 26vh, 300px);
+.board {
+  display: grid;
+  align-items: start;
 }
 
-.chart-line {
-  height: clamp(180px, 26vh, 300px);
+/* 一格。`min-width: 0`：卡片里一张宽图或一个长标题会把格子撑破（网格轨道是 `1fr` 定死的，
+   但内容的固有宽度仍会从格子里溢出来） */
+.cell {
+  min-width: 0;
+}
+
+/*
+ * 窄屏（小于 antd 的 `md`，即手机与竖屏平板）一列一张。
+ *
+ * 换成 flex 而不是改 `grid-template-columns`：flex 布局下 `grid-column`（模板上那个内联的
+ * `span N`）**整个失效**，一行一张是自然结果。写成 `grid-template-columns: 1fr` 反而不行
+ * —— 卡片仍带着 `span 6`，浏览器会为了容纳它补出隐含列，于是又变回多列。
+ *
+ * **阈值看的是视口宽度，不是容器宽度**（与原来用栅格折行时同一口径）。所以 1400px 的屏幕上
+ * 展开侧栏、容器只剩 600px 时，卡片仍按宽屏排。
+ */
+@media (max-width: 767px) {
+  .board {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/*
+ * 编辑态的一格：虚线框 + 一颗「可以拖」的光标。整屏一眼看出「现在改的是布局，不是在看数据」。
+ *
+ * 光标给在格子上（而不是卡片内部的某块）：整格都是拖拽区，没有拖拽把手
+ * （CDK 有 5px 的启动阈值，所以「不移动就是一次点击」—— 整卡可点与整卡可拖不冲突）。
+ */
+.cell-editing {
+  outline: 1px dashed rgba(0, 0, 0, 0.25);
+  outline-offset: 0;
+  border-radius: 4px;
+  cursor: move;
+}
+
+/*
+ * 拖拽时飘着的那张幽灵卡。CDK 把它挂到 `<body>` 上，尺寸由 `matchSize` 按真卡片定死
+ * （见模板）—— 这里只管长相：一个与卡片同宽的框，标出正在搬的是哪一张。
+ */
+.drag-ghost {
+  box-sizing: border-box;
+  height: 100%;
+  padding: 12px 16px;
+  overflow: hidden;
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: #fff;
+  border: 1px solid #1677ff;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+}
+
+/*
+ * 原地留下的那个占位块：CDK 深拷一份真卡片放在那儿（`deepCloneNode`），所以尺寸、圆角都对，
+ * 只有 canvas 是空的。压暗一点、加一道虚线，读成「这里空着，等那张卡落下来」。
+ *
+ * 这三条 CDK 的样式这份工程**没有引**（`styles.less` 里没有 `@angular/cdk` 的 prebuilt css），
+ * 所以自己写。`.cdk-drag-animating` 给落定后归位的那一下一个过渡，不然松手是「跳」回去的。
+ */
+.cdk-drag-placeholder {
+  opacity: 0.35;
+  outline: 1px dashed rgba(0, 0, 0, 0.35);
+  outline-offset: -1px;
+  border-radius: 4px;
+}
+
+.cdk-drag-animating {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
 }
