@@ -21,16 +21,13 @@
         <!-- 全屏。**两个模式里都有、都在最左边那一颗**：它管的是「这一屏怎么显示」，
              与看数据/改布局都无关，进出编辑态时它不该换位置。
 
-             图标按状态换（`fullscreen` / `fullscreen-exit`），文案也是。两个名字都**没注册**
+             图标按状态换（`fullscreen` / `fullscreen-exit`）。两个名字都**没注册**
              在 `icons-provider.ts` 里，但 `assets/outline/` 下都有 svg，按需取即可 ——
              与 `home.3d` 那颗用的是同一对名字。float button 渲染图标时 `nzTheme` 写死
              `"outline"`，所以这里不会重演 `close-fill` 那个「拿错主题去找图标」的错。 -->
         <nz-float-button
           nzShape="circle"
           [nzIcon]="fullscreen() ? 'fullscreen-exit' : 'fullscreen'"
-          nz-tooltip
-          [nzTooltipTitle]="(fullscreen() ? '退出全屏' : '全屏') | translate"
-          nzTooltipPlacement="left"
           (nzOnClick)="toggleFullscreen()"
         />
 
@@ -38,9 +35,6 @@
           <nz-float-button
             nzShape="circle"
             nzIcon="edit"
-            nz-tooltip
-            [nzTooltipTitle]="'编辑布局' | translate"
-            nzTooltipPlacement="left"
             (nzOnClick)="startEdit()"
           />
         }
@@ -54,15 +48,11 @@
              再把触发器掰回圆形」才画得出来（`nzDescription` 只在方形上渲染），
              一整套绕行现在**连样式一起删掉了**。
 
-             这颗现在**可以挂 tooltip 了**：当初不挂是因为它自己就吃悬停，两个浮层会同时冒出来；
-             点击与悬停不冲突。正因如此「现在是哪一档」在关着的状态看不出来 ——
-             由对话框里那一行勾表示（tooltip 只报「刷新间隔」这个名字）。 -->
+             「现在是哪一档」在关着的状态看不出来（原来那列菜单里当前那颗是蓝的），
+             这个信息**由对话框里那一行勾表示**。 -->
         <nz-float-button
           nzShape="circle"
           nzIcon="clock-circle"
-          nz-tooltip
-          [nzTooltipTitle]="'刷新间隔' | translate"
-          nzTooltipPlacement="left"
           (nzOnClick)="refreshOpen.set(true)"
         />
 
@@ -71,9 +61,6 @@
         <nz-float-button
           nzShape="circle"
           nzIcon="reload"
-          nz-tooltip
-          [nzTooltipTitle]="'刷新' | translate"
-          nzTooltipPlacement="left"
           (nzOnClick)="load()"
         />
       </div>
@@ -92,9 +79,6 @@
         <nz-float-button
           nzShape="circle"
           [nzIcon]="fullscreen() ? 'fullscreen-exit' : 'fullscreen'"
-          nz-tooltip
-          [nzTooltipTitle]="(fullscreen() ? '退出全屏' : '全屏') | translate"
-          nzTooltipPlacement="left"
           (nzOnClick)="toggleFullscreen()"
         />
 
@@ -104,17 +88,11 @@
                每一步都只有一件事要做（见 editor/widget.picker） -->
           <nz-float-button
             nzIcon="plus"
-            nz-tooltip
-            [nzTooltipTitle]="'添加卡片' | translate"
-            nzTooltipPlacement="left"
             (nzOnClick)="openPicker()"
           />
           <!-- 没有确认气泡：它只改草稿，「退出编辑」就能撤销，落库要等「保存布局」 -->
           <nz-float-button
             nzIcon="rollback"
-            nz-tooltip
-            [nzTooltipTitle]="'恢复默认' | translate"
-            nzTooltipPlacement="left"
             (nzOnClick)="reset()"
           />
           <!-- **没动过就直接退出，改过才问一句。** 靠的是 `[nzCondition]="!dirty()"`，方向别写反 ——
@@ -158,9 +136,6 @@
           >
             <nz-float-button
               nzIcon="close"
-              nz-tooltip
-              [nzTooltipTitle]="'退出编辑' | translate"
-              nzTooltipPlacement="left"
             />
           </span>
           <!-- 没真改过就点不动：进编辑态、拖一下又拖回原处、打开配置框又点取消，都不该让这次
@@ -168,9 +143,6 @@
                guard —— `nz-float-button` 没有 `nzDisabled`，这里只能把它压暗（见样式表） -->
           <nz-float-button
             nzIcon="save"
-            nz-tooltip
-            [nzTooltipTitle]="'保存布局' | translate"
-            nzTooltipPlacement="left"
             (nzOnClick)="save()"
           />
         </nz-float-button-group>

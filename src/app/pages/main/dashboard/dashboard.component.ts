@@ -18,7 +18,6 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
-import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AccountService } from '../../../service/account.service';
 import { DashboardService } from '../../../service/dashboard.service';
@@ -105,7 +104,6 @@ import { WidgetHostComponent } from './widget/host/widget.host';
     NzModalModule,
     NzPopconfirmModule,
     NzSpinModule,
-    NzTooltipDirective,
     TranslatePipe,
     WidgetEditorComponent,
     WidgetPickerComponent,
