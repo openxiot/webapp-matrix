@@ -56,19 +56,23 @@
 }
 
 /*
- * 落点框：拖动中这张卡要落到哪一格。
+ * 落点框：拖动中这张卡要落到哪一格。**绿色**，与原地那个灰色的框区分开 ——
+ * 一个是「它从哪来」，一个是「它要去哪」，同色的话拖起来分不清哪个是哪个。
  *
  * 它本身就是网格里的一个成员（模板上给了与卡片同款的 `grid-column` / `grid-row`），所以跨几行
  * 就自动多高 —— **一个像素都不用量**，也就不会与卡片的实际尺寸对不上。
  *
  * `pointer-events: none` 必须有：它浮在别人（以及被拖的那张的占位块）上面，吃掉事件的话
  * 指针底下的卡片就收不到拖拽了。
+ *
+ * 只在放得下时才画（模板上那个 `@if` 问的就是「放得下吗」）。放不下时**没有框**、
+ * 幽灵卡染红 —— 两个信号说的是同一件事，不必再让框也变红。
  */
 .drop-outline {
   z-index: 1;
   pointer-events: none;
-  background: rgba(22, 119, 255, 0.08);
-  border: 2px dashed #1677ff;
+  background: rgba(82, 196, 26, 0.12);
+  border: 2px dashed #52c41a;
   border-radius: 4px;
 }
 
@@ -123,21 +127,52 @@
 }
 
 /*
+ * 「这块地方放得下」—— 幽灵卡染成可落的底色（antd 的绿 1 与红 1，与 `.drop-outline` 同色系）。
+ *
+ * **两个状态都要有颜色**：只给「放不下」上红的话，用户看到一张白卡时并不知道那是「可以放」
+ * 还是「还没判」。上了底色，绿=松手就落在这儿，红=松手弹回去，不用解释。
+ *
+ * 这两个 class 由模板绑在组件信号上（`dropState()`）—— 这个视图挂在 `.cell` 的
+ * ViewContainerRef 上，所以拖动中每一轮变更检测都会重算，颜色跟着指针走（模板上有详细注释）。
+ */
+.drag-ghost-ok {
+  background: #f6ffed;
+  border-color: #52c41a;
+}
+
+.drag-ghost-blocked {
+  background: #fff2f0;
+  border-color: #ff4d4f;
+}
+
+/*
  * 原地留下的那个占位块：CDK 拖动时把 `.cell` **整个换成**一份深拷（`replaceChild`），
  * 那份拷贝带着当时的 `grid-column` / `grid-row`，所以它会一动不动地停在卡片原来那一格。
  *
- * **藏掉它**。让位已经由 `placeAt` 实时算出来、别的卡片当场就让开了，原地再杵着一张半透明的
- * 旧位置卡片是过期信息（读起来像「复制了一份在这儿」）。真正说明落点的是 `.drop-outline`。
+ * **留一个灰框**（不是藏掉）：卡片从哪来、要往哪去，两个框一起看才读得懂 —— 绿的是落点
+ * （`.drop-outline`），灰的是原地。曾经是 `opacity: 0` 整个隐掉的，那时页面上的框其实来自
+ * `dropOutline` 的一个 bug（框画在了卡片自己的位置上，跟着指针一动不动），看着也像「原地」。
+ * 那个 bug 修掉之后这个框得由占位块自己给，否则拖动中就没有「从哪来」这个信息了。
  *
- * 用 `opacity: 0` 而不是 `display: none`：后者会让这一格整个退出网格，隐含行的尺寸可能跟着变，
- * 落定时画面会抖一下。
+ * 里面那份深拷的内容（尤其是**画不出图的 ECharts canvas**）用 `visibility: hidden` 藏掉：
+ * 隐藏的是内容，父级自己的边框与底色照旧，而 `visibility` 不会让盒子退出布局。
+ * 顺带盖掉 `.cell-editing` 那条 `outline` —— 一个框就够了，两条虚线会错开一像素。
+ *
+ * 不用 `display: none`：那会让这一格整个退出网格，隐含行的尺寸可能跟着变，落定时画面会抖一下。
  *
  * `.cdk-drag-animating` 给落定后归位的那一下一个过渡，不然松手是「跳」回去的。
  * 这两条 CDK 的样式这份工程**没有引**（`styles.less` 里没有 `@angular/cdk` 的 prebuilt css），
  * 所以自己写。
  */
 .cdk-drag-placeholder {
-  opacity: 0;
+  background: rgba(0, 0, 0, 0.02);
+  border: 2px dashed rgba(0, 0, 0, 0.25);
+  border-radius: 4px;
+  outline: none;
+}
+
+.cdk-drag-placeholder > * {
+  visibility: hidden;
 }
 
 .cdk-drag-animating {

@@ -49,6 +49,7 @@ import {
   compact,
   ensurePlacements,
   findSlot,
+  fitsAt,
   placeAt,
   placementsOf,
   sizeOf,
@@ -206,8 +207,11 @@ export class DashboardComponent implements OnDestroy {
    * 拖拽能用的前提，不能反：CDK 拖动时把那个 `.cell` 从 DOM 里换成了占位块（`replaceChild`），
    * 节点正被它持有；Angular 这时候一挪节点，卡片当场跳。所以拖动中变的**只有绑定值**。
    *
-   * 拖动中每张卡的位置取自 {@link dragTarget} 那次 `placeAt` 的结果（别人已经让开、整屏上吸完），
+   * 拖动中每张卡的位置取自 {@link dragTarget} 那次 `placeAt` 的结果（别人已经让开），
    * 没有拖动时就是卡片自己的坐标。
+   *
+   * **落点越界时整屏一个字节都不动**：那一拖的结果是「弹回原位」，没有位置要预览，
+   * 这时让别人让开再让回去只是白晃一下。
    *
    * 每张卡与它这一刻的读数在这里配成一对（少一次按 id 查找的 O(n²)）。高度按档位给，
    * **编辑态与看数据时是同一个值**（见类说明）。
@@ -222,7 +226,7 @@ export class DashboardComponent implements OnDestroy {
     const byId = new Map(base.map((item) => [item.id, item]));
     // 拖动中：整屏按「拖到那儿之后」的样子排。没拖动时一个字节都不重算
     const target = this.dragTarget();
-    if (target) {
+    if (target && this.canDrop()) {
       for (const item of placeAt(base, target.id, target.x, target.y)) {
         byId.set(item.id, item);
       }
@@ -268,8 +272,34 @@ export class DashboardComponent implements OnDestroy {
    * 这一拖要落到哪一格。非 null 时整屏按它重排（见 {@link placements}）并画出落点框。
    *
    * 只在**指针真的跨了一格之后**才有值：还没动就画一个框罩在这张卡自己身上，是噪音。
+   *
+   * `w` / `h` 一起记着，是为了让 {@link canDrop} 只看这一个信号就能判界 —— 被判的那张卡
+   * 就是被拖的这张，它的占格在拖动中不会变（拖动不改尺寸）。
    */
-  readonly dragTarget = signal<{ id: string; x: number; y: number } | null>(null);
+  readonly dragTarget = signal<{ id: string; x: number; y: number; w: number; h: number } | null>(
+    null,
+  );
+
+  /**
+   * 这一拖的三种状态，**拖动中那两处反馈（幽灵卡的底色、落点框）共用它这一个判据**：
+   *
+   * - `idle`：还没跨过任何一格（刚抓手），什么都不提示；
+   * - `ok`：落点放得下 —— 幽灵卡染成可落的底色、落点框画出来；
+   * - `blocked`：放不下，幽灵卡染红，没有落点框（松手就弹回原位）。
+   *
+   * 「放不下」只有一种：越出 24 列，或拖到板子上方（{@link fitsAt}）。**压在别人身上算放得下** ——
+   * 被压的那张会往下让，这正是让位存在的意义；要是压住了就算放不下，用户永远叠不出纵向的版式。
+   */
+  readonly dropState = computed<'blocked' | 'idle' | 'ok'>(() => {
+    const target = this.dragTarget();
+    if (!target) {
+      return 'idle';
+    }
+    return fitsAt(target.x, target.y, target.w) ? 'ok' : 'blocked';
+  });
+
+  /** 这一拖收不收。整屏预览（{@link placements}）、落点框、松手落地都问它 */
+  readonly canDrop = computed(() => this.dropState() === 'ok');
 
   /**
    * 这一拖开始时那张卡的位置与占格。拖动中一切都是「起点 + 位移」，不用去读正在变的信号。
@@ -285,15 +315,14 @@ export class DashboardComponent implements OnDestroy {
   /** 网格容器。只在拖动开始那一刻要它（量列宽），所以用信号查询而不是常驻一份引用 */
   private readonly boardRef = viewChild<ElementRef<HTMLElement>>('board');
 
-  /** 落点框：把 {@link dragTarget} 换算成绑上去的两条 CSS 网格线（CSS 从 1 起，故 +1） */
-  readonly dropOutline = computed(() => {
-    const target = this.dragTarget();
-    if (!target) {
-      return null;
-    }
-    const item = placementsOf(this.widgets()).find((i) => i.id === target.id);
-    return item ? { x: item.x, y: item.y, w: item.w, h: item.h } : null;
-  });
+  /**
+   * 落点框：把 {@link dragTarget} 换算成绑上去的两条 CSS 网格线（CSS 从 1 起，故 +1）。
+   *
+   * 就是 {@link dragTarget} 自己那个格子（**不是**这张卡原来的位置 —— 这里曾经按
+   * `placementsOf(widgets)` 取过，于是框永远画在卡片出发的地方、跟着指针一动不动）。
+   * 越界时不画：那一拖的结果是弹回原位，没有可落的地方。
+   */
+  readonly dropOutline = computed(() => (this.canDrop() ? this.dragTarget() : null));
 
   /** 每张卡自己的定时器（按 `refresh` 分组，见 {@link restartTimers}） */
   private timers: ReturnType<typeof setInterval>[] = [];
@@ -641,8 +670,10 @@ export class DashboardComponent implements OnDestroy {
    * 拖动中：把「从起点走了多少像素」换算成目标格子。
    *
    * `cdkDragMoved` **每移动一像素就发一次**，所以目标格子没变就直接返回，不白算一遍整屏让位。
-   * 位置夹在界内（贴着右边 / 顶边停），{@link placeAt} 里还会再夹一次 —— 那一次是给别的调用方
-   * 兜底的，这里夹一次是为了让「没变就 return」判断的是**最终**那个格子。
+   *
+   * **不夹边界**：卡片跟着指针走到哪就是哪，顶出右边界或上方照实记下来 —— 那个越界的落点正是
+   * 「放不下」的判据（{@link canDrop}），夹回界内就永远看不出放不下，用户会以为松手能落在那儿。
+   * 真的越界了，松手时 {@link dragEnded} 不收这一拖，卡片弹回原处。
    */
   dragMoved(event: CdkDragMove<DashboardWidget>): void {
     const origin = this.dragOrigin;
@@ -650,14 +681,14 @@ export class DashboardComponent implements OnDestroy {
       return;
     }
     const { dc, dr } = cellDelta(event.distance.x, event.distance.y, this.colUnit);
-    const x = Math.min(Math.max(origin.x + dc, 0), GRID_COLUMNS - origin.w);
-    const y = Math.max(origin.y + dr, 0);
+    const x = origin.x + dc;
+    const y = origin.y + dr;
 
     const current = this.dragTarget();
     if (current && current.x === x && current.y === y) {
       return;
     }
-    this.dragTarget.set({ id: origin.id, x, y });
+    this.dragTarget.set({ id: origin.id, x, y, w: origin.w, h: origin.h });
   }
 
   /**
@@ -665,16 +696,20 @@ export class DashboardComponent implements OnDestroy {
    *
    * 写的是 {@link dragTarget} 里那个位置 —— **拖到哪就落在哪**，不被上吸挪走。否则「纵向占领
    * 空间」这件事根本做不到（往下拖白拖），而且拖动中那个落点框会骗人：瞄着一个位置松手却落到别处。
-   * 让位的代价由别人付：被压到的先往下让，让完整屏上吸（`placeAt` 一个函数里三步走完）。
+   * 让位的代价由别人付：被压到的**往下让**（`placeAt` 里那一步），让完就停、不再上吸。
+   *
+   * **越界的一拖整个丢掉**（{@link canDrop} 为假）：草稿不动，CDK 自己把那张幽灵卡弹回原位。
+   * 这里也就不用去 `placeAt` 一次再丢掉 —— 那一次会让别的卡先让开再回去，白晃一下。
    *
    * 指针没跨过任何一格（一次点击）时 `dragTarget` 是空的，这里什么都不做 —— 那一下是
    * 「打开这张卡的配置框」，由 `.cell` 上的 `(click)` 管。
    */
   dragEnded(): void {
     const target = this.dragTarget();
+    const canDrop = this.canDrop();
     this.dragOrigin = null;
     this.dragTarget.set(null);
-    if (!target) {
+    if (!target || !canDrop) {
       return;
     }
     this.applyPlacements(placeAt(placementsOf(this.draft()), target.id, target.x, target.y));
@@ -703,8 +738,9 @@ export class DashboardComponent implements OnDestroy {
    * 对话框点「确认」：把改好的那张换回草稿，**并重算一遍位置**。
    *
    * 重算是因为尺寸可能变了：`S`（6×2）改成 `XL`（24×4）之后它多半压到了旁边的卡，光把尺寸换上去
-   * 就是两张卡叠在一起。`placeAt` 把它钉在原处、被压的往下让、然后整屏上吸 —— 缩小或删除时
-   * 它同一个函数还会把让出来的空收掉。所以改尺寸、改配置都走这一条路，不必分情况。
+   * 就是两张卡叠在一起。`placeAt` 把它钉在原处、被压的往下让。尺寸**变小**时让出来的空就这么
+   * 留着（不上吸，与拖拽同口径）—— 用户自己把卡改小，剩下的地方该由他决定放什么。
+   * 所以改尺寸、改配置都走这一条路，不必分情况。
    */
   commitEditor(widget: DashboardWidget): void {
     this.draft.set(this.draft().map((w) => (w.id === widget.id ? widget : w)));
@@ -719,6 +755,9 @@ export class DashboardComponent implements OnDestroy {
    * 对话框点「删除」：把这张卡从草稿里拿掉，**并把它让出来的空收掉**（`compact` 只上吸）。
    *
    * 不收的话删掉一张卡会在版式里留一个洞，而那个洞只能靠手动拖别的东西过去补。
+   *
+   * **这是全屏唯一还会整屏上吸的地方**：拖拽与改档位都不吸了（位置是用户摆的，不能自己跑），
+   * 只有「这张卡没了」的时候那个洞不是任何人摆出来的，收掉才说得过去。
    *
    * **只动草稿**，所以不套确认气泡 —— 「退出编辑」天然就是撤销，而库里的那份要到「保存布局」
    * 才会被改。这也正是这个按钮能直接放在对话框 footer 里的原因。

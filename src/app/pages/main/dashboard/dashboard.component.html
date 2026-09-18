@@ -65,8 +65,8 @@
            cardHeight(h) 逐像素相同，于是两张一行高的卡竖着叠起来正好等于一张两行高的卡。
 
            `cdkDropListSortingDisabled`：让位由 `dashboard.grid` 的 `placeAt` 算（拖到哪就落在哪、
-           被压的往下让、整屏上吸），**CDK 一个 DOM 都不搬**。留着 cdkDropList 是因为预览幽灵与
-           占位块那套只在有 dropList 时才建立。非编辑态 [cdkDropListDisabled] 让拖拽整个失效
+           被压的往下让、**让完就停，不上吸**），**CDK 一个 DOM 都不搬**。留着 cdkDropList 是因为
+           预览幽灵与占位块那套只在有 dropList 时才建立。非编辑态 [cdkDropListDisabled] 让拖拽整个失效
            （**不是**不渲染指令 —— 那样进出编辑会重建一遍整屏卡片，八张图会重画） -->
       <div
         #board
@@ -107,11 +107,22 @@
                  （`deepCloneNode`），而卡片里那块 ECharts 画在 canvas 上 —— 拷出来是一张
                  白身子的卡。`matchSize` 让它与真卡片同尺寸，光标抓在卡上的哪一点就还是那一点。
 
-                 数据走 `[data]` 显式传：这个模板被 CDK 用 `createEmbeddedView` 自己实例化，
-                 上下文是它给的那个对象，**不是** `@for` 的作用域 —— 直接写 `p.title` 读不到。
-                 `[data]` 这个绑定本身仍在 `@for` 里求值，所以 `p` 在那儿是有的 -->
+                 标题走 `[data]` 显式传：这个模板被 CDK 用 `createEmbeddedView` 自己实例化，
+                 **`@for` 的作用域在这里读不到** —— 直接写 `p.title` 是空的。`[data]` 那个绑定本身
+                 仍在 `@for` 里求值，所以 `p` 在那儿是有的（`let-title` 取出来用）。
+
+                 底色那三个 class 反过来直接问组件：`dropState` 是**组件的**成员，不是 `@for` 的
+                 局部变量，所以这个视图取得到它。而且这个视图挂在 `.cell` 的 ViewContainerRef 上
+                 （只有它的 DOM 节点被 CDK 挪到了 `<body>`），所以后续每一轮变更检测都会重新求值一次
+                 —— 底色跟着指针实时变。**标题不能这么做**：`[data]` 是拖动开始那一刻的快照 -->
             <ng-template cdkDragPreview matchSize [data]="{ title: p.title }" let-title="title">
-              <div class="drag-ghost">{{ title }}</div>
+              <div
+                class="drag-ghost"
+                [class.drag-ghost-ok]="dropState() === 'ok'"
+                [class.drag-ghost-blocked]="dropState() === 'blocked'"
+              >
+                {{ title }}
+              </div>
             </ng-template>
 
             <!-- 按 id 对应读数（下标会随拖拽变化，id 不会）；还没取到就传 undefined，卡片留白。
@@ -128,6 +139,10 @@
 
         <!-- 落点框：拖动中这张卡要落到哪一格。它就是这个网格里的一个普通成员，所以跨几行就
              自动多高、跨几列就自动多宽 —— 一个像素都不用量。
+
+             只在**放得下**时画（`dropOutline` 问的就是 `canDrop`）：放不下时那一拖的结果是弹回
+             原位，没有可落的地方，画个框反而在骗人。放不下时改由幽灵卡染红来提示（见上面那三个
+             class）。**卡片出发的那块地方**是另一个框 —— CDK 的占位块，灰色的，由样式表负责。
 
              `pointer-events: none`：它浮在别人身上，挡住的话指针底下的卡片会收不到事件。
              `z-index: 1`：压在让开之前的那些卡片上面。 -->

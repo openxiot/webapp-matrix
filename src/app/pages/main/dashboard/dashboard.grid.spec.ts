@@ -13,6 +13,7 @@ import {
   compact,
   ensurePlacements,
   findSlot,
+  fitsAt,
   flowPlace,
   hasPlacements,
   placeAt,
@@ -296,13 +297,30 @@ describe('dashboard.grid', () => {
       expect(once.map((i) => i.id)).toEqual(['a', 'b']);
       expect(compact(once)).toEqual(once);
     });
+  });
 
-    it('钉住的那张不动（就是刚被拖的那张）', () => {
-      const items = [place('a', 0, 5, 6, 2), place('b', 0, 0, 6, 2)];
-      const result = compact(items, 'a');
+  describe('fitsAt', () => {
+    it('界内就放得下', () => {
+      expect(fitsAt(0, 0, 6)).toBe(true);
+      expect(fitsAt(18, 0, 6)).toBe(true); // 18 + 6 = 24，正好贴着右边
+      expect(fitsAt(0, 99, 24)).toBe(true); // 行往下是无限的
+    });
 
-      expect(result.find((i) => i.id === 'a')!.y).toBe(5);
-      expect(result.find((i) => i.id === 'b')!.y).toBe(0);
+    it('顶出右边界就放不下', () => {
+      expect(fitsAt(19, 0, 6)).toBe(false);
+      expect(fitsAt(12, 0, 24)).toBe(false); // 24 宽的卡只有 x = 0 放得下
+      expect(fitsAt(24, 0, 6)).toBe(false);
+    });
+
+    it('跑到板子上边或左边就放不下', () => {
+      expect(fitsAt(0, -1, 6)).toBe(false);
+      expect(fitsAt(-1, 0, 6)).toBe(false);
+    });
+
+    it('**压在别人身上仍然算放得下** —— 那是让位的事，不是界的事', () => {
+      // 这一条是「可以放置」那个判定的口径：拖动中只有越界才变红，压到别人不变红，
+      // 因为松手之后被压的会往下让。要是这里判成放不下，用户就没法把卡往上叠了
+      expect(fitsAt(0, 0, 24)).toBe(true);
     });
   });
 
@@ -315,9 +333,9 @@ describe('dashboard.grid', () => {
       expect(result.find((i) => i.id === 'a')!.y).toBe(5);
     });
 
-    it('被压到的往下让，让完让出来的空隙被收掉', () => {
+    it('被压到的往下让，让到不压为止', () => {
       const items = [place('a', 0, 0, 6, 2), place('b', 0, 2, 6, 2), place('c', 0, 4, 6, 2)];
-      // 把 c 拎到 a 的位置上：a、b 依次往下让，然后一起往上吸回来
+      // 把 c 拎到 a 的位置上：a、b 依次往下让
       const result = placeAt(items, 'c', 0, 0);
       const byId = index(result);
 
@@ -325,6 +343,18 @@ describe('dashboard.grid', () => {
       // 让位是**顺次**的：每张落到上面那张的正下方，中间不留缝
       expect(byId['a'].y).toBe(2);
       expect(byId['b'].y).toBe(4);
+    });
+
+    it('**让完就停**：没被压到的卡不会自己往上吸', () => {
+      // 这是这一轮去掉上吸的那条口径。上吸在这里会把 b 从第 6 行吸到第 2 行 ——
+      // 用户明明把 b 摆在下面留着位置，一松手它自己跑了，白摆一次
+      const items = [place('a', 0, 0, 6, 2), place('b', 0, 6, 6, 2), place('c', 12, 4, 12, 4)];
+      const result = placeAt(items, 'c', 12, 0);
+      const byId = index(result);
+
+      expect(byId['c'].y).toBe(0);
+      expect(byId['a'].y).toBe(0);
+      expect(byId['b'].y).toBe(6); // 没被压到，原样待着
     });
 
     it('让位之后整屏仍然不重叠、不越界', () => {
@@ -339,16 +369,11 @@ describe('dashboard.grid', () => {
       expectNoOverlap(result);
     });
 
-    it('拖出右边界时贴着右边停', () => {
+    it('越界的落点被**夹回界内**（兜底：拖拽那条路自己会先判界，别的调用方不会）', () => {
       const items = [place('a', 0, 0, 12, 2)];
       // 12 宽的卡片最大起始列是 12（12 + 12 = 24）
       expect(placeAt(items, 'a', 20, 0).find((i) => i.id === 'a')!.x).toBe(12);
       expect(placeAt(items, 'a', -5, 0).find((i) => i.id === 'a')!.x).toBe(0);
-    });
-
-    it('拖到上边界之外时贴顶停', () => {
-      const items = [place('a', 0, 3, 6, 2)];
-
       expect(placeAt(items, 'a', 0, -4).find((i) => i.id === 'a')!.y).toBe(0);
     });
 
