@@ -91,20 +91,44 @@
           />
           <!-- 没动过就直接退出：`nzCondition` 为真时 ng-zorro **不弹浮层、直接走确认**
                （`NzPopconfirmComponent.show()`），只有真改过、要丢东西了才问一句。
-               一个能撤销的动作本来也不必先过一道确认 -->
-          <nz-float-button
-            nzIcon="close"
-            nz-tooltip
-            [nzTooltipTitle]="'退出编辑' | translate"
-            nzTooltipPlacement="left"
+               一个能撤销的动作本来也不必先过一道确认。
+
+               **确认气泡挂在外面这个 `span` 上，不挂在按钮上** —— 这不是口味，是必需的：
+               `nz-float-button` 与 `nz-popconfirm` **各声明了一个公开名都叫 `nzIcon` 的输入**，
+               写在同一个元素上的静态属性 `nzIcon="close"` 会被**两个指令同时**收到。
+               气泡那头拿到 `close` 之后，用它的一贯画法渲染提示图标 ——
+               `nzTheme` 写死 `"fill"`（`<nz-icon [nzType]="icon || 'exclamation-circle'" nzTheme="fill" />`），
+               于是解析出来的名字是 **`close-fill`**；而 fill 主题里根本没有裸的 `close`
+               （只有 `close-circle` / `close-square`），`assets/fill/close.svg` 不存在，
+               动态加载 404 之后就是控制台那句
+               `the icon close-fill does not exist or is not registered`。
+               图标本身没画错、按钮也照常能用，所以这个错只在控制台里，肉眼看不出来。
+
+               挂到 span 上之后两个 `nzIcon` 各归各的：按钮那头仍是 `close`（圆主题 = `close-o`，
+               真有这个图标），气泡这头才是它该要的 `exclamation-circle`（fill 主题 = 真有）。
+               左边那颗「恢复默认」、以及看模式那三颗都没这个问题 —— 它们身上没有 `nz-popconfirm`。
+
+               `nzIcon="exclamation-circle"` 是**显式**写的，虽然不写也能落到同一个图标上
+               （气泡模板里是 `[nzType]="icon || 'exclamation-circle'"`）：写出来，
+               这一行就自己证明了它要的是哪一颗，下次换图标也不必先去查 ng-zorro 的默认值。 -->
+          <span
+            class="float-confirm"
             nz-popconfirm
+            nzIcon="exclamation-circle"
             [nzCondition]="dirty()"
             nzPopconfirmPlacement="left"
             [nzPopconfirmTitle]="'未保存的修改将丢失，确认退出编辑？' | translate"
             [nzOkText]="'确认' | translate"
             [nzCancelText]="'取消' | translate"
             (nzOnConfirm)="cancelEdit()"
-          />
+          >
+            <nz-float-button
+              nzIcon="close"
+              nz-tooltip
+              [nzTooltipTitle]="'退出编辑' | translate"
+              nzTooltipPlacement="left"
+            />
+          </span>
           <!-- 没真改过就点不动：进编辑态、拖一下又拖回原处、打开配置框又点取消，都不该让这次
                保存白跑一趟（更不该在乐观锁下把版本号推上去）。挡它的是 `save()` 自己那两句
                guard —— `nz-float-button` 没有 `nzDisabled`，这里只能把它压暗（见样式表） -->
