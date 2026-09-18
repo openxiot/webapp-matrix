@@ -119,10 +119,11 @@ describe('dashboard.grid', () => {
       expect(widthChoices('line')).toEqual([6, 12, 24]);
     });
 
-    it('高度下拉**跟着宽度联动**：6 宽只有 200 一档，12 宽有三档，24 宽也有三档', () => {
-      // 联动而不是「列出全部组合再禁用几个」：用户不必先撞一次墙才知道 6 宽没有 308。
-      // 12 宽里没有 W12H92 —— 一行高的档位只给统计卡，那是类型那道筛选管的事
-      expect(sizeChoices('line', 6)).toEqual(['W6H200']);
+    it('高度下拉**跟着宽度联动**：6 宽两档、12 宽三档、24 宽三档', () => {
+      // 联动而不是「列出全部组合再禁用几个」：用户不必先撞一次墙才知道 6 宽没有 416。
+      // 6 宽里没有 W6H92 —— 一行高的档位只给统计卡，那是类型那道筛选管的事；
+      // 12 宽里同样没有 W12H92
+      expect(sizeChoices('line', 6)).toEqual(['W6H200', 'W6H308']);
       expect(sizeChoices('line', 12)).toEqual(['W12H200', 'W12H308', 'W12H416']);
       expect(sizeChoices('line', 24)).toEqual(['W24H200', 'W24H308', 'W24H416']);
 
