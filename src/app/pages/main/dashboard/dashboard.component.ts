@@ -371,9 +371,27 @@ export class DashboardComponent implements OnDestroy {
   /** 全屏**唯一**那个自动刷新定时器（`refreshSeconds` 为 `0` 时是 `null`） */
   private timer: ReturnType<typeof setInterval> | null = null;
 
+  /**
+   * 整页是否处于全屏。
+   *
+   * 与 `home.3d.component` 里那套同一个道理：**状态只能从 `document.fullscreenElement` 读，
+   * 不能自己维护一个布尔量**。用户按 Esc（或浏览器因为别的原因退出全屏）我们收不到任何回调
+   * —— 只有 `fullscreenchange`。自己记的那个布尔量在这种时候就与浏览器说的不一致了，
+   * 按钮会显示成「退出全屏」而实际已经不在全屏。
+   *
+   * 这里读的是**整页**（`documentElement`）而不是某个元素：这一屏要的是「看板铺满整块屏幕」，
+   * 与 `home.3d` 那个只把 3D 场景放进全屏的用法不同 —— 所以判定的也是「有没有人全屏」，
+   * 不比对是哪个元素。
+   */
+  readonly fullscreen = signal(false);
+
   constructor() {
     this.currentSpaceId = this.account.space().id;
     this.load();
+
+    // 挂上监听顺便对一次现状：初值可能是 true（比如热重载后页面仍在全屏）
+    document.addEventListener('fullscreenchange', this.onFullscreenChange);
+    this.onFullscreenChange();
 
     // 项目信号后续变化（切换项目 / 清空）时自动刷新
     effect(() => {
@@ -391,6 +409,28 @@ export class DashboardComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.clearTimer();
+    document.removeEventListener('fullscreenchange', this.onFullscreenChange);
+  }
+
+  /** 全屏状态跟着浏览器走（见 `fullscreen` 上面那段） */
+  private readonly onFullscreenChange = (): void => {
+    this.fullscreen.set(document.fullscreenElement !== null);
+  };
+
+  /**
+   * 全屏 / 退出全屏。
+   *
+   * 进全屏的请求**可能被拒**（不是用户手势触发的、iframe 没给权限、浏览器策略），
+   * 吞掉异常即可：状态由 `fullscreenchange` 说话，这里也不乐观置位 —— 报错没有别的补救动作。
+   * 退出那条同理（理论上不会失败，但没必要为一个没人接的 rejection 操心）。
+   */
+  toggleFullscreen(): void {
+    if (document.fullscreenElement) {
+      void document.exitFullscreen().catch(() => undefined);
+      return;
+    }
+
+    void document.documentElement.requestFullscreen().catch(() => undefined);
   }
 
   /** 翻译一个词条。都在 `computed` 里用，故读一次 `currentLang` 建立依赖（同 `widget.host.ts`） */

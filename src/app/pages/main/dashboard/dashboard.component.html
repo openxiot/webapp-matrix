@@ -18,6 +18,22 @@
   @if (account.space().id) {
     @if (!editing()) {
       <div class="float-actions">
+        <!-- 全屏。**两个模式里都有、都在最左边那一颗**：它管的是「这一屏怎么显示」，
+             与看数据/改布局都无关，进出编辑态时它不该换位置。
+
+             图标按状态换（`fullscreen` / `fullscreen-exit`），文案也是。两个名字都**没注册**
+             在 `icons-provider.ts` 里，但 `assets/outline/` 下都有 svg，按需取即可 ——
+             与 `home.3d` 那颗用的是同一对名字。float button 渲染图标时 `nzTheme` 写死
+             `"outline"`，所以这里不会重演 `close-fill` 那个「拿错主题去找图标」的错。 -->
+        <nz-float-button
+          nzShape="circle"
+          [nzIcon]="fullscreen() ? 'fullscreen-exit' : 'fullscreen'"
+          nz-tooltip
+          [nzTooltipTitle]="(fullscreen() ? '退出全屏' : '全屏') | translate"
+          nzTooltipPlacement="left"
+          (nzOnClick)="toggleFullscreen()"
+        />
+
         @if (canEdit() && layout()) {
           <nz-float-button
             nzShape="circle"
@@ -70,6 +86,19 @@
            屏幕上的顺序是**从左往右**（组是 `flex-direction: row`，而它的右边缘钉在 24px 上，
            所以整排是往左长的），模板顺序即屏幕顺序。 -->
       <div class="float-actions float-edit" [class.is-idle]="!dirty()" [class.is-busy]="saving()">
+        <!-- 全屏那颗在编辑态里也有，位置与看模式**一模一样**（最左）。它与那四个编辑动作
+             不是一类东西，所以**不放进这个组里** —— 顺带也就不必去动红按钮那两条
+             「组内首尾」的选择器（`> .ant-float-btn:first-child` / `:last-child`）：
+             组里仍是那四颗，首 = 添加卡片、尾 = 保存布局，一个都没挪位。 -->
+        <nz-float-button
+          nzShape="circle"
+          [nzIcon]="fullscreen() ? 'fullscreen-exit' : 'fullscreen'"
+          nz-tooltip
+          [nzTooltipTitle]="(fullscreen() ? '退出全屏' : '全屏') | translate"
+          nzTooltipPlacement="left"
+          (nzOnClick)="toggleFullscreen()"
+        />
+
         <nz-float-button-group nzShape="circle">
           <!-- 按钮 + 一个类型选择对话框，而不是把类型摊成一排按钮：卡片类型会越加越多，
                摊开来这一排会被撑满；而且「选类型」与「填配置」本来就是两步，分成两个框之后
@@ -89,9 +118,15 @@
             nzTooltipPlacement="left"
             (nzOnClick)="reset()"
           />
-          <!-- 没动过就直接退出：`nzCondition` 为真时 ng-zorro **不弹浮层、直接走确认**
-               （`NzPopconfirmComponent.show()`），只有真改过、要丢东西了才问一句。
-               一个能撤销的动作本来也不必先过一道确认。
+          <!-- **没动过就直接退出，改过才问一句。** 靠的是 `[nzCondition]="!dirty()"`，方向别写反 ——
+               `NzPopconfirmComponent.show()` 是这么写的：
+
+                   show() { if (!this.nzCondition) { …; super.show(); } else { this.onConfirm(); } }
+
+               也就是 **`nzCondition` 为假才弹气泡，为真直接走确认**。所以这里要传 `!dirty()`：
+               没改过 → 直接退出（没什么可丢的），改过 → 弹气泡问一句。
+               修订十九在这里写成 `dirty()` 是**读反了**：那样改过反而会静默丢掉改动、
+               没改过倒要弹一下确认，两个方向都错。
 
                **确认气泡挂在外面这个 `span` 上，不挂在按钮上** —— 这不是口味，是必需的：
                `nz-float-button` 与 `nz-popconfirm` **各声明了一个公开名都叫 `nzIcon` 的输入**，
@@ -115,7 +150,7 @@
             class="float-confirm"
             nz-popconfirm
             nzIcon="exclamation-circle"
-            [nzCondition]="dirty()"
+            [nzCondition]="!dirty()"
             nzPopconfirmPlacement="left"
             [nzPopconfirmTitle]="'未保存的修改将丢失，确认退出编辑？' | translate"
             [nzOkText]="'确认' | translate"
