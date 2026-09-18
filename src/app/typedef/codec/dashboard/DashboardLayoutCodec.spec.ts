@@ -1,4 +1,4 @@
-import { DashboardLayout } from '../../define/dashboard/DashboardLayout';
+import { DashboardLayout, WIDGET_SIZES } from '../../define/dashboard/DashboardLayout';
 import { DashboardLayoutCodec } from './DashboardLayoutCodec';
 
 /**
@@ -31,12 +31,38 @@ describe('DashboardLayoutCodec', () => {
       expect(DashboardLayoutCodec.decode({ widgets: {} }).widgets).toEqual([]);
     });
 
-    it('不认识的 type 与 size 各退回 stat / S，而不是让它们流到渲染里', () => {
+    it('不认识的 type 与 size 各退回 stat / W6H200，而不是让它们流到渲染里', () => {
       // 库里存着将来某版本写的 type 时，宁可显示成一张统计卡，也不要一个渲染不出来的空壳
       const widget = DashboardLayoutCodec.decodeWidget({ type: 'sankey', size: 'XXL' });
 
       expect(widget.type).toBe('stat');
-      expect(widget.size).toBe('S');
+      expect(widget.size).toBe('W6H200');
+    });
+
+    it('**改造前的档位名读得出来**：翻译成新名，而不是落进兜底档位', () => {
+      // 库里存着的布局写的是旧名。认不出来就会落到兜底档位 —— 那是一次**静默的改尺寸**：
+      // 用户没动过的卡片自己变了大小，界面上查不出原因。所以六个旧名每一个都要有去处，
+      // 且去处是**占格完全相同**的那一档（S 与 W6H200 都是 6 列 2 行）
+      const cases: [string, string][] = [
+        ['S1', 'W6H92'],
+        ['M1', 'W12H92'],
+        ['S', 'W6H200'],
+        ['M', 'W12H200'],
+        ['L', 'W12H416'],
+        ['XL', 'W24H416'],
+      ];
+
+      for (const [legacy, current] of cases) {
+        expect(DashboardLayoutCodec.decodeWidget({ size: legacy }).size).toBe(current);
+      }
+    });
+
+    it('新名优先：一个恰好也叫旧名的档位不会被翻译走', () => {
+      // 今天两套名字不相交（新名以 W 开头），这条钉的是**判断顺序** ——
+      // 先查现名、再查旧名。反过来的话，将来哪天新起一个与旧名同名的档位就会读错
+      for (const size of Object.keys(WIDGET_SIZES)) {
+        expect(DashboardLayoutCodec.decodeWidget({ size }).size).toBe(size);
+      }
     });
 
     it('title / titleKey / refresh 没下发时保持 undefined，不补空值', () => {
@@ -147,7 +173,7 @@ describe('DashboardLayoutCodec', () => {
     });
 
     it('坐标要发出去：不发就等于每次保存都退回贪婪铺，刷新一次整屏重排', () => {
-      const widget = DashboardLayoutCodec.decodeWidget({ id: 'w1', size: 'L', x: 6, y: 4 });
+      const widget = DashboardLayoutCodec.decodeWidget({ id: 'w1', size: 'W12H416', x: 6, y: 4 });
 
       const body = DashboardLayoutCodec.encodeWidget(widget);
 
@@ -222,7 +248,7 @@ describe('DashboardLayoutCodec', () => {
         id: 'w1',
         type: 'stat',
         title: '东区设备',
-        size: 'M',
+        size: 'W12H200',
         x: 6,
         y: 4,
         refresh: 30,
@@ -235,7 +261,7 @@ describe('DashboardLayoutCodec', () => {
         id: 'w1',
         type: 'stat',
         title: '东区设备',
-        size: 'M',
+        size: 'W12H200',
         x: 6,
         y: 4,
         refresh: 30,
@@ -283,8 +309,8 @@ describe('DashboardLayoutCodec', () => {
         spaceId: 'space-1',
         version: 2,
         widgets: [
-          { id: 'w1', type: 'stat', size: 'S', x: 0, y: 0, config: {} },
-          { id: 'w2', type: 'line', size: 'XL', x: 0, y: 2, config: {} },
+          { id: 'w1', type: 'stat', size: 'W6H92', x: 0, y: 0, config: {} },
+          { id: 'w2', type: 'line', size: 'W24H416', x: 0, y: 2, config: {} },
         ],
       };
 
@@ -292,7 +318,7 @@ describe('DashboardLayoutCodec', () => {
       const roundTripped = DashboardLayoutCodec.decode(DashboardLayoutCodec.encode(saved));
 
       expect(roundTripped.widgets.map((w) => w.id)).toEqual(['w1', 'w2']);
-      expect(roundTripped.widgets.map((w) => w.size)).toEqual(['S', 'XL']);
+      expect(roundTripped.widgets.map((w) => w.size)).toEqual(['W6H92', 'W24H416']);
       expect(roundTripped.widgets.map((w) => [w.x, w.y])).toEqual([
         [0, 0],
         [0, 2],

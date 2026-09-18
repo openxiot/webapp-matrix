@@ -5,6 +5,9 @@ import {
   GRID_ROW_HEIGHT,
   WidgetSize,
   WIDGET_SIZES,
+  sizeAllowed,
+  sizeChoices,
+  widthChoices,
 } from '../../../typedef/define/dashboard/DashboardLayout';
 import {
   Placement,
@@ -32,19 +35,28 @@ import {
 describe('dashboard.grid', () => {
   describe('sizeOf', () => {
     it('按档位给占格', () => {
-      expect(sizeOf(widget('S1'))).toEqual({ w: 6, h: 1 });
-      expect(sizeOf(widget('M1'))).toEqual({ w: 12, h: 1 });
-      expect(sizeOf(widget('S'))).toEqual({ w: 6, h: 2 });
-      expect(sizeOf(widget('M'))).toEqual({ w: 12, h: 2 });
-      expect(sizeOf(widget('L'))).toEqual({ w: 12, h: 4 });
-      expect(sizeOf(widget('XL'))).toEqual({ w: 24, h: 4 });
+      expect(sizeOf(widget('W6H92'))).toEqual({ w: 6, h: 1 });
+      expect(sizeOf(widget('W12H92'))).toEqual({ w: 12, h: 1 });
+      expect(sizeOf(widget('W6H200'))).toEqual({ w: 6, h: 2 });
+      expect(sizeOf(widget('W12H200'))).toEqual({ w: 12, h: 2 });
+      expect(sizeOf(widget('W12H416'))).toEqual({ w: 12, h: 4 });
+      expect(sizeOf(widget('W24H416'))).toEqual({ w: 24, h: 4 });
     });
 
-    it('不认识的档位退回 S（不是撑满一屏的 XL）', () => {
-      const odd = widget('S');
+    it('不认识的档位退回 W6H200（不是撑满一屏的 W24H416）', () => {
+      const odd = widget('W6H200');
       odd.size = 'Huge' as WidgetSize;
 
       expect(sizeOf(odd)).toEqual({ w: 6, h: 2 });
+    });
+
+    it('**档位名说的就是这一档的两件事**：W{列}H{像素}', () => {
+      // 换名的全部理由就在这条断言里：名字得是真的。改档位表时若忘了改名字（或反过来），
+      // 这一条当场红 —— 一个名叫 W6H200 却占 8 列、或者高 308 像素的档位，
+      // 比一个难读的名字坏得多
+      for (const size of Object.keys(WIDGET_SIZES) as WidgetSize[]) {
+        expect(size).toBe(`W${WIDGET_SIZES[size].w}H${cardHeight(WIDGET_SIZES[size].h)}`);
+      }
     });
 
     it('档位表里每一档都落在 24 列之内（越界的卡会被挤到下一行，看着像自己跳了）', () => {
@@ -70,10 +82,10 @@ describe('dashboard.grid', () => {
       // 这条用例把「旧算式」硬编码在这里，改常量时它会当场红
       const before = (h: number) => h * 38 + (h - 1) * 16;
 
-      expect(cardHeight(WIDGET_SIZES.S.h)).toBe(before(4));
-      expect(cardHeight(WIDGET_SIZES.M.h)).toBe(before(4));
-      expect(cardHeight(WIDGET_SIZES.L.h)).toBe(before(8));
-      expect(cardHeight(WIDGET_SIZES.XL.h)).toBe(before(8));
+      expect(cardHeight(WIDGET_SIZES.W6H200.h)).toBe(before(4));
+      expect(cardHeight(WIDGET_SIZES.W12H200.h)).toBe(before(4));
+      expect(cardHeight(WIDGET_SIZES.W12H416.h)).toBe(before(8));
+      expect(cardHeight(WIDGET_SIZES.W24H416.h)).toBe(before(8));
     });
 
     it('**高度可以拼接**：两张一行高的卡叠起来 = 一张两行高的卡', () => {
@@ -83,11 +95,54 @@ describe('dashboard.grid', () => {
     });
   });
 
+  /**
+   * 编辑器那两个下拉背后的三个纯函数。它们住在 `define/`（档位表那儿），但**行为**是排版规则，
+   * 所以用例跟排版这组放一起。
+   */
+  describe('可选档位（编辑器两个下拉的依据）', () => {
+    it('统计卡只有一行高的两档，别的卡片一行高的都选不了', () => {
+      // 统计卡是唯一「没有卡头、按内容自然高约 90px」的卡片，塞进 200px 的格子里下面空 110px
+      expect(sizeAllowed('stat', 'W6H92')).toBe(true);
+      expect(sizeAllowed('stat', 'W12H92')).toBe(true);
+      expect(sizeAllowed('stat', 'W6H200')).toBe(false);
+      expect(sizeAllowed('stat', 'W24H416')).toBe(false);
+
+      for (const type of ['line', 'distribution', 'device', 'service'] as const) {
+        expect(sizeAllowed(type, 'W6H92')).toBe(false);
+        expect(sizeAllowed(type, 'W12H200')).toBe(true);
+        expect(sizeAllowed(type, 'W12H308')).toBe(true);
+      }
+    });
+
+    it('宽度下拉：统计卡 6/12，别的卡片 6/12/24（24 那一档谁都够不着 92 高）', () => {
+      expect(widthChoices('stat')).toEqual([6, 12]);
+      expect(widthChoices('line')).toEqual([6, 12, 24]);
+    });
+
+    it('高度下拉**跟着宽度联动**：6 宽只有 200 一档，12 宽有三档，24 宽也有三档', () => {
+      // 联动而不是「列出全部组合再禁用几个」：用户不必先撞一次墙才知道 6 宽没有 308。
+      // 12 宽里没有 W12H92 —— 一行高的档位只给统计卡，那是类型那道筛选管的事
+      expect(sizeChoices('line', 6)).toEqual(['W6H200']);
+      expect(sizeChoices('line', 12)).toEqual(['W12H200', 'W12H308', 'W12H416']);
+      expect(sizeChoices('line', 24)).toEqual(['W24H200', 'W24H308', 'W24H416']);
+
+      // 统计卡在 12 宽上只剩一行高那一档 —— 类型与宽度两道筛选是**同时**起作用的
+      expect(sizeChoices('stat', 12)).toEqual(['W12H92']);
+      expect(sizeChoices('stat', 6)).toEqual(['W6H92']);
+    });
+
+    it('高度下拉按高度从矮到高（用户是从上往下读的）', () => {
+      const heights = sizeChoices('line', 12).map((size) => WIDGET_SIZES[size].h);
+
+      expect(heights).toEqual([...heights].sort((a, b) => a - b));
+    });
+  });
+
   describe('flowPlace', () => {
     it('复刻旧的流式排版：从左上往右下铺，一行放不下就换行', () => {
-      // 手算的期望值：M(12 列) 占掉左半边；两张 S(6 列) 依次落在右边；
-      // 第三张 S 在第 0、1 行都放不下（那两行已满），于是落到第 2 行
-      expect(flowPlace([widget('M', 'a'), widget('S', 'b'), widget('S', 'c'), widget('S', 'd')])).toEqual([
+      // 手算的期望值：12 列那张占掉左半边；两张 6 列的依次落在右边；
+      // 第四张 6 列的在第 0、1 行都放不下（那两行已满），于是落到第 2 行
+      expect(flowPlace([widget('W12H200', 'a'), widget('W6H200', 'b'), widget('W6H200', 'c'), widget('W6H200', 'd')])).toEqual([
         place('a', 0, 0, 12, 2),
         place('b', 12, 0, 6, 2),
         place('c', 18, 0, 6, 2),
@@ -99,7 +154,7 @@ describe('dashboard.grid', () => {
       // 左边一张高卡，右边竖着两张矮卡。改造前这排不出来 —— 流式排布里第二行要从
       // 「第一行最高的那张卡」下面才开始，右边那块明明空着的地方落不下去。
       // 现在只是普通的一行，因为流式铺开本来就是「逐行扫第一个放得下的位置」
-      expect(flowPlace([widget('L', 'big'), widget('S1', 's1'), widget('S1', 's2')])).toEqual([
+      expect(flowPlace([widget('W12H416', 'big'), widget('W6H92', 's1'), widget('W6H92', 's2')])).toEqual([
         place('big', 0, 0, 12, 4),
         place('s1', 12, 0, 6, 1),
         place('s2', 18, 0, 6, 1),
@@ -107,7 +162,7 @@ describe('dashboard.grid', () => {
     });
 
     it('忽略卡片上已有的坐标（它回答的是「没有坐标时该怎么摆」）', () => {
-      const moved = widget('S', 'a', 18, 7);
+      const moved = widget('W6H200', 'a', 18, 7);
 
       expect(flowPlace([moved])).toEqual([place('a', 0, 0, 6, 2)]);
     });
@@ -115,7 +170,7 @@ describe('dashboard.grid', () => {
 
   describe('二维摆放（用户要的那件事）', () => {
     it('两张一行高的卡竖向叠在一张两行高的卡旁边，底边齐平', () => {
-      // 这是「高度可以拼接」在**布局**上的样子：两张 S1 叠起来正好与一张 S 等高，
+      // 这是「高度可以拼接」在**布局**上的样子：两张 W6H92 叠起来正好与一张 W6H200 等高，
       // 于是它们能并排放在同一段纵向空间里
       const items = [
         place('big', 0, 0, 6, 2),
@@ -154,27 +209,27 @@ describe('dashboard.grid', () => {
 
   describe('hasPlacements', () => {
     it('齐全、在界内、互不重叠才算有', () => {
-      expect(hasPlacements([widget('S', 'a', 0, 0), widget('S', 'b', 6, 0)])).toBe(true);
+      expect(hasPlacements([widget('W6H200', 'a', 0, 0), widget('W6H200', 'b', 6, 0)])).toBe(true);
     });
 
     it('缺一个坐标就是没有（旧文档）', () => {
-      expect(hasPlacements([widget('S', 'a', 0, 0), widget('S', 'b')])).toBe(false);
+      expect(hasPlacements([widget('W6H200', 'a', 0, 0), widget('W6H200', 'b')])).toBe(false);
     });
 
     it('越界或负数就是没有', () => {
-      expect(hasPlacements([widget('XL', 'a', 6, 0)])).toBe(false);
-      expect(hasPlacements([widget('S', 'a', -1, 0)])).toBe(false);
-      expect(hasPlacements([widget('S', 'a', 0, -1)])).toBe(false);
+      expect(hasPlacements([widget('W24H416', 'a', 6, 0)])).toBe(false);
+      expect(hasPlacements([widget('W6H200', 'a', -1, 0)])).toBe(false);
+      expect(hasPlacements([widget('W6H200', 'a', 0, -1)])).toBe(false);
     });
 
     it('互相压着就是没有（脏数据照它渲染就是两张卡叠在一起）', () => {
-      expect(hasPlacements([widget('S', 'a', 0, 0), widget('S', 'b', 3, 0)])).toBe(false);
+      expect(hasPlacements([widget('W6H200', 'a', 0, 0), widget('W6H200', 'b', 3, 0)])).toBe(false);
     });
 
     it('边界相接不算重叠', () => {
       // 一张的下沿正好是另一张的上沿
-      expect(hasPlacements([widget('S', 'a', 0, 0), widget('S', 'b', 0, 2)])).toBe(true);
-      expect(hasPlacements([widget('S', 'a', 0, 0), widget('S', 'b', 6, 0)])).toBe(true);
+      expect(hasPlacements([widget('W6H200', 'a', 0, 0), widget('W6H200', 'b', 0, 2)])).toBe(true);
+      expect(hasPlacements([widget('W6H200', 'a', 0, 0), widget('W6H200', 'b', 6, 0)])).toBe(true);
     });
 
     it('空布局算有（没有卡片就没有什么可重铺的）', () => {
@@ -184,7 +239,7 @@ describe('dashboard.grid', () => {
 
   describe('ensurePlacements', () => {
     it('旧布局（没有坐标）整份按流式铺一遍', () => {
-      const legacy = [widget('M', 'a'), widget('S', 'b'), widget('S', 'c')];
+      const legacy = [widget('W12H200', 'a'), widget('W6H200', 'b'), widget('W6H200', 'c')];
       const fixed = ensurePlacements(legacy);
 
       expect(fixed.map((w) => [w.x, w.y])).toEqual([
@@ -197,20 +252,20 @@ describe('dashboard.grid', () => {
     });
 
     it('铺过一遍之后再铺是同一个结果（用户保存前会重复调它）', () => {
-      const once = ensurePlacements([widget('M', 'a'), widget('S', 'b')]);
+      const once = ensurePlacements([widget('W12H200', 'a'), widget('W6H200', 'b')]);
       const twice = ensurePlacements(once);
 
       expect(twice.map((w) => [w.x, w.y])).toEqual(once.map((w) => [w.x, w.y]));
     });
 
     it('坐标齐全时原样返回（同一个数组，不白白换引用）', () => {
-      const good = [widget('S', 'a', 0, 0), widget('S', 'b', 6, 0)];
+      const good = [widget('W6H200', 'a', 0, 0), widget('W6H200', 'b', 6, 0)];
 
       expect(ensurePlacements(good)).toBe(good);
     });
 
     it('只改坐标，卡片上别的一个字段都不动', () => {
-      const legacy = [widget('S', 'a')];
+      const legacy = [widget('W6H200', 'a')];
       legacy[0].title = '东区温度';
       legacy[0].refresh = 30;
 
@@ -218,7 +273,7 @@ describe('dashboard.grid', () => {
 
       expect(fixed.title).toBe('东区温度');
       expect(fixed.refresh).toBe(30);
-      expect(fixed.size).toBe('S');
+      expect(fixed.size).toBe('W6H200');
       expect(fixed.id).toBe('a');
     });
   });
@@ -468,6 +523,6 @@ function expectNoOverlap(items: Placement[]): void {
 // placementsOf 本身没有别的行为，一并在这里钉一下「坐标缺失按 0 算」这条前提
 describe('placementsOf', () => {
   it('坐标缺失按 0 算（所以要先问 hasPlacements）', () => {
-    expect(placementsOf([widget('S', 'a')])).toEqual([place('a', 0, 0, 6, 2)]);
+    expect(placementsOf([widget('W6H200', 'a')])).toEqual([place('a', 0, 0, 6, 2)]);
   });
 });

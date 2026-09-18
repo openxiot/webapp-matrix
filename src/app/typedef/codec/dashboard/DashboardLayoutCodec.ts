@@ -4,6 +4,7 @@ import {
   DashboardWidget,
   WidgetSize,
   WidgetType,
+  WIDGET_SIZES,
 } from '../../define/dashboard/DashboardLayout';
 
 /**
@@ -56,7 +57,7 @@ export class DashboardLayoutCodec {
     // 用户改过的卡片靠自己那份 title，两者都空时由页面按 type 兜底
     x.title = typeof o?.title === 'string' ? o.title : undefined;
     x.titleKey = typeof o?.titleKey === 'string' ? o.titleKey : undefined;
-    x.size = SIZES.includes(o?.size) ? (o.size as WidgetSize) : 'S';
+    x.size = readSize(o?.size);
     // 坐标：**两个都要**，只给一个的文档按「都没有」处理（由页面整份重铺）。
     // `cellCoord` 只收非负整数 —— `"6"` 这种字符串数字收下来只会掩盖后端的一次改动，
     // 小数则根本不是格子下标；两种都当「没有这个键」
@@ -127,7 +128,43 @@ export class DashboardLayoutCodec {
 }
 
 const TYPES: WidgetType[] = ['stat', 'line', 'distribution', 'device', 'service'];
-const SIZES: WidgetSize[] = ['S1', 'M1', 'S', 'M', 'L', 'XL'];
+
+/**
+ * 旧档位名 → 现在的名字（`W{列}H{像素}` 那一套之前的 `S1` / `M1` / `S` / `M` / `L` / `XL`）。
+ *
+ * **这层映射必须有**：库里存着的布局写的是旧名，认不出来就会落到下面的兜底档位 ——
+ * 那是一次**静默的改尺寸**（用户没动过的卡片自己变了大小，界面上查不出原因），
+ * 正是 `DashboardLayout` 里那条「静默改尺寸比留一个旧档位更坏」要避免的事。
+ * 读的时候翻译成新名，用户下一次保存时库里就自动落成新名了，不需要迁移脚本。
+ */
+const LEGACY_SIZES: Record<string, WidgetSize> = {
+  S1: 'W6H92',
+  M1: 'W12H92',
+  S: 'W6H200',
+  M: 'W12H200',
+  L: 'W12H416',
+  XL: 'W24H416',
+};
+
+/**
+ * 读一个档位名：**新名 → 旧名 → 兜底**。
+ *
+ * 名字的名单直接取自 `WIDGET_SIZES` 的键（加档位只改那一处，这里不用跟着抄）。
+ * 认不出来时给 `W6H200`（最小的常规档）：那意味着库里存着一个将来某个版本写的档位，
+ * 给个小格子总比给个撑满屏幕的好 —— 与 `dashboard.grid` 的 `sizeOf` 同一条兜底。
+ */
+function readSize(raw: unknown): WidgetSize {
+  if (typeof raw === 'string') {
+    if (raw in WIDGET_SIZES) {
+      return raw as WidgetSize;
+    }
+    const legacy = LEGACY_SIZES[raw];
+    if (legacy) {
+      return legacy;
+    }
+  }
+  return 'W6H200';
+}
 
 /** 读一个网格坐标（非负整数）。不合法一律 `undefined` = 「没有这个键」 */
 function cellCoord(raw: unknown): number | undefined {

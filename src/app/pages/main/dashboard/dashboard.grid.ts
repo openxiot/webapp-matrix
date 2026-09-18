@@ -60,11 +60,15 @@ export interface Placement {
 /**
  * 卡片按档位占几列几行。
  *
- * 档位不认识时退回 `S`：那意味着库里存着一个将来某个版本写的档位，给个小格子总比给个
- * 撑满屏幕的格子好（渲染不出来还能看见，占满一屏则整页都毁了）。
+ * 档位不认识时退回 `W6H200`（最小的常规档）：那意味着库里存着一个将来某个版本写的档位，
+ * 给个小格子总比给个撑满屏幕的格子好（渲染不出来还能看见，占满一屏则整页都毁了）。
+ *
+ * **旧档位名（`S1` / `M1` / `S` / `M` / `L` / `XL`）在这里认不出来是对的** ——
+ * 它们由 `DashboardLayoutCodec` 在读线格式时翻译成新名，能走到这里说明那个 widget
+ * 不是从线格式来的（比如测试里直接造的）。真到了这儿也只是一个小格子，不会炸。
  */
 export function sizeOf(widget: DashboardWidget): { w: number; h: number } {
-  return WIDGET_SIZES[widget.size as WidgetSize] ?? WIDGET_SIZES.S;
+  return WIDGET_SIZES[widget.size as WidgetSize] ?? WIDGET_SIZES.W6H200;
 }
 
 /**

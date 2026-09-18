@@ -17,13 +17,14 @@ import { DashboardCatalog, catalogDevices } from '../../../../typedef/define/das
 import {
   DASHBOARD_DIMENSIONS,
   DASHBOARD_METRICS,
-  DASHBOARD_SIZE_CHOICES,
   DEFAULT_REFRESH_SECONDS,
   DashboardWidget,
   WIDGET_SIZES,
   WidgetSize,
   dashboardDimensionLabel,
   dashboardMetricLabel,
+  sizeChoices,
+  widthChoices,
 } from '../../../../typedef/define/dashboard/DashboardLayout';
 import { cardHeight } from '../dashboard.grid';
 import { absoluteWindow } from '../dashboard.folding';
@@ -118,24 +119,41 @@ export class WidgetEditorComponent {
   readonly type = computed(() => this.draft().type);
 
   /**
-   * 这个类型**能选**的尺寸档位，连显示名一起给好。
+   * 尺寸拆成**两个下拉**：宽度（列）与高度（像素）。
    *
-   * 按类型分叉，不是全表：统计卡只给两个矮档位（一行 92px）—— 它是唯一「没有卡头、按内容
-   * 自然高约 90px」的卡片，塞进 200px 的档位里下面会空 110px。别的卡片给四个正常档位。
+   * 拆开的理由：档位现在是把两个维度自由组合的，而一个下拉里塞九档（`W6H92` … `W24H416`）
+   * 是让人在一张九行的菜单里找那两个数。拆成两个之后，宽度只有 2–3 个选项、
+   * 高度只有 1–3 个，用户先定形状再定大小。
    *
-   * 显示名是「档位名 · 占几列 × 多少像素」，只有数字与乘号 —— **不引入任何要翻译的文案**，
-   * 但一眼看得出 `S1` 与 `S` 差在哪。像素高度走 `cardHeight`（与卡片实际高度同一份算式）。
+   * **高度选项跟着宽度联动**（`sizeChoices` 按宽度过滤）：6 宽的卡片只有 200 这一档高度，
+   * 12 宽有三档。不列「存在的全部组合再禁用掉几个」—— 那样用户得先撞墙才知道不行。
    *
-   * **存量统计卡（库里存着 `S` / `M` / `L` / `XL` 的）渲染侧一律不管**，按存的档位渲染 ——
-   * 不悄悄改用户的布局；只是打开这个对话框时下拉里没有当前值，用户一保存就落成合法档位。
+   * 两个下拉的显示文字**都是纯数字**（宽度是列数、高度是像素），只有数字与乘号，
+   * **不引入任何要翻译的文案** —— 这个对话框的字段名「尺寸」是既有词条，
+   * 新加的文案一条都没有。高度那串数走 `cardHeight`，与卡片实际高度同一份算式。
+   *
+   * **当前档位选不出来时把它补进选项**（下面两处三元）：库里可能存着一张
+   * 「统计卡占了 4 行」这种按现在的规则选不出来的卡片（旧规则下存下的）。渲染侧一律按存的
+   * 档位渲染、不悄悄改用户的布局，那么这里至少要让下拉显示得出当前值 ——
+   * 显示空白的下拉会让人以为卡片没有尺寸，用户一保存还会莫名其妙地被改小。
    * 静默改尺寸比留一个旧档位更坏：用户没动过的卡片自己变了大小，是查不出原因的。
    */
-  readonly sizes = computed(() =>
-    (DASHBOARD_SIZE_CHOICES[this.type()] ?? DASHBOARD_SIZE_CHOICES.stat).map((size) => {
-      const box = WIDGET_SIZES[size];
-      return { size, label: `${size} · ${box.w}×${cardHeight(box.h)}` };
-    }),
-  );
+  readonly width = computed(() => WIDGET_SIZES[this.size()]?.w ?? WIDGET_SIZES.W6H200.w);
+
+  /** 宽度下拉的选项。当前宽度不在（存量卡片）时补在末尾，排序不讲究 —— 补进去的那个本来就是异类 */
+  readonly widths = computed(() => {
+    const allowed = widthChoices(this.type());
+    const current = this.width();
+    return allowed.includes(current) ? allowed : [...allowed, current];
+  });
+
+  /** 高度下拉的选项：当前档位 + 这个宽度下能选的（按高度从矮到高）。label 是像素数 */
+  readonly heights = computed(() => {
+    const current = this.size();
+    const allowed = sizeChoices(this.type(), this.width());
+    const list = allowed.includes(current) ? allowed : [current, ...allowed];
+    return list.map((size) => ({ size, label: String(cardHeight(WIDGET_SIZES[size].h)) }));
+  });
 
   private readonly config = computed(() => this.draft().config ?? {});
 
@@ -383,8 +401,39 @@ export class WidgetEditorComponent {
     this.patch({ title: title.trim() || undefined });
   }
 
+  /** 高度下拉的选中值。值仍是一个**档位名** —— 名字里同时带着列数，所以改高度也会写回宽度 */
   setSize(size: WidgetSize): void {
     this.patch({ size });
+  }
+
+  /**
+   * 换宽度：在**新宽度下能选的档位**里挑一个高度最接近当前的。
+   *
+   * 「最接近」而不是「保持行数」：档位不是笛卡尔积（6 宽没有 308 那一档），拿行数去配会在
+   * 6 宽上撞空。挑最近的则任何一次换宽度都落在合法档位上，高度又不跳变 ——
+   * 从 12×308 换到 6 宽，得到 6×200（而不是掉到 6×92 或干脆没得选）。
+   *
+   * 新宽度下**一个合法档位都没有**（下拉里补进来的那个异类宽度，比如存量统计卡的 24 列）：
+   * 退回这一宽度下**存在**的档位里挑最矮的 —— 总之不能让下拉选出一个不存在的组合。
+   */
+  setWidth(w: number): void {
+    if (w === this.width()) {
+      return;
+    }
+    const current = WIDGET_SIZES[this.size()] ?? WIDGET_SIZES.W6H200;
+    const allowed = sizeChoices(this.type(), w);
+    const pool = allowed.length
+      ? allowed
+      : (Object.keys(WIDGET_SIZES) as WidgetSize[]).filter((size) => WIDGET_SIZES[size].w === w);
+    if (!pool.length) {
+      return;
+    }
+    const nearest = pool.reduce((best, size) =>
+      Math.abs(WIDGET_SIZES[size].h - current.h) < Math.abs(WIDGET_SIZES[best].h - current.h)
+        ? size
+        : best,
+    );
+    this.patch({ size: nearest });
   }
 
   setRefresh(refresh: number | null): void {

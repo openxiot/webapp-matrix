@@ -19,32 +19,57 @@
 export type WidgetType = 'stat' | 'line' | 'distribution' | 'device' | 'service';
 
 /**
- * 尺寸档位。名字里那个数字是**占几行**：`S1` 是「S 的一行版」，`S` 是它的两行版。
+ * 尺寸档位。名字是 `W{占几列}H{多少像素}`，**说的就是这一档的两件事**：
+ * `W6H200` = 6 列宽、200 像素高。所以名字本身可读，也自带一道校验 ——
+ * 「名字与实际占格对不上」这件事有 `dashboard.grid.spec.ts` 一条用例钉着。
  *
- * `M` 与 `L` 同宽、只有高度不同（「宽图」与「高图」是两种需求），`XL` 才整宽。
- * `S1` / `M1` 是**统计卡专用**的矮档位（只有它们高度是一行 92px），因为统计卡是唯一
- * 「没有卡头、按内容自然高 ≈ 90px」的卡片 —— 见 {@link DASHBOARD_SIZE_CHOICES}。
+ * 为什么不用 `S` / `M` / `L` / `XL`（那是上一版的名字）：**那套名字早就不成立了**。
+ * `S1` 是 6 宽 1 行、`S` 是 6 宽 2 行、`M1` 是 12 宽 1 行、`L` 与 `XL` 同高不同宽 ——
+ * 字母既不单调对应宽度、也不对应高度，「S 比 M 小」这句话在引入矮档位那天起就是错的。
+ *
+ * 名字里用**像素**而不是行数：行数会跟着行高变。上一次把行高从 38 改成 92 时，
+ * 每档的行数被整体减半（`h: 4` → `h: 2`）而像素一个没动 —— 像素是稳定的那一维。
+ *
+ * 档位是可以**拼**的：矮档位竖着叠起来正好等于高一档（`92 + 16 + 92 = 200`），
+ * 所以 308 那一档能由「一张 200 + 一张 92」占满，416 能由四张 92 占满。
  */
-export type WidgetSize = 'S1' | 'M1' | 'S' | 'M' | 'L' | 'XL';
+export type WidgetSize =
+  | 'W6H92'
+  | 'W12H92'
+  | 'W6H200'
+  | 'W12H200'
+  | 'W24H200'
+  | 'W12H308'
+  | 'W24H308'
+  | 'W12H416'
+  | 'W24H416';
 
 /**
- * 尺寸档位 → 占几列几行（24 列网格）。
+ * 尺寸档位 → 占几列几行（24 列网格）。**这张表是档位的唯一真值**：
+ * 名字、宽度选项、高度选项、占格全由它推出来，别处不许再抄一份。
  *
  * **这张表只在前端**：服务端只认档位名（认不认识这个名字），排版知识全在这里 ——
  * 加档位时改这一处，后端 `WidgetSize` 跟着加一个枚举常量即可，不必同步数值。
  * 服务端也**不存 `w` / `h`**：那是从档位推出来的，存一份就是第二份会过期的真值。
  *
- * `h` 是**行数**，一行 {@link GRID_ROW_HEIGHT} 像素，所以像素高度 = `h × 92 + (h − 1) × 16`。
+ * `h` 是**行数**，一行 {@link GRID_ROW_HEIGHT} 像素，所以像素高度 = `h × 92 + (h − 1) × 16`
+ * —— 即 `108h − 16`，是个**等差阶梯**（92 / 200 / 308 / 416，步长 108 = 一行加一道缝）。
  * 一行 92 这个数是挑出来的（理由见 {@link GRID_ROW_HEIGHT}）：它让每一档的像素高度与
  * 改造前**一像素不差**，同时让「两张一行高的卡竖着叠起来」正好等于「一张两行高的卡」。
+ *
+ * 宽度的两个缺口是故意的：**没有 6 宽的 308 / 416**（细高条放图表没法看，而那一竖条
+ * 用矮卡摞就能填满），**没有整宽的 92**（一行高的整宽卡没有对应的内容）。
  */
 export const WIDGET_SIZES: Record<WidgetSize, { w: number; h: number }> = {
-  S1: { w: 6, h: 1 }, // 92px，统计专用
-  M1: { w: 12, h: 1 }, // 92px，统计专用
-  S: { w: 6, h: 2 }, // 200px
-  M: { w: 12, h: 2 }, // 200px
-  L: { w: 12, h: 4 }, // 416px
-  XL: { w: 24, h: 4 }, // 416px
+  W6H92: { w: 6, h: 1 }, // 92px，统计专用
+  W12H92: { w: 12, h: 1 }, // 92px，统计专用
+  W6H200: { w: 6, h: 2 }, // 200px
+  W12H200: { w: 12, h: 2 }, // 200px
+  W24H200: { w: 24, h: 2 }, // 200px，整宽的横幅
+  W12H308: { w: 12, h: 3 }, // 308px
+  W24H308: { w: 24, h: 3 }, // 308px
+  W12H416: { w: 12, h: 4 }, // 416px
+  W24H416: { w: 24, h: 4 }, // 416px
 };
 
 /** 网格列数（§D4）：CSS Grid 的 `repeat(24, 1fr)` */
@@ -54,7 +79,7 @@ export const GRID_COLUMNS = 24;
  * 卡片行高（px）。**这是真正的常量之一**。
  *
  * 92 不是个整数好看的数字，是算出来的：它与 {@link GRID_GAP} 一起让**每一档的像素高度
- * 与改造前完全相同**（1 行 92、2 行 200、4 行 416 —— 即原来的 S/M 与 L/XL），
+ * 与改造前完全相同**（1 行 92、2 行 200、3 行 308、4 行 416），
  * 同时保证「两张一行高的卡竖着叠起来 = 一张两行高的卡」（`92 + 16 + 92 = 200`），
  * 这就是用户要的「高度可以拼接」。换个数字（比如字面的 90）就要连间距一起动，
  * 而间距一动，24 列的列宽会跟着变，**每一张卡的宽度都得重算**。
@@ -170,7 +195,7 @@ export class DashboardWidget {
    */
   titleKey?: string;
   /** 尺寸档位。占几列几行按 {@link WIDGET_SIZES} 算；拖拽只改坐标、不改档位 */
-  size: WidgetSize = 'S';
+  size: WidgetSize = 'W6H200';
   /**
    * 起始列（0 起，`0 .. GRID_COLUMNS − 1`）。
    *
@@ -238,33 +263,51 @@ export const DASHBOARD_WIDGET_TITLES: Record<WidgetType, string> = {
  */
 export const DASHBOARD_EDITABLE_TYPES: WidgetType[] = ['stat', 'line', 'distribution', 'device', 'service'];
 
-/** 新建卡片时的尺寸档位。必须落在 {@link DASHBOARD_SIZE_CHOICES} 里，否则下拉显示不出当前值 */
+/** 新建卡片时的尺寸档位。必须能被 {@link sizeAllowed} 放行，否则下拉里选不中当前值 */
 export const DASHBOARD_DEFAULT_SIZE: Record<WidgetType, WidgetSize> = {
-  stat: 'S1',
-  line: 'M',
-  distribution: 'M',
-  device: 'S',
-  service: 'M',
+  stat: 'W6H92',
+  line: 'W12H200',
+  distribution: 'W12H200',
+  device: 'W6H200',
+  service: 'W12H200',
 };
 
 /**
- * 各类型**能选**的尺寸档位（编辑器那个下拉的选项表）。
+ * 这个类型能不能用这一档。
  *
- * 统计卡只给两个矮档位：它是唯一「没有卡头、按内容自然高」的卡片，实测约 90px ——
- * 塞进 200px 的档位里下面会空 110px。两个矮档位（6 格 / 12 格，都是一行 92px）
- * 正好是它需要的全部自由度。
+ * **统计卡只允许一行高的档位**：它是唯一「没有卡头、按内容自然高 ≈ 90px」的卡片，
+ * 塞进 200px 的档位里下面会空 110px；反过来别的卡片一行都太矮（卡头就要占掉一行的一多半）。
  *
- * **存量统计卡（库里存着 `S` / `M` / `L` / `XL` 的）不受这张表约束**：渲染侧一律按存的档位渲染，
- * 不悄悄改用户的布局；只有打开编辑器时下拉里没有当前值，用户一保存就落成合法档位。
- * 静默改尺寸比留一个旧档位更坏 —— 用户没动过的卡片自己变了大小，是查不出原因的。
+ * 界线写成「恰好一行」与「一行以上」而不是一份手抄的档位名单：加新档位时这里不用改，
+ * 更不会出现「加了档位却忘了加到某个类型的名单里」那种静默的漏。
  */
-export const DASHBOARD_SIZE_CHOICES: Record<WidgetType, WidgetSize[]> = {
-  stat: ['S1', 'M1'],
-  line: ['S', 'M', 'L', 'XL'],
-  distribution: ['S', 'M', 'L', 'XL'],
-  device: ['S', 'M', 'L', 'XL'],
-  service: ['S', 'M', 'L', 'XL'],
-};
+export function sizeAllowed(type: WidgetType, size: WidgetSize): boolean {
+  const rows = WIDGET_SIZES[size]?.h ?? 0;
+  return type === 'stat' ? rows === 1 : rows > 1;
+}
+
+/**
+ * 这个类型能选的宽度（列），从窄到宽 —— 编辑器第一个下拉的选项。
+ * 由 {@link WIDGET_SIZES} 推出来，**不另立一张表**。
+ */
+export function widthChoices(type: WidgetType): number[] {
+  const widths = (Object.keys(WIDGET_SIZES) as WidgetSize[])
+    .filter((size) => sizeAllowed(type, size))
+    .map((size) => WIDGET_SIZES[size].w);
+  return [...new Set(widths)].sort((a, b) => a - b);
+}
+
+/**
+ * 这个类型 + 这个宽度下能选的档位，**按高度从矮到高** —— 编辑器第二个下拉的选项。
+ *
+ * 高度选项因此是**跟着宽度联动**的：6 宽的卡片只有 200 这一档高度，12 宽有三档。
+ * 不列「存在的全部组合再禁用掉几个」—— 那样用户得先撞墙才知道不行。
+ */
+export function sizeChoices(type: WidgetType, width: number): WidgetSize[] {
+  return (Object.keys(WIDGET_SIZES) as WidgetSize[])
+    .filter((size) => WIDGET_SIZES[size].w === width && sizeAllowed(type, size))
+    .sort((a, b) => WIDGET_SIZES[a].h - WIDGET_SIZES[b].h);
+}
 
 /**
  * 分布卡的 `dimension` 表（§5.5）与它的显示名，与 {@link DASHBOARD_METRICS} 同一条口径
