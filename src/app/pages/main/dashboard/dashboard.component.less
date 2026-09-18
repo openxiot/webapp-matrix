@@ -13,12 +13,54 @@
 }
 
 /*
- * 悬浮操作区（视口右下角）。
+ * 悬浮操作区（视口右下角那一排）。
  *
- * **这里不摆位置**：`nz-float-button` 与 `nz-float-button-group` 自己就是
- * `position: fixed`（`inset-inline-end: 24px` / `bottom: 48px`，ng-zorro 定的），一列排开、
- * 成员之间 16px 的间距也是它给的（`.ant-float-btn-group-circle { gap: 16px }`）。
- * 这一节只管四件它管不了的事，下面逐条交代。
+ * **这一节先管「那一排」本身**。ng-zorro 给**每一颗** `nz-float-button` 都写死了
+ * `position: fixed; inset-inline-end: 24px; bottom: 48px`（`@float-button-inset-inline-end`
+ * 与它 ×2）—— 一颗一颗各自钉在同一个点上，两颗就叠在一起。所以外面套一个 `.float-actions` 壳，
+ * 把定位收到壳上、把按钮各自的 `fixed` 关掉，让它们退回普通流里横着排。
+ *
+ * 壳上那两个值（24 / 48）是从 ng-zorro 那里**抄过来的**：壳接管了定位，就得把它那两个值接过来，
+ * 否则这一排会贴到视口边缘上。换大版本时对着 `float-button/style/index.less` 的两个变量看一眼。
+ *
+ * `z-index: 99` 也是抄的（与它给单颗按钮的那个一致），而且这里还多一层作用：它让这一排成为一个
+ * **层叠上下文** —— 展开出来那列档位的 `z-index` 是 `-1`（ng-zorro 定的），没有这层上下文的话
+ * 负层级会跑到页面根上去，被卡片盖住。
+ *
+ * **横排不只是好看**：档位面板是**向上**展开的（`.ant-float-btn-group-top > wrap`），
+ * 竖排的话它会正好盖住上面那颗。
+ */
+.float-actions {
+  position: fixed;
+  z-index: 99;
+  inset-inline-end: 24px;
+  bottom: 48px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+
+/* 每颗按钮自己的定位关掉：位置归壳管 */
+.float-actions ::ng-deep .ant-float-btn {
+  position: static;
+  inset: auto;
+}
+
+/*
+ * 组**不能**跟着退回 `static`：展开出来那列档位是 `position: absolute`，它的包含块就是组。
+ * 组一旦 `static`，面板会改成相对壳定位 —— 右边缘对齐的就是壳而不是触发器了，位置全错。
+ * `flex-direction: row` 是给编辑态那一排用的（组的默认是 `column`，一竖列）。
+ */
+.float-actions ::ng-deep .ant-float-btn-group {
+  position: relative;
+  inset: auto;
+  flex-direction: row;
+}
+
+/*
+ * 下面三件是 ng-zorro 管不了、得自己交代的：触发器要圆、档位那列要成为一块面板、
+ * 编辑态那一排的状态与两个红。
  */
 
 /*
@@ -111,23 +153,10 @@
 }
 
 /*
- * 三、「编辑布局」那颗要往左让一格。
- *
- * 两颗都按 ng-zorro 的默认位置（右边 24px）摆的话会**正好叠在一起**。让它往左挪一整个
- * 按钮 + 一道间距（24 + 40 + 16 = 80px）而不是往上叠：刷新那一组是往上展开的，
- * 叠在上面会被展开的档位盖住。
- *
- * `inset-inline-end` 而不是 `right`：ng-zorro 用的是逻辑属性（RTL 下跟着翻），这里要跟它一致。
- */
-.float-edit-btn {
-  inset-inline-end: 80px;
-}
-
-/*
- * 四、编辑态那一列的状态 —— 两个 ng-zorro **没有**的东西。
+ * 三、编辑态那一排的状态 —— 两个 ng-zorro **没有**的东西。
  *
  * `nz-float-button` 既没有 `nzDisabled` 也没有 `nzLoading`，所以「没改过」与「正在存」只能
- * 这样表达。「没改过」只压暗**最下面那颗**（保存布局）而不是整列：另外三个照旧可点，
+ * 这样表达。「没改过」只压暗**最右边那颗**（保存布局）而不是整排：另外三个照旧可点，
  * 而点击本身由 `save()` 里那两句 guard 挡着 —— 不挡的话，一次白跑的保存会把乐观锁的版本号
  * 推上去（见 save()）。
  */
@@ -135,8 +164,8 @@
   opacity: 0.4;
 }
 
-/* 「正在存」是整列的事：这次请求没回来之前，那一列一个动作都不该发出去（连点两下必然撞版本
-   冲突）。这里**只挡指针**、不挡提示，所以两个按钮的 tooltip 仍然看得见 */
+/* 「正在存」是整排的事：这次请求没回来之前，那一排一个动作都不该发出去（连点两下必然撞版本
+   冲突）。这里**只挡指针**、不挡提示，所以四个按钮的 tooltip 仍然看得见 */
 .float-edit.is-busy {
   pointer-events: none;
   opacity: 0.6;
@@ -148,9 +177,9 @@
  * `nzType` 只有 `primary`（主题蓝）与 `default` 两档，没有 `danger` —— ng-zorro 的
  * float-button 样式表里连一条 `-primary` / `-danger` 规则都没有，红只能覆盖出来。
  *
- * 认的是**位置**（那一列的首尾两个）而不是一个类：类要加在 `nz-float-button` 身上，而那个
+ * 认的是**位置**（那一排的首尾两个）而不是一个类：类要加在 `nz-float-button` 身上，而那个
  * 组件的宿主元素上有一条 `[class]` 绑定（`class = computed(...)`），能不碰就不碰。
- * 模板里的顺序就是屏幕上的顺序（从上往下），首 = 添加卡片、尾 = 保存布局。
+ * 模板里的顺序就是屏幕上的顺序（从左往右），首 = 添加卡片、尾 = 保存布局。
  *
  * 底色给 `body`、颜色给 `icon`：`-default` 那两条把这两个值各自定死了
  * （`.ant-float-btn-default .ant-float-btn-body { background-color: ... }` 与

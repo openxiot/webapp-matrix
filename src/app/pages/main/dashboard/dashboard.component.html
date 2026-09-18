@@ -1,68 +1,78 @@
 <div class="dashboard">
-  <!-- 悬浮操作区（右下角）。看模式与编辑态各一套，互不重叠：编辑态里没有「刷新」
+  <!-- 悬浮操作区（右下角那一排）。看模式与编辑态各一排，互不重叠：编辑态里没有「刷新」
        （它会把草稿冲掉），看模式里没有那几个编辑动作（非管理员连编辑入口都看不到）。
 
-       两套都挂在**视口**右下角（`position: fixed`，ng-zorro 定的 24px / 48px），所以这一屏
-       不再有工具条占位 —— 卡片区就是全部内容。未选项目时一个都不渲染（那一屏只有一句
-       「请先选择项目」，摆一排按钮反而在那儿碍事）。
+       两排都挂在**视口**右下角，所以这一屏不再有工具条占位 —— 卡片区就是全部内容。
+       未选项目时一个都不渲染（那一屏只有一句「请先选择项目」，摆一排按钮反而在那儿碍事）。
+
+       `.float-actions` 那个壳是必需的：ng-zorro 给**每一颗** `nz-float-button` 都写死了
+       `position: fixed` + 同一个 24px / 48px，一颗一颗各自钉在同一个点上 —— 两颗就叠在一起。
+       壳把定位收上去、把按钮各自的 `fixed` 关掉，它们才退回普通流里横着排（见样式表）。
+
+       一排的顺序：**左边离右下角最远、右边最近**。所以「刷新」在最右（最常点），
+       「编辑布局」在最左（它是换一种模式，与取数那两颗是两回事）。
 
        用 FloatButton 而不是普通按钮，换来三处绕行（都在下面就地写了）：
        `nz-float-button` **没有** `nzDisabled` / `nzLoading` 这两个输入；圆的按钮**只显示图标**
        （`nzDescription` 只在方形上渲染）；而一个组里所有成员**共用组的 `nzShape`**。 -->
   @if (account.space().id) {
     @if (!editing()) {
-      <!-- 「刷新」+ 自动刷新档位，合成一个组：**圆形的刷新按钮，悬停向上展开六个档位**，
-           点它就是刷新（见 onRefreshGroupClick）。
-
-           为什么是「方的组 + 圆的触发器」：档位那一列要显示「30s」这样的**文字**，而文字只在
-           方形按钮上渲染（`nzDescription` 的条件里写着 `nzShape() === 'square'`），组里所有成员
-           又共用组的形状 —— 于是整组按方的建，再把触发器单独掰回圆形（样式表里有理由）。 -->
-      <nz-float-button-group
-        nzTrigger="hover"
-        nzPlacement="top"
-        nzShape="square"
-        nzIcon="reload"
-        nz-tooltip
-        [nzTooltipTitle]="'刷新' | translate"
-        nzTooltipPlacement="left"
-        (click)="onRefreshGroupClick($event)"
-      >
-        @for (option of refreshOptions(); track option.value) {
-          <!-- 当前档位用主题蓝标出来：一列六个档位总得让人看出现在是哪一个，
-               而菜单里没有「选中」这个状态位可用 -->
+      <div class="float-actions">
+        @if (canEdit() && layout()) {
           <nz-float-button
-            nzShape="square"
-            [nzDescription]="option.label"
-            [nzType]="option.value === refreshSeconds() ? 'primary' : 'default'"
-            (nzOnClick)="setRefreshInterval(option.value)"
+            nzShape="circle"
+            nzIcon="edit"
+            nz-tooltip
+            [nzTooltipTitle]="'编辑布局' | translate"
+            nzTooltipPlacement="left"
+            (nzOnClick)="startEdit()"
           />
         }
-      </nz-float-button-group>
 
-      @if (canEdit() && layout()) {
-        <!-- 编辑入口摆在「刷新」**左边**而不是上面：上下叠的话，悬停展开的那一列档位会正好
-             盖住它（档位是往上长的） -->
+        <!-- 自动刷新档位：**独立的一颗**（它管「多久刷一次」，右边那颗管「现在刷一次」），
+             悬停向上展开六个档位。
+
+             为什么整组按**方形**建、只把触发器掰回圆形：档位那一列要显示「30s」这样的**文字**，
+             而 `nzDescription` 只在方形按钮上渲染（条件里写着 `nzShape() === 'square'`），
+             组里所有成员又共用组的形状 —— 于是整组按方的建，再单独把触发器掰圆。
+
+             **这颗上没有 tooltip**：它自己就是悬停展开的，再挂一个会在悬停时同时冒出两个浮层
+             （档位菜单 + 气泡）。「现在是哪一档」由展开的那一列里那颗蓝的表示。 -->
+        <nz-float-button-group nzTrigger="hover" nzPlacement="top" nzShape="square" nzIcon="clock-circle">
+          @for (option of refreshOptions(); track option.value) {
+            <!-- 当前档位用主题蓝标出来：一列六个档位总得让人看出现在是哪一个，
+                 而菜单里没有「选中」这个状态位可用 -->
+            <nz-float-button
+              nzShape="square"
+              [nzDescription]="option.label"
+              [nzType]="option.value === refreshSeconds() ? 'primary' : 'default'"
+              (nzOnClick)="setRefreshInterval(option.value)"
+            />
+          }
+        </nz-float-button-group>
+
+        <!-- 刷新。走 `load()` 而不是 `refresh()`：与改造前那颗工具条按钮同一个口径 —— 手动刷新
+             要连**布局**一起重取（别人可能刚改过，这是用户手里唯一的「把别人的改动取回来」的入口） -->
         <nz-float-button
-          class="float-edit-btn"
           nzShape="circle"
-          nzIcon="edit"
+          nzIcon="reload"
           nz-tooltip
-          [nzTooltipTitle]="'编辑布局' | translate"
+          [nzTooltipTitle]="'刷新' | translate"
           nzTooltipPlacement="left"
-          (nzOnClick)="startEdit()"
+          (nzOnClick)="load()"
         />
-      }
+      </div>
     } @else {
-      <!-- 编辑态：一列四个圆按钮，**都看得见**（不折进菜单里）—— 这四个是这一屏仅有的动作，
-           折起来只是白多一次悬停。「添加卡片」在顶上、「保存布局」在最下面：后者是这两个里
-           更常点的那个，贴着右下角顺手；两个红的（往布局里加东西 / 写库）一头一尾各一个。
+      <!-- 编辑态：一排四个圆按钮，**都看得见**（不折进菜单里）—— 这四个是这一屏仅有的动作，
+           折起来只是白多一次悬停。「添加卡片」在最左、「保存布局」在最右：后者是这两个里更常点的
+           那个，贴着右下角顺手；两个红的（往布局里加东西 / 写库）一头一尾各一个。
 
-           浏览器里一列的顺序是**从上往下**（组是 `flex-direction: column`，而它的下边缘钉在
-           48px 上，所以整列是往上长的），模板顺序即屏幕顺序。 -->
-      <div class="float-edit" [class.is-idle]="!dirty()" [class.is-busy]="saving()">
+           屏幕上的顺序是**从左往右**（组是 `flex-direction: row`，而它的右边缘钉在 24px 上，
+           所以整排是往左长的），模板顺序即屏幕顺序。 -->
+      <div class="float-actions float-edit" [class.is-idle]="!dirty()" [class.is-busy]="saving()">
         <nz-float-button-group nzShape="circle">
           <!-- 按钮 + 一个类型选择对话框，而不是把类型摊成一排按钮：卡片类型会越加越多，
-               摊开来这一列会被撑满；而且「选类型」与「填配置」本来就是两步，分成两个框之后
+               摊开来这一排会被撑满；而且「选类型」与「填配置」本来就是两步，分成两个框之后
                每一步都只有一件事要做（见 editor/widget.picker） -->
           <nz-float-button
             nzIcon="plus"
@@ -79,8 +89,9 @@
             nzTooltipPlacement="left"
             (nzOnClick)="reset()"
           />
-          <!-- 没动过就直接退出（`nzCondition`）：一个能撤销的动作本来也不必先过一道确认，
-               只有真改过、要丢东西了才问一句 -->
+          <!-- 没动过就直接退出：`nzCondition` 为真时 ng-zorro **不弹浮层、直接走确认**
+               （`NzPopconfirmComponent.show()`），只有真改过、要丢东西了才问一句。
+               一个能撤销的动作本来也不必先过一道确认 -->
           <nz-float-button
             nzIcon="close"
             nz-tooltip

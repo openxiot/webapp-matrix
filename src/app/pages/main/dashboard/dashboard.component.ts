@@ -344,8 +344,8 @@ export class DashboardComponent implements OnDestroy {
   readonly refreshSeconds = signal(DEFAULT_REFRESH_SECONDS);
 
   /**
-   * 刷新那一组里那六个档位的候选。`0` 显示成「关闭」，其余显示成 `30s` / `1m` / `5m` / `15m` / `1h`
-   * ——全是纯数字与单位，**不翻译**（同尺寸下拉的裸档位名）。
+   * 「自动刷新」那颗里那六个档位的候选。`0` 显示成「关闭」，其余显示成 `30s` / `1m` / `5m` /
+   * `15m` / `1h` ——全是纯数字与单位，**不翻译**（同尺寸下拉的裸档位名）。
    */
   readonly refreshOptions = computed(() =>
     REFRESH_INTERVALS.map((seconds) => ({
@@ -532,28 +532,6 @@ export class DashboardComponent implements OnDestroy {
     this.refreshSeconds.set(seconds);
     storeInterval(this.currentSpaceId, seconds);
     this.restartTimer();
-  }
-
-  /**
-   * 刷新那一组的点击：落在**触发器**上就是刷新，落在展开出来的档位上由它自己的
-   * `(nzOnClick)` 处理（那些点击也会冒泡到这里，所以要认一下目标）。
-   *
-   * 为什么要这么绕：那个组的触发器被 ng-zorro 自己吃掉了 —— 它的 `(nzOnClick)` 走的是
-   * `open() ? clickCloseMenu() : clickOpenMenu()`，而我们要的是「悬停展开档位、点一下就是
-   * 刷新」，两者撞在同一个元素上。好在 `nzTrigger="hover"` 时那两个方法会自己 early-return
-   * （`handleEvent` 里判 `nzTrigger() !== 'click'`），这一下点击是空着的，接过来用即可。
-   *
-   * 走 {@link load} 而不是 {@link refresh}：与改造前那个工具条按钮同一个口径 —— 手动刷新要
-   * 连**布局**一起重取（别人可能刚改过，这是用户手里唯一的「把别人的改动取回来」的入口）。
-   *
-   * `closest` 问的是 ng-zorro 自己的类名（组模板里那个 `class="ant-float-btn-group-trigger"`）。
-   * 换大版本时这条要跟着看一眼 —— 认错了最多是「点触发器不刷新」，不会误伤别的。
-   */
-  onRefreshGroupClick(event: MouseEvent): void {
-    const target = event.target as HTMLElement | null;
-    if (target?.closest('.ant-float-btn-group-trigger')) {
-      this.load();
-    }
   }
 
   /**
