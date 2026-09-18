@@ -1,65 +1,113 @@
 <div class="dashboard">
-  <!-- 工具条。看模式两套按钮，互不重叠：编辑态里没有「刷新」（它会把草稿冲掉），
-       非编辑态里没有那几个编辑动作（非管理员连编辑入口都看不到） -->
-  <div class="toolbar">
+  <!-- 悬浮操作区（右下角）。看模式与编辑态各一套，互不重叠：编辑态里没有「刷新」
+       （它会把草稿冲掉），看模式里没有那几个编辑动作（非管理员连编辑入口都看不到）。
+
+       两套都挂在**视口**右下角（`position: fixed`，ng-zorro 定的 24px / 48px），所以这一屏
+       不再有工具条占位 —— 卡片区就是全部内容。未选项目时一个都不渲染（那一屏只有一句
+       「请先选择项目」，摆一排按钮反而在那儿碍事）。
+
+       用 FloatButton 而不是普通按钮，换来三处绕行（都在下面就地写了）：
+       `nz-float-button` **没有** `nzDisabled` / `nzLoading` 这两个输入；圆的按钮**只显示图标**
+       （`nzDescription` 只在方形上渲染）；而一个组里所有成员**共用组的 `nzShape`**。 -->
+  @if (account.space().id) {
     @if (!editing()) {
-      <button nz-button type="button" [disabled]="!account.space().id" (click)="load()">
-        {{ '刷新' | translate }}
-      </button>
-      <!-- 自动刷新的节拍，**跟在「刷新」后面**：它是「刷新」这件事的频率，不是布局的一部分
-           （所以它进编辑态就跟着「刷新」一起收起来，也不跟布局一起落库） -->
-      <nz-select
-        class="refresh"
-        [nzDisabled]="!layout()"
-        [ngModel]="refreshSeconds()"
-        (ngModelChange)="setRefreshInterval($event)"
+      <!-- 「刷新」+ 自动刷新档位，合成一个组：**圆形的刷新按钮，悬停向上展开六个档位**，
+           点它就是刷新（见 onRefreshGroupClick）。
+
+           为什么是「方的组 + 圆的触发器」：档位那一列要显示「30s」这样的**文字**，而文字只在
+           方形按钮上渲染（`nzDescription` 的条件里写着 `nzShape() === 'square'`），组里所有成员
+           又共用组的形状 —— 于是整组按方的建，再把触发器单独掰回圆形（样式表里有理由）。 -->
+      <nz-float-button-group
+        nzTrigger="hover"
+        nzPlacement="top"
+        nzShape="square"
+        nzIcon="reload"
+        nz-tooltip
+        [nzTooltipTitle]="'刷新' | translate"
+        nzTooltipPlacement="left"
+        (click)="onRefreshGroupClick($event)"
       >
         @for (option of refreshOptions(); track option.value) {
-          <nz-option [nzValue]="option.value" [nzLabel]="option.label" />
+          <!-- 当前档位用主题蓝标出来：一列六个档位总得让人看出现在是哪一个，
+               而菜单里没有「选中」这个状态位可用 -->
+          <nz-float-button
+            nzShape="square"
+            [nzDescription]="option.label"
+            [nzType]="option.value === refreshSeconds() ? 'primary' : 'default'"
+            (nzOnClick)="setRefreshInterval(option.value)"
+          />
         }
-      </nz-select>
-      @if (canEdit()) {
-        <button nz-button nzType="primary" type="button" [disabled]="!layout()" (click)="startEdit()">
-          {{ '编辑布局' | translate }}
-        </button>
+      </nz-float-button-group>
+
+      @if (canEdit() && layout()) {
+        <!-- 编辑入口摆在「刷新」**左边**而不是上面：上下叠的话，悬停展开的那一列档位会正好
+             盖住它（档位是往上长的） -->
+        <nz-float-button
+          class="float-edit-btn"
+          nzShape="circle"
+          nzIcon="edit"
+          nz-tooltip
+          [nzTooltipTitle]="'编辑布局' | translate"
+          nzTooltipPlacement="left"
+          (nzOnClick)="startEdit()"
+        />
       }
     } @else {
-      <!-- 一个「添加卡片」按钮 + 一个类型选择对话框，而不是把类型摊成一排按钮：
-           卡片类型会越加越多，摊开来工具条会被撑满；而且「选类型」与「填配置」本来就是
-           两步，分成两个框之后每一步都只有一件事要做（见 editor/widget.picker） -->
-      <button nz-button nzType="primary" type="button" (click)="openPicker()">
-        {{ '添加卡片' | translate }}
-      </button>
-      <span class="toolbar-gap"></span>
-      <!-- 没有确认气泡：它只改草稿，「退出编辑」就能撤销，落库要等「保存布局」 -->
-      <button nz-button type="button" [nzLoading]="saving()" (click)="reset()">
-        {{ '恢复默认' | translate }}
-      </button>
-      <button
-        nz-button
-        type="button"
-        nz-popconfirm
-        [nzPopconfirmTitle]="'未保存的修改将丢失，确认退出编辑？' | translate"
-        [nzOkText]="'确认' | translate"
-        [nzCancelText]="'取消' | translate"
-        (nzOnConfirm)="cancelEdit()"
-      >
-        {{ '退出编辑' | translate }}
-      </button>
-      <!-- 没真改过就点不动：进编辑态、拖一下又拖回原处、打开配置框又点取消，都不该让这次
-           保存白跑一趟（更不该在乐观锁下把版本号推上去） -->
-      <button
-        nz-button
-        nzType="primary"
-        type="button"
-        [disabled]="!dirty()"
-        [nzLoading]="saving()"
-        (click)="save()"
-      >
-        {{ '保存布局' | translate }}
-      </button>
+      <!-- 编辑态：一列四个圆按钮，**都看得见**（不折进菜单里）—— 这四个是这一屏仅有的动作，
+           折起来只是白多一次悬停。「添加卡片」在顶上、「保存布局」在最下面：后者是这两个里
+           更常点的那个，贴着右下角顺手；两个红的（往布局里加东西 / 写库）一头一尾各一个。
+
+           浏览器里一列的顺序是**从上往下**（组是 `flex-direction: column`，而它的下边缘钉在
+           48px 上，所以整列是往上长的），模板顺序即屏幕顺序。 -->
+      <div class="float-edit" [class.is-idle]="!dirty()" [class.is-busy]="saving()">
+        <nz-float-button-group nzShape="circle">
+          <!-- 按钮 + 一个类型选择对话框，而不是把类型摊成一排按钮：卡片类型会越加越多，
+               摊开来这一列会被撑满；而且「选类型」与「填配置」本来就是两步，分成两个框之后
+               每一步都只有一件事要做（见 editor/widget.picker） -->
+          <nz-float-button
+            nzIcon="plus"
+            nz-tooltip
+            [nzTooltipTitle]="'添加卡片' | translate"
+            nzTooltipPlacement="left"
+            (nzOnClick)="openPicker()"
+          />
+          <!-- 没有确认气泡：它只改草稿，「退出编辑」就能撤销，落库要等「保存布局」 -->
+          <nz-float-button
+            nzIcon="rollback"
+            nz-tooltip
+            [nzTooltipTitle]="'恢复默认' | translate"
+            nzTooltipPlacement="left"
+            (nzOnClick)="reset()"
+          />
+          <!-- 没动过就直接退出（`nzCondition`）：一个能撤销的动作本来也不必先过一道确认，
+               只有真改过、要丢东西了才问一句 -->
+          <nz-float-button
+            nzIcon="close"
+            nz-tooltip
+            [nzTooltipTitle]="'退出编辑' | translate"
+            nzTooltipPlacement="left"
+            nz-popconfirm
+            [nzCondition]="dirty()"
+            nzPopconfirmPlacement="left"
+            [nzPopconfirmTitle]="'未保存的修改将丢失，确认退出编辑？' | translate"
+            [nzOkText]="'确认' | translate"
+            [nzCancelText]="'取消' | translate"
+            (nzOnConfirm)="cancelEdit()"
+          />
+          <!-- 没真改过就点不动：进编辑态、拖一下又拖回原处、打开配置框又点取消，都不该让这次
+               保存白跑一趟（更不该在乐观锁下把版本号推上去）。挡它的是 `save()` 自己那两句
+               guard —— `nz-float-button` 没有 `nzDisabled`，这里只能把它压暗（见样式表） -->
+          <nz-float-button
+            nzIcon="save"
+            nz-tooltip
+            [nzTooltipTitle]="'保存布局' | translate"
+            nzTooltipPlacement="left"
+            (nzOnClick)="save()"
+          />
+        </nz-float-button-group>
+      </div>
     }
-  </div>
+  }
 
   <nz-spin [nzSpinning]="loading()">
     @if (error(); as message) {

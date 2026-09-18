@@ -135,4 +135,55 @@ body.dark-theme {
   .cell-editing {
     outline-color: rgba(255, 255, 255, 0.25);
   }
+
+  /*
+   * 看板右下角那几颗悬浮按钮（ng-zorro 的 `nz-float-button`）。这套表面用的是
+   * `@component-background`（白）与 `@text-color`（深），跟 `.cell-editing` 同一个症状：
+   * 不补的话深色模式下一块块白板。
+   *
+   * 两处要说清：
+   * - 字色那两条得**一路点到 icon / description**：`-default` 那两条把颜色定死在子元素上
+   *   （`.ant-float-btn-default .ant-float-btn-body .ant-float-btn-content .ant-float-btn-icon`），
+   *   继承不下来，所以这里的选择器也得有那么长。
+   * - **两个红按钮不受影响**：它们的底色写在看板自己的组件样式里，那条选择器带着
+   *   位置选择器与 `::ng-deep`，比这里的任何一条都长，压得过。
+   * - 展开出来那一列档位条目也是 `-default`，一并被前两条盖住；当前档位那颗是 `-primary`（蓝），
+   *   它的白字是 `.ant-btn-primary` 给的，不用管。
+   */
+  .ant-float-btn-default,
+  .ant-float-btn-default .ant-float-btn-body {
+    background-color: #1f1f1f;
+  }
+
+  .ant-float-btn-default .ant-float-btn-body:hover {
+    background-color: #303030;
+  }
+
+  .ant-float-btn-default .ant-float-btn-body .ant-float-btn-content .ant-float-btn-icon,
+  .ant-float-btn-default .ant-float-btn-body .ant-float-btn-content .ant-float-btn-description {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  /*
+   * 「刷新」那一组悬停展开出来的档位面板。这一块是看板自己搭的（上游那套方形菜单是给只有图标的
+   * 菜单做的），所以它的底色 / 分隔线 / hover 三个值写在看板自己的组件样式里，是**字面量**
+   * —— 上面那几条 `-default` 盖不到：面板底色挂在 `-wrap` 上（它身上没有 `-default`），
+   * 分隔线挂在条目的宿主上（一条 ng-zorro 自己的 `border-bottom`），而条目 hover 那条在
+   * 组件样式里带着位置选择器，比这里的任何一条都长。
+   *
+   * 所以这三条是**照着组件样式抄的**，选择器得跟着一起长 —— 长多少不是随意的，是算过的：
+   * 组件里那条 hover 是「宿主属性 + 5 个类 + :hover」，这里多带一个 `.ant-float-btn-group` 才压得过。
+   * 看板那边改这三笔时，这里要跟着看一眼（`dashboard.component.less` 里那段注释有同一句提醒）。
+   */
+  .ant-float-btn-group.ant-float-btn-group-square .ant-float-btn-group-wrap {
+    background-color: #1f1f1f;
+
+    > .ant-float-btn-square:not(:last-child) {
+      border-bottom-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .ant-float-btn-square .ant-float-btn-inner.ant-float-btn-default:hover {
+      background-color: #303030;
+    }
+  }
 }

@@ -12,31 +12,165 @@
   padding: 20px;
 }
 
-/* 工具条。按钮右对齐、与网格之间留一口气；只有一排按钮时也不要塌成贴着顶边 */
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
+/*
+ * 悬浮操作区（视口右下角）。
+ *
+ * **这里不摆位置**：`nz-float-button` 与 `nz-float-button-group` 自己就是
+ * `position: fixed`（`inset-inline-end: 24px` / `bottom: 48px`，ng-zorro 定的），一列排开、
+ * 成员之间 16px 的间距也是它给的（`.ant-float-btn-group-circle { gap: 16px }`）。
+ * 这一节只管四件它管不了的事，下面逐条交代。
+ */
+
+/*
+ * 一、「刷新」那个组的触发器要圆。
+ *
+ * 那个组按**方形**建（`nzShape="square"`）—— 理由在模板上：档位那一列要显示「30s」这样的
+ * 文字，而 `nzDescription` 只在方形的按钮上渲染，组里所有成员又共用组的形状。代价是触发器
+ * 也成了方的（`border-radius: 4px`），而用户要的是「所有悬浮按钮都是圆的」。
+ *
+ * 所以只把触发器掰回圆形。选择器写这么长是要**压过 ng-zorro 自己那条**
+ * （`.ant-float-btn-group-square .ant-float-btn-square.ant-float-btn-group-trigger`，
+ * 三个类）—— 少写一个类就得靠「组件样式在全局样式之后加载」这个顺序去赢，那是运气。
+ *
+ * 触发器是个 40×40 的盒子（`.ant-float-btn` 的宽 + 内容 40px 的 `min-height`），
+ * 圆角一给就是正圆；`inner` 与 `body` 两层也要给，否则它们各自那个 6px / 4px 的方角会从
+ * 圆里露出来。
+ */
+:host ::ng-deep .ant-float-btn-group.ant-float-btn-group-square .ant-float-btn-group-trigger,
+:host ::ng-deep .ant-float-btn-group.ant-float-btn-group-square .ant-float-btn-group-trigger .ant-float-btn-inner,
+:host ::ng-deep .ant-float-btn-group.ant-float-btn-group-square .ant-float-btn-group-trigger .ant-float-btn-body {
+  border-radius: 50%;
 }
 
-/* 「恢复默认 / 退出编辑 / 保存布局」与前面那个「添加卡片」拉开距离：前者是整份布局上的动作，
-   后者是往布局里添东西，挨在一起会被当成同一组 */
-.toolbar-gap {
-  flex: 1 1 auto;
+/*
+ * 二、展开出来那一列档位（「面板」）。
+ *
+ * 上游那套方形菜单是给**只有图标**的菜单做的，直接拿它显示文字会得到「六张各自圆角的小卡片
+ * 飘在页面底色上，缝里还夹着一条孤立的分隔线」，而不是一块面板。所以要补三笔：
+ *
+ * 1. **面板自己得有个底色**。上游给 `-wrap` 只加了阴影没加底色（阴影投在一个透明的盒子上，
+ *    看着就是一圈莫名其妙的光晕）。
+ * 2. **条目得补齐、内边距得挪到 inner 上**。上游的条目带 4px 内边距，底色与 hover 挂在 body
+ *    上 —— 于是底色的四周留着一圈缝。挪到 inner 上之后「整行一个热区」，当前档位那颗
+ *    `-primary`（蓝）也才铺得满一行。
+ * 3. **body 的宽高得放开**。上游把它定死 32×32（`@float-button-body-size`），只够放一个图标；
+ *    而 `content` 上有 `overflow: hidden`，文字是**被裁掉**而不是把盒子撑开 ——
+ *    「30s」这种两三个字符就已经看不全了。
+ * 4. **条目自己的最小高得去掉**。上游给 `.ant-float-btn-square` 定了 `min-height: 40px`
+ *    （圆按钮那个尺寸），而 `content` 的 `min-height: 40px` 被我们去掉之后一行只有 34.8px ——
+ *    于是每一行底下都露出 **5.2px 的面板底色**。深色模式下那就是六条横向的白线
+ *    （面板是白的、条目是 `#1f1f1f`）；浅色下两者同色，看不出来，但是同一处。去掉最小高，
+ *    条目高度就等于内容，面板严丝合缝。
+ *
+ * `min-width` 定死宽度：六个档位的文字长短不一（`15m` 与 `1h`），不定宽的话菜单右边缘是锯齿。
+ * 顺带把内容那 40px 的最小高去掉 —— 那是给图标留的，文字行用不上，六行叠起来快 400px。
+ *
+ * 最后那行 `inset-inline-end: 0` 管的是**面板贴哪边**。上游没给面板定左右，于是它按
+ * 「绝对定位子元素按 flex 的 `align-items` 求静态位置」这条规则，被**居中在 40px 宽的触发器上**
+ * —— 88px 的面板于是左右各探出 24px。右边那 24px 正好等于触发器自己的 `inset-inline-end`，
+ * 面板右缘**将将压在视口边上**：这不是设计，是 88−40=48 的一半恰好等于 24 的巧合。
+ * 哪天把 `min-width` 调大 8px，面板就会被切掉一截（窄屏上更早出现）。
+ *
+ * 钉到 `inset-inline-end: 0`（= 组的右内边距边 = 触发器右缘）之后，面板一律往**左**长，
+ * 与触发器的右边对齐 —— 右下角那颗按钮展开出来的菜单本来就该是这么长的。上下不动：
+ * 纵向由 ng-zorro 的 `.ant-float-btn-group-top > wrap { bottom: calc(40px + 16px) }` 管着。
+ */
+:host ::ng-deep .ant-float-btn-group-square .ant-float-btn-group-wrap {
+  background-color: #fff;
+  overflow: hidden;
+  inset-inline-end: 0;
+
+  .ant-float-btn-square {
+    min-width: 88px;
+    min-height: 0;
+    padding: 0;
+
+    .ant-float-btn-inner {
+      padding: 8px 12px;
+      border-radius: 0;
+
+      /* 只认 `-default`：当前档位那颗是 `-primary`（蓝），它自己的浅蓝 hover 归 `.ant-btn-primary`，
+         抢过来的话「当前是哪一档」就在鼠标移上去的一瞬间消失了。 */
+      &.ant-float-btn-default:hover {
+        background-color: #f5f5f5;
+      }
+    }
+
+    .ant-float-btn-body {
+      width: auto;
+      height: auto;
+      min-height: 0;
+      background-color: transparent;
+      border-radius: 0;
+    }
+
+    .ant-float-btn-content {
+      min-height: 0;
+    }
+  }
 }
 
-/* 自动刷新的间隔下拉。定宽而不是让它按选中项自适应：「1m」与「15m」宽度不一样，不定宽的话
-   换一档整排按钮就往左挪一截 */
-.toolbar .refresh {
-  width: 88px;
+/*
+ * 三、「编辑布局」那颗要往左让一格。
+ *
+ * 两颗都按 ng-zorro 的默认位置（右边 24px）摆的话会**正好叠在一起**。让它往左挪一整个
+ * 按钮 + 一道间距（24 + 40 + 16 = 80px）而不是往上叠：刷新那一组是往上展开的，
+ * 叠在上面会被展开的档位盖住。
+ *
+ * `inset-inline-end` 而不是 `right`：ng-zorro 用的是逻辑属性（RTL 下跟着翻），这里要跟它一致。
+ */
+.float-edit-btn {
+  inset-inline-end: 80px;
 }
 
-/* 没有工具条内容时（未选项目、非管理员且未编辑）那一行不留空档 */
-.toolbar:empty {
-  display: none;
+/*
+ * 四、编辑态那一列的状态 —— 两个 ng-zorro **没有**的东西。
+ *
+ * `nz-float-button` 既没有 `nzDisabled` 也没有 `nzLoading`，所以「没改过」与「正在存」只能
+ * 这样表达。「没改过」只压暗**最下面那颗**（保存布局）而不是整列：另外三个照旧可点，
+ * 而点击本身由 `save()` 里那两句 guard 挡着 —— 不挡的话，一次白跑的保存会把乐观锁的版本号
+ * 推上去（见 save()）。
+ */
+.float-edit.is-idle ::ng-deep .ant-float-btn-group > .ant-float-btn:last-child {
+  opacity: 0.4;
+}
+
+/* 「正在存」是整列的事：这次请求没回来之前，那一列一个动作都不该发出去（连点两下必然撞版本
+   冲突）。这里**只挡指针**、不挡提示，所以两个按钮的 tooltip 仍然看得见 */
+.float-edit.is-busy {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/*
+ * 「添加卡片」与「保存布局」要红色（用户点名的那两个：往布局里添东西、写库）。
+ *
+ * `nzType` 只有 `primary`（主题蓝）与 `default` 两档，没有 `danger` —— ng-zorro 的
+ * float-button 样式表里连一条 `-primary` / `-danger` 规则都没有，红只能覆盖出来。
+ *
+ * 认的是**位置**（那一列的首尾两个）而不是一个类：类要加在 `nz-float-button` 身上，而那个
+ * 组件的宿主元素上有一条 `[class]` 绑定（`class = computed(...)`），能不碰就不碰。
+ * 模板里的顺序就是屏幕上的顺序（从上往下），首 = 添加卡片、尾 = 保存布局。
+ *
+ * 底色给 `body`、颜色给 `icon`：`-default` 那两条把这两个值各自定死了
+ * （`.ant-float-btn-default .ant-float-btn-body { background-color: ... }` 与
+ * `... .ant-float-btn-icon { color: @text-color }`），都得压过去。图标是 `<svg fill="currentColor">`，
+ * 所以 `color: #fff` 就够了。
+ *
+ * 红用 `#ff4d4f`（antd 的 error 红）—— 与 `.drag-ghost-blocked` 同一个色，是本工程已经在用的那个红。
+ */
+.float-edit ::ng-deep .ant-float-btn-group > .ant-float-btn:first-child .ant-float-btn-body,
+.float-edit ::ng-deep .ant-float-btn-group > .ant-float-btn:last-child .ant-float-btn-body {
+  background-color: #ff4d4f;
+
+  &:hover {
+    background-color: #ff7875;
+  }
+}
+
+.float-edit ::ng-deep .ant-float-btn-group > .ant-float-btn:first-child .ant-float-btn-icon,
+.float-edit ::ng-deep .ant-float-btn-group > .ant-float-btn:last-child .ant-float-btn-icon {
+  color: #fff;
 }
 
 /*

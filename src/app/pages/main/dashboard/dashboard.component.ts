@@ -9,16 +9,15 @@ import {
   viewChild,
 } from '@angular/core';
 import { CdkDragMove, CdkDragStart, DragDropModule } from '@angular/cdk/drag-drop';
-import { FormsModule } from '@angular/forms';
 import { catchError, forkJoin, of } from 'rxjs';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
-import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
+import { NzFloatButtonModule } from 'ng-zorro-antd/float-button';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
-import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AccountService } from '../../../service/account.service';
 import { DashboardService } from '../../../service/dashboard.service';
@@ -98,14 +97,13 @@ import { WidgetHostComponent } from './widget/host/widget.host';
   styleUrl: './dashboard.component.less',
   imports: [
     DragDropModule,
-    FormsModule,
     NzAlertModule,
-    NzButtonModule,
     NzEmptyModule,
+    NzFloatButtonModule,
     NzModalModule,
     NzPopconfirmModule,
-    NzSelectModule,
     NzSpinModule,
+    NzTooltipDirective,
     TranslatePipe,
     WidgetEditorComponent,
     WidgetPickerComponent,
@@ -159,7 +157,13 @@ export class DashboardComponent implements OnDestroy {
   /** 类型选择框开着（点「添加卡片」之后、选定类型之前） */
   readonly pickerOpen = signal(false);
 
-  /** 保存 / 恢复默认进行中（那三个按钮转圈用） */
+  /**
+   * 保存 / 恢复默认进行中。
+   *
+   * 它同时管两件事：`save()` 与 `reset()` 各自的 guard（一次请求没回来之前不再发第二次），
+   * 以及编辑态那一列浮动按钮的「忙」态 —— `nz-float-button` 没有 `nzLoading`，
+   * 转不了圈就整列压暗、不收点击（见模板与样式表）。
+   */
   readonly saving = signal(false);
 
   /** {@link editingWidget} 是这次「添加卡片」刚加进来的 —— 取消编辑要把它撤掉 */
@@ -340,7 +344,7 @@ export class DashboardComponent implements OnDestroy {
   readonly refreshSeconds = signal(DEFAULT_REFRESH_SECONDS);
 
   /**
-   * 间隔下拉的候选。`0` 显示成「关闭」，其余显示成 `30s` / `1m` / `5m` / `15m` / `1h`
+   * 刷新那一组里那六个档位的候选。`0` 显示成「关闭」，其余显示成 `30s` / `1m` / `5m` / `15m` / `1h`
    * ——全是纯数字与单位，**不翻译**（同尺寸下拉的裸档位名）。
    */
   readonly refreshOptions = computed(() =>
@@ -351,12 +355,14 @@ export class DashboardComponent implements OnDestroy {
   );
 
   /**
-   * 草稿与已存布局**有没有真差别** —— 「保存布局」按它决定能不能点。
+   * 草稿与已存布局**有没有真差别**。两处在用它：「保存布局」那颗浮动按钮按它压不压暗，
+   * 以及 `save()` 自己的 guard（那颗按钮没有 `nzDisabled`，真正的拦截在方法里）。
    *
    * 比较走 `sameLayout`（结构比较），不是引用：进编辑态时草稿是 `[...widgets]`，数组是新的
    * 而卡片对象还是旧的，引用一比会一进编辑态就说「改过了」。
    *
-   * 非编辑态恒为假（草稿是空的，没有「改动」可言）。
+   * 非编辑态恒为假（草稿是空的，没有「改动」可言）—— 「退出编辑」那颗按钮的确认气泡也问它
+   * （`[nzCondition]`，没动过就直接退，不必弹）。
    */
   readonly dirty = computed(
     () => this.editing() && !sameLayout(this.draft(), this.layout()?.widgets ?? []),
@@ -526,6 +532,28 @@ export class DashboardComponent implements OnDestroy {
     this.refreshSeconds.set(seconds);
     storeInterval(this.currentSpaceId, seconds);
     this.restartTimer();
+  }
+
+  /**
+   * 刷新那一组的点击：落在**触发器**上就是刷新，落在展开出来的档位上由它自己的
+   * `(nzOnClick)` 处理（那些点击也会冒泡到这里，所以要认一下目标）。
+   *
+   * 为什么要这么绕：那个组的触发器被 ng-zorro 自己吃掉了 —— 它的 `(nzOnClick)` 走的是
+   * `open() ? clickCloseMenu() : clickOpenMenu()`，而我们要的是「悬停展开档位、点一下就是
+   * 刷新」，两者撞在同一个元素上。好在 `nzTrigger="hover"` 时那两个方法会自己 early-return
+   * （`handleEvent` 里判 `nzTrigger() !== 'click'`），这一下点击是空着的，接过来用即可。
+   *
+   * 走 {@link load} 而不是 {@link refresh}：与改造前那个工具条按钮同一个口径 —— 手动刷新要
+   * 连**布局**一起重取（别人可能刚改过，这是用户手里唯一的「把别人的改动取回来」的入口）。
+   *
+   * `closest` 问的是 ng-zorro 自己的类名（组模板里那个 `class="ant-float-btn-group-trigger"`）。
+   * 换大版本时这条要跟着看一眼 —— 认错了最多是「点触发器不刷新」，不会误伤别的。
+   */
+  onRefreshGroupClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.ant-float-btn-group-trigger')) {
+      this.load();
+    }
   }
 
   /**
@@ -828,11 +856,16 @@ export class DashboardComponent implements OnDestroy {
    *
    * 成功时用**服务端返回的那份**替换手里的布局：版本号已经 +1，不换的话紧接着再存一次
    * 就会撞版本冲突。失败时**不动草稿** —— 用户改的那一屏还在，要不要放弃由他点「退出编辑」决定。
+   *
+   * 前两句 guard 是**按钮那边给不了**的：改造前「保存布局」是个 `[disabled]="!dirty()"` 的普通
+   * 按钮，现在它是浮动按钮，而 `nz-float-button` 没有 `nzDisabled` 这个输入。所以「没改过」
+   * 与「正在存」这两件事由这里挡住，界面上只把那颗按钮压暗（见模板与样式表）。
+   * 挡住的正是它们该挡的：前者会让一次白跑保存把乐观锁版本号推上去，后者是连点两下必然撞版本冲突。
    */
   save(): void {
     const layout = this.layout();
     const spaceId = this.currentSpaceId;
-    if (!layout || !spaceId) {
+    if (!layout || !spaceId || !this.dirty() || this.saving()) {
       return;
     }
     const next = new DashboardLayout();
@@ -868,10 +901,13 @@ export class DashboardComponent implements OnDestroy {
    *
    * 预置布局**不带坐标**（服务端给不了，见 §6.5），铺一遍才有得摆 —— 与 {@link adopt} 同一个
    * 理由，只是这里不换 `layout`，所以不用它。
+   *
+   * `saving()` 那句 guard：它同时管着 `saving` 这个信号（按钮转圈、整列压暗），
+   * 一次请求没回来之前不该再发一次。
    */
   reset(): void {
     const spaceId = this.currentSpaceId;
-    if (!spaceId) {
+    if (!spaceId || this.saving()) {
       return;
     }
     this.saving.set(true);
