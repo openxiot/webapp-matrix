@@ -25,12 +25,9 @@
  * 它的 24px**（`@float-button-inset-inline-end`）—— 用户看下来觉得 24 太贴边，要与下边一致。
  * 换大版本时对着 `float-button/style/index.less` 那两个变量看一眼。
  *
- * `z-index: 99` 也是抄的（与它给单颗按钮的那个一致），而且这里还多一层作用：它让这一排成为一个
- * **层叠上下文** —— 展开出来那列档位的 `z-index` 是 `-1`（ng-zorro 定的），没有这层上下文的话
- * 负层级会跑到页面根上去，被卡片盖住。
- *
- * **横排不只是好看**：档位面板是**向上**展开的（`.ant-float-btn-group-top > wrap`），
- * 竖排的话它会正好盖住上面那颗。
+ * `z-index: 99` 也是抄的（与它给单颗按钮的那个一致）。它原来还兼一层作用 —— 让这一排成为
+ * **层叠上下文**，好把档位菜单那个 `-1` 的层级关在里面；那个菜单在修订二十二换成了对话框，
+ * 这个作用没有了，值仍然留着：这一排飘在卡片上面，本来就该有自己的层级。
  *
  * 一排的顺序：**左边离右下角最远、右边最近**。所以「刷新」在最右（最常点），
  * 「全屏」在最左（最少点，而且它在两个模式里都待在同一个位置上，进出编辑态不跳）。
@@ -53,8 +50,12 @@
 }
 
 /*
- * 组**不能**跟着退回 `static`：展开出来那列档位是 `position: absolute`，它的包含块就是组。
- * 组一旦 `static`，面板会改成相对壳定位 —— 右边缘对齐的就是壳而不是触发器了，位置全错。
+ * 组也要管 —— **它自己也是 `fixed`**：ng-zorro 那条
+ * `.ant-float-btn-group { position: fixed; bottom: 48px; inset-inline-end: 24px; z-index: 99 }`
+ * 与单颗按钮那条是**分开写的两份**，只关按钮那一份不够，组仍会自己钉到视口右下角去。
+ * 换 `relative` 而不是 `static`：组是个定位祖先，ng-zorro 给成员写的那条
+ * `.ant-float-btn-group .ant-float-btn { position: static }` 靠它才有效（组 `static` 的话
+ * 成员会退到更外面那个定位祖先上，配合 `inset: auto` 目前看不出差别，但这层关系不该拆掉）。
  * `flex-direction: row` 是给编辑态那一排用的（组的默认是 `column`，一竖列）。
  */
 .float-actions ::ng-deep .ant-float-btn-group {
@@ -90,102 +91,16 @@
 }
 
 /*
- * 下面三件是 ng-zorro 管不了、得自己交代的：触发器要圆、档位那列要成为一块面板、
- * 编辑态那一排的状态与两个红。
+ * 下面两件是 ng-zorro 管不了、得自己交代的：编辑态那一排的状态、以及两个红。
+ *
+ * 原来这里还有两段（「触发器要圆」「展开出来那一列档位」）—— 那是给**悬停展开的档位菜单**
+ * 补的：那个组按方形建（文字只在方形按钮上渲染）、触发器再单独掰回圆形、展出来那列还得
+ * 重铺底色与内边距。修订二十二把那个菜单换成了对话框，**那两段整段删掉了**，
+ * `styles.less` 里深色模式对应的那一段也跟着删了。
  */
 
 /*
- * 一、「刷新」那个组的触发器要圆。
- *
- * 那个组按**方形**建（`nzShape="square"`）—— 理由在模板上：档位那一列要显示「30s」这样的
- * 文字，而 `nzDescription` 只在方形的按钮上渲染，组里所有成员又共用组的形状。代价是触发器
- * 也成了方的（`border-radius: 4px`），而用户要的是「所有悬浮按钮都是圆的」。
- *
- * 所以只把触发器掰回圆形。选择器写这么长是要**压过 ng-zorro 自己那条**
- * （`.ant-float-btn-group-square .ant-float-btn-square.ant-float-btn-group-trigger`，
- * 三个类）—— 少写一个类就得靠「组件样式在全局样式之后加载」这个顺序去赢，那是运气。
- *
- * 触发器是个 40×40 的盒子（`.ant-float-btn` 的宽 + 内容 40px 的 `min-height`），
- * 圆角一给就是正圆；`inner` 与 `body` 两层也要给，否则它们各自那个 6px / 4px 的方角会从
- * 圆里露出来。
- */
-:host ::ng-deep .ant-float-btn-group.ant-float-btn-group-square .ant-float-btn-group-trigger,
-:host ::ng-deep .ant-float-btn-group.ant-float-btn-group-square .ant-float-btn-group-trigger .ant-float-btn-inner,
-:host ::ng-deep .ant-float-btn-group.ant-float-btn-group-square .ant-float-btn-group-trigger .ant-float-btn-body {
-  border-radius: 50%;
-}
-
-/*
- * 二、展开出来那一列档位（「面板」）。
- *
- * 上游那套方形菜单是给**只有图标**的菜单做的，直接拿它显示文字会得到「六张各自圆角的小卡片
- * 飘在页面底色上，缝里还夹着一条孤立的分隔线」，而不是一块面板。所以要补三笔：
- *
- * 1. **面板自己得有个底色**。上游给 `-wrap` 只加了阴影没加底色（阴影投在一个透明的盒子上，
- *    看着就是一圈莫名其妙的光晕）。
- * 2. **条目得补齐、内边距得挪到 inner 上**。上游的条目带 4px 内边距，底色与 hover 挂在 body
- *    上 —— 于是底色的四周留着一圈缝。挪到 inner 上之后「整行一个热区」，当前档位那颗
- *    `-primary`（蓝）也才铺得满一行。
- * 3. **body 的宽高得放开**。上游把它定死 32×32（`@float-button-body-size`），只够放一个图标；
- *    而 `content` 上有 `overflow: hidden`，文字是**被裁掉**而不是把盒子撑开 ——
- *    「30s」这种两三个字符就已经看不全了。
- * 4. **条目自己的最小高得去掉**。上游给 `.ant-float-btn-square` 定了 `min-height: 40px`
- *    （圆按钮那个尺寸），而 `content` 的 `min-height: 40px` 被我们去掉之后一行只有 34.8px ——
- *    于是每一行底下都露出 **5.2px 的面板底色**。深色模式下那就是六条横向的白线
- *    （面板是白的、条目是 `#1f1f1f`）；浅色下两者同色，看不出来，但是同一处。去掉最小高，
- *    条目高度就等于内容，面板严丝合缝。
- *
- * `min-width` 定死宽度：六个档位的文字长短不一（`15m` 与 `1h`），不定宽的话菜单右边缘是锯齿。
- * 顺带把内容那 40px 的最小高去掉 —— 那是给图标留的，文字行用不上，六行叠起来快 400px。
- *
- * 最后那行 `inset-inline-end: 0` 管的是**面板贴哪边**。上游没给面板定左右，于是它按
- * 「绝对定位子元素按 flex 的 `align-items` 求静态位置」这条规则，被**居中在 40px 宽的触发器上**
- * —— 88px 的面板于是左右各探出 24px。壳上那个 `inset-inline-end` 还是 24px 的时候，右边那
- * 24px 正好等于它，面板右缘**将将压在视口边上**：那不是设计，是 88−40=48 的一半恰好等于 24
- * 的巧合。（修订二十把壳那个值改成了 48，这层巧合没有了；但这行仍然要留着 ——
- * `min-width` 一大、那个值一小，面板照样会被切掉一截。）
- *
- * 钉到 `inset-inline-end: 0`（= 组的右内边距边 = 触发器右缘）之后，面板一律往**左**长，
- * 与触发器的右边对齐 —— 右下角那颗按钮展开出来的菜单本来就该是这么长的。上下不动：
- * 纵向由 ng-zorro 的 `.ant-float-btn-group-top > wrap { bottom: calc(40px + 16px) }` 管着。
- */
-:host ::ng-deep .ant-float-btn-group-square .ant-float-btn-group-wrap {
-  background-color: #fff;
-  overflow: hidden;
-  inset-inline-end: 0;
-
-  .ant-float-btn-square {
-    min-width: 88px;
-    min-height: 0;
-    padding: 0;
-
-    .ant-float-btn-inner {
-      padding: 8px 12px;
-      border-radius: 0;
-
-      /* 只认 `-default`：当前档位那颗是 `-primary`（蓝），它自己的浅蓝 hover 归 `.ant-btn-primary`，
-         抢过来的话「当前是哪一档」就在鼠标移上去的一瞬间消失了。 */
-      &.ant-float-btn-default:hover {
-        background-color: #f5f5f5;
-      }
-    }
-
-    .ant-float-btn-body {
-      width: auto;
-      height: auto;
-      min-height: 0;
-      background-color: transparent;
-      border-radius: 0;
-    }
-
-    .ant-float-btn-content {
-      min-height: 0;
-    }
-  }
-}
-
-/*
- * 三、编辑态那一排的状态 —— 两个 ng-zorro **没有**的东西。
+ * 一、编辑态那一排的状态 —— 两个 ng-zorro **没有**的东西。
  *
  * `nz-float-button` 既没有 `nzDisabled` 也没有 `nzLoading`，所以「没改过」与「正在存」只能
  * 这样表达。「没改过」只压暗**最右边那颗**（保存布局）而不是整排：另外三个照旧可点，
@@ -204,7 +119,7 @@
 }
 
 /*
- * 「添加卡片」与「保存布局」要红色（用户点名的那两个：往布局里添东西、写库）。
+ * 二、「添加卡片」与「保存布局」要红色（用户点名的那两个：往布局里添东西、写库）。
  *
  * `nzType` 只有 `primary`（主题蓝）与 `default` 两档，没有 `danger` —— ng-zorro 的
  * float-button 样式表里连一条 `-primary` / `-danger` 规则都没有，红只能覆盖出来。
@@ -379,4 +294,45 @@
 
 .cdk-drag-animating {
   transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/*
+ * 自动刷新间隔那个对话框里的六行（草稿在模板里，见那颗闹钟按钮）。
+ *
+ * 六行全都是 `label` ＋ 有没有勾，没有别的状态，所以这里只有三笔：一行的排布、悬停底色、
+ * 当前那一行的样子。
+ *
+ * 为什么不用 `nz-radio-group`：「当前是哪个」要的是一个勾与一行蓝字，而 radio 会带进来一个
+ * 单选圆点、一套 `nz-radio` 的间距与它自己的字号 —— 六行短文字用不上那套表单语义。
+ * 这几行也不是表单控件：点一行就是「选定并关掉」，没有「先选后确认」这一步。
+ *
+ * 底色用的是 antd 的 `#f5f5f5`（`@item-hover-bg` 那一档，与档位菜单原来那条 hover 同值）。
+ * **深色模式那一条在 `styles.less`**（这一页所有字色/底色的深色覆盖都在那儿，同一个口径）。
+ */
+.refresh-picker {
+  display: flex;
+  flex-direction: column;
+  /* 左右各外扩 12px。对话框内容区自己的内边距是 **24px**（`.ant-modal-body { padding: 24px }`，
+     即 antd 的 `@padding-lg`），行自己的内边距是 12px —— 两边一抵消，**行里那行字的左缘
+     正好落在 24px 上**，与上面「刷新间隔」这个标题的左缘齐平。热区也顺带比文字宽 12px。 */
+  margin: 0 -12px;
+}
+
+.refresh-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #f5f5f5;
+  }
+
+  /* 当前那一档：染成主题蓝再压深一点字重。勾由模板画（`@if`），这里只管这一行的样子 */
+  &.is-current {
+    color: #1677ff;
+    font-weight: 500;
+  }
 }

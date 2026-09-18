@@ -45,27 +45,26 @@
           />
         }
 
-        <!-- 自动刷新档位：**独立的一颗**（它管「多久刷一次」，右边那颗管「现在刷一次」），
-             悬停向上展开六个档位。
+        <!-- 自动刷新间隔：**独立的一颗**（它管「多久刷一次」，右边那颗管「现在刷一次」），
+             点一下弹对话框选档位。
 
-             为什么整组按**方形**建、只把触发器掰回圆形：档位那一列要显示「30s」这样的**文字**，
-             而 `nzDescription` 只在方形按钮上渲染（条件里写着 `nzShape() === 'square'`），
-             组里所有成员又共用组的形状 —— 于是整组按方的建，再单独把触发器掰圆。
+             原来是**悬停向上展开一列**（`nz-float-button-group` ＋ `nzTrigger="hover"`）。
+             换成对话框有三个理由：悬停这件事**触屏上没有**（这一屏在平板/手机上是真会用的）；
+             「有个菜单可以展开」只能靠手滑过去才发现；而那一列文字还得靠「整组按方形建、
+             再把触发器掰回圆形」才画得出来（`nzDescription` 只在方形上渲染），
+             一整套绕行现在**连样式一起删掉了**。
 
-             **这颗上没有 tooltip**：它自己就是悬停展开的，再挂一个会在悬停时同时冒出两个浮层
-             （档位菜单 + 气泡）。「现在是哪一档」由展开的那一列里那颗蓝的表示。 -->
-        <nz-float-button-group nzTrigger="hover" nzPlacement="top" nzShape="square" nzIcon="clock-circle">
-          @for (option of refreshOptions(); track option.value) {
-            <!-- 当前档位用主题蓝标出来：一列六个档位总得让人看出现在是哪一个，
-                 而菜单里没有「选中」这个状态位可用 -->
-            <nz-float-button
-              nzShape="square"
-              [nzDescription]="option.label"
-              [nzType]="option.value === refreshSeconds() ? 'primary' : 'default'"
-              (nzOnClick)="setRefreshInterval(option.value)"
-            />
-          }
-        </nz-float-button-group>
+             这颗现在**可以挂 tooltip 了**：当初不挂是因为它自己就吃悬停，两个浮层会同时冒出来；
+             点击与悬停不冲突。正因如此「现在是哪一档」在关着的状态看不出来 ——
+             由对话框里那一行勾表示（tooltip 只报「刷新间隔」这个名字）。 -->
+        <nz-float-button
+          nzShape="circle"
+          nzIcon="clock-circle"
+          nz-tooltip
+          [nzTooltipTitle]="'刷新间隔' | translate"
+          nzTooltipPlacement="left"
+          (nzOnClick)="refreshOpen.set(true)"
+        />
 
         <!-- 刷新。走 `load()` 而不是 `refresh()`：与改造前那颗工具条按钮同一个口径 —— 手动刷新
              要连**布局**一起重取（别人可能刚改过，这是用户手里唯一的「把别人的改动取回来」的入口） -->
@@ -300,6 +299,42 @@
   (picked)="pickWidget($event)"
   (cancelled)="closePicker()"
 />
+
+<!-- 自动刷新间隔的选择框（那颗闹钟）。
+     **就地写在这里、不单开一个组件**（与 `dashboard-widget-picker` 不同）：整份内容就是
+     `refreshOptions()` 那六行静态文字，而那两份数据本来就是这一页的成员 —— 单开组件得把
+     它们传进去或者再算一遍，净是管道。哪天真长出状态来（比如自定义秒数）再拆。
+
+     footer 不要（`[nzFooter]="null"`）：点一行就是选定 ＋ 关掉，没有「确定」这一步 ——
+     与「添加卡片」那个选择框同一个口径。取消走 ESC / 右上角那个叉 / 点浮层外面。
+     nzWidth 只给 320：六行短文字，宽度按 antd 默认的 520 会空一大半。 -->
+<nz-modal
+  [nzVisible]="refreshOpen()"
+  [nzTitle]="'刷新间隔' | translate"
+  [nzFooter]="null"
+  [nzWidth]="320"
+  (nzOnCancel)="refreshOpen.set(false)"
+>
+  <ng-container *nzModalContent>
+    <div class="refresh-picker">
+      @for (option of refreshOptions(); track option.value) {
+        <!-- 一行一个档位。**当前那一档画勾并染蓝**：对话框关着的时候这颗按钮只有一个闹钟图标，
+             不标出来的话「现在是哪一档」就没地方看了（原来那列菜单靠当前那颗是蓝的表示，
+             换成对话框之后那个位置由这里接手）。 -->
+        <div
+          class="refresh-option"
+          [class.is-current]="option.value === refreshSeconds()"
+          (click)="pickRefreshInterval(option.value)"
+        >
+          <span>{{ option.label }}</span>
+          @if (option.value === refreshSeconds()) {
+            <nz-icon nzType="check" nzTheme="outline" />
+          }
+        </div>
+      }
+    </div>
+  </ng-container>
+</nz-modal>
 
 <!-- 卡片配置对话框。footer 交给编辑器自己出（它要点「确认」把手里的副本交回来、
      点「删除」把这张卡撤掉），故这里 [nzFooter]="null" —— 走 nzOnCancel 的只有 ESC 与右上角那个叉 -->

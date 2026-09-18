@@ -99,6 +99,39 @@ body.dark-theme {
   }
 
   /*
+   * 对话框的**抬头那块底**与**里面的字**。原来只写了上面那一笔（内容区底色），漏了两处：
+   *
+   * 1. `.ant-modal-header { background: #fff }` 是 antd 自己给的白底，不跟着内容区走 ——
+   *    只看内容区的话，深色下就是「一块深底上顶着一道白条」。
+   * 2. `.ant-modal { color: #000000d9 }` 与 `.ant-modal-title { color: #000000d9 }` 把字色
+   *    定死在**子元素**上（继承不过去），深色下内容区里的字全是深底上的深字。
+   *    这一笔**不是**本页新加的对话框才需要：看板那另外两个（编辑卡片、添加卡片）同样中招，
+   *    一起修好了。
+   *
+   * 分隔线那笔跟上面的内容区同色系：`.08` 是本文件给行用的，一条抬头分隔线用 `.12`。
+   * 关闭叉那笔照 `.icon-btn` 一类的口径给 `0.45`（它是次要控件，不该跟正文一样亮）。
+   *
+   * **不用管 footer**：全工程三个 `nz-modal` 都写着 `[nzFooter]="null"`，没有底栏可染。
+   */
+  nz-modal-container .ant-modal-header {
+    background: #1f1f1f;
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+  }
+
+  nz-modal-container .ant-modal,
+  nz-modal-container .ant-modal-title {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  nz-modal-container .ant-modal-close {
+    color: rgba(255, 255, 255, 0.45);
+
+    &:hover {
+      color: rgba(255, 255, 255, 0.85);
+    }
+  }
+
+  /*
    * 自定义看板（首页 `/main/dashboard`）。这一页的字色全写在各自的组件样式里
    * （`rgba(0, 0, 0, .45)` 这类，与其它页面同一个写法），而深色模式是 `body.dark-theme` 下的一份
    * 覆盖清单 —— 不在这里补一笔，卡片里的窗口与失败提示就是**深底上的深字**，等于没有。
@@ -147,8 +180,6 @@ body.dark-theme {
    *   继承不下来，所以这里的选择器也得有那么长。
    * - **两个红按钮不受影响**：它们的底色写在看板自己的组件样式里，那条选择器带着
    *   位置选择器与 `::ng-deep`，比这里的任何一条都长，压得过。
-   * - 展开出来那一列档位条目也是 `-default`，一并被前两条盖住；当前档位那颗是 `-primary`（蓝），
-   *   它的白字是 `.ant-btn-primary` 给的，不用管。
    */
   .ant-float-btn-default,
   .ant-float-btn-default .ant-float-btn-body {
@@ -165,25 +196,20 @@ body.dark-theme {
   }
 
   /*
-   * 「刷新」那一组悬停展开出来的档位面板。这一块是看板自己搭的（上游那套方形菜单是给只有图标的
-   * 菜单做的），所以它的底色 / 分隔线 / hover 三个值写在看板自己的组件样式里，是**字面量**
-   * —— 上面那几条 `-default` 盖不到：面板底色挂在 `-wrap` 上（它身上没有 `-default`），
-   * 分隔线挂在条目的宿主上（一条 ng-zorro 自己的 `border-bottom`），而条目 hover 那条在
-   * 组件样式里带着位置选择器，比这里的任何一条都长。
+   * 自动刷新间隔那个**对话框**里六行的悬停底色（修订二十二把原来的悬停档位菜单换成了它）。
    *
-   * 所以这三条是**照着组件样式抄的**，选择器得跟着一起长 —— 长多少不是随意的，是算过的：
-   * 组件里那条 hover 是「宿主属性 + 5 个类 + :hover」，这里多带一个 `.ant-float-btn-group` 才压得过。
-   * 看板那边改这三笔时，这里要跟着看一眼（`dashboard.component.less` 里那段注释有同一句提醒）。
+   * 那一行的底色与字色是看板自己的组件样式给的**字面量**（`#f5f5f5` / `#1677ff`），上面那几条
+   * `-default` 一条都盖不到 —— 那几行既不是 ng-zorro 的按钮，也不在 `.ant-float-btn` 里面。
+   * 字色那两笔**不用覆盖**：`.is-current` 的 `#1677ff` 在深底上照样看得清，
+   * 而普通行是继承来的（`body.dark-theme` 那笔给的就是浅色字）。
+   *
+   * hover 这条的选择器要压过组件里那条 `.refresh-option[_ngcontent-x]:hover`，靠的是**权重**：
+   * 组件那条是「类 + 宿主属性 + 伪类」= (0,3,0)，这里多了个 `body` 元素 = **(0,3,1)**，
+   * 高一分，与加载顺序无关（组件样式在懒加载的 chunk 里，晚于这份全局表加载，真按顺序比反而
+   * 是它赢）。少写那个 `body` 就压不过去 —— 深色下悬停会是一条浅灰。
+   * 这一条与看板那边那条 `#f5f5f5` 是**成对的**：改一个要跟着改另一个。
    */
-  .ant-float-btn-group.ant-float-btn-group-square .ant-float-btn-group-wrap {
-    background-color: #1f1f1f;
-
-    > .ant-float-btn-square:not(:last-child) {
-      border-bottom-color: rgba(255, 255, 255, 0.12);
-    }
-
-    .ant-float-btn-square .ant-float-btn-inner.ant-float-btn-default:hover {
-      background-color: #303030;
-    }
+  .refresh-option:hover {
+    background-color: #303030;
   }
 }

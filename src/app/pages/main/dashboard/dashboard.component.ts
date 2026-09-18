@@ -13,6 +13,7 @@ import { catchError, forkJoin, of } from 'rxjs';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzFloatButtonModule } from 'ng-zorro-antd/float-button';
+import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
@@ -100,6 +101,7 @@ import { WidgetHostComponent } from './widget/host/widget.host';
     NzAlertModule,
     NzEmptyModule,
     NzFloatButtonModule,
+    NzIconModule,
     NzModalModule,
     NzPopconfirmModule,
     NzSpinModule,
@@ -354,6 +356,9 @@ export class DashboardComponent implements OnDestroy {
     })),
   );
 
+  /** 间隔选择框开着（那颗闹钟点出来的）。内容就地写在模板里，见那段注释 */
+  readonly refreshOpen = signal(false);
+
   /**
    * 草稿与已存布局**有没有真差别**。两处在用它：「保存布局」那颗浮动按钮按它压不压暗，
    * 以及 `save()` 自己的 guard（那颗按钮没有 `nzDisabled`，真正的拦截在方法里）。
@@ -572,6 +577,17 @@ export class DashboardComponent implements OnDestroy {
     this.refreshSeconds.set(seconds);
     storeInterval(this.currentSpaceId, seconds);
     this.restartTimer();
+  }
+
+  /**
+   * 在对话框里点了一个档位：设上，然后**把框关掉** —— 点一行就是选定这件事本身，
+   * 没有「确定」这一步（同「添加卡片」那个选择框）。取消走 ESC / 右上角那个叉 / 点浮层外面，
+   * 那几条都只是 `refreshOpen.set(false)`，不改任何状态 —— 所以「点了一行」与「点错了想撤」
+   * 两条路不会串。
+   */
+  pickRefreshInterval(seconds: number): void {
+    this.setRefreshInterval(seconds);
+    this.refreshOpen.set(false);
   }
 
   /**
