@@ -516,5 +516,9 @@
   "数据源": "Adatforrás",
   "服务字段": "Szolgáltatás mező",
   "显示采集失败竖线": "Sikertelen gyűjtések vonalainak megjelenítése",
-  "该字段为非数值，曲线上会是断点": "Ez a mező nem számérték, a grafikonon szakadásként jelenik meg"
+  "该字段为非数值，曲线上会是断点": "Ez a mező nem számérték, a grafikonon szakadásként jelenik meg",
+  "项目1": "Projekt 1",
+  "展开": "Kibontás",
+  "收起": "Összecsukás",
+  "暂无数据": "Nincs adat"
 }

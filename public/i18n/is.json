@@ -516,5 +516,9 @@
   "数据源": "Gagnaveita",
   "服务字段": "Þjónustureitur",
   "显示采集失败竖线": "Sýna línur misheppnaðrar söfnunar",
-  "该字段为非数值，曲线上会是断点": "Þetta svið er ekki tölulegt og birtist sem eyður í grafinu"
+  "该字段为非数值，曲线上会是断点": "Þetta svið er ekki tölulegt og birtist sem eyður í grafinu",
+  "项目1": "Verkefni 1",
+  "展开": "Stækka",
+  "收起": "Minnka",
+  "暂无数据": "Engin gögn"
 }

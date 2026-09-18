@@ -516,5 +516,9 @@
   "数据源": "Sursă de date",
   "服务字段": "Câmpul serviciului",
   "显示采集失败竖线": "Afișează liniile de colectare eșuată",
-  "该字段为非数值，曲线上会是断点": "Acest câmp nu este numeric; va apărea ca întreruperi pe curbă"
+  "该字段为非数值，曲线上会是断点": "Acest câmp nu este numeric; va apărea ca întreruperi pe curbă",
+  "项目1": "Proiect 1",
+  "展开": "Extinde",
+  "收起": "Restrânge",
+  "暂无数据": "Nu există date"
 }

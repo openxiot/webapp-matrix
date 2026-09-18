@@ -516,5 +516,9 @@
   "数据源": "Source de données",
   "服务字段": "Champ du service",
   "显示采集失败竖线": "Afficher les lignes d'échec de collecte",
-  "该字段为非数值，曲线上会是断点": "Ce champ n'est pas numérique ; il apparaîtra sous forme de coupures sur la courbe"
+  "该字段为非数值，曲线上会是断点": "Ce champ n'est pas numérique ; il apparaîtra sous forme de coupures sur la courbe",
+  "项目1": "Projet 1",
+  "展开": "Développer",
+  "收起": "Réduire",
+  "暂无数据": "Aucune donnée"
 }

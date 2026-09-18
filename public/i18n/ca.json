@@ -516,5 +516,9 @@
   "数据源": "Font de dades",
   "服务字段": "Camp del servei",
   "显示采集失败竖线": "Mostra les línies d'error de recollida",
-  "该字段为非数值，曲线上会是断点": "Aquest camp no és numèric; a la corba apareixerà com a talls"
+  "该字段为非数值，曲线上会是断点": "Aquest camp no és numèric; a la corba apareixerà com a talls",
+  "项目1": "Projecte 1",
+  "展开": "Expandeix",
+  "收起": "Replega",
+  "暂无数据": "Sense dades"
 }

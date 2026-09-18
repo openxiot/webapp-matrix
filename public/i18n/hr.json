@@ -516,5 +516,9 @@
   "数据源": "Izvor podataka",
   "服务字段": "Polje usluge",
   "显示采集失败竖线": "Prikaži linije neuspjelog prikupljanja",
-  "该字段为非数值，曲线上会是断点": "Ovo polje nije brojčano, pa će se prikazati kao prekidi na krivulji"
+  "该字段为非数值，曲线上会是断点": "Ovo polje nije brojčano, pa će se prikazati kao prekidi na krivulji",
+  "项目1": "Projekt 1",
+  "展开": "Proširi",
+  "收起": "Sažmi",
+  "暂无数据": "Nema podataka"
 }

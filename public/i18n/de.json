@@ -516,5 +516,9 @@
   "数据源": "Datenquelle",
   "服务字段": "Dienstfeld",
   "显示采集失败竖线": "Linien fehlgeschlagener Erfassungen anzeigen",
-  "该字段为非数值，曲线上会是断点": "Dieses Feld ist nicht numerisch und erscheint als Lücke im Diagramm"
+  "该字段为非数值，曲线上会是断点": "Dieses Feld ist nicht numerisch und erscheint als Lücke im Diagramm",
+  "项目1": "Projekt 1",
+  "展开": "Erweitern",
+  "收起": "Einklappen",
+  "暂无数据": "Keine Daten"
 }

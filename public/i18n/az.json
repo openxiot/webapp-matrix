@@ -516,5 +516,9 @@
   "数据源": "Məlumat mənbəyi",
   "服务字段": "Xidmət sahəsi",
   "显示采集失败竖线": "Toplama xətalarının xətlərini göstər",
-  "该字段为非数值，曲线上会是断点": "Bu sahə rəqəm deyil, qrafikdə fasilə kimi görünəcək"
+  "该字段为非数值，曲线上会是断点": "Bu sahə rəqəm deyil, qrafikdə fasilə kimi görünəcək",
+  "项目1": "Layihə 1",
+  "展开": "Genişləndir",
+  "收起": "Yığcamlaşdır",
+  "暂无数据": "Məlumat yoxdur"
 }

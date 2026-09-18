@@ -516,5 +516,9 @@
   "数据源": "Sumber data",
   "服务字段": "Medan perkhidmatan",
   "显示采集失败竖线": "Tunjuk garisan pengumpulan gagal",
-  "该字段为非数值，曲线上会是断点": "Medan ini bukan angka, akan muncul sebagai jurang pada graf"
+  "该字段为非数值，曲线上会是断点": "Medan ini bukan angka, akan muncul sebagai jurang pada graf",
+  "项目1": "Projek 1",
+  "展开": "Kembangkan",
+  "收起": "Runtuhkan",
+  "暂无数据": "Tiada data"
 }

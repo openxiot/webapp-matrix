@@ -516,5 +516,9 @@
   "数据源": "Zdroj dat",
   "服务字段": "Pole služby",
   "显示采集失败竖线": "Zobrazit čáry neúspěšného sběru",
-  "该字段为非数值，曲线上会是断点": "Toto pole není číselné, v grafu se zobrazí jako přerušení"
+  "该字段为非数值，曲线上会是断点": "Toto pole není číselné, v grafu se zobrazí jako přerušení",
+  "项目1": "Projekt 1",
+  "展开": "Rozbalit",
+  "收起": "Sbalit",
+  "暂无数据": "Žádná data"
 }

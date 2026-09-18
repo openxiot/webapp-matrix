@@ -1,0 +1,717 @@
+/*
+ * 项目树。这一份样式表分三截：**画布怎么摆**（卡片与曲线）、**卡片长什么样**、**右下角那排按钮**。
+ *
+ * ── 画布 ─────────────────────────────────────────────────────────────────────
+ *
+ * 卡片是**绝对定位**的，坐标由 `project1.layout.ts` 算出来，绑在 `left` / `top` 上 ——
+ * 这一份样式表里**没有一个位置是布局引擎决定的**。这是「能拖」的前提：只要位置还能由
+ * flex / grid 推导，「用户摆的位置」就无处安放。
+ *
+ * 曲线走一层盖满画布的 svg，坐标与卡片**同一份**（也是那个模块算的），所以线端点不可能
+ * 与卡片脱开。svg 在 DOM 里排在卡片**前面**，于是卡片压在线上，端点被卡片边缘盖住半个线宽。
+ *
+ * 上一版这里是一整套「CSS3 family tree」的肘形折线：三层 flexbox（`.node` / `.node-children`
+ * / `.node-branch`）加伪元素边框拼出正交折线，父卡片那根横线接得上母线还专门证过一道。
+ * **那一整套现在全删了** —— 折线的前提是「位置由层级推导」，而这一版的位置是用户摆的。
+ * 形状本身没丢：它变成了自动布局（`project1.layout.ts` 里的 `autoLayout`），
+ * 一进页面看到的就是它，一行没改。
+ *
+ * ── 拖动 ─────────────────────────────────────────────────────────────────────
+ *
+ * `cdkDrag` 挂在定位壳 `.tree-node` 上，但**只用它做指针追踪**：位置始终由 `left`/`top`
+ * 绑定说话，CDK 自己那个 `transform` 被下面那条 `.cdk-drag-dragging` **压掉了**。
+ *
+ * 为什么非要压：CDK 拖动时会给被拖的元素写**内联** `style.transform`，而我们的位置又是
+ * `left`/`top` 绑出来的 —— 两边同时生效就是**双倍位移**（卡片比指针快一倍）。只能留一边，
+ * 留绑定这一边，因为曲线与画布尺寸读的是同一份坐标；让 CDK 去动那张卡的话，
+ * 曲线端点就得单独给它补一次位移，多一条容易忘记的分支。
+ *
+ * `!important` 在这里是**必需**的：CDK 写的是内联样式，只有带 `!important` 的样式表规则
+ * 压得过内联。类名挂在 `CdkDrag` 的宿主元素上（就是 `.tree-node` 自己），所以下面这条
+ * 与 CDK 写 transform 的是**同一个元素**，压得住。
+ *
+ * ── 卡片 ─────────────────────────────────────────────────────────────────────
+ *
+ * 卡宽卡高都是常量（`--node-w` / `--node-h`），**与 `project1.layout.ts` 里的 `NODE_W` /
+ * `NODE_H` 必须同值** —— 贝塞尔的端点按那两个数算。改一处要两处一起改。
+ *
+ * 高度**定死**而不是由内容撑开：曲线端点要落在卡片右缘**中点**上，高度不一，同一行卡片的
+ * 中点就参差，扇面看着是散的。内容少的那几种就在卡片里居中（`justify-content`）。
+ * 三种节点（空间 / 设备 / 服务）同宽同高，靠左边那道色条与标签区分。
+ *
+ * ── 颜色全走自定义属性 ────────────────────────────────────────────────────────
+ *
+ * 卡片与曲线的每一个颜色都是一个 `--tree-*` 变量（定义在下面的 `:host` 上），**样式表里不写
+ * 第二个字面量**。理由不是洁癖，是**深色模式**：
+ *
+ * 组件样式会被 Angular 加上 `[_ngcontent-x]` 属性选择器，凡选择器里带后代元素的那几条
+ * 权重会一路涨到 (0,4,1)，`styles.less` 里那套 `body.dark-theme …` 的老写法想在权重上压过去
+ * 就得跟着堆选择器，堆漏一条就是深底上的深字。自定义属性没有这个问题：它只看**赋值的那条
+ * 规则谁赢**，而 `body.dark-theme projects-tree` 比 `:host`（编译成 `[_nghost-x]`，
+ * 一个属性选择器）多一个元素，稳赢。于是深色模式在 `styles.less` 里就是一小段变量重定义，
+ * 一条 `!important` 都不用 —— 曲线用的 `--tree-line` 也在那一小段里，这一版换了画法它照旧管用。
+ *
+ * 有一处**看起来像坑、其实不是**，先写下来免得下次再查一遍：编译产物里这些变量名会变成
+ * `--%NS%tree-line`（Angular 会给组件样式里的自定义属性名统一加这个前缀）。那是**可选的**
+ * 命名空间，由 `provideCssVarNamespacing()` 提供 `CSS_VAR_NAMESPACE` 才生效；本工程没提供它，
+ * 运行时 `%NS%` 被替成**空串**，所以名字还是 `--tree-line`，与全局那份 `styles.less` 对得上。
+ * （反过来说：哪天有人开了命名空间，这一页的深色覆盖会**静默失效**。）
+ */
+
+:host {
+  display: block;
+
+  --tree-line: #d9d9d9;
+
+  --tree-bg: #fff;
+  --tree-bg-root: #fafafa;
+  --tree-border: #f0f0f0;
+  --tree-border-hover: #d6e4ff;
+  --tree-border-root: #1677ff;
+
+  --tree-title: rgba(0, 0, 0, 0.88);
+  --tree-muted: rgba(0, 0, 0, 0.45);
+
+  --tree-chip-bg: #f5f5f5;
+  --tree-chip-color: rgba(0, 0, 0, 0.45);
+  --tree-chip-bg-hover: #e6f4ff;
+  --tree-chip-color-hover: #1677ff;
+
+  --tree-panel-bg: #fff;
+  --tree-panel-border: #e8e8e8;
+  --tree-panel-anchor: #d6e4ff;
+  --tree-panel-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+
+  /* 卡片尺寸。**与 `project1.layout.ts` 的 NODE_W / NODE_H 必须同值**（见文件头） */
+  --node-w: 200px;
+  --node-h: 92px;
+
+  /* 信息框宽度。**与 `project1.layout.ts` 的 PANEL_W 必须同值** —— 左右翻边按它算 */
+  --panel-w: 320px;
+}
+
+.tree-page {
+  padding: 0 20px 20px;
+}
+
+.tree-body {
+  padding: 20px;
+}
+
+/*
+ * 横向滚动壳。横着长之后画布已经很少比屏幕宽了（宽度只随层数涨），这一层留着是**兜底**：
+ * 层数很深、或者卡片被摆到很远的地方时，仍然宁可横着滚，也不把卡片压窄 ——
+ * 窄到看不清名字的树不如回去看表格。
+ *
+ * `overflow: auto` 也是**画布的裁剪边界**：卡片出了这一层就是被裁掉，看不见也拖不回来。
+ * 所以拖动时有一道夹取，把卡片挡在**看得见的那块板**里（组件里的 `clampToVisible` +
+ * `visibleBounds`，那一层要量它的矩形）；画布尺寸本身也会跟着卡片长（见 `canvasOf`），
+ * 但那只解决「画布装不装得下」，不解决「屏幕上看不看得见」。
+ */
+.tree-scroll {
+  overflow: auto;
+  padding: 8px 0 24px;
+}
+
+/*
+ * 画布。`position: relative` 是绝对定位卡片的定位祖先；宽高由模板绑上去（`layoutTree` 算的
+ * 包围盒 + 四周留白），**不写死**、也不 `width: max-content` —— 兜底的横滚要的是
+ * 「画布自己知道多大」，而不是让内容把父亲撑开。
+ */
+.tree-canvas {
+  position: relative;
+}
+
+/*
+ * 连线层。盖满画布、不接指针（`pointer-events: none`，让「点到空白处」落到底下的滚动壳上）。
+ *
+ * `z-index: 2` 让它**压在每一张卡之上**，包括抬起来的那一支 —— 这一层是**没有例外**的。
+ *
+ * 自动布局里曲线只在两列之间那 56px 的缝里走，永远撞不到卡片，谁压谁无所谓；**自由摆放之后
+ * 就不是了** —— 拖远的那张卡，它的曲线会从别的卡身上横穿过去，压在卡下就是「一段线不见了」
+ * （桩页面上量到过：一条曲线 612 个采样点里有 93 个落在卡片里，最长的一条 273/519 被遮住）。
+ * 连线是这一页的主要信息，被卡片吃掉说不通。
+ *
+ * **为什么不给「抬起来的那张卡」留个例外**（卡片抬到连线之上）：那样一来，被拖的那张卡就会
+ * 盖住**它自己那条曲线的尾巴** —— 拖到左上角时量到 163/519 被遮住，用户看到的还是
+ * 「线条有一段不显示」，只是成因换了个位置。两张卡重叠时谁在上面、和「线在卡上还是卡下」
+ * 是两件事，混在一个 `z-index` 数轴上就会互相打架：于是分成**两条带** ——
+ * 卡片内部按 `.is-raised` / `.is-selected` 分高下（`1` 压 `auto`），连线整条带在它们之上（`2`）。
+ *
+ * 信息框（`.node-panel`，`3`）在这两条带**之外**：它不是卡片，是浮在整个画布上的一层，
+ * 理由写在那一段里。
+ */
+.tree-links {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.tree-links path {
+  fill: none;
+  stroke: var(--tree-line);
+  stroke-width: 2;
+}
+
+/*
+ * 一张卡的定位壳。位置由模板绑 `left`/`top`，尺寸是那两个常量。
+ *
+ * 光标按「能不能拖」给：CDK 在禁用时会给宿主加 `.cdk-drag-disabled`，正好可以当判据 ——
+ * 看模式下是普通箭头（读图时不该有「这能拖」的暗示），编辑态是抓手。
+ */
+.tree-node {
+  position: absolute;
+  box-sizing: border-box;
+  width: var(--node-w);
+  height: var(--node-h);
+}
+
+.tree-node:not(.cdk-drag-disabled) {
+  cursor: grab;
+}
+
+.tree-node.cdk-drag-dragging {
+  cursor: grabbing;
+}
+
+/*
+ * **压掉 CDK 的拖动位移**（理由见文件头「拖动」那一段）。
+ *
+ * 位置只由 `left`/`top` 说话。CDK 写的内联 `transform` 必须用 `!important` 才压得过 ——
+ * 这不是「优先级不够所以加个 !important」那种敷衍，是这个场景下唯一能压过内联样式的写法。
+ *
+ * 信息框（`.node-panel`）在同一张表里：它也是 `left`/`top` 绑定的绝对定位元素，
+ * 拖动靠 `panelDrag` 换算，CDK 那个 `transform` 一样要压掉。两个选择器写成一条，
+ * 是为了让「谁在拖都走这套坐标」这件事只有一个落点 —— 分两条写，将来只会有一条被改。
+ */
+:is(.tree-node, .node-panel).cdk-drag-dragging {
+  transform: none !important;
+}
+
+/*
+ * 拖动中的那张卡抬起来：自由摆放是允许重叠的（这是自由度的一部分），重叠时被拖的那张
+ * 必须在**最上面**、而且看得出是它 —— 否则按住一张卡往另一张上面拖的时候，
+ * 会以为自己抓错了卡。
+ *
+ * 与 `.is-raised` 同一条带（`1`）：拖动中的卡本来就是「最后碰过的那张」，两个类必然同时挂着，
+ * 分成两档只会在数轴上多留一个说不清谁该更高的缝。
+ */
+.tree-node.is-dragging {
+  z-index: 1;
+}
+
+/*
+ * 松手之后**仍然**抬着。这是本轮修的一个 bug —— 用户报的「卡片有可能会消失」：
+ *
+ * 拖动中那张卡抬着，一松手就归 `auto`，而卡片之间的压盖是 **DOM 序**（DFS 序）决定的。
+ * 落点压在另一张卡上时，只要那张卡的 DFS 序更靠后，它就把刚拖完的这张**整个盖住** ——
+ * 看起来就是「我拖的那张卡不见了」。抬到 `1` 之后，**你动过的那张永远在最上面**；
+ * 被它压住的那张再去拖一下就会顶上来（`dragStarted` 里会把这一层挪过去）。
+ *
+ * **抬的是一整支，不是一张**（`raisedKeys` 那个 computed 算的子树）：拖动是整支跟着走，
+ * 落到别人身上时跟着挪过去的还有子孙，只抬被抓住的那张，子孙照样被盖住 ——
+ * 用户拖的是一支，看不见的却是这一支里的某张卡，症状一模一样。桩页面上量到的正是这一条：
+ * `onto` 场景里被盖住的是子卡 `dev:em7`，而它爹好好地抬在最上面。
+ *
+ * `1` **低于**连线层的 `2`，这是有意的：卡片之间的高下归这条带，曲线整条带在它之上。
+ * 让抬起来的那张压在连线之上，它就会盖住自己那条曲线的尾巴（量到 163/519），
+ * 于是「线条有一段不显示」换个位置又冒出来。理由在 `.tree-links` 那段里写全了。
+ *
+ * 只在编辑态生效（`raisedKeys` 里判的）：看模式不该有任何卡抬着。
+ */
+.tree-node.is-raised {
+  z-index: 1;
+}
+
+/*
+ * 选中的那张卡。同样是**卡片那条带**（`1`），理由与 `.is-raised` 一字不差：压过普通卡、
+ * 但仍在连线之下。选中态只在看模式下有值（`enterEdit` 会清掉），而看模式下卡片也可能重叠 ——
+ * 存档里摆过的那几张就是，不抬的话选中一张被压在下面的卡，看不出选中的是哪张。
+ */
+.tree-node.is-selected {
+  z-index: 1;
+}
+
+/*
+ * 选中的样子。**两样都给**：一圈与节点同色的环（`--node-accent`，于是空间青 / 设备绿 /
+ * 服务蓝各是各的，与卡片左边那道色条同一个来源），外加一层更重的阴影。
+ *
+ * 用 `box-shadow` 画的环而不是 `outline` / 更粗的 `border`：那两样都会把盒撑大或改掉尺寸，
+ * 而卡片的宽高是常量、贝塞尔的端点按它算 —— 选中一下线就脱开半个像素，是最难查的一类错。
+ * `box-shadow` 画在盒子外面、不参与布局。
+ *
+ * 半径 `2px` 与卡片自身的 `border-radius: 8px` 加在一起，环的四角是跟着圆角走的
+ * （`box-shadow` 的扩散会沿用元素的圆角半径）。
+ */
+.tree-node.is-selected .node-card {
+  border-color: var(--node-accent);
+  box-shadow:
+    0 0 0 2px var(--node-accent),
+    0 4px 14px rgba(0, 0, 0, 0.16);
+}
+
+/* ── 卡片 ───────────────────────────────────────────────────────────────── */
+
+.node-card {
+  /* 三选一的那道色条。给个默认值：`var()` 取不到值时整条边框会失效，宁可灰着 */
+  --node-accent: var(--tree-line);
+
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  /* 高度定死之后，内容少的那几种（设备 / 服务只有两行）在这里居中；根卡片正好填满 */
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  /* 定高 + 内容比预期高一点点时，宁可裁掉那一像素也不要顶出去压到隔壁卡 */
+  overflow: hidden;
+  padding: 10px 12px;
+  background: var(--tree-bg);
+  border: 1px solid var(--tree-border);
+  border-left: 3px solid var(--node-accent);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  font-size: 13px;
+  line-height: 20px;
+
+  &:hover {
+    border-color: var(--tree-border-hover);
+    border-left-color: var(--node-accent);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+  }
+}
+
+/* 拖动中那张再抬一档阴影，与 `z-index` 一起说明「现在拿的是这张」 */
+.tree-node.is-dragging .node-card {
+  border-color: var(--node-accent);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+}
+
+/*
+ * 三种节点同宽同高，靠**左边那道色条**与标签区分。色与表格里的 `nz-tag` 同一套
+ * （空间 cyan / 设备 green / 服务 blue），两页之间来回看不会串。
+ * 深色下这三个值不用换：它们本来就是亮色，压在深底上更清楚。
+ */
+.node-card.kind-space {
+  --node-accent: #13c2c2;
+}
+
+.node-card.kind-device {
+  --node-accent: #52c41a;
+}
+
+.node-card.kind-service {
+  --node-accent: #1677ff;
+}
+
+/* 树顶那张（当前项目）：换个底色 + 深色边框，一眼看出这棵树属于谁 */
+.node-card.is-root {
+  background: var(--tree-bg-root);
+  border-color: var(--tree-border-root);
+  border-left-color: var(--tree-border-root);
+}
+
+.node-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.node-icon,
+.node-avatar {
+  flex: none;
+  color: var(--node-accent);
+}
+
+.node-icon {
+  font-size: 16px;
+}
+
+/*
+ * 卡片标题。它是一颗 `<button>` 而不是 `<span>`（理由在模板里：卡片里已经有一颗收起按钮，
+ * 整张卡不能顶 `role="button"` —— 那是 axe 的 `nested-interactive`），
+ * 所以下面这一串 `background` / `border` / `padding` / `font` / `text-align` 全是**按钮复位**：
+ * 一样都不能少，否则浏览器会画出一颗灰底圆角、居中、系统字体的默认按钮。
+ *
+ * `display: block` 也是必需的：按钮默认是 `inline-block`，而 `text-overflow: ellipsis` 只对
+ * 块级盒里那一行文字生效，行内盒上写了等于没写 —— 名字一长就是**顶破卡片**而不是省略号。
+ *
+ * `min-width: 0` 是省略号的前提：flex 项默认 `min-width: auto`，不加这个就不会收缩。
+ */
+.node-title {
+  flex: 1;
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+  color: var(--tree-title);
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/*
+ * 键盘焦点。`:focus-visible` 而不是 `:focus` —— 鼠标点一下不该在卡上留一圈框，
+ * 而 Tab 走过来必须看得见（WCAG 2.4.7）。两处键盘可达的地方共用这一条：标题（选中）与收起按钮。
+ *
+ * 颜色用 `--node-accent`（同选中环，各节点各色），环画在**按钮自己的盒子**外面。
+ */
+.node-title:focus-visible,
+.node-toggle:focus-visible {
+  outline: 2px solid var(--node-accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/*
+ * 收起 / 展开。`flex: none` 是因为标题那个 `flex: 1` 会把空间吃掉 —— 不写的话这颗按钮会被压扁。
+ * 收起来时画 `+`、展开时画 `−`，旁边那个数字是孩子个数：收起来也还知道「这里有几支」。
+ */
+.node-toggle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 18px;
+  padding: 0 4px;
+  color: var(--tree-chip-color);
+  font-size: 11px;
+  line-height: 1;
+  background: var(--tree-chip-bg);
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--tree-chip-color-hover);
+    background: var(--tree-chip-bg-hover);
+  }
+}
+
+/*
+ * `flex-wrap: nowrap` + 裁掉溢出：卡片高度定死之后，这一行**不能折行** ——
+ * 折了就是第三行，定高装不下。几种节点的内容都很短（一两个标签 + 几个字），
+ * 正常情况远没有溢出的机会，这里是防止名字特别长的脏数据把它顶开。
+ */
+.node-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+
+  /* 卡片里的 nz-tag 不需要 antd 那套行高与外边距，压小一圈 */
+  ::ng-deep .ant-tag {
+    margin: 0;
+    flex: none;
+    font-size: 11px;
+    line-height: 16px;
+  }
+}
+
+.node-note,
+.node-id {
+  color: var(--tree-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.node-id {
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-overflow: ellipsis;
+}
+
+/*
+ * 这里原本有一截 `.node-actions` / `.node-sep`（动作行的几个链接与分隔点），
+ * 卡片改成只读之后整块删掉了 —— 连同 `--tree-link` / `--tree-danger` 那几个只有它用的变量
+ * （`styles.less` 的深色块里同步删了，两处是一对）。
+ * 那些链接的行为在表格版 `/main/project` 里一个不少，这一页只是不重复摆一遍。
+ */
+
+/* ── 选中的信息框 ─────────────────────────────────────────────────────────
+ *
+ * 它是画布里的一个**绝对定位**元素，坐标由 `panelSpot` 按选中那张卡算出来 ——
+ * 于是拖动卡片时框跟着走，不必再为它接一套屏幕坐标或监听滚动。
+ *
+ * `z-index: 3` 让它压在**连线之上**（连线是 `2`，卡片是 `1` / `auto`）。这与「两个带」那套
+ * 高低口径不冲突：那个数轴管的是**卡片之间**谁压谁、以及线为什么不能压在卡下；框不是卡，
+ * 它是浮在整个画布之上的一层，从它身上穿过去一条线只会让人以为线是从框里长出来的。
+ *
+ * 高度**不写死**（三种节点行数不同），也**不绑 `max-height`**：框是 `height: auto`，内容多高
+ * 就多高，**物理上不可能内部滚**（本页「信息框不出现滚动条」的头号口径）。装不下时是画布
+ * 往下/往上挪补（`canvasWithPanel` 长高），不是在这里把框截短去看画布脸色。
+ *
+ * 内容高度由 `#panelBox` 量一遍，喂给 `panelSpot`/`shiftPanel`/`canvasWithPanel` 做**落位记账**
+ * （往哪一侧翻、拖到哪儿夹回来、画布长多少兜住它），但那只供计算，**不绑回 CSS 裁口**。
+ * 真机渲染后量的是 `offsetHeight`，一次到位、不需要追赶 —— 正因为没有裁口，自然没有
+ * 「先按旧高度裁再量」的偏差，滚动条无从谈起。
+ *
+ * `overflow: hidden` **不是**给滚动开的门 —— 高度是内容的，没有溢出的东西；它只是借这一层
+ * 裁剪把 `border-radius` 吃干净（圆角只裁容器、不裁里面的字，标题条的底色不会顶出圆角）。
+ * 于是 `position: sticky` 那条已经是无作用了（从不滚动，钉不钉一个样），留着也无妨。
+ * 宽度必须定死：左右翻边是按 `PANEL_W` 算的，这边不等宽就对不上。
+ */
+.node-panel {
+  position: absolute;
+  z-index: 3;
+  box-sizing: border-box;
+  width: var(--panel-w);
+  overflow: hidden;
+  padding: 0;
+  background: var(--tree-panel-bg);
+  border: 1px solid var(--tree-panel-border);
+  border-radius: 8px;
+  box-shadow: var(--tree-panel-shadow);
+  font-size: 12px;
+  line-height: 18px;
+
+  /* 靠卡片那一侧描深一点。框和卡之间隔着 12px 的空隙，边上不加这个提示，
+       一眼看不出它说的是哪张卡（尤其两张卡挨得近的时候）。翻边之后这一侧也跟着翻。 */
+  border-left-color: var(--tree-panel-anchor);
+
+  &.is-flipped {
+    border-left-color: var(--tree-panel-border);
+    border-right-color: var(--tree-panel-anchor);
+  }
+}
+
+.panel-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 8px;
+  background: var(--tree-panel-bg);
+  border-bottom: 1px solid var(--tree-panel-border);
+}
+
+/*
+ * 标题就是**抓手**（模板上挂着 `cdkDragHandle`）。光标给 `move` 而不是 `grab`：
+ * 卡片那边 `grab` 是因为整张卡都是抓手，这里只有这一条，`move` 更像「这一条能挪」。
+ * 关闭按钮在同一个 `.panel-head` 里，所以抓手**不能**挂到 `.panel-head` 上 ——
+ * 那样按关闭键也会变成开拖。
+ *
+ * `touch-action: none` 是 CDK 对手柄的要求（触摸设备上不让浏览器把这次按下当成滚动）。
+ */
+.panel-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--tree-title);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: move;
+  touch-action: none;
+}
+
+.node-panel.cdk-drag-dragging .panel-name {
+  cursor: grabbing;
+}
+
+.panel-close {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  color: var(--tree-muted);
+  font-size: 12px;
+  line-height: 1;
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--tree-title);
+    background: var(--tree-chip-bg);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--node-accent, var(--tree-border-root));
+    outline-offset: 1px;
+  }
+}
+
+.panel-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px 0;
+}
+
+.panel-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/*
+ * 左列**定宽**：标签长短不一（「状态」两个字、「最后在线」四个字、英文还要更长），
+ * 不定宽的话每一行的值都从不同的地方起头，一列数字看着是锯齿。
+ *
+ * 右对齐：定宽 + 右对齐之后，值与标签之间那道空隙是恒定的，读起来是一张两列的表。
+ */
+.panel-label {
+  flex: none;
+  width: 76px;
+  color: var(--tree-muted);
+  text-align: right;
+}
+
+/* 值一律单行省略号，完整的那个放在 `title` 里（模板上每一条都挂了） */
+.panel-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--tree-title);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* id 这类值走等宽字体：`urn:ox:...` 里 `l` 与 `1`、`O` 与 `0` 在比例字体里分不清 */
+.panel-value.is-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* 值里有 `nz-tag` 的那两处（状态）：标签自带行高与边距，压到与这一行文字同高 */
+.panel-value ::ng-deep .ant-tag {
+  margin: 0;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+/* 左右那 12px 从内边距挪到这里（见 `.node-panel`）：底边留着，免得按钮贴着圆角 */
+.panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 12px 0;
+  padding-top: 10px;
+  padding-bottom: 12px;
+  border-top: 1px solid var(--tree-panel-border);
+
+  /* antd 给相邻按钮之间那条默认外边距在这里多余：间距归上面那个 `gap` 管，
+     两者叠加会让按钮之间的距离比折行之后的行距大一截。 */
+  ::ng-deep .ant-btn + .ant-btn {
+    margin-inline-start: 0;
+  }
+}
+
+/* ── 右下角的悬浮按钮 ─────────────────────────────────────────────────────
+ *
+ * 与看板**逐字同一套**（位置、房壳、红按钮的规矩），差别只在动作个数。下面每一段的「为什么」
+ * 都在看板那份样式表里写全了，这里只留结论性的那几句 —— 两边哪天要一起改的话，
+ * 改的是同一件事，不值得各写一份不同措辞的解释。
+ */
+
+/*
+ * 一排按钮的壳。**48px 是量过定的**：右边缘到视口右缘 48px（原本 24px，用户看过之后要求
+ * 改成 48px，与右边缘那颗按钮的可见右缘对齐）。
+ *
+ * 一排的顺序：**左边离右下角最远、右边最近**。所以「保存布局」在最右（最常点），
+ * 「全屏」在最左（最少点，而且它在两个模式里都待在同一个位置上，进出编辑态不跳）。
+ */
+.float-actions {
+  position: fixed;
+  z-index: 99;
+  inset-inline-end: 48px;
+  bottom: 48px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+
+/* 每颗按钮自己的定位关掉：位置归壳管 */
+.float-actions ::ng-deep .ant-float-btn {
+  position: static;
+  inset: auto;
+}
+
+/*
+ * 组也要管 —— **它自己也是 `fixed`**：ng-zorro 那条
+ * `.ant-float-btn-group { position: fixed; bottom: 48px; inset-inline-end: 24px; z-index: 99 }`
+ * 与单颗按钮那条是**分开写的两份**，只关按钮那一份不够，组仍会自己钉到视口右下角去。
+ * 换 `relative` 而不是 `static`：组是个定位祖先，ng-zorro 给成员写的那条
+ * `.ant-float-btn-group .ant-float-btn { position: static }` 靠它才有效。
+ * `flex-direction: row` 是给编辑态那一排用的（组的默认是 `column`，一竖列）。
+ */
+.float-actions ::ng-deep .ant-float-btn-group {
+  position: relative;
+  inset: auto;
+  flex-direction: row;
+}
+
+/*
+ * 「退出编辑」外面那个壳。模板上那段注释讲了**为什么**要有它（确认气泡与按钮都声明了
+ * 一个叫 `nzIcon` 的输入，同一个元素上会串味，气泡会去找不存在的 `close-fill`）。
+ * 这里只说这个壳自己的两件事：
+ *
+ * 1. `display: flex` 是必需的。`span` 默认是行内盒，里面那颗 40px 的圆按钮会按**行内基线**
+ *    排 —— 壳的高度于是不止 40px，这一排的 `align-items: center` 对齐的也成了这个壳而不是
+ *    按钮本身，按钮会跟着整体偏上几像素。
+ *
+ * 2. 红按钮那两条用的是 `> .ant-float-btn` 这个**直接子**选择器，壳里的按钮不是组的直接子
+ *    元素，所以与它无关（壳里这颗本来也不是红的）。
+ *
+ * 顺带记一个已知的小副作用，不影响观感、但换形状时会露出来：`nz-float-button-group` 是用
+ * `contentChildren` 找成员的，套了一层之后这颗**不再被它找到**，组那条「把成员形状统一成
+ * 组自己的形状」的 effect 就管不到它。现在两边形状恰好都是 `circle`，一模一样，所以看不出来。
+ */
+.float-confirm {
+  display: flex;
+  align-items: center;
+}
+
+/*
+ * 编辑态那一排的状态 —— 一个 ng-zorro **没有**的东西。
+ *
+ * `nz-float-button` 既没有 `nzDisabled` 也没有 `nzLoading`，所以「没改过」只能这样表达。
+ * 「没改过」只压暗**最右边那颗**（保存布局）而不是整排：另外两颗照旧可点，
+ * 而点击本身由 `saveLayout()` 开头那句 guard 挡着。
+ */
+.float-edit.is-idle ::ng-deep .ant-float-btn-group > .ant-float-btn:last-child {
+  opacity: 0.4;
+}
+
+/*
+ * 「恢复默认」与「保存布局」要红色。认的是**位置**（那一排的首尾两个）而不是一个类：
+ * 类要加在 `nz-float-button` 身上，而那个组件的宿主元素上有一条 `[class]` 绑定，能不碰就不碰。
+ * 模板里的顺序就是屏幕上的顺序（从左往右），首 = 恢复默认、尾 = 保存布局。
+ * （中间那颗「退出编辑」在模板上多套了一层 `.float-confirm` 壳，但它不在首尾，与这两条无关。）
+ *
+ * `nzType` 只有 `primary` 与 `default` 两档，没有 `danger` —— 红只能覆盖出来。
+ * 底色给 `body`、颜色给 `icon`：`-default` 那两条把这两个值各自定死了，都得压过去。
+ * 图标是 `<svg fill="currentColor">`，所以 `color: #fff` 就够了。
+ * 红用 `#ff4d4f`（antd 的 error 红）—— 本工程已经在用的那个红。
+ */
+.float-edit ::ng-deep .ant-float-btn-group > .ant-float-btn:first-child .ant-float-btn-body,
+.float-edit ::ng-deep .ant-float-btn-group > .ant-float-btn:last-child .ant-float-btn-body {
+  background-color: #ff4d4f;
+
+  &:hover {
+    background-color: #ff7875;
+  }
+}
+
+.float-edit ::ng-deep .ant-float-btn-group > .ant-float-btn:first-child .ant-float-btn-icon,
+.float-edit ::ng-deep .ant-float-btn-group > .ant-float-btn:last-child .ant-float-btn-icon {
+  color: #fff;
+}

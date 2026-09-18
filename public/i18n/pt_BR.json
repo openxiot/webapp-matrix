@@ -516,5 +516,9 @@
   "数据源": "Fonte de dados",
   "服务字段": "Campo do serviço",
   "显示采集失败竖线": "Mostrar as linhas de falha na coleta",
-  "该字段为非数值，曲线上会是断点": "Este campo não é numérico; aparecerá como lacunas no gráfico"
+  "该字段为非数值，曲线上会是断点": "Este campo não é numérico; aparecerá como lacunas no gráfico",
+  "项目1": "Projeto 1",
+  "展开": "Expandir",
+  "收起": "Recolher",
+  "暂无数据": "Nenhum dado"
 }

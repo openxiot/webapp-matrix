@@ -516,5 +516,9 @@
   "数据源": "Databron",
   "服务字段": "Serviceveld",
   "显示采集失败竖线": "Lijnen van mislukt ophalen tonen",
-  "该字段为非数值，曲线上会是断点": "Dit veld is niet numeriek; het verschijnt als onderbrekingen in de grafiek"
+  "该字段为非数值，曲线上会是断点": "Dit veld is niet numeriek; het verschijnt als onderbrekingen in de grafiek",
+  "项目1": "Project 1",
+  "展开": "Uitvouwen",
+  "收起": "Inklappen",
+  "暂无数据": "Geen gegevens"
 }

@@ -516,5 +516,9 @@
   "数据源": "Datu avots",
   "服务字段": "Pakalpojuma lauks",
   "显示采集失败竖线": "Rādīt neizdevušos vākšanas līnijas",
-  "该字段为非数值，曲线上会是断点": "Šis lauks nav skaitlisks, grafikā tas parādīsies kā pārtraukumi"
+  "该字段为非数值，曲线上会是断点": "Šis lauks nav skaitlisks, grafikā tas parādīsies kā pārtraukumi",
+  "项目1": "Projekts 1",
+  "展开": "Izvērst",
+  "收起": "Sakļaut",
+  "暂无数据": "Nav datu"
 }

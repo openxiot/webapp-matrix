@@ -516,5 +516,9 @@
   "数据源": "Data source",
   "服务字段": "Service field",
   "显示采集失败竖线": "Show collection failure lines",
-  "该字段为非数值，曲线上会是断点": "This field is not numeric; it will appear as gaps in the chart"
+  "该字段为非数值，曲线上会是断点": "This field is not numeric; it will appear as gaps in the chart",
+  "项目1": "Project 1",
+  "展开": "Expand",
+  "收起": "Collapse",
+  "暂无数据": "No data"
 }

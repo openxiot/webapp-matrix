@@ -516,5 +516,9 @@
   "数据源": "Origen de datos",
   "服务字段": "Campo del servicio",
   "显示采集失败竖线": "Mostrar las líneas de error de recogida",
-  "该字段为非数值，曲线上会是断点": "Este campo no es numérico; en la curva aparecerá como cortes"
+  "该字段为非数值，曲线上会是断点": "Este campo no es numérico; en la curva aparecerá como cortes",
+  "项目1": "Proyecto 1",
+  "展开": "Expandir",
+  "收起": "Contraer",
+  "暂无数据": "Sin datos"
 }

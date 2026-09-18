@@ -48,6 +48,25 @@ import {
   FullscreenOutline,
   FullscreenExitOutline,
   BgColorsOutline,
+  // 补四个**用到了却没注册**的图标。前三个是项目页（表格与树两版）要的，
+  // 第四个是 nz-page-header 那个返回箭头（`nzBackIcon` 的默认值）——
+  // 缺了不会渲染成空白，而是抛 `IconNotFoundError` 进控制台（见修订（十八）那次 close-fill）。
+  // 补在注册表里而不是改模板：`api` / `hdd` 与表格页是同一个写法，改模板就与那一版不一致了。
+  ApiOutline,
+  HddOutline,
+  MinusOutline,
+  ArrowLeftOutline,
+  // 项目树那两个悬浮按钮（恢复默认 / 保存布局）要的。这两个与上面四个**缺的后果不一样**，
+  // 值得单说：浏览器里它们其实能显示 —— `angular.json` 把 `@ant-design/icons-angular`
+  // 那棵 inline-svg 整个拷进了 `assets/`，注册表里没有的图标会去
+  // `assets/outline/<名字>.svg` **动态加载**兜底（`assets/outline/rollback.svg` 与
+  // `save.svg` 都真实存在）。所以这里补的是**省一次取图标请求**，不是修一个坏图标。
+  //
+  // 真正非补不可的是**测试**：项目树的挂载用例跑在 jsdom 里，那儿既没有 `assets/`
+  // 也没有 `provideHttpClient`，动态加载这条兜底根本走不通。看板没有挂载用例，
+  // 所以同样两个图标在那儿一直没暴露这条差异。
+  RollbackOutline,
+  SaveOutline,
 } from '@ant-design/icons-angular/icons';
 
 export const icons = [
@@ -100,4 +119,11 @@ export const icons = [
   FullscreenOutline,
   FullscreenExitOutline,
   BgColorsOutline,
+  // 见上面 import 处的说明
+  ApiOutline,
+  HddOutline,
+  MinusOutline,
+  ArrowLeftOutline,
+  RollbackOutline,
+  SaveOutline,
 ];

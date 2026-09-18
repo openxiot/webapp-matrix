@@ -747,8 +747,14 @@ export class ProjectComponent implements OnInit {
     });
   }
 
-  /** 加载项目根空间 + 成员，供 isAdmin 判定；非管理员无需展示按钮，失败静默即可。 */
-  private loadAdminContext(rootId: string): void {
+  /**
+   * 加载项目根空间 + 成员，供 isAdmin 判定；非管理员无需展示按钮，失败静默即可。
+   *
+   * `protected` 而不是 `private`：`Project1Component`（树那一版）继承本类，它那张信息框里
+   * 也有一批按 `isAdmin` 显隐的写操作按钮，同样是**进页面就该有**的判定。
+   * 两页共用同一份实现，比各写一遍「谁是管理员」强。
+   */
+  protected loadAdminContext(rootId: string): void {
     forkJoin({
       space: this.matrix.getSpace(rootId),
       members: this.matrix.listAccesses(rootId),

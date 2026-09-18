@@ -516,5 +516,9 @@
   "数据源": "Sumber data",
   "服务字段": "Bidang layanan",
   "显示采集失败竖线": "Tampilkan garis pengambilan gagal",
-  "该字段为非数值，曲线上会是断点": "Bidang ini bukan angka, akan tampil sebagai celah pada grafik"
+  "该字段为非数值，曲线上会是断点": "Bidang ini bukan angka, akan tampil sebagai celah pada grafik",
+  "项目1": "Proyek 1",
+  "展开": "Perluas",
+  "收起": "Ciutkan",
+  "暂无数据": "Tidak ada data"
 }

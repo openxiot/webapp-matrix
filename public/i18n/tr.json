@@ -516,5 +516,9 @@
   "数据源": "Veri kaynağı",
   "服务字段": "Servis alanı",
   "显示采集失败竖线": "Başarısız toplama çizgilerini göster",
-  "该字段为非数值，曲线上会是断点": "Bu alan sayısal değil, grafikte kesinti olarak görünecek"
+  "该字段为非数值，曲线上会是断点": "Bu alan sayısal değil, grafikte kesinti olarak görünecek",
+  "项目1": "Proje 1",
+  "展开": "Genişlet",
+  "收起": "Daralt",
+  "暂无数据": "Veri yok"
 }

@@ -516,5 +516,9 @@
   "数据源": "Datakilde",
   "服务字段": "Tjenestefelt",
   "显示采集失败竖线": "Vis linjer for mislykket innhenting",
-  "该字段为非数值，曲线上会是断点": "Dette feltet er ikke numerisk og vises som brudd i kurven"
+  "该字段为非数值，曲线上会是断点": "Dette feltet er ikke numerisk og vises som brudd i kurven",
+  "项目1": "Prosjekt 1",
+  "展开": "Utvid",
+  "收起": "Skjul",
+  "暂无数据": "Ingen data"
 }

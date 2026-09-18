@@ -516,5 +516,9 @@
   "数据源": "Tietolähde",
   "服务字段": "Palvelun kenttä",
   "显示采集失败竖线": "Näytä epäonnistuneen keruun viivat",
-  "该字段为非数值，曲线上会是断点": "Tämä kenttä ei ole numeerinen, joten se näkyy katkoksina kuvaajassa"
+  "该字段为非数值，曲线上会是断点": "Tämä kenttä ei ole numeerinen, joten se näkyy katkoksina kuvaajassa",
+  "项目1": "Projekti 1",
+  "展开": "Laajenna",
+  "收起": "Kutista",
+  "暂无数据": "Ei tietoja"
 }

@@ -516,5 +516,9 @@
   "数据源": "Źródło danych",
   "服务字段": "Pole usługi",
   "显示采集失败竖线": "Pokazuj linie nieudanego odczytu",
-  "该字段为非数值，曲线上会是断点": "To pole nie jest liczbowe — na wykresie pojawi się jako przerwy"
+  "该字段为非数值，曲线上会是断点": "To pole nie jest liczbowe — na wykresie pojawi się jako przerwy",
+  "项目1": "Projekt 1",
+  "展开": "Rozwiń",
+  "收起": "Zwiń",
+  "暂无数据": "Brak danych"
 }

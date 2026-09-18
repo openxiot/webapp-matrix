@@ -212,4 +212,42 @@ body.dark-theme {
   .refresh-option:hover {
     background-color: #303030;
   }
+
+  /*
+   * 项目树（`/main/project1`）。这一页的颜色**全部**走自定义属性（见那个组件的样式表头部），
+   * 所以这里只要把变量重定一遍就够了 —— 一条选择器覆盖、没有 `!important`、也不会跟
+   * 组件样式表打权重官司。
+   *
+   * 为什么打得赢：`:host` 编译成 `[_nghost-x]`，是一个属性选择器 (0,1,0)；这条是
+   * 「一个类 + 两个元素」= (0,1,2)，多一个元素，稳赢。**不能**写成 `body.dark-theme .tree`
+   * 之类的类选择器 —— 宿主元素上并没有 `tree` 这个类，而且那也绕开了这套变量。
+   *
+   * 值照本文件一贯的口径：表面 `#1f1f1f`、悬停 `#303030`、正文 `0.88`、次要 `0.45`、
+   * 分隔线 `0.12`。折线用 `.18`：它是纯装饰，不该比次要文字还亮。
+   *
+   * 三个节点色条（cyan / green / blue）与几枚 `nz-tag` **不动** —— 它们本来就是亮色，
+   * 压在深色上更清楚，换掉反而丢掉「这是哪种节点」这个信号。
+   */
+  projects-tree {
+    --tree-line: rgba(255, 255, 255, 0.18);
+
+    --tree-bg: #1f1f1f;
+    --tree-bg-root: #262626;
+    --tree-border: rgba(255, 255, 255, 0.12);
+    --tree-border-hover: rgba(255, 255, 255, 0.24);
+    --tree-border-root: #1677ff;
+
+    --tree-title: rgba(255, 255, 255, 0.88);
+    --tree-muted: rgba(255, 255, 255, 0.45);
+
+    --tree-chip-bg: #303030;
+    --tree-chip-color: rgba(255, 255, 255, 0.45);
+    --tree-chip-bg-hover: #111d2c;
+    --tree-chip-color-hover: #1890ff;
+
+    --tree-panel-bg: #1f1f1f;
+    --tree-panel-border: rgba(255, 255, 255, 0.18);
+    --tree-panel-anchor: rgba(255, 255, 255, 0.28);
+    --tree-panel-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  }
 }

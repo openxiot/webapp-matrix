@@ -516,5 +516,9 @@
   "数据源": "Çavkaniya daneyê",
   "服务字段": "Qada xizmetê",
   "显示采集失败竖线": "Xetên berhevkirina bi ser neketî nîşan bide",
-  "该字段为非数值，曲线上会是断点": "Ev qad ne hejmarî ye, dê di grafîkê de wek navberan xuya bibe"
+  "该字段为非数值，曲线上会是断点": "Ev qad ne hejmarî ye, dê di grafîkê de wek navberan xuya bibe",
+  "项目1": "Proje 1",
+  "展开": "Fireh bike",
+  "收起": "Teng bike",
+  "暂无数据": "Daneyên tune"
 }

@@ -1,0 +1,504 @@
+<!--
+  项目树。整页只有四块：页头（面包屑 + 标题 + 返回）、状态（转圈 / 报错 / 空）、画布、悬浮按钮。
+
+  **页头里没有 `nz-descriptions`** —— 表格页把它摆在页头，是因为表格那一版里根空间不出行
+  （它的信息没地方放）。这一版根空间就是树顶那张卡，代码 / 类型 / 设备数 / 服务数全在卡上，
+  再在页头摆一份就是同一件事说两遍。
+
+  ── 画布 ─────────────────────────────────────────────────────────────────────
+
+  一层**绝对定位**的卡片 + 一层 `pointer-events: none` 的 svg 连线，两者**同一个坐标系**：
+  svg 铺满整个画布，曲线的坐标就是卡片的坐标（都由 `project1.layout.ts` 算出来）。
+  **线压在卡片之上**（样式表里那条 `z-index`，理由写在那里）：曲线的终点就落在卡片边缘的中点上，
+  没有「端点该藏半个线宽」这回事。
+
+  **不是嵌套结构**（上一版是 `.node > .node-children > .node-branch > .node` 递归套出来的）。
+  改扁平是为了拖动：绝对定位的子元素坐标要相对父元素算，而这里的坐标本来就是画布绝对的；
+  扁平之后一层 `@for` 铺完，CDK 也不必去处理嵌套的拖拽容器。
+
+  ── 拖动 ─────────────────────────────────────────────────────────────────────
+
+  `cdkDrag` 挂在定位壳上，但**只用它做指针追踪**：位置始终由 `[style.left/top]` 绑定说话，
+  CDK 自己那个 `transform` 被样式表压掉了（`.cdk-drag-dragging`，理由写在样式表里）。
+  两边同时生效就是双倍位移，所以必须只留一边 —— 留绑定这一边，因为曲线与画布读的是同一份坐标。
+
+  `@for` 迭代的是 `layout().nodes`，它只依赖 graph 与收起状态，**与拖动无关**：
+  拖的时候集合、顺序一个都不变，只有每张卡的 `left/top` 在动。这是看板那边踩过的坑 ——
+  被拖的那张卡正被 CDK 持有着，Angular 一旦挪动它的 DOM 位置，卡片就会跳。
+
+  `[cdkDragDisabled]` 挡住看模式下的拖动：读图时手滑一下就把布局碰乱，是这一页最不该有的手感。
+-->
+<nz-spin [nzSpinning]="loading()">
+  <nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
+    <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+  </nz-page-header>
+
+  @if (error(); as message) {
+    <!-- 取数失败就明说：静默留一屏空白，这棵树就成了「这个项目是空的」 -->
+    <div class="tree-body">
+      <nz-alert nzType="error" nzShowIcon [nzMessage]="message"></nz-alert>
+    </div>
+  } @else if (!rootId()) {
+    <div class="tree-body">
+      <nz-empty [nzNotFoundContent]="'请先在项目列表中选择一个项目' | translate"></nz-empty>
+    </div>
+  } @else if (layout(); as board) {
+    <!-- `#boardScroll` / `#board` 两个引用是给拖动夹取量可视区用的（见组件里的 `visibleBounds`）：
+         前者是横向唯一会裁掉卡片的那个层，后者是曲线与卡片共用的坐标原点。 -->
+    <div class="tree-scroll" #boardScroll>
+      <!-- 尺寸走 `canvasSize()` 而不是 `board.w/h`：后者是纯函数算的那一份（规格套件逐条钉着），
+           前者在它之上多了「信息框伸出画布的那一截」（见 `canvasWithPanel`）。
+           `(click)` 收框，判的是 `target === currentTarget` —— 理由在 `onCanvasClick`。 -->
+      <div
+        class="tree-canvas"
+        #board
+        [style.width.px]="canvasSize().w"
+        [style.height.px]="canvasSize().h"
+        (click)="onCanvasClick($event)"
+      >
+        <!-- 连线层。`aria-hidden` 是因为它纯装饰：谁连着谁这件事，卡片之间的父子关系已经
+             在数据里成立了，读屏用户拿到的是卡片列表而不是一堆曲线。
+
+             它在样式表里 `z-index` 高于**每一张**卡（含抬起来的那一支）：自由摆放之后
+             曲线会从别的卡身上穿过去，压在卡下面就成了一段看不见的线。 -->
+        <svg
+          class="tree-links"
+          [attr.width]="canvasSize().w"
+          [attr.height]="canvasSize().h"
+          aria-hidden="true"
+        >
+          @for (edge of board.edges; track edge.key) {
+            <path [attr.d]="edge.d" />
+          }
+        </svg>
+
+        @for (p of board.nodes; track p.key) {
+          <div
+            class="tree-node"
+            [style.left.px]="p.x"
+            [style.top.px]="p.y"
+            [class.is-dragging]="draggingKey() === p.key"
+            [class.is-raised]="raisedKeys().has(p.key)"
+            [class.is-selected]="selected() === p.key"
+            (click)="select(p.key)"
+            cdkDrag
+            [cdkDragData]="p.node"
+            [cdkDragDisabled]="!editing()"
+            (cdkDragStarted)="dragStarted($event)"
+            (cdkDragMoved)="dragMoved($event)"
+            (cdkDragEnded)="dragEnded()"
+          >
+            <div
+              class="node-card"
+              [class.kind-space]="p.node.kind === 'space'"
+              [class.kind-device]="p.node.kind === 'device'"
+              [class.kind-service]="p.node.kind === 'service'"
+              [class.is-root]="isRootSpace(p.node)"
+            >
+              <div class="node-head">
+                @switch (p.node.kind) {
+                  @case ('space') {
+                    <span class="node-icon" nz-icon [nzType]="iconOf(p.node.space!)"></span>
+                  }
+                  @case ('service') {
+                    <span class="node-icon" nz-icon nzType="api"></span>
+                  }
+                  @default {
+                    <!-- 设备带产品图标（与表格里的头像同一个来源）；没有图标就退回一个硬盘图标 -->
+                    @if (deviceIcon(p.node.device!); as icon) {
+                      <nz-avatar class="node-avatar" [nzSrc]="icon" [nzSize]="20"></nz-avatar>
+                    } @else {
+                      <nz-avatar class="node-avatar" [nzSize]="20" nzIcon="hdd"></nz-avatar>
+                    }
+                  }
+                }
+                <!--
+                  标题是**按钮**而不是 span，为的是键盘也能选中这张卡：整张卡上那个 `(click)`
+                  只有鼠标够得着，而卡片是个普通容器（没有 `role`），键盘用户在这一页原本
+                  只有那颗收起按钮停得住。
+
+                  为什么不让整张卡顶个 `tabindex` + `role="button"`：卡片里**已经有一颗**
+                  收起按钮，带 widget 角色的元素再套一个可聚焦元素就是 axe 的
+                  `nested-interactive`（读屏软件在这种嵌套上普遍会念错）。把标题做成与它
+                  **平级**的真按钮就没这回事，两个各按各的。
+
+                  点击仍然只挂在卡片上，这里不挂第二遍：按钮的 click 会冒泡上去，父级那个
+                  处理函数照常跑 —— 两处都挂就是一次点击跑两次，选中又立刻取消。
+                  `aria-pressed` 说的是这颗按钮的开关状态（「这张卡是不是选中的」）。
+                  title 属性和卡片上的省略号是一对：名字被截断时，指针停一下能看全。
+                -->
+                <button
+                  type="button"
+                  class="node-title"
+                  [title]="titleOf(p.node)"
+                  [attr.aria-pressed]="selected() === p.key"
+                >{{ titleOf(p.node) }}</button>
+
+                @if (p.node.children.length) {
+                  <!-- 收起 / 展开这一棵子树。收起来的时候数字还在，所以「这里原本有几支」不会丢掉。
+                       `(click)` 上要 `$event.stopPropagation()`，两个理由：这颗按钮在 `cdkDrag`
+                       的宿主里面，不拦住会当成一次「按下 — 抬起」的拖动（0 位移，代价是白算一轮
+                       全部坐标，松手那一下 `dragEnded` 还会把这张卡标成「摆过」）；它也在卡片那个
+                       `(click)` 里面，不拦住的话点一下收起会顺手把这张卡选中。 -->
+                  <button
+                    type="button"
+                    class="node-toggle"
+                    [attr.aria-expanded]="!isCollapsed(p.key)"
+                    [attr.aria-label]="(isCollapsed(p.key) ? '展开' : '收起') | translate"
+                    (click)="toggleCollapse(p.key); $event.stopPropagation()"
+                  >
+                    <span nz-icon [nzType]="isCollapsed(p.key) ? 'plus' : 'minus'"></span>
+                    <span class="node-count">{{ p.node.children.length }}</span>
+                  </button>
+                }
+              </div>
+
+              <div class="node-meta">
+                @switch (p.node.kind) {
+                  @case ('space') {
+                    <nz-tag nzColor="cyan">{{ typeLabel(p.node.space!) | translate }}</nz-tag>
+                    <span class="node-note">{{ deviceCount(p.node.space!.id) }} {{ '设备' | translate }}</span>
+                    @if (serviceCount(p.node.space!.id) > 0) {
+                      <span class="node-note">· {{ serviceCount(p.node.space!.id) }} {{ '服务' | translate }}</span>
+                    }
+                  }
+                  @case ('service') {
+                    <nz-tag nzColor="blue">{{ '服务' | translate }}</nz-tag>
+                  }
+                  @default {
+                    <nz-tag nzColor="green">{{ '设备' | translate }}</nz-tag>
+                    <nz-tag [nzColor]="p.node.device!.online ? 'success' : 'default'">
+                      {{ p.node.device!.online ? ('在线' | translate) : ('离线' | translate) }}
+                    </nz-tag>
+                  }
+                }
+              </div>
+
+              <!-- 空间代码只在树顶那张卡上显示（其它空间代码是噪音）。表格页把这个值摆在页头 -->
+              @if (isRootSpace(p.node)) {
+                <div class="node-id">{{ p.node.space!.id }}</div>
+              }
+            </div>
+          </div>
+        }
+
+        <!--
+          选中那张卡的信息框。**不是模态框**：它在画布里、贴着卡片，读一张看一眼再点下一张是常态，
+          每看一张就挡一页说不过去。
+
+          坐标是**画布坐标**（`panelSpot` 按卡片位置算，再叠上用户拖出来的 `panelDrag`），
+          所以拖动卡片时它跟着走 —— 不必再为它接一套屏幕坐标 / 监听滚动。
+
+          框是 `height: auto`，内容多高框多高 —— **物理上不出现内部滚动条**（本页头号口径）。
+          `box.maxH` 只进**落位计算**（`panelSpot` 往哪一侧翻、`shiftPanel` 拖到哪儿夹回来、
+          `canvasWithPanel` 画布长多高来兜住它），不绑回 CSS 裁口，也就不存在「裁出滚动条」。
+
+          抓手只有标题那一段（`.panel-name` 上的 `cdkDragHandle`）：挂到 `.panel-head` 上的话，
+          按关闭按钮也会变成开拖 —— 按钮就在那一行里。
+
+          里面的字段按 `kind` 分三套，全是卡片上放不下的那一层（卡片是 200×92 的定高盒）。
+          动作按钮与表格那一版同一个口径：导航类（详情 / 历史 / 服务 / 调试）对空间成员开放，
+          写操作（添加设备 / 添加子空间 / 删除）按 `isAdmin` 显隐。
+        -->
+        @if (panel(); as box) {
+          <div
+            #panelBox
+            class="node-panel"
+            [class.is-flipped]="box.flipped"
+            [style.left.px]="box.x"
+            [style.top.px]="box.y"
+            cdkDrag
+            (cdkDragStarted)="panelDragStarted()"
+            (cdkDragMoved)="panelDragMoved($event)"
+            (cdkDragEnded)="panelDragEnded()"
+            role="region"
+            [attr.aria-label]="titleOf(box.node)"
+          >
+            <div class="panel-head">
+              <span class="panel-name" cdkDragHandle [title]="titleOf(box.node)">{{ titleOf(box.node) }}</span>
+              <button
+                type="button"
+                class="panel-close"
+                [attr.aria-label]="'关闭' | translate"
+                (click)="closePanel()"
+              >
+                <span nz-icon nzType="close"></span>
+              </button>
+            </div>
+
+            <div class="panel-fields">
+              @switch (box.node.kind) {
+                @case ('space') {
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '空间代码' | translate }}</span>
+                    <span class="panel-value is-mono" [title]="box.node.space!.id">{{ box.node.space!.id }}</span>
+                  </div>
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '空间名称' | translate }}</span>
+                    <span class="panel-value" [title]="box.node.space!.name">{{ box.node.space!.name }}</span>
+                  </div>
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '空间类型' | translate }}</span>
+                    <span class="panel-value">{{ typeLabel(box.node.space!) | translate }}</span>
+                  </div>
+                  <!-- 父空间取名字不取 id：id 是给人对接口用的，卡片旁边这张框要的是「它在谁下面」。
+                       树顶那张卡没有父空间，这一行整个不出（不是显示一个空值）。 -->
+                  @if (spaceNameById(box.node.space!.parentId); as parent) {
+                    <div class="panel-row">
+                      <span class="panel-label">{{ '父空间' | translate }}</span>
+                      <span class="panel-value" [title]="parent">{{ parent }}</span>
+                    </div>
+                  }
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '设备数量' | translate }}</span>
+                    <span class="panel-value">{{ deviceCount(box.node.space!.id) }}</span>
+                  </div>
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '服务数量' | translate }}</span>
+                    <span class="panel-value">{{ serviceCount(box.node.space!.id) }}</span>
+                  </div>
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '创建时间' | translate }}</span>
+                    <span class="panel-value">
+                      {{ box.node.space!.createTime ? (box.node.space!.createTime | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
+                    </span>
+                  </div>
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '更新时间' | translate }}</span>
+                    <span class="panel-value">
+                      {{ box.node.space!.updateTime ? (box.node.space!.updateTime | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
+                    </span>
+                  </div>
+                }
+                @case ('service') {
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '服务名称' | translate }}</span>
+                    <span class="panel-value" [title]="box.node.service!.name">{{ box.node.service!.name }}</span>
+                  </div>
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '服务类型' | translate }}</span>
+                    <span class="panel-value" [title]="box.node.service!.type">{{ box.node.service!.type || '-' }}</span>
+                  </div>
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '依赖设备' | translate }}</span>
+                    <span class="panel-value is-mono" [title]="box.node.service!.did">{{ box.node.service!.did }}</span>
+                  </div>
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '所在空间' | translate }}</span>
+                    <span class="panel-value" [title]="spaceNameById(box.node.service!.spaceId)">
+                      {{ spaceNameById(box.node.service!.spaceId) || '-' }}
+                    </span>
+                  </div>
+                }
+                @default {
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '设备名称' | translate }}</span>
+                    <span class="panel-value" [title]="titleOf(box.node)">{{ titleOf(box.node) }}</span>
+                  </div>
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '设备ID' | translate }}</span>
+                    <span class="panel-value is-mono" [title]="box.node.device!.did">{{ box.node.device!.did }}</span>
+                  </div>
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '设备类型' | translate }}</span>
+                    <span class="panel-value" [title]="box.node.device!.type">
+                      {{ deviceTypeLabel(box.node.device!) }}
+                    </span>
+                  </div>
+                  @if (productNames().get(deviceModel(box.node.device!)); as product) {
+                    <div class="panel-row">
+                      <span class="panel-label">{{ '产品名称' | translate }}</span>
+                      <span class="panel-value" [title]="product">{{ product }}</span>
+                    </div>
+                  }
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '状态' | translate }}</span>
+                    <span class="panel-value">
+                      <nz-tag [nzColor]="box.node.device!.online ? 'success' : 'default'">
+                        {{ box.node.device!.online ? ('在线' | translate) : ('离线' | translate) }}
+                      </nz-tag>
+                    </span>
+                  </div>
+                  @if (box.node.device!.protocol; as protocol) {
+                    <div class="panel-row">
+                      <span class="panel-label">{{ '协议' | translate }}</span>
+                      <span class="panel-value">{{ protocol }}</span>
+                    </div>
+                  }
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '最后在线' | translate }}</span>
+                    <span class="panel-value">
+                      {{ box.node.device!.lastOnline ? (box.node.device!.lastOnline | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
+                    </span>
+                  </div>
+                  <div class="panel-row">
+                    <span class="panel-label">{{ '最后离线' | translate }}</span>
+                    <span class="panel-value">
+                      {{ box.node.device!.lastOffline ? (box.node.device!.lastOffline | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
+                    </span>
+                  </div>
+                  @if (box.node.device!.parentId; as parentDid) {
+                    <div class="panel-row">
+                      <span class="panel-label">{{ '父设备' | translate }}</span>
+                      <span class="panel-value is-mono" [title]="parentDid">{{ parentDid }}</span>
+                    </div>
+                  }
+                  @if (spaceNameById(box.node.device!.space.spaceId); as located) {
+                    <div class="panel-row">
+                      <span class="panel-label">{{ '所在空间' | translate }}</span>
+                      <span class="panel-value" [title]="located">{{ located }}</span>
+                    </div>
+                  }
+                  @if (childDeviceCount(box.node.device!) > 0) {
+                    <div class="panel-row">
+                      <span class="panel-label">{{ '子设备' | translate }}</span>
+                      <span class="panel-value">{{ childDeviceCount(box.node.device!) }}</span>
+                    </div>
+                  }
+                }
+              }
+            </div>
+
+            <div class="panel-actions">
+              @switch (box.node.kind) {
+                @case ('space') {
+                  @if (isAdmin()) {
+                    <button nz-button nzSize="small" (click)="addDevice(box.node.space!)">
+                      {{ '添加设备' | translate }}
+                    </button>
+                    <button nz-button nzSize="small" (click)="addChildSpace(box.node.space!)">
+                      {{ '添加子空间' | translate }}
+                    </button>
+                    <button nz-button nzSize="small" nzDanger (click)="removeSpace(box.node.space!)">
+                      {{ '删除' | translate }}
+                    </button>
+                  }
+                }
+                @case ('service') {
+                  <a nz-button nzSize="small" [routerLink]="serviceDetailLink(box.node.service!)">
+                    {{ '详情' | translate }}
+                  </a>
+                  <a nz-button nzSize="small" [routerLink]="serviceHistoryLink(box.node.service!)">
+                    {{ '历史' | translate }}
+                  </a>
+                  @if (isAdmin()) {
+                    <button nz-button nzSize="small" nzDanger (click)="removeService(box.node.service!)">
+                      {{ '删除' | translate }}
+                    </button>
+                  }
+                }
+                @default {
+                  <a nz-button nzSize="small" [routerLink]="['/main/device/detail', box.node.device!.did]">
+                    {{ '详情' | translate }}
+                  </a>
+                  @if (showMapping(box.node.device!)) {
+                    <a nz-button nzSize="small" [routerLink]="['/main/device/services', box.node.device!.did]">
+                      {{ '服务' | translate }}
+                    </a>
+                  }
+                  @if (isAdmin()) {
+                    <a nz-button nzSize="small" [routerLink]="['/main/device/debugger', box.node.device!.did]">
+                      {{ '调试' | translate }}
+                    </a>
+                    <button nz-button nzSize="small" nzDanger (click)="removeDevice(box.node.device!)">
+                      {{ '删除' | translate }}
+                    </button>
+                  }
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  } @else if (!loading()) {
+    <div class="tree-body">
+      <nz-empty [nzNotFoundContent]="'暂无数据' | translate"></nz-empty>
+    </div>
+  }
+</nz-spin>
+
+<ng-template #pageTitle>
+  {{ rootSpace()?.name || ('项目详情' | translate) }}
+</ng-template>
+
+<!--
+  右下角悬浮按钮。与看板同一套（位置、尺寸、红按钮的规矩都一样），差别只在动作个数。
+
+  看模式两颗：全屏 + 编辑布局。
+  编辑态四颗：全屏 + 一个组（恢复默认 / 退出编辑 / 保存布局）。
+
+  `全屏` 那颗**不进组**，两个模式下位置相同（最左）—— 它管的是「这一页怎么显示」，
+  与改不改布局无关，进出编辑态时不该换位置。顺带也就不必去动红按钮那两条「组内首尾」的
+  选择器：组里仍是那三颗，首 = 恢复默认、尾 = 保存布局。
+-->
+@if (!editing()) {
+  <div class="float-actions">
+    <nz-float-button
+      nzShape="circle"
+      [nzIcon]="fullscreen() ? 'fullscreen-exit' : 'fullscreen'"
+      (nzOnClick)="toggleFullscreen()"
+    />
+    @if (layout()) {
+      <nz-float-button
+        nzShape="circle"
+        nzIcon="edit"
+        (nzOnClick)="enterEdit()"
+      />
+    }
+  </div>
+} @else {
+  <div class="float-actions float-edit" [class.is-idle]="!dirty()">
+    <nz-float-button
+      nzShape="circle"
+      [nzIcon]="fullscreen() ? 'fullscreen-exit' : 'fullscreen'"
+      (nzOnClick)="toggleFullscreen()"
+    />
+
+    <nz-float-button-group nzShape="circle">
+      <!-- 恢复默认：**没有确认气泡**。它只改草稿（回到自动布局），「退出编辑」就能撤销，
+           落盘要等「保存布局」—— 一个能撤销的动作不必先过一道确认。 -->
+      <nz-float-button
+        nzIcon="rollback"
+        (nzOnClick)="resetLayout()"
+      />
+
+      <!-- **没动过就直接退出，改过才问一句。** 靠的是 `[nzCondition]="!dirty()"`，方向别写反 ——
+           `NzPopconfirmComponent.show()` 是这么写的：
+
+               show() { if (!this.nzCondition) { …; super.show(); } else { this.onConfirm(); } }
+
+           也就是 **`nzCondition` 为假才弹气泡、为真直接走确认**。所以这里传 `!dirty()`：
+           没改过 → 直接退出（没什么可丢的），改过 → 弹气泡问一句。看板那边写成 `dirty()` 是**读反了**
+           （见那边的修订十九），两个方向都错，这里不要跟着抄错。
+
+           **确认气泡挂在外面这个 `span` 上，不挂在按钮上** —— 这不是口味，是必需的：
+           `nz-float-button` 与 `nz-popconfirm` **各声明了一个公开名都叫 `nzIcon` 的输入**，
+           写在同一个元素上会被**两个指令同时**收到。气泡那头拿到 `close` 之后按它的一贯画法渲染，
+           `nzTheme` 写死 `"fill"`，于是解析出来的名字是 `close-fill`；而 `assets/fill/close.svg`
+           根本不存在，动态加载 404 之后就是控制台那句
+           `the icon close-fill does not exist or is not registered`（修订（十八）踩过）。
+           挂到 span 上之后两个 `nzIcon` 各归各的：按钮那头仍是 `close`（outline 主题 = 真有）。 -->
+      <span
+        class="float-confirm"
+        nz-popconfirm
+        nzIcon="exclamation-circle"
+        [nzCondition]="!dirty()"
+        nzPopconfirmPlacement="left"
+        [nzPopconfirmTitle]="'未保存的修改将丢失，确认退出编辑？' | translate"
+        [nzOkText]="'确认' | translate"
+        [nzCancelText]="'取消' | translate"
+        (nzOnConfirm)="cancelEdit()"
+      >
+        <nz-float-button nzIcon="close" />
+      </span>
+
+      <!-- 没真改过就点不动。挡它的是 `saveLayout()` 开头那句 guard ——
+           `nz-float-button` 没有 `nzDisabled`，这里只能把它压暗（见样式表）。 -->
+      <nz-float-button
+        nzIcon="save"
+        (nzOnClick)="saveLayout()"
+      />
+    </nz-float-button-group>
+  </div>
+}

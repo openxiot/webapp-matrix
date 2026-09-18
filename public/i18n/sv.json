@@ -516,5 +516,9 @@
   "数据源": "Datakälla",
   "服务字段": "Tjänstefält",
   "显示采集失败竖线": "Visa linjer för misslyckad insamling",
-  "该字段为非数值，曲线上会是断点": "Detta fält är inte numeriskt och visas som avbrott i kurvan"
+  "该字段为非数值，曲线上会是断点": "Detta fält är inte numeriskt och visas som avbrott i kurvan",
+  "项目1": "Projekt 1",
+  "展开": "Expandera",
+  "收起": "Fäll ihop",
+  "暂无数据": "Inga data"
 }

@@ -516,5 +516,9 @@
   "数据源": "Vir podatkov",
   "服务字段": "Polje storitve",
   "显示采集失败竖线": "Prikaži črte neuspešnega zajema",
-  "该字段为非数值，曲线上会是断点": "To polje ni številsko, na grafu bo prikazano kot prekinitev"
+  "该字段为非数值，曲线上会是断点": "To polje ni številsko, na grafu bo prikazano kot prekinitev",
+  "项目1": "Projekt 1",
+  "展开": "Razširi",
+  "收起": "Strni",
+  "暂无数据": "Ni podatkov"
 }

@@ -516,5 +516,9 @@
   "数据源": "Duomenų šaltinis",
   "服务字段": "Paslaugos laukas",
   "显示采集失败竖线": "Rodyti nepavykusio rinkimo linijas",
-  "该字段为非数值，曲线上会是断点": "Šis laukas nėra skaitinis, grafike bus rodomas kaip trūkiai"
+  "该字段为非数值，曲线上会是断点": "Šis laukas nėra skaitinis, grafike bus rodomas kaip trūkiai",
+  "项目1": "Projektas 1",
+  "展开": "Išskleisti",
+  "收起": "Sutraukti",
+  "暂无数据": "Nėra duomenų"
 }

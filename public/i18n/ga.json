@@ -516,5 +516,9 @@
   "数据源": "Foinse sonraí",
   "服务字段": "Réimse seirbhíse",
   "显示采集失败竖线": "Taispeáin línte bailithe ar theip orthu",
-  "该字段为非数值，曲线上会是断点": "Níl an réimse seo uimhriúil; taispeánfar mar bhearnaí sa ghraf é"
+  "该字段为非数值，曲线上会是断点": "Níl an réimse seo uimhriúil; taispeánfar mar bhearnaí sa ghraf é",
+  "项目1": "Tionscadal 1",
+  "展开": "Leathnaigh",
+  "收起": "Laghdaigh",
+  "暂无数据": "Gan sonraí"
 }

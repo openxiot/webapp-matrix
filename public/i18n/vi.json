@@ -516,5 +516,9 @@
   "数据源": "Nguồn dữ liệu",
   "服务字段": "Trường dịch vụ",
   "显示采集失败竖线": "Hiển thị đường thu thập thất bại",
-  "该字段为非数值，曲线上会是断点": "Trường này không phải dạng số, sẽ hiển thị thành khoảng trống trên đồ thị"
+  "该字段为非数值，曲线上会是断点": "Trường này không phải dạng số, sẽ hiển thị thành khoảng trống trên đồ thị",
+  "项目1": "Dự án 1",
+  "展开": "Mở rộng",
+  "收起": "Thu gọn",
+  "暂无数据": "Không có dữ liệu"
 }
