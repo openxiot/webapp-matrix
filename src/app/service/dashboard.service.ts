@@ -14,8 +14,8 @@ import { DashboardWidgetDataCodec } from '../typedef/codec/dashboard/DashboardWi
  * 自定义数据看板（后端 DashboardResource，端点 `/matrix/v1/dashboard`）。
  *
  * **读写权限不对称**，这是本功能唯一的权限口径：
- * - `layout`：**空间成员**可读（看板人人可见），**空间管理员**才能 `save` / `reset`
- *   （布局是空间共享一份，改它影响所有人）。
+ * - `layout`：**空间成员**可读（看板人人可见），**空间管理员**才能 `save`
+ *   （布局是空间共享一份，改它影响所有人）。`preset` 只读出「预置长什么样」，与读布局同权限。
  * - `render`：空间成员。
  *
  * 空间 ID 一律传**当前项目的根空间**（`account.space().id`）。路径上给子空间时后端也归到同一个
@@ -58,14 +58,20 @@ export class DashboardService {
   }
 
   /**
-   * 恢复预置布局（DELETE /layout/{spaceId}）。
+   * 预置布局（GET /layout/{spaceId}/preset，**只读、无副作用**）。
    *
-   * 返回的是**恢复之后读到的**预置布局（版本号回到 `0`），所以「恢复默认」之后直接拿它重画
-   * 即可，不必再发一次 GET —— 那中间还夹着一个「删完再读之间别人又存了一次」的竞态。
+   * 「恢复默认」拿它当**草稿的起点**：装进草稿、标脏，用户再点「保存布局」才落库 ——
+   * 在那之前「退出编辑」等于什么都没发生过。所以这里**没有** DELETE 了：改造前那个端点
+   * 一调库里那份当场就没了，「保存才生效」根本无从谈起。
+   *
+   * 返回的版本号是 `0`、卡片上也没有坐标（原因见方案 §6.5），调用方要照读布局那条路
+   * 铺一遍位置。
    */
-  reset(spaceId: string): Observable<DashboardLayout> {
+  preset(spaceId: string): Observable<DashboardLayout> {
     return this.http
-      .delete<OxResponse>(`${this.server}/matrix/v1/dashboard/layout/${encodeURIComponent(spaceId)}`)
+      .get<OxResponse>(
+        `${this.server}/matrix/v1/dashboard/layout/${encodeURIComponent(spaceId)}/preset`,
+      )
       .pipe(map((r) => DashboardLayoutCodec.decode(r.data)));
   }
 

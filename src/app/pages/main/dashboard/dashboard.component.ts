@@ -9,6 +9,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { CdkDragMove, CdkDragStart, DragDropModule } from '@angular/cdk/drag-drop';
+import { FormsModule } from '@angular/forms';
 import { catchError, forkJoin, of } from 'rxjs';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -16,6 +17,7 @@ import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
+import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AccountService } from '../../../service/account.service';
@@ -32,6 +34,7 @@ import {
   DASHBOARD_WIDGET_TITLES,
   DEFAULT_REFRESH_SECONDS,
   DashboardLayout,
+  REFRESH_INTERVALS,
   DashboardWidget,
   GRID_COLUMNS,
   GRID_GAP,
@@ -52,6 +55,7 @@ import {
   fitsAt,
   placeAt,
   placementsOf,
+  sameLayout,
   sizeOf,
 } from './dashboard.grid';
 import { WidgetHostComponent } from './widget/host/widget.host';
@@ -73,8 +77,10 @@ import { WidgetHostComponent } from './widget/host/widget.host';
  *   重排一次让两者一致 —— 但它不是位置的真值。旧布局没有坐标，{@link adopt} 进来时整份重铺一遍
  *   （`ensurePlacements`，复刻的正是改造前浏览器流式排开的样子，所以旧布局长相不变）。
  * - **还没取到就是空白，不是 0**：首屏那几百毫秒里画一个「0」，用户会当成真读数。
- * - **自动刷新按每张卡自己的 `refresh` 分组**，`0` 表示不刷新（§5.2）：把所有卡挂在同一个
- *   最快的节拍上，等于让整屏陪着最勤的那张卡一起请求。
+ * - **自动刷新是工具条上一个全局间隔**（`0` 表示不刷新，§5.2）：整屏挂在同一个节拍上，
+ *   到点重取一次读数。它**不跟布局一起落库**，存在浏览器里、按项目分键 —— 它是看的人当下的
+ *   偏好（盯大屏时想 30 秒刷一次，在自己电脑上未必），不是这份布局的一部分；存库还会让
+ *   「切一下间隔」变成一次带乐观锁的写。改造前每张卡各带一个 `refresh`，那个字段已经删了。
  * - **编辑态是一份本地草稿，点「保存布局」才写库**（§7.4）。改十次不写十次，而且「退出编辑」
  *   天然就是撤销。
  *
@@ -92,11 +98,13 @@ import { WidgetHostComponent } from './widget/host/widget.host';
   styleUrl: './dashboard.component.less',
   imports: [
     DragDropModule,
+    FormsModule,
     NzAlertModule,
     NzButtonModule,
     NzEmptyModule,
     NzModalModule,
     NzPopconfirmModule,
+    NzSelectModule,
     NzSpinModule,
     TranslatePipe,
     WidgetEditorComponent,
@@ -324,8 +332,38 @@ export class DashboardComponent implements OnDestroy {
    */
   readonly dropOutline = computed(() => (this.canDrop() ? this.dragTarget() : null));
 
-  /** 每张卡自己的定时器（按 `refresh` 分组，见 {@link restartTimers}） */
-  private timers: ReturnType<typeof setInterval>[] = [];
+  /**
+   * 自动刷新间隔（秒），**全屏一个**，`0` = 不自动刷新。
+   *
+   * 存在浏览器里（按项目分键，见 {@link readStoredInterval}），换项目时跟着换回来。
+   */
+  readonly refreshSeconds = signal(DEFAULT_REFRESH_SECONDS);
+
+  /**
+   * 间隔下拉的候选。`0` 显示成「关闭」，其余显示成 `30s` / `1m` / `5m` / `15m` / `1h`
+   * ——全是纯数字与单位，**不翻译**（同尺寸下拉的裸档位名）。
+   */
+  readonly refreshOptions = computed(() =>
+    REFRESH_INTERVALS.map((seconds) => ({
+      value: seconds,
+      label: seconds === 0 ? this.t('关闭') : intervalLabel(seconds),
+    })),
+  );
+
+  /**
+   * 草稿与已存布局**有没有真差别** —— 「保存布局」按它决定能不能点。
+   *
+   * 比较走 `sameLayout`（结构比较），不是引用：进编辑态时草稿是 `[...widgets]`，数组是新的
+   * 而卡片对象还是旧的，引用一比会一进编辑态就说「改过了」。
+   *
+   * 非编辑态恒为假（草稿是空的，没有「改动」可言）。
+   */
+  readonly dirty = computed(
+    () => this.editing() && !sameLayout(this.draft(), this.layout()?.widgets ?? []),
+  );
+
+  /** 全屏**唯一**那个自动刷新定时器（`refreshSeconds` 为 `0` 时是 `null`） */
+  private timer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     this.currentSpaceId = this.account.space().id;
@@ -346,7 +384,7 @@ export class DashboardComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.clearTimers();
+    this.clearTimer();
   }
 
   /** 翻译一个词条。都在 `computed` 里用，故读一次 `currentLang` 建立依赖（同 `widget.host.ts`） */
@@ -373,7 +411,9 @@ export class DashboardComponent implements OnDestroy {
     const spaceId = this.currentSpaceId;
     this.error.set('');
     this.configs.set([]);
-    this.clearTimers();
+    this.clearTimer();
+    // 间隔是**按项目**记的，换项目要跟着换回来（没记过就是缺省的那档）
+    this.refreshSeconds.set(spaceId ? readStoredInterval(spaceId) : DEFAULT_REFRESH_SECONDS);
     // 换项目 / 手动刷新都可能发生在编辑态里：那份草稿是上一个项目的，留着只会被存到新项目上
     this.exitEdit();
 
@@ -397,7 +437,7 @@ export class DashboardComponent implements OnDestroy {
         this.data.set(data);
         this.configs.set(configs);
         this.loading.set(false);
-        this.restartTimers();
+        this.restartTimer();
       },
       error: (e) => {
         this.layout.set(null);
@@ -415,7 +455,7 @@ export class DashboardComponent implements OnDestroy {
    * 它复刻的正是改造前浏览器流式排开的那个样子，所以旧布局打开后长相不变（见 `dashboard.grid`
    * 的不变量 3）。改的是刚解出来的那个对象（它是这一趟的产物，没有别人持着），不必再拷一份。
    *
-   * 三处入口都要过这里：`load` / `save` 回包 / `reset` 回包。漏一处的后果是那份布局的
+   * 两处入口都要过这里：`load` / `save` 回包。漏一处的后果是那份布局的
    * `widgets` 全没有坐标 —— 而 {@link placements} 是按坐标摆的，于是整屏卡片全叠在左上角。
    */
   private adopt(layout: DashboardLayout): DashboardLayout {
@@ -438,103 +478,81 @@ export class DashboardComponent implements OnDestroy {
   }
 
   /**
-   * 重新取一屏读数（布局不动）。
+   * 重取一屏读数。
    *
-   * 保存 / 恢复默认之后用它而不是 {@link load}：布局刚由服务端返回，再取一次是白跑一趟，
-   * 还会让整屏闪一下加载态。**失败就置空**（卡片留白）而不是换成错误态 —— 布局已经存好了，
-   * 因为读数没取到就把整屏变成一张告警，反而把刚保存成功这件事盖掉了；下一个刷新周期会补上。
+   * 自动刷新的定时器与保存成功后的收尾都走这里 —— 两条路的差别只在**失败怎么办**上，
+   * 所以分成两个薄壳而不是各写一遍订阅（见 {@link refresh} 与 {@link reloadData}）。
+   *
+   * （工具条那个「刷新」不走这里：它要连**布局**一起重取 —— 别人可能刚改过，而重新加载是
+   * 用户手里唯一的「把别人的改动取回来」的入口。见 {@link load}。）
+   *
+   * 布局不动，所以这是**一次**请求（`render` 不带草稿 = 渲染整份已存布局）。
    */
-  private reloadData(): void {
+  private fetchData(onError: (e: unknown) => void): void {
     const spaceId = this.currentSpaceId;
     if (!spaceId) {
       return;
     }
-    this.restartTimers();
     this.dashboard.render(spaceId).subscribe({
       next: (data) => this.data.set(data),
-      error: () => this.data.set(null),
+      error: onError,
     });
   }
 
   /**
-   * 按每张卡的 `refresh` 分组起定时器。
+   * 自动刷新与手动刷新走这条：**失败不弹错、不清屏**。
    *
-   * 分组而不是「取所有卡里最小的那个间隔，到点全刷」：一个 10 秒的卡片不该让一屏 60 秒的卡片
-   * 陪它每 10 秒请求一次。`refresh` 缺省按 {@link DEFAULT_REFRESH_SECONDS}，**`0` 表示不刷新**
-   * （schema 里就是这个意思），负数是脏数据，同样当不刷新。
-   *
-   * 每次布局变化都**全部重起**：分组是按当前的卡片集合算的，留着旧定时器会让已经删掉的卡片
-   * 继续在后台请求。
-   *
-   * **只看服务端那份布局，不看草稿**：按草稿起定时器会有一个很糟的后果 ——「退出编辑」不会
-   * 重起定时器，于是它们会一直刷着那份已经被丢掉的草稿（连卡片 id 都可能对不上）。
-   * 跟着存起来的那份走，退出编辑时手里这份读数本来就是对的那一份；编辑期间卡片照常显示，
-   * 只是刷新周期按**存起来的那份**的 `refresh` 走 —— 这也是它唯一的代价，可以接受。
+   * 页面上那份读数仍然可用（只是旧了几十秒），下一个 tick 会再试。把整屏换成错误态，
+   * 反而把「刚才还好好的」也一并弄没了。
    */
-  private restartTimers(): void {
-    this.clearTimers();
-    const groups = new Map<number, DashboardWidget[]>();
-    for (const widget of this.layout()?.widgets ?? []) {
-      const seconds = widget.refresh ?? DEFAULT_REFRESH_SECONDS;
-      if (seconds <= 0) {
-        continue;
-      }
-      const group = groups.get(seconds);
-      if (group) {
-        group.push(widget);
-      } else {
-        groups.set(seconds, [widget]);
-      }
-    }
-    for (const [seconds, widgets] of groups) {
-      this.timers.push(setInterval(() => this.refresh(widgets), seconds * 1000));
-    }
-  }
-
-  private clearTimers(): void {
-    for (const timer of this.timers) {
-      clearInterval(timer);
-    }
-    this.timers = [];
+  private refresh(): void {
+    this.fetchData(() => {});
   }
 
   /**
-   * 刷一组卡片。
+   * 保存成功之后走这条：**失败就置空**（卡片留白）而不是换成错误态。
    *
-   * 传 `widgets` 就是让服务端按**这一组**渲染（`render` 的草稿用法）—— 传空表示渲染整份已存布局，
-   * 那正是这里要避免的：分组刷新就是为了不必整屏重取。
-   *
-   * **失败不弹错、不清屏**：页面上那份读数仍然可用（只是旧了几十秒），下一个 tick 会再试。
-   * 把整屏换成错误态，反而把「刚才还好好的」也一并弄没了。
+   * 布局已经存好了，因为读数没取到就把整屏变成一张告警，反而把「刚保存成功」这件事盖掉；
+   * 置空至少是诚实的（卡片还在、位置还是新的，只是暂时没有数字），下一个刷新周期会补上。
    */
-  private refresh(widgets: DashboardWidget[]): void {
-    const spaceId = this.currentSpaceId;
-    if (!spaceId) {
-      return;
-    }
-    this.dashboard.render(spaceId, widgets).subscribe({
-      next: (data) => this.merge(data),
-      error: () => {},
-    });
+  private reloadData(): void {
+    this.fetchData(() => this.data.set(null));
   }
 
-  /** 把一次刷新回来的那张（那几张）卡的读数并进手里这份，**其余原样保留** */
-  private merge(incoming: DashboardWidgetData): void {
-    const current = this.data();
-    if (!current) {
-      this.data.set(incoming);
+  /**
+   * 换自动刷新间隔：记进浏览器 + 立刻重起定时器（不必等下一个 tick 生效）。
+   */
+  setRefreshInterval(seconds: number): void {
+    this.refreshSeconds.set(seconds);
+    storeInterval(this.currentSpaceId, seconds);
+    this.restartTimer();
+  }
+
+  /**
+   * 起那个唯一的定时器。
+   *
+   * **全屏一个节拍**：改造前是每张卡各带一个 `refresh`、按值分组起多个定时器，为的是「10 秒
+   * 的那张卡不该让整屏陪它每 10 秒请求一次」。那个优化换来的是一屏最多五个定时器、一屏布局
+   * 一改就要全部重起，以及每张卡还得各自维护一个「多久没刷」的账 —— 而它省下的请求，在
+   * `render` 本来就能一次取回整屏读数（且服务端对卡片是按需查的）之后就不成立了。
+   *
+   * `0`（关闭）与未选项目都不起。**换间隔、换项目、重进页面都要先清再起**，否则会留下一串
+   * 各自计时、谁也停不掉的僵尸定时器。
+   */
+  private restartTimer(): void {
+    this.clearTimer();
+    const seconds = this.refreshSeconds();
+    if (seconds <= 0 || !this.currentSpaceId) {
       return;
     }
-    const byId = new Map(current.widgets.map((item) => [item.id, item]));
-    for (const item of incoming.widgets) {
-      byId.set(item.id, item);
+    this.timer = setInterval(() => this.refresh(), seconds * 1000);
+  }
+
+  private clearTimer(): void {
+    if (this.timer !== null) {
+      clearInterval(this.timer);
+      this.timer = null;
     }
-    const merged = new DashboardWidgetData();
-    merged.spaceId = incoming.spaceId || current.spaceId;
-    merged.from = incoming.from || current.from;
-    merged.to = incoming.to || current.to;
-    merged.widgets = [...byId.values()];
-    this.data.set(merged);
   }
 
   /* ----------------------------------------------------------------------------------------------
@@ -623,7 +641,6 @@ export class DashboardComponent implements OnDestroy {
     widget.id = newWidgetId(this.draft());
     widget.type = type;
     widget.size = DASHBOARD_DEFAULT_SIZE[type] ?? 'S';
-    widget.refresh = DEFAULT_REFRESH_SECONDS;
     widget.config = defaultConfig(type);
     const size = sizeOf(widget);
     const spot = findSlot(placementsOf(this.draft()), size.w, size.h);
@@ -840,10 +857,17 @@ export class DashboardComponent implements OnDestroy {
   }
 
   /**
-   * 恢复默认布局（服务端删掉文档，下次读回到预置布局）。
+   * 恢复默认：把**预置布局装进草稿**，库里的那份原封不动。
    *
-   * **留在编辑态**：这是一次「换一份起点」而不是「改完了」，用户多半还要接着调；
-   * 草稿一并换成预置布局，界面上立刻看得到。这个操作是破坏性的，故模板里套了确认气泡。
+   * 与其它编辑动作同口径 —— 它只改草稿，用户还得点「保存布局」才生效；在那之前「退出编辑」
+   * 就等于什么都没发生过。所以模板里那个确认气泡也去掉了：一个能撤销的动作不必先过一道确认
+   * （改造前它是个 DELETE，一点库里的布局当场就没了，那个确认是必须的）。
+   *
+   * **留在编辑态**：这是一次「换一份起点」而不是「改完了」，用户多半还要接着调，草稿一换界面上
+   * 立刻看得到。
+   *
+   * 预置布局**不带坐标**（服务端给不了，见 §6.5），铺一遍才有得摆 —— 与 {@link adopt} 同一个
+   * 理由，只是这里不换 `layout`，所以不用它。
    */
   reset(): void {
     const spaceId = this.currentSpaceId;
@@ -851,16 +875,11 @@ export class DashboardComponent implements OnDestroy {
       return;
     }
     this.saving.set(true);
-    this.dashboard.reset(spaceId).subscribe({
+    this.dashboard.preset(spaceId).subscribe({
       next: (layout) => {
         this.saving.set(false);
         this.closeEditor();
-        // 预置布局**不带坐标**（服务端给不了，见 §6.5），铺一遍才有得摆
-        const adopted = this.adopt(layout);
-        this.layout.set(adopted);
-        this.draft.set([...adopted.widgets]);
-        this.msg.success(this.t('操作成功'));
-        this.reloadData();
+        this.draft.set(ensurePlacements(layout.widgets ?? []));
       },
       error: (e) => {
         this.saving.set(false);
@@ -887,6 +906,45 @@ function defaultConfig(type: WidgetType): Record<string, unknown> {
       // 留给用户在对话框里选 —— 必填项没填齐时那里也点不了「确认」
       return {};
   }
+}
+
+/**
+ * 自动刷新间隔在浏览器里的键前缀，**按项目分键**（`dashboard.refreshSeconds.<spaceId>`）。
+ *
+ * 分键而不是全站一个：两个项目各看各的，切过去就是各自上次选的那档。存浏览器而不是跟布局一起
+ * 落库的理由见类说明。
+ */
+const REFRESH_STORAGE_PREFIX = 'dashboard.refreshSeconds.';
+
+/**
+ * 读这个项目上次选的间隔。
+ *
+ * **认不出来就是缺省值**：没选过、被手改过、存的是已经下线的档位 —— 一条都不值得报错，
+ * 回到 `1m` 就是了。所以这里校验「是不是候选里的那一档」，而不是信 `Number()` 的结果。
+ */
+function readStoredInterval(spaceId: string): number {
+  const raw = Number(localStorage.getItem(REFRESH_STORAGE_PREFIX + spaceId));
+  return REFRESH_INTERVALS.includes(raw) ? raw : DEFAULT_REFRESH_SECONDS;
+}
+
+function storeInterval(spaceId: string, seconds: number): void {
+  if (!spaceId) {
+    return;
+  }
+  localStorage.setItem(REFRESH_STORAGE_PREFIX + spaceId, String(seconds));
+}
+
+/**
+ * 间隔的显示文案：`30s` / `1m` / `1h`。
+ *
+ * 纯数字 + 单位，**不翻译** —— 与尺寸下拉的裸档位名同一个口径（`W6H308` 也没进那 66 份词典）。
+ * 只有 `0` 那个特殊值走词典里的「关闭」。
+ */
+function intervalLabel(seconds: number): string {
+  if (seconds % 3600 === 0) {
+    return `${seconds / 3600}h`;
+  }
+  return seconds % 60 === 0 ? `${seconds / 60}m` : `${seconds}s`;
 }
 
 /**

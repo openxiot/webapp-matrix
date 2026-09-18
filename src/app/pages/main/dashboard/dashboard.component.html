@@ -6,6 +6,18 @@
       <button nz-button type="button" [disabled]="!account.space().id" (click)="load()">
         {{ '刷新' | translate }}
       </button>
+      <!-- 自动刷新的节拍，**跟在「刷新」后面**：它是「刷新」这件事的频率，不是布局的一部分
+           （所以它进编辑态就跟着「刷新」一起收起来，也不跟布局一起落库） -->
+      <nz-select
+        class="refresh"
+        [nzDisabled]="!layout()"
+        [ngModel]="refreshSeconds()"
+        (ngModelChange)="setRefreshInterval($event)"
+      >
+        @for (option of refreshOptions(); track option.value) {
+          <nz-option [nzValue]="option.value" [nzLabel]="option.label" />
+        }
+      </nz-select>
       @if (canEdit()) {
         <button nz-button nzType="primary" type="button" [disabled]="!layout()" (click)="startEdit()">
           {{ '编辑布局' | translate }}
@@ -19,16 +31,8 @@
         {{ '添加卡片' | translate }}
       </button>
       <span class="toolbar-gap"></span>
-      <button
-        nz-button
-        type="button"
-        nz-popconfirm
-        [nzPopconfirmTitle]="'确认恢复默认布局？' | translate"
-        [nzOkText]="'确认' | translate"
-        [nzCancelText]="'取消' | translate"
-        [nzLoading]="saving()"
-        (nzOnConfirm)="reset()"
-      >
+      <!-- 没有确认气泡：它只改草稿，「退出编辑」就能撤销，落库要等「保存布局」 -->
+      <button nz-button type="button" [nzLoading]="saving()" (click)="reset()">
         {{ '恢复默认' | translate }}
       </button>
       <button
@@ -42,7 +46,16 @@
       >
         {{ '退出编辑' | translate }}
       </button>
-      <button nz-button nzType="primary" type="button" [nzLoading]="saving()" (click)="save()">
+      <!-- 没真改过就点不动：进编辑态、拖一下又拖回原处、打开配置框又点取消，都不该让这次
+           保存白跑一趟（更不该在乐观锁下把版本号推上去） -->
+      <button
+        nz-button
+        nzType="primary"
+        type="button"
+        [disabled]="!dirty()"
+        [nzLoading]="saving()"
+        (click)="save()"
+      >
         {{ '保存布局' | translate }}
       </button>
     }

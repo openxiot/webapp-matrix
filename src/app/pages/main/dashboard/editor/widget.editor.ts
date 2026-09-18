@@ -17,7 +17,6 @@ import { DashboardCatalog, catalogDevices } from '../../../../typedef/define/das
 import {
   DASHBOARD_DIMENSIONS,
   DASHBOARD_METRICS,
-  DEFAULT_REFRESH_SECONDS,
   DashboardWidget,
   WIDGET_SIZES,
   WidgetSize,
@@ -105,14 +104,11 @@ export class WidgetEditorComponent {
     return this.i18n.translate.instant(key);
   };
 
-  // ===== 与类型无关的四项 =====
+  // ===== 与类型无关的两项 =====
 
   readonly title = computed(() => this.draft().title ?? '');
 
   readonly size = computed(() => this.draft().size);
-
-  /** `refresh` 缺省按服务端那档（§5.2），`0` 表示不刷新 */
-  readonly refresh = computed(() => this.draft().refresh ?? DEFAULT_REFRESH_SECONDS);
 
   // ===== 按类型分叉的配置 =====
 
@@ -434,10 +430,6 @@ export class WidgetEditorComponent {
         : best,
     );
     this.patch({ size: nearest });
-  }
-
-  setRefresh(refresh: number | null): void {
-    this.patch({ refresh: refresh ?? DEFAULT_REFRESH_SECONDS });
   }
 
   setMetric(metric: string): void {

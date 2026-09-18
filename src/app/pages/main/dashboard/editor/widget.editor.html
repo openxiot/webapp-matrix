@@ -331,16 +331,6 @@
     </div>
   </nz-form-control>
 </nz-form-item>
-<nz-form-item>
-  <nz-form-label [nzSpan]="5">{{ '刷新间隔' | translate }}</nz-form-label>
-  <nz-form-control>
-    <nz-input-number [ngModel]="refresh()" (ngModelChange)="setRefresh($event)" [nzMin]="0" [nzStep]="10" />
-    <span class="unit">{{ '秒' | translate }}</span>
-    @if (refresh() <= 0) {
-      <div class="hint">{{ '不自动刷新' | translate }}</div>
-    }
-  </nz-form-control>
-</nz-form-item>
 
 <div class="editor-actions">
   <!-- 删除在**左边**、其余两个在右边：它与「取消 / 确认」不是一类动作（那两下决定这次编辑算不算数，

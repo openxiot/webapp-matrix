@@ -4,10 +4,10 @@ import { DashboardLayoutCodec } from './DashboardLayoutCodec';
 /**
  * 布局的编解码。断言的重点不是「字段抄全了」，而是三条**错了不会报错、只会悄悄不对**的口径：
  *
- * - **`decode` 什么都不补**：`title` / `refresh` 没设就是 `undefined`，不是空串 / 0。
- *   补了的话「没设」与「设成了空」再也分不开 —— 前者要退回预置名与默认刷新，
- *   后者是用户真的把标题清空了。
- * - **`refresh: 0` 是真值**（= 不自动刷新），与「没设」是两件事。写成 `if (refresh)` 就丢了。
+ * - **`decode` 什么都不补**：`title` 没设就是 `undefined`，不是空串。
+ *   补了的话「没设」与「设成了空」再也分不开 —— 前者要退回预置名，后者是用户真的把标题清空了。
+ * - **老键跳过**：`layout`（嵌套坐标，更早的形状）与 `refresh`（每卡一个刷新周期，改造前）
+ *   都在这个口径里 —— 读得进、不报错、下次保存自然就没了。
  * - **`encode` 只发该发的**：`w` / `h` 不发（那是从 `size` 档位推出来的，服务端只认档位名），
  *   而 `version` 是乐观锁，**必须发** —— 漏了后端按「首次保存」处理，别人的改动被无声覆盖。
  * - **坐标两个一起发、一起不发**：只发一个就是脏数据，服务端两个都要。
@@ -65,18 +65,21 @@ describe('DashboardLayoutCodec', () => {
       }
     });
 
-    it('title / titleKey / refresh 没下发时保持 undefined，不补空值', () => {
+    it('title / titleKey 没下发时保持 undefined，不补空值', () => {
       const widget = DashboardLayoutCodec.decodeWidget({ id: 'w1' });
 
       expect(widget.title).toBeUndefined();
       expect(widget.titleKey).toBeUndefined();
-      expect(widget.refresh).toBeUndefined();
     });
 
-    it('refresh: 0 要留住（那是「不自动刷新」，不是「没设」）', () => {
-      // `if (o?.refresh)` 会把 0 当缺省丢掉，于是一张明确配了「不刷新」的卡开始自己刷新
-      expect(DashboardLayoutCodec.decodeWidget({ refresh: 0 }).refresh).toBe(0);
-      expect(DashboardLayoutCodec.decodeWidget({}).refresh).toBeUndefined();
+    it('老文档里的 refresh 是历史残留：跳过，不认识也不报错', () => {
+      // 改造前每张卡各带一个 `refresh`，现在整屏一个间隔、记在浏览器里（见方案 §5.2）。
+      // 那个键与 `layout` 一样属于「不认识的键」，codec 当没看见 —— 读得进，
+      // 而且这一趟前端过完再保存时就自然没了
+      const widget = DashboardLayoutCodec.decodeWidget({ id: 'w1', refresh: 0 });
+
+      expect('refresh' in widget).toBe(false);
+      expect('refresh' in DashboardLayoutCodec.encodeWidget(widget)).toBe(false);
     });
 
     it('config 缺失时给空对象而不是 undefined', () => {
@@ -229,12 +232,6 @@ describe('DashboardLayoutCodec', () => {
       expect('titleKey' in body).toBe(false);
     });
 
-    it('refresh: 0 要发上去', () => {
-      const widget = DashboardLayoutCodec.decodeWidget({ id: 'w1', refresh: 0 });
-
-      expect(DashboardLayoutCodec.encodeWidget(widget).refresh).toBe(0);
-    });
-
     it('config 总是要发（哪怕是空的）', () => {
       const widget = DashboardLayoutCodec.decodeWidget({ id: 'w1' });
 
@@ -251,7 +248,6 @@ describe('DashboardLayoutCodec', () => {
         size: 'W12H200',
         x: 6,
         y: 4,
-        refresh: 30,
         config: { metric: 'devices.total', window: { kind: 'last', hours: 24 } },
       };
 
@@ -264,7 +260,6 @@ describe('DashboardLayoutCodec', () => {
         size: 'W12H200',
         x: 6,
         y: 4,
-        refresh: 30,
         config: { metric: 'devices.total', window: { kind: 'last', hours: 24 } },
       });
     });

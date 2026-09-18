@@ -270,3 +270,52 @@ function pushClear(item: Placement, settled: Placement[]): Placement {
 function compareYX(a: Placement, b: Placement): number {
   return a.y - b.y || a.x - b.x;
 }
+
+/**
+ * 一份版式的**指纹**：两张卡比出来不同，就是「用户改过」。
+ *
+ * 用途只有一个 —— 工具条上「保存布局」该不该可点（修订（十七））。判定必须是**结构**比较：
+ * 草稿是进编辑态时从服务端那份拷来的，没动过的卡片与原件是**同一个对象**（`===` 一发命中），
+ * 动过的那张则是一份新对象，所以先比引用、再比内容。
+ *
+ * 内容里比哪些字段：**版式的全部** —— 有哪些卡（`id`）、什么类型、多大、摆在哪、叫什么名字、
+ * 配置是什么。`title` / `titleKey` 也算：只改了标题同样是「改过布局」，不认的话用户改完标题
+ * 会发现保存按钮是灰的。
+ *
+ * `config` 的**键序不参与比较**（排序后再拼）：它在几条路径上的插入顺序不同
+ * （codec 解出来的、编辑器 `patch` 出来的），拿 `JSON.stringify` 直接比会把「没改」
+ * 判成「改过」。嵌套值仍按 `JSON.stringify` 比 —— 它们都出自同一趟 decode，键序一致。
+ */
+export function layoutSignature(widgets: DashboardWidget[]): string {
+  return widgets
+    .map((widget) => {
+      const config = Object.keys(widget.config ?? {})
+        .sort()
+        .map((key) => `${key}=${JSON.stringify((widget.config ?? {})[key])}`)
+        .join(',');
+      return [
+        widget.id,
+        widget.type,
+        widget.size,
+        widget.x ?? '',
+        widget.y ?? '',
+        widget.title ?? '',
+        widget.titleKey ?? '',
+        config,
+      ].join('|');
+    })
+    .join('\n');
+}
+
+/** 两份版式是不是同一个东西。卡片的**顺序**也算：它是窄屏折成一列时的阅读顺序 */
+export function sameLayout(a: DashboardWidget[], b: DashboardWidget[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i] && layoutSignature([a[i]]) !== layoutSignature([b[i]])) {
+      return false;
+    }
+  }
+  return true;
+}

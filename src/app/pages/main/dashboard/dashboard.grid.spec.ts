@@ -19,8 +19,10 @@ import {
   fitsAt,
   flowPlace,
   hasPlacements,
+  layoutSignature,
   placeAt,
   placementsOf,
+  sameLayout,
   sizeOf,
 } from './dashboard.grid';
 
@@ -31,6 +33,8 @@ import {
  *   用户不该在自己的看板上看出任何差别（除非他正好想用新档位）。
  * - **高度可以拼接**：两张一行高的卡竖着叠起来，与一张两行高的卡**严丝合缝** ——
  *   这是「人眼看上去可以占领的空间，卡片就可以拖过去占领」的实现基础。
+ * - **「改过没有」是结构比较，不是引用比较**（`sameLayout`）：它决定「保存布局」能不能点，
+ *   假阳性（没改也说改过）只是白存一次，假阴性（改过却说没改）是**用户的改动根本存不下去**。
  */
 describe('dashboard.grid', () => {
   describe('sizeOf', () => {
@@ -268,12 +272,12 @@ describe('dashboard.grid', () => {
     it('只改坐标，卡片上别的一个字段都不动', () => {
       const legacy = [widget('W6H200', 'a')];
       legacy[0].title = '东区温度';
-      legacy[0].refresh = 30;
+      legacy[0].titleKey = '东区温度';
 
       const fixed = ensurePlacements(legacy)[0];
 
       expect(fixed.title).toBe('东区温度');
-      expect(fixed.refresh).toBe(30);
+      expect(fixed.titleKey).toBe('东区温度');
       expect(fixed.size).toBe('W6H200');
       expect(fixed.id).toBe('a');
     });
@@ -520,6 +524,73 @@ function expectNoOverlap(items: Placement[]): void {
     }
   }
 }
+
+describe('sameLayout', () => {
+  it('同一个数组不算改过（进编辑态那一刻）', () => {
+    // 进编辑态是 `draft.set([...widgets])`：数组是新的，卡片对象还是旧的。
+    // 只比数组引用会一进编辑态就说「改过了」，只比对象引用会漏掉「加了一张卡」
+    const widgets = [widget('W6H200', 'a', 0, 0), widget('W6H200', 'b', 6, 0)];
+
+    expect(sameLayout([...widgets], widgets)).toBe(true);
+  });
+
+  it('拖了一下位置：算改过', () => {
+    const before = [widget('W6H200', 'a', 0, 0)];
+    const after = [widget('W6H200', 'a', 0, 2)];
+
+    expect(sameLayout(after, before)).toBe(false);
+  });
+
+  it('换了档位、删了卡、改了标题：都算改过', () => {
+    const before = [widget('W6H200', 'a', 0, 0), widget('W6H200', 'b', 6, 0)];
+
+    expect(sameLayout([widget('W6H200', 'a', 0, 0), widget('W12H416', 'b', 6, 0)], before)).toBe(
+      false,
+    );
+    expect(sameLayout([widget('W6H200', 'a', 0, 0)], before)).toBe(false);
+
+    const renamed = [widget('W6H200', 'a', 0, 0), widget('W6H200', 'b', 6, 0)];
+    renamed[1].title = '东区温度';
+
+    expect(sameLayout(renamed, before)).toBe(false);
+  });
+
+  it('config 的键序不算改过（同一份配置换个写法）', () => {
+    // 键序不是用户能感知的东西，而 `JSON.stringify` 是照插入顺序输出的：
+    // 编辑一趟回来键序变了，会被读成「改过」，于是「保存布局」永远亮着
+    const before = [widget('W6H200', 'a', 0, 0)];
+    before[0].config = { metric: 'devices.total', window: { kind: 'last', hours: 24 } };
+
+    const after = [widget('W6H200', 'a', 0, 0)];
+    after[0].config = { window: { kind: 'last', hours: 24 }, metric: 'devices.total' };
+
+    expect(sameLayout(after, before)).toBe(true);
+  });
+
+  it('config 的值变了：算改过', () => {
+    const before = [widget('W6H200', 'a', 0, 0)];
+    before[0].config = { metric: 'devices.total' };
+
+    const after = [widget('W6H200', 'a', 0, 0)];
+    after[0].config = { metric: 'devices.online' };
+
+    expect(sameLayout(after, before)).toBe(false);
+  });
+
+  it('卡片顺序变了也算改过（数组顺序是阅读顺序，窄屏要靠它）', () => {
+    const before = [widget('W6H200', 'a', 0, 0), widget('W6H200', 'b', 0, 2)];
+    const after = [widget('W6H200', 'b', 0, 2), widget('W6H200', 'a', 0, 0)];
+
+    expect(sameLayout(after, before)).toBe(false);
+  });
+
+  it('layoutSignature 对同一个对象是稳定的（内容一样就一样）', () => {
+    const widgets = [widget('W6H200', 'a', 0, 0), widget('W6H200', 'b', 6, 0)];
+
+    expect(layoutSignature(widgets)).toBe(layoutSignature([...widgets]));
+    expect(layoutSignature(widgets)).not.toBe(layoutSignature([]));
+  });
+});
 
 // placementsOf 本身没有别的行为，一并在这里钉一下「坐标缺失按 0 算」这条前提
 describe('placementsOf', () => {

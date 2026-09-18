@@ -67,7 +67,6 @@ export class DashboardLayoutCodec {
       x.x = cx;
       x.y = cy;
     }
-    x.refresh = typeof o?.refresh === 'number' ? o.refresh : undefined;
     // config 原样收下：它异构，按 type 断言是渲染侧的事（见 DashboardWidget 的说明）
     x.config = o?.config && typeof o.config === 'object' ? { ...o.config } : {};
     return x;
@@ -112,9 +111,6 @@ export class DashboardLayoutCodec {
     // 用户一旦自己起了名字，这张卡就是他的了，不该再留着一个会随服务端改文案而变的旧记号
     if (widget.titleKey && !widget.title) {
       body.titleKey = widget.titleKey;
-    }
-    if (widget.refresh !== undefined) {
-      body.refresh = widget.refresh;
     }
     // 坐标**必须发**，两个一起发：不发就等于每次保存都退回「没有坐标」，
     // 用户下一次刷新会看到整屏重排。只发一个是脏数据（服务端两个都要），
