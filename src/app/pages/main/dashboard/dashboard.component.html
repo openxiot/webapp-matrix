@@ -55,37 +55,52 @@
     } @else if (!account.space().id) {
       <nz-empty [nzNotFoundContent]="'请先在项目列表中选择一个项目' | translate"></nz-empty>
     } @else if (placements().length > 0) {
-      <!-- 一屏卡片：**扁平的一层**，24 列 CSS Grid。列数与间距都来自 DashboardLayout 的那两个
-           常量（这里绑上去，样式表里不抄第二处）；占几列由每格自己的 `grid-column: span N`
-           决定，放不下就换行 —— 「让位 / 重排」正是浏览器按这个规则自己算的。
+      <!-- 一屏卡片：**扁平的一层**，24 列 × 无限行的 CSS Grid，每一格都显式定位。
+           三个尺寸常量（列数 / 行高 / 间距）都来自 DashboardLayout，这里绑上去、样式表里不写死。
 
-           扁平是**拖拽的前提**：CDK 的让位是把占位块在兄弟节点之间搬来搬去，所有卡片必须是
-           同一个容器的直接子节点。所以这里不再有 nz-row / nz-col 那两层嵌套。
+           扁平是**拖拽的前提**：所有卡片必须是同一个容器的直接子节点。所以这里不再有
+           nz-row / nz-col 那两层嵌套 —— 那套只能横向排，右边那块「大卡旁边」的空处落不下去。
 
-           编辑态挂 cdkDropList 并把每一格变成可拖的；非编辑态 [cdkDropListDisabled] 让拖拽
-           整个失效（**不是**不渲染指令 —— 那样进出编辑会重建一遍整屏卡片，八张图会重画） -->
+           行高 92 让高度**可以拼接**：跨 h 行的格子正好 `h × 92 + (h − 1) × 16` 像素，与
+           cardHeight(h) 逐像素相同，于是两张一行高的卡竖着叠起来正好等于一张两行高的卡。
+
+           `cdkDropListSortingDisabled`：让位由 `dashboard.grid` 的 `placeAt` 算（拖到哪就落在哪、
+           被压的往下让、整屏上吸），**CDK 一个 DOM 都不搬**。留着 cdkDropList 是因为预览幽灵与
+           占位块那套只在有 dropList 时才建立。非编辑态 [cdkDropListDisabled] 让拖拽整个失效
+           （**不是**不渲染指令 —— 那样进出编辑会重建一遍整屏卡片，八张图会重画） -->
       <div
+        #board
         class="board"
         [style.gap.px]="gap"
         [style.grid-template-columns]="'repeat(' + columns + ', 1fr)'"
+        [style.grid-auto-rows.px]="rowHeight"
         cdkDropList
-        cdkDropListOrientation="mixed"
+        [cdkDropListSortingDisabled]="true"
         [cdkDropListDisabled]="!editing()"
-        (cdkDropListDropped)="dropWidget($event)"
       >
         @for (p of placements(); track p.widget.id) {
           <!-- 高度按这张卡自己的档位给像素。**不给 `.cell`**：统计卡一个高度值都不要
-               （见 widget/stat/stat.widget.less），格子（S 档 200px）比它高 —— `.cell` 带着
-               高度的话，多出来的那截就空在卡片下面，一整行看起来像没对齐。
+               （见 widget/stat/stat.widget.less），它的档位（S1）本来就只有一行 92px。
 
                编辑态与看数据时**传的是同一个 height、渲染的是同一张卡**：尺寸一致是构造上
-               成立的，不是两套样式对齐出来的 -->
+               成立的，不是两套样式对齐出来的。
+
+               位置是两条网格线绑定，**不是 DOM 顺序** —— 拖动中 `@for` 的节点集合与顺序一个都
+               不能变（被拖的那个节点正被 CDK 持有着，Angular 一挪它卡片就跳），变的只有这两个值。
+               CSS 的网格线从 1 起，故坐标 +1。
+
+               `[cdkDragData]` 把卡片本身交给拖拽事件：dragStarted 要知道抓的是哪一张 -->
           <div
             class="cell"
             [class.cell-editing]="editing()"
-            [style.grid-column]="'span ' + p.span"
+            [style.grid-column]="p.x + 1 + ' / span ' + p.w"
+            [style.grid-row]="p.y + 1 + ' / span ' + p.h"
             cdkDrag
+            [cdkDragData]="p.widget"
             [cdkDragDisabled]="!editing()"
+            (cdkDragStarted)="dragStarted($event)"
+            (cdkDragMoved)="dragMoved($event)"
+            (cdkDragEnded)="dragEnded()"
             (click)="editing() && editWidget(p.widget)"
           >
             <!-- 拖拽时飘着的那张卡。**必须自己给**：默认实现是把真卡片深拷贝一份
@@ -109,6 +124,19 @@
               [hoverable]="editing()"
             />
           </div>
+        }
+
+        <!-- 落点框：拖动中这张卡要落到哪一格。它就是这个网格里的一个普通成员，所以跨几行就
+             自动多高、跨几列就自动多宽 —— 一个像素都不用量。
+
+             `pointer-events: none`：它浮在别人身上，挡住的话指针底下的卡片会收不到事件。
+             `z-index: 1`：压在让开之前的那些卡片上面。 -->
+        @if (dropOutline(); as t) {
+          <div
+            class="drop-outline"
+            [style.grid-column]="t.x + 1 + ' / span ' + t.w"
+            [style.grid-row]="t.y + 1 + ' / span ' + t.h"
+          ></div>
         }
       </div>
     } @else if (!loading()) {

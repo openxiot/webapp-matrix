@@ -16,10 +16,19 @@ import {
  * - **`encode` 只发该发的**：`spaceId` 与 `creator` / `updater` 不带（服务端从路径与 JWT 取，
  *   客户端说了不算）。**`version` 必须带**：它是乐观锁，漏了后端按「首次保存」处理，
  *   别人的改动会被无声覆盖。
- * - **线格式里没有坐标**（顺序即位置）：`widgets` 的**数组顺序**本身就是排版信息，
- *   故编码就是按顺序 map，一个字节都不多。老文档里存着的 `widgets[].layout` 读的时候
- *   **不认识就丢掉**（Mongo 的 POJO codec 与 `@JsonIgnoreProperties` 都跳过未知键），
- *   第一次保存就把它洗掉了 —— 不需要迁移。
+ * - **线格式里有坐标，但只有两个数**：每张卡带 `x` / `y`（网格单位，左上角起点）。
+ *   占几列几行（`w` / `h`）**不上行** —— 那是从 `size` 档位推出来的，服务端只认档位名
+ *   （见 `DashboardLayout` 的 `WIDGET_SIZES`）。老文档里那两个都不存在，读出来是 `undefined`，
+ *   由**页面**去补（见下面「这个类不补坐标」）。
+ *
+ * **这个类不补坐标**：`x` / `y` 缺失时只是 `undefined`，不在这里按顺序铺位置 —— 本类第一条口径
+ * 就是「`decode` 什么都不补」，而「没有坐标时该摆在哪儿」是排版知识，属于页面
+ * （`pages/main/dashboard/dashboard.grid` 的 `ensurePlacements`）。再者 `typedef/` 从不反向
+ * import `pages/`，把那段搬进来会开一个坏头。
+ *
+ * 老文档里那个嵌套的 `widgets[].layout`（改造前的 `{x, y, w, h}`）**不认识就丢掉**
+ * （Mongo 的 POJO codec 与 `@JsonIgnoreProperties` 都跳过未知键），第一次保存就把它洗掉了
+ * —— 不需要迁移。注意别把它与现在的平铺 `x` / `y` 搞混：**那个是历史残留，不读也不写**。
  */
 export class DashboardLayoutCodec {
   static decode(o: any): DashboardLayout {
@@ -48,6 +57,15 @@ export class DashboardLayoutCodec {
     x.title = typeof o?.title === 'string' ? o.title : undefined;
     x.titleKey = typeof o?.titleKey === 'string' ? o.titleKey : undefined;
     x.size = SIZES.includes(o?.size) ? (o.size as WidgetSize) : 'S';
+    // 坐标：**两个都要**，只给一个的文档按「都没有」处理（由页面整份重铺）。
+    // `cellCoord` 只收非负整数 —— `"6"` 这种字符串数字收下来只会掩盖后端的一次改动，
+    // 小数则根本不是格子下标；两种都当「没有这个键」
+    const cx = cellCoord(o?.x);
+    const cy = cellCoord(o?.y);
+    if (cx !== undefined && cy !== undefined) {
+      x.x = cx;
+      x.y = cy;
+    }
     x.refresh = typeof o?.refresh === 'number' ? o.refresh : undefined;
     // config 原样收下：它异构，按 type 断言是渲染侧的事（见 DashboardWidget 的说明）
     x.config = o?.config && typeof o.config === 'object' ? { ...o.config } : {};
@@ -66,7 +84,8 @@ export class DashboardLayoutCodec {
   /**
    * 保存请求体。**只发这几个键**，其余一概不发。
    *
-   * 排版**一个字节都不发**：`widgets` 的数组顺序就是版式，服务端原样存下这个顺序。
+   * 坐标在 `widgets` 每一项上（{@link encodeWidget}），这里不再另发一份 ——
+   * `widgets` 的数组顺序是**阅读顺序**，一并带上，两者保持一致是页面的责任。
    */
   static encode(layout: DashboardLayout): any {
     return {
@@ -96,9 +115,21 @@ export class DashboardLayoutCodec {
     if (widget.refresh !== undefined) {
       body.refresh = widget.refresh;
     }
+    // 坐标**必须发**，两个一起发：不发就等于每次保存都退回「没有坐标」，
+    // 用户下一次刷新会看到整屏重排。只发一个是脏数据（服务端两个都要），
+    // 宁可两个都不发、让服务端按旧布局处理，也不要发半个
+    if (widget.x !== undefined && widget.y !== undefined) {
+      body.x = widget.x;
+      body.y = widget.y;
+    }
     return body;
   }
 }
 
 const TYPES: WidgetType[] = ['stat', 'line', 'distribution', 'device', 'service'];
-const SIZES: WidgetSize[] = ['S', 'M', 'L', 'XL'];
+const SIZES: WidgetSize[] = ['S1', 'M1', 'S', 'M', 'L', 'XL'];
+
+/** 读一个网格坐标（非负整数）。不合法一律 `undefined` = 「没有这个键」 */
+function cellCoord(raw: unknown): number | undefined {
+  return typeof raw === 'number' && Number.isInteger(raw) && raw >= 0 ? raw : undefined;
+}

@@ -50,7 +50,7 @@ export class DeviceWidgetComponent {
   readonly title = input.required<string>();
   /** 悬停浮起（`nz-card` 的 `nzHoverable`）。**只有编辑态为真** —— 见 `host/widget.host.ts` */
   readonly hoverable = input(false);
-  /** 格子高度（像素，`h × 38 + (h−1) × 16`）。与服务卡同一个确定高度的盒子 */
+  /** 格子高度（像素，见 `dashboard.grid` 的 `cardHeight`）。与服务卡同一个确定高度的盒子 */
   readonly height = input.required<number>();
 
   private readonly specs = inject(DeviceSpecService);

@@ -310,9 +310,14 @@
 <nz-form-item>
   <nz-form-label [nzSpan]="5">{{ '尺寸' | translate }}</nz-form-label>
   <nz-form-control>
+    <!-- 选项**按类型分叉**（见 sizes）：统计卡只列两个矮档位。
+         显示的是「档位名 · 占几列 × 多少像素」而不是裸的档位名 —— 只有数字与乘号，
+         不引入任何要翻译的文案，但一眼看得出 S1 与 S 差在哪。
+         像素高度由卡片自己的 h 算（`WIDGET_SIZES` 的 h × 92 + (h − 1) × 16），
+         与 `dashboard.grid` 的 `cardHeight` 同一份算式，故这里只列数字、不重算 -->
     <nz-select [ngModel]="size()" (ngModelChange)="setSize($event)">
-      @for (size of sizes; track size) {
-        <nz-option [nzValue]="size" [nzLabel]="size" />
+      @for (option of sizes(); track option.size) {
+        <nz-option [nzValue]="option.size" [nzLabel]="option.label" />
       }
     </nz-select>
   </nz-form-control>

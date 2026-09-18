@@ -31,7 +31,7 @@ import { StatWidgetComponent } from '../stat/stat.widget';
  *   每张卡自己的那几条（`display: flex`、高度）都在各自的 less 里；只有 `.ant-card-body` 走不了
  *   —— 它是 nz-card **内部**造出来的元素，不带任何组件的 `_ngcontent`，只能由某个祖先穿透，
  *   而宿主正好是它们共同的祖先。见 `widget.host.less`。
- * - **格子高度从这里往下传**：`h × 38 + (h−1) × 16` 由页面给到这一层，再转给四张撑满格子的卡。
+ * - **格子高度从这里往下传**：高度（见 `dashboard.grid` 的 `cardHeight`）由页面给到这一层，再转给四张撑满格子的卡。
  *   统计卡不要它（高度由内容定，见 `stat.widget.less`），宿主自己也不留高度 ——
  *   卡片多高这一格就多高，统计卡那一行才收得紧。
  * - **悬停浮起也往下传**（{@link hoverable}）：给的是各卡片自己的 `<nz-card>`，而不是在这一层
@@ -61,7 +61,7 @@ export class WidgetHostComponent {
   readonly item = input<WidgetDataItem | undefined>(undefined);
   /** 可见点表：只有服务类型分布用得到（把 `configId` 解成「厂家 型号」） */
   readonly configs = input<ModbusConfig[]>([]);
-  /** 这张卡的格子高度（像素，`h × 38 + (h−1) × 16`，见 `dashboard.grid`）。四张撑满格子的类型用它 */
+  /** 这张卡的格子高度（像素，见 `dashboard.grid` 的 `cardHeight`）。四张撑满格子的类型用它 */
   readonly height = input.required<number>();
   /**
    * 鼠标移过时浮起（`nz-card` 的 `nzHoverable`）。

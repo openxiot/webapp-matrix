@@ -56,7 +56,7 @@ export class ServiceWidgetComponent {
   readonly title = input.required<string>();
   /** 悬停浮起（`nz-card` 的 `nzHoverable`）。**只有编辑态为真** —— 见 `host/widget.host.ts` */
   readonly hoverable = input(false);
-  /** 格子高度（像素，`h × 38 + (h−1) × 16`）。它是列表滚动区那个确定高度的盒子 */
+  /** 格子高度（像素，见 `dashboard.grid` 的 `cardHeight`）。它是列表滚动区那个确定高度的盒子 */
   readonly height = input.required<number>();
 
   private readonly i18n = inject(MainI18nService);

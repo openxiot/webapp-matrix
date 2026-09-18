@@ -46,7 +46,7 @@ export class DistributionWidgetComponent {
   readonly hoverable = input(false);
   /** 可见点表：`serviceType` 维度把 `configId` 解成显示名要用（与服务清单页同一个函数） */
   readonly configs = input<ModbusConfig[]>([]);
-  /** 格子高度（像素，`h × 38 + (h−1) × 16`）。饼必须有确定高度的盒子，而高度由档位给 */
+  /** 格子高度（像素，见 `dashboard.grid` 的 `cardHeight`）。饼必须有确定高度的盒子，而高度由档位给 */
   readonly height = input.required<number>();
 
   private readonly i18n = inject(MainI18nService);

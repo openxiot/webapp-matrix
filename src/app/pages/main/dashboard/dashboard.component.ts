@@ -1,5 +1,14 @@
-import { Component, computed, effect, inject, OnDestroy, signal } from '@angular/core';
-import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { CdkDragMove, CdkDragStart, DragDropModule } from '@angular/cdk/drag-drop';
 import { catchError, forkJoin, of } from 'rxjs';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -26,13 +35,24 @@ import {
   DashboardWidget,
   GRID_COLUMNS,
   GRID_GAP,
+  GRID_ROW_HEIGHT,
   WidgetType,
   titleOf,
 } from '../../../typedef/define/dashboard/DashboardLayout';
 import { DashboardWidgetData } from '../../../typedef/define/dashboard/DashboardWidgetData';
 import { WidgetEditorComponent } from './editor/widget.editor';
 import { WidgetPickerComponent } from './editor/widget.picker';
-import { cardHeight, sizeOf } from './dashboard.grid';
+import {
+  Placement,
+  cardHeight,
+  cellDelta,
+  compact,
+  ensurePlacements,
+  findSlot,
+  placeAt,
+  placementsOf,
+  sizeOf,
+} from './dashboard.grid';
 import { WidgetHostComponent } from './widget/host/widget.host';
 
 /**
@@ -46,9 +66,11 @@ import { WidgetHostComponent } from './widget/host/widget.host';
  * （§6.5），空看板在正常路径上不出现。
  *
  * 四条口径：
- * - **顺序即位置**：版式就是 `widgets` 的数组顺序，一屏按 24 列 CSS Grid **流式**铺开
- *   （`dashboard.component.html` 的 `.board`），窄屏折成一列交给一条媒体查询。服务端那份顺序一字未动
- *   —— 布局是**空间共享一份**的，一个人在手机上看到的顺序不该改掉所有人的排布。
+ * - **位置是两个坐标**：屏幕是「宽 24 格、高无限」的网格，每张卡带 `x` / `y`（左上角起点），
+ *   占几列几行由 `size` 档位决定（`dashboard.grid` 的 `sizeOf` / `cardHeight`）。
+ *   `widgets` 的**数组顺序是阅读顺序**（窄屏折成一列时的上下次序），每次落定后按 `(y, x)`
+ *   重排一次让两者一致 —— 但它不是位置的真值。旧布局没有坐标，{@link adopt} 进来时整份重铺一遍
+ *   （`ensurePlacements`，复刻的正是改造前浏览器流式排开的样子，所以旧布局长相不变）。
  * - **还没取到就是空白，不是 0**：首屏那几百毫秒里画一个「0」，用户会当成真读数。
  * - **自动刷新按每张卡自己的 `refresh` 分组**，`0` 表示不刷新（§5.2）：把所有卡挂在同一个
  *   最快的节拍上，等于让整屏陪着最勤的那张卡一起请求。
@@ -169,10 +191,7 @@ export class DashboardComponent implements OnDestroy {
   /** 已加载的项目 id（与 `account.space()` 比对，变了才重载） */
   private currentSpaceId = '';
 
-  /**
-   * 这一屏要摆的卡片：编辑态取草稿，否则取服务端那份。**两条路径都是同一个数组类型、同一份顺序**
-   * ——「顺序即位置」，所以这里没有坐标要算。
-   */
+  /** 这一屏要摆的卡片：编辑态取草稿，否则取服务端那份。**两条路径的坐标都是齐的**（见 {@link adopt}） */
   readonly widgets = computed(() =>
     this.editing() ? this.draft() : (this.layout()?.widgets ?? []),
   );
@@ -180,9 +199,15 @@ export class DashboardComponent implements OnDestroy {
   /**
    * 摆上屏的每一格（**扁平的一层**，不是按行分组的两层）。
    *
-   * 扁平是拖拽的前提：CDK 的「让位」是把占位块在**兄弟节点之间**搬来搬去，跨行搬动要求所有
-   * 卡片是同一个容器的直接子节点。原来的 `nz-row` / `nz-col` 两层嵌套因此换成了 24 列 CSS Grid
-   * —— 一行的宽度、换行位置由浏览器按 `grid-column: span N` 自己算，效果与栅格相同。
+   * 扁平是拖拽的前提：所有卡片必须是同一个容器的直接子节点，跨行搬动才谈得上（原来的
+   * `nz-row` / `nz-col` 两层嵌套因此换成了 24 列 CSS Grid）。
+   *
+   * **迭代的仍是 `widgets()` 的数组顺序**，位置走 `grid-column` / `grid-row` 绑定 —— 这一条是
+   * 拖拽能用的前提，不能反：CDK 拖动时把那个 `.cell` 从 DOM 里换成了占位块（`replaceChild`），
+   * 节点正被它持有；Angular 这时候一挪节点，卡片当场跳。所以拖动中变的**只有绑定值**。
+   *
+   * 拖动中每张卡的位置取自 {@link dragTarget} 那次 `placeAt` 的结果（别人已经让开、整屏上吸完），
+   * 没有拖动时就是卡片自己的坐标。
    *
    * 每张卡与它这一刻的读数在这里配成一对（少一次按 id 查找的 O(n²)）。高度按档位给，
    * **编辑态与看数据时是同一个值**（见类说明）。
@@ -191,16 +216,31 @@ export class DashboardComponent implements OnDestroy {
    * 在模板里调一个方法：切语言时它跟着重算，模板方法则要等一次变更检测。
    */
   readonly placements = computed(() => {
-    const byId = new Map((this.data()?.widgets ?? []).map((item) => [item.id, item]));
-    return this.widgets().map((widget) => {
-      const size = sizeOf(widget);
+    const widgets = this.widgets();
+    // 坐标一定齐：布局进 {@link adopt} 时就补过一遍了（见那个方法）
+    const base = placementsOf(widgets);
+    const byId = new Map(base.map((item) => [item.id, item]));
+    // 拖动中：整屏按「拖到那儿之后」的样子排。没拖动时一个字节都不重算
+    const target = this.dragTarget();
+    if (target) {
+      for (const item of placeAt(base, target.id, target.x, target.y)) {
+        byId.set(item.id, item);
+      }
+    }
+    const dataById = new Map((this.data()?.widgets ?? []).map((item) => [item.id, item]));
+    return widgets.map((widget, index) => {
+      const item = byId.get(widget.id) ?? base[index];
       return {
         widget,
-        item: byId.get(widget.id),
+        item: dataById.get(widget.id),
         title: this.widgetTitle(widget),
-        /** 占几列，绑到 `grid-column: span N` */
-        span: size.w,
-        height: cardHeight(size.h),
+        /** 起始列 / 起始行（0 起），绑到 `grid-column` / `grid-row`（CSS 里从 1 起，模板 +1） */
+        x: item.x,
+        y: item.y,
+        /** 占几列几行 */
+        w: item.w,
+        h: item.h,
+        height: cardHeight(item.h),
       };
     });
   });
@@ -212,9 +252,48 @@ export class DashboardComponent implements OnDestroy {
     return label.text ?? this.t(label.key ?? fallback);
   }
 
-  /** 网格列数与间距（`GRID_COLUMNS` / `GRID_GAP` 都在 `DashboardLayout` 里，样式表不抄第二处） */
+  /**
+   * 网格的三个尺寸（都在 `DashboardLayout` 里，**样式表不抄第二处** —— 全由模板绑上去）。
+   *
+   * `rowHeight` 是**行单位**：一行 92px，跨 `h` 行的格子正好 `h × 92 + (h − 1) × 16` 像素，
+   * 与 `cardHeight(h)` 逐像素相同。两张一行高的卡竖着叠起来于是正好等于一张两行高的卡。
+   */
   readonly columns = GRID_COLUMNS;
+  readonly rowHeight = GRID_ROW_HEIGHT;
   readonly gap = GRID_GAP;
+
+  // ===== 拖拽（二维摆放） =====
+
+  /**
+   * 这一拖要落到哪一格。非 null 时整屏按它重排（见 {@link placements}）并画出落点框。
+   *
+   * 只在**指针真的跨了一格之后**才有值：还没动就画一个框罩在这张卡自己身上，是噪音。
+   */
+  readonly dragTarget = signal<{ id: string; x: number; y: number } | null>(null);
+
+  /**
+   * 这一拖开始时那张卡的位置与占格。拖动中一切都是「起点 + 位移」，不用去读正在变的信号。
+   */
+  private dragOrigin: { id: string; x: number; y: number; w: number; h: number } | null = null;
+
+  /**
+   * 一格宽 + 一道缝（像素）。**拖动开始时量一次**：拖动中容器宽度不会变，每像素量一次是白读
+   * 一次布局。量不到（板子还没上屏）时留 0，{@link cellDelta} 对 0 是安全的（横向不位移）。
+   */
+  private colUnit = 0;
+
+  /** 网格容器。只在拖动开始那一刻要它（量列宽），所以用信号查询而不是常驻一份引用 */
+  private readonly boardRef = viewChild<ElementRef<HTMLElement>>('board');
+
+  /** 落点框：把 {@link dragTarget} 换算成绑上去的两条 CSS 网格线（CSS 从 1 起，故 +1） */
+  readonly dropOutline = computed(() => {
+    const target = this.dragTarget();
+    if (!target) {
+      return null;
+    }
+    const item = placementsOf(this.widgets()).find((i) => i.id === target.id);
+    return item ? { x: item.x, y: item.y, w: item.w, h: item.h } : null;
+  });
 
   /** 每张卡自己的定时器（按 `refresh` 分组，见 {@link restartTimers}） */
   private timers: ReturnType<typeof setInterval>[] = [];
@@ -285,7 +364,7 @@ export class DashboardComponent implements OnDestroy {
       configs: this.modbus.listVisible().pipe(catchError(() => of<ModbusConfig[]>([]))),
     }).subscribe({
       next: ({ layout, data, configs }) => {
-        this.layout.set(layout);
+        this.layout.set(this.adopt(layout));
         this.data.set(data);
         this.configs.set(configs);
         this.loading.set(false);
@@ -298,6 +377,21 @@ export class DashboardComponent implements OnDestroy {
         this.error.set(e?.message ?? String(e));
       },
     });
+  }
+
+  /**
+   * 收下一份服务端布局：**先把坐标补齐**，再交给信号。
+   *
+   * 补的是**旧布局**（改造前存下来的那份没有坐标）。补法是 `ensurePlacements` 的整份贪婪铺 ——
+   * 它复刻的正是改造前浏览器流式排开的那个样子，所以旧布局打开后长相不变（见 `dashboard.grid`
+   * 的不变量 3）。改的是刚解出来的那个对象（它是这一趟的产物，没有别人持着），不必再拷一份。
+   *
+   * 三处入口都要过这里：`load` / `save` 回包 / `reset` 回包。漏一处的后果是那份布局的
+   * `widgets` 全没有坐标 —— 而 {@link placements} 是按坐标摆的，于是整屏卡片全叠在左上角。
+   */
+  private adopt(layout: DashboardLayout): DashboardLayout {
+    layout.widgets = ensurePlacements(layout.widgets ?? []);
+    return layout;
   }
 
   /** 项目根空间 + 成员，供 {@link canEdit} 判定；非管理员也要看板，失败静默即可 */
@@ -487,10 +581,13 @@ export class DashboardComponent implements OnDestroy {
   }
 
   /**
-   * 加一张卡：**落在末尾**，紧接着打开对话框填配置。
+   * 加一张卡：**落在第一个放得下的空位**，紧接着打开对话框填配置。
    *
-   * 落末尾是顺序模型的自然结果：没有坐标可挑，要放哪儿拖一下。所以原来那个「扫第一个不重叠的
-   * 空位」（`findSlot`）随坐标一起删掉了 —— 流式排布里本来就没有「空位」这回事。
+   * 扫空位而不是接在末尾：用户腾出来的洞不该只有手动拖才用得回去（`findSlot` 从顶上往下、
+   * 每行从左往右）。落定之后它会以 `findSlot` 给的那一格进 `compact` —— 其实不必：
+   * `findSlot` 本来就是按阅读顺序找到的第一个洞，再吸一遍是恒等的。
+   *
+   * **草稿里坐标一定是齐的**，这也是 {@link placements} 敢直接 `placementsOf` 的前提。
    */
   private addWidget(type: WidgetType): void {
     const widget = new DashboardWidget();
@@ -499,6 +596,10 @@ export class DashboardComponent implements OnDestroy {
     widget.size = DASHBOARD_DEFAULT_SIZE[type] ?? 'S';
     widget.refresh = DEFAULT_REFRESH_SECONDS;
     widget.config = defaultConfig(type);
+    const size = sizeOf(widget);
+    const spot = findSlot(placementsOf(this.draft()), size.w, size.h);
+    widget.x = spot.x;
+    widget.y = spot.y;
     this.draft.set([...this.draft(), widget]);
     this.openEditor(widget, true);
   }
@@ -508,35 +609,116 @@ export class DashboardComponent implements OnDestroy {
     this.openEditor(widget, false);
   }
 
+  /* ----------------------------------------------------------------------------------------------
+   * 拖拽：二维摆放
+   * ----------------------------------------------------------------------------------------------*/
+
   /**
-   * 拖拽落定：把草稿里那两项的位置换过来。
+   * 抓起一张卡：记下起点、量一次列宽。
    *
-   * `previousIndex` / `currentIndex` 是**上屏顺序**（{@link placements}）里的下标，与草稿数组
-   * 一一对应（`placements` 就是按草稿顺序 map 出来的），所以可以直接拿来换。
+   * **不设置 {@link dragTarget}** —— 这时落点就是它自己待着的地方，画个框罩在自己身上只是噪音。
+   * 等指针真的跨了一格（{@link dragMoved}）再画。
    *
-   * 换的是顺序本身，**不重算任何位置** —— 版式就是顺序，浏览器按新的顺序重排。
+   * 卡片身上没有坐标（理论上到不了：进 {@link adopt} 就补过）时整个拖拽不启动：安静地什么都不做
+   * 比按 `0, 0` 算出一堆乱七八糟的位移强。
    */
-  dropWidget(event: CdkDragDrop<unknown>): void {
-    if (!this.editing() || event.previousIndex === event.currentIndex) {
+  dragStarted(event: CdkDragStart<DashboardWidget>): void {
+    const widget = event.source.data;
+    if (!widget || widget.x === undefined || widget.y === undefined) {
+      this.dragOrigin = null;
       return;
     }
-    const next = [...this.draft()];
-    moveItemInArray(next, event.previousIndex, event.currentIndex);
+    const size = sizeOf(widget);
+    this.dragOrigin = { id: widget.id, x: widget.x, y: widget.y, w: size.w, h: size.h };
+
+    // 一格宽 + 一道缝：24 列的网格里，相邻两格的**起点**间距就是这么多。下面那个 `+ gap`
+    // 是把最后一道缝补进来 —— `clientWidth` 是 24 格加 23 道缝，除以 24 才是每格的步长
+    const board = this.boardRef()?.nativeElement;
+    this.colUnit = board ? (board.clientWidth + GRID_GAP) / GRID_COLUMNS : 0;
+  }
+
+  /**
+   * 拖动中：把「从起点走了多少像素」换算成目标格子。
+   *
+   * `cdkDragMoved` **每移动一像素就发一次**，所以目标格子没变就直接返回，不白算一遍整屏让位。
+   * 位置夹在界内（贴着右边 / 顶边停），{@link placeAt} 里还会再夹一次 —— 那一次是给别的调用方
+   * 兜底的，这里夹一次是为了让「没变就 return」判断的是**最终**那个格子。
+   */
+  dragMoved(event: CdkDragMove<DashboardWidget>): void {
+    const origin = this.dragOrigin;
+    if (!origin) {
+      return;
+    }
+    const { dc, dr } = cellDelta(event.distance.x, event.distance.y, this.colUnit);
+    const x = Math.min(Math.max(origin.x + dc, 0), GRID_COLUMNS - origin.w);
+    const y = Math.max(origin.y + dr, 0);
+
+    const current = this.dragTarget();
+    if (current && current.x === x && current.y === y) {
+      return;
+    }
+    this.dragTarget.set({ id: origin.id, x, y });
+  }
+
+  /**
+   * 松手：把落在的那一格写进草稿。
+   *
+   * 写的是 {@link dragTarget} 里那个位置 —— **拖到哪就落在哪**，不被上吸挪走。否则「纵向占领
+   * 空间」这件事根本做不到（往下拖白拖），而且拖动中那个落点框会骗人：瞄着一个位置松手却落到别处。
+   * 让位的代价由别人付：被压到的先往下让，让完整屏上吸（`placeAt` 一个函数里三步走完）。
+   *
+   * 指针没跨过任何一格（一次点击）时 `dragTarget` 是空的，这里什么都不做 —— 那一下是
+   * 「打开这张卡的配置框」，由 `.cell` 上的 `(click)` 管。
+   */
+  dragEnded(): void {
+    const target = this.dragTarget();
+    this.dragOrigin = null;
+    this.dragTarget.set(null);
+    if (!target) {
+      return;
+    }
+    this.applyPlacements(placeAt(placementsOf(this.draft()), target.id, target.x, target.y));
+  }
+
+  /**
+   * 把一份坐标表写回草稿：坐标落到卡片上，数组**按 `(y, x)` 重排**（那是「阅读顺序」，
+   * 窄屏折成一列时按它排）。
+   *
+   * 传进来的表必须已经是排好序的 —— `placeAt` / `compact` 的输出都是（见 `dashboard.grid`
+   * 的不变量 1），所以直接照它的顺序 map 就行。
+   */
+  private applyPlacements(items: Placement[]): void {
+    const byId = new Map(this.draft().map((widget) => [widget.id, widget]));
+    const next: DashboardWidget[] = [];
+    for (const item of items) {
+      const widget = byId.get(item.id);
+      if (widget) {
+        next.push({ ...widget, x: item.x, y: item.y });
+      }
+    }
     this.draft.set(next);
   }
 
   /**
-   * 对话框点「确认」：把改好的那张换回草稿。
+   * 对话框点「确认」：把改好的那张换回草稿，**并重算一遍位置**。
    *
-   * 换的只是这一张，**别处一张都不动**：顺序进线之后改了尺寸也只是它自己换个占格，与谁都不冲突。
+   * 重算是因为尺寸可能变了：`S`（6×2）改成 `XL`（24×4）之后它多半压到了旁边的卡，光把尺寸换上去
+   * 就是两张卡叠在一起。`placeAt` 把它钉在原处、被压的往下让、然后整屏上吸 —— 缩小或删除时
+   * 它同一个函数还会把让出来的空收掉。所以改尺寸、改配置都走这一条路，不必分情况。
    */
   commitEditor(widget: DashboardWidget): void {
     this.draft.set(this.draft().map((w) => (w.id === widget.id ? widget : w)));
     this.closeEditor();
+    // 尺寸变小 / 没变时这一步是恒等的（`placeAt` 幂等），不必先判断有没有变
+    this.applyPlacements(
+      placeAt(placementsOf(this.draft()), widget.id, widget.x ?? 0, widget.y ?? 0),
+    );
   }
 
   /**
-   * 对话框点「删除」：把这张卡从草稿里拿掉。
+   * 对话框点「删除」：把这张卡从草稿里拿掉，**并把它让出来的空收掉**（`compact` 只上吸）。
+   *
+   * 不收的话删掉一张卡会在版式里留一个洞，而那个洞只能靠手动拖别的东西过去补。
    *
    * **只动草稿**，所以不套确认气泡 —— 「退出编辑」天然就是撤销，而库里的那份要到「保存布局」
    * 才会被改。这也正是这个按钮能直接放在对话框 footer 里的原因。
@@ -545,6 +727,7 @@ export class DashboardComponent implements OnDestroy {
     const id = this.editingWidget()?.id;
     if (id) {
       this.draft.set(this.draft().filter((w) => w.id !== id));
+      this.applyPlacements(compact(placementsOf(this.draft())));
     }
     this.closeEditor();
   }
@@ -583,7 +766,8 @@ export class DashboardComponent implements OnDestroy {
   /**
    * 保存布局（整体替换，带乐观锁版本号）。
    *
-   * 存的就是草稿的**数组顺序**本身 —— 屏幕上那一刻看到的顺序，一个字节不重排、不重算。
+   * 存的是草稿**原样** —— 屏幕上那一刻看到的坐标与顺序，一个字节不重排、不重算
+   * （重排只在拖拽落定、改尺寸、删卡片那三处发生，见 `applyPlacements`）。
    *
    * 成功时用**服务端返回的那份**替换手里的布局：版本号已经 +1，不换的话紧接着再存一次
    * 就会撞版本冲突。失败时**不动草稿** —— 用户改的那一屏还在，要不要放弃由他点「退出编辑」决定。
@@ -604,7 +788,7 @@ export class DashboardComponent implements OnDestroy {
       next: (saved) => {
         this.saving.set(false);
         this.exitEdit();
-        this.layout.set(saved);
+        this.layout.set(this.adopt(saved));
         this.msg.success(this.t('保存成功'));
         this.reloadData();
       },
@@ -631,8 +815,10 @@ export class DashboardComponent implements OnDestroy {
       next: (layout) => {
         this.saving.set(false);
         this.closeEditor();
-        this.layout.set(layout);
-        this.draft.set([...layout.widgets]);
+        // 预置布局**不带坐标**（服务端给不了，见 §6.5），铺一遍才有得摆
+        const adopted = this.adopt(layout);
+        this.layout.set(adopted);
+        this.draft.set([...adopted.widgets]);
         this.msg.success(this.t('操作成功'));
         this.reloadData();
       },

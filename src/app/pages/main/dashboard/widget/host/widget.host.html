@@ -1,6 +1,9 @@
 @switch (widget().type) {
   @case ('stat') {
-    <!-- 统计卡不要 `height`：一个高度值都不给它，卡片多高就是多高（见 stat.widget.less） -->
+    <!-- 统计卡不要 `height`：一个高度值都不给它，卡片多高就是多高（见 stat.widget.less）。
+         它的档位（`S1` / `M1`）只有一行 92px，而卡片自然高约 90px —— 差的那 2px 就空在下面，
+         编辑态的虚线框也跟着高 2px，看不见。给个 `height: 100%` 反而会把老档位（存着 `S` = 200px
+         的统计卡）的数字顶到 200px 的正中间，那是这张卡唯一不该有的样子 -->
     <dashboard-stat
       [widget]="widget()"
       [item]="item()"

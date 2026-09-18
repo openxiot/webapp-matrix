@@ -2,7 +2,7 @@
  * 服务卡。`nz-card` 在本组件的模板里，元素选择器直接命中，不需要 `::ng-deep`；
  * 卡身子接住卡头剩下高度那一条（`.ant-card-body`）在 `../host/widget.host.less`。
  *
- * 高度由模板按档位绑上来（`[style.height.px]="height()"`，`h × 38 + (h−1) × 16`，见 dashboard.grid）：
+ * 高度由模板按档位绑上来（`[style.height.px]="height()"`，见 dashboard.grid 的 cardHeight）：
  * 身子里是一个**要滚动的列表**，`overflow: auto` 需要一个确定高度的盒子 —— 与曲线卡的图同一个道理。
  */
 nz-card {

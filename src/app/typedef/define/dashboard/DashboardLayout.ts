@@ -6,35 +6,62 @@
  * - **布局是一个空间（项目）一份**，空间内共享。读写权限不对称：读是空间成员、写是空间管理员。
  *   所以这里**没有 `editable` 字段** —— 能不能编辑由前端按 `isAdmin` 现算（§6.2），
  *   服务端不重复下发一份可能过期的判断。
- * - **顺序即位置**：{@link DashboardLayout.widgets} 的数组顺序就是屏幕顺序，卡片**没有坐标**。
- *   占几列几行由 `size` 档位按 {@link WIDGET_SIZES} 在前端算（服务端只认档位名）。
+ * - **位置是坐标**：每张卡带 {@link DashboardWidget.x}（起始列，0..23）与
+ *   {@link DashboardWidget.y}（起始行，0 起），二维自由摆放。
+ *   {@link DashboardLayout.widgets} 的数组顺序是**阅读顺序**（窄屏一列时的顺序），
+ *   每次落定后按 `(y, x)` 重排一次让两者保持一致 —— 但它**不是位置的真值**。
+ *   占几列几行（`w` / `h`）仍由 `size` 档位按 {@link WIDGET_SIZES} 在前端算，**不上行**：
+ *   服务端只认档位名，存 `w`/`h` 就是第二份会过期的真值。
  * - **时间一律是毫秒时间戳**，与其他接口同口径。
  */
 
 /** 卡片类型。只剩 `line` 的 `serviceField` 分支还没接数据源，提交能存但渲染会回「暂不支持」 */
 export type WidgetType = 'stat' | 'line' | 'distribution' | 'device' | 'service';
 
-/** 尺寸档位。`M` 与 `L` 同宽、只有高度不同（「宽图」与「高图」是两种需求），`XL` 才整宽 */
-export type WidgetSize = 'S' | 'M' | 'L' | 'XL';
+/**
+ * 尺寸档位。名字里那个数字是**占几行**：`S1` 是「S 的一行版」，`S` 是它的两行版。
+ *
+ * `M` 与 `L` 同宽、只有高度不同（「宽图」与「高图」是两种需求），`XL` 才整宽。
+ * `S1` / `M1` 是**统计卡专用**的矮档位（只有它们高度是一行 92px），因为统计卡是唯一
+ * 「没有卡头、按内容自然高 ≈ 90px」的卡片 —— 见 {@link DASHBOARD_SIZE_CHOICES}。
+ */
+export type WidgetSize = 'S1' | 'M1' | 'S' | 'M' | 'L' | 'XL';
 
 /**
  * 尺寸档位 → 占几列几行（24 列网格）。
  *
- * **这张表只在前端**：服务端只认档位名（`S` / `M` / `L` / `XL` 认不认识），排版知识全在
- * 这里 —— 加档位时改这一处，后端 `WidgetSize` 跟着加一个枚举常量即可，不必同步数值。
+ * **这张表只在前端**：服务端只认档位名（认不认识这个名字），排版知识全在这里 ——
+ * 加档位时改这一处，后端 `WidgetSize` 跟着加一个枚举常量即可，不必同步数值。
+ * 服务端也**不存 `w` / `h`**：那是从档位推出来的，存一份就是第二份会过期的真值。
+ *
+ * `h` 是**行数**，一行 {@link GRID_ROW_HEIGHT} 像素，所以像素高度 = `h × 92 + (h − 1) × 16`。
+ * 一行 92 这个数是挑出来的（理由见 {@link GRID_ROW_HEIGHT}）：它让每一档的像素高度与
+ * 改造前**一像素不差**，同时让「两张一行高的卡竖着叠起来」正好等于「一张两行高的卡」。
  */
 export const WIDGET_SIZES: Record<WidgetSize, { w: number; h: number }> = {
-  S: { w: 6, h: 4 },
-  M: { w: 12, h: 4 },
-  L: { w: 12, h: 8 },
-  XL: { w: 24, h: 8 },
+  S1: { w: 6, h: 1 }, // 92px，统计专用
+  M1: { w: 12, h: 1 }, // 92px，统计专用
+  S: { w: 6, h: 2 }, // 200px
+  M: { w: 12, h: 2 }, // 200px
+  L: { w: 12, h: 4 }, // 416px
+  XL: { w: 24, h: 4 }, // 416px
 };
 
 /** 网格列数（§D4）：CSS Grid 的 `repeat(24, 1fr)` */
 export const GRID_COLUMNS = 24;
 
-/** 卡片行高（px）。**这是真正的常量之一**，卡片的像素高度 = `h × 38 + (h − 1) × 16` */
-export const GRID_ROW_HEIGHT = 38;
+/**
+ * 卡片行高（px）。**这是真正的常量之一**。
+ *
+ * 92 不是个整数好看的数字，是算出来的：它与 {@link GRID_GAP} 一起让**每一档的像素高度
+ * 与改造前完全相同**（1 行 92、2 行 200、4 行 416 —— 即原来的 S/M 与 L/XL），
+ * 同时保证「两张一行高的卡竖着叠起来 = 一张两行高的卡」（`92 + 16 + 92 = 200`），
+ * 这就是用户要的「高度可以拼接」。换个数字（比如字面的 90）就要连间距一起动，
+ * 而间距一动，24 列的列宽会跟着变，**每一张卡的宽度都得重算**。
+ *
+ * 像素高度一律由 `dashboard.grid` 的 `cardHeight()` 算，**别在别处再抄一遍这个算式**。
+ */
+export const GRID_ROW_HEIGHT = 92;
 
 /** 卡片间距（px）。另一个真正的常量 */
 export const GRID_GAP = 16;
@@ -118,8 +145,8 @@ export interface DashboardPerson {
 /**
  * 一张卡片。五种类型共用一个壳，差异全在 {@link config} 里。
  *
- * **没有位置字段**：卡片摆在哪儿由它在 {@link DashboardLayout.widgets} 里的**下标**决定
- * （顺序即位置），占格由 {@link size} 档位决定。
+ * **位置是两个坐标**：{@link x} / {@link y} 是左上角起点（网格单位）。占几列几行由
+ * {@link size} 档位决定 —— **`w` / `h` 不上行**，服务端只收 `x` / `y`。
  *
  * `config` 的类型是 `Record<string, unknown>` 而不是 {@link StatConfig} 那样的联合类型：
  * 线格式里它本来就是一个异构对象，按 `type` 断言成某个具体类型是**编辑器**该做的事
@@ -142,8 +169,19 @@ export class DashboardWidget {
    * 而按 AGENTS.md 的规则，服务端下发的 `title` 恰恰不许翻译）。
    */
   titleKey?: string;
-  /** 尺寸档位。占几列几行按 {@link WIDGET_SIZES} 算；拖拽只改顺序、不改档位 */
+  /** 尺寸档位。占几列几行按 {@link WIDGET_SIZES} 算；拖拽只改坐标、不改档位 */
   size: WidgetSize = 'S';
+  /**
+   * 起始列（0 起，`0 .. GRID_COLUMNS − 1`）。
+   *
+   * **没有这个键 = 旧布局**（改造前存下来的是「顺序即位置」，卡片不带坐标）。
+   * 这种情况由 `DashboardLayoutCodec.decode` 按数组顺序 `flowPlace` 补一遍 ——
+   * 那条路径复刻的正是改造前浏览器的流式排布，所以旧布局打开后长相不变。
+   * 两者**要么都有、要么都没有**：只给一个的文档按「都没有」处理（见 codec）。
+   */
+  x?: number;
+  /** 起始行（0 起，上不封顶）。与 {@link x} 同生同灭 */
+  y?: number;
   /** 自动刷新间隔（秒）；`0` = 不自动刷新。缺省按 {@link DEFAULT_REFRESH_SECONDS} */
   refresh?: number;
   config: Record<string, unknown> = {};
@@ -159,10 +197,12 @@ export class DashboardLayout {
    */
   version: number = 0;
   /**
-   * 卡片列表。**数组顺序就是屏幕顺序**，从左上往右下流式铺开（`flow` 的排版规则）；
-   * 拖拽换的是这个数组里两项的位置。
+   * 卡片列表。**数组顺序是阅读顺序**（窄屏一列时的上下次序），**不是位置** ——
+   * 位置是每张卡自己的 {@link DashboardWidget.x} / {@link DashboardWidget.y}。
    *
-   * 服务端保存时**原样保留这个顺序**，不做任何重排 —— 顺序是用户的意图，不是可推导的派生物。
+   * 两者保持一致的办法是：**每次落定后按 `(y, x)` 重排一次这个数组**（见 `dashboard.grid`
+   * 的 `placeAt` / `compact`，它们的输出都是排好序的）。所以数组顺序是**派生物**，
+   * 但服务端保存时仍**原样保留**它，只校验坐标 —— 服务端不做排序，重排是前端的活。
    */
   widgets: DashboardWidget[] = [];
   /** 创建者（展示用）。**预置布局没有作者**，这两个键整个不出现 */
@@ -198,13 +238,32 @@ export const DASHBOARD_WIDGET_TITLES: Record<WidgetType, string> = {
  */
 export const DASHBOARD_EDITABLE_TYPES: WidgetType[] = ['stat', 'line', 'distribution', 'device', 'service'];
 
-/** 新建卡片时的尺寸档位。取值照服务端预置布局（统计卡 `S`、另外两种 `M`） */
+/** 新建卡片时的尺寸档位。必须落在 {@link DASHBOARD_SIZE_CHOICES} 里，否则下拉显示不出当前值 */
 export const DASHBOARD_DEFAULT_SIZE: Record<WidgetType, WidgetSize> = {
-  stat: 'S',
+  stat: 'S1',
   line: 'M',
   distribution: 'M',
   device: 'S',
   service: 'M',
+};
+
+/**
+ * 各类型**能选**的尺寸档位（编辑器那个下拉的选项表）。
+ *
+ * 统计卡只给两个矮档位：它是唯一「没有卡头、按内容自然高」的卡片，实测约 90px ——
+ * 塞进 200px 的档位里下面会空 110px。两个矮档位（6 格 / 12 格，都是一行 92px）
+ * 正好是它需要的全部自由度。
+ *
+ * **存量统计卡（库里存着 `S` / `M` / `L` / `XL` 的）不受这张表约束**：渲染侧一律按存的档位渲染，
+ * 不悄悄改用户的布局；只有打开编辑器时下拉里没有当前值，用户一保存就落成合法档位。
+ * 静默改尺寸比留一个旧档位更坏 —— 用户没动过的卡片自己变了大小，是查不出原因的。
+ */
+export const DASHBOARD_SIZE_CHOICES: Record<WidgetType, WidgetSize[]> = {
+  stat: ['S1', 'M1'],
+  line: ['S', 'M', 'L', 'XL'],
+  distribution: ['S', 'M', 'L', 'XL'],
+  device: ['S', 'M', 'L', 'XL'],
+  service: ['S', 'M', 'L', 'XL'],
 };
 
 /**

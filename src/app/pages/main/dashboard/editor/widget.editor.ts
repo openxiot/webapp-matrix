@@ -17,6 +17,7 @@ import { DashboardCatalog, catalogDevices } from '../../../../typedef/define/das
 import {
   DASHBOARD_DIMENSIONS,
   DASHBOARD_METRICS,
+  DASHBOARD_SIZE_CHOICES,
   DEFAULT_REFRESH_SECONDS,
   DashboardWidget,
   WIDGET_SIZES,
@@ -24,6 +25,7 @@ import {
   dashboardDimensionLabel,
   dashboardMetricLabel,
 } from '../../../../typedef/define/dashboard/DashboardLayout';
+import { cardHeight } from '../dashboard.grid';
 import { absoluteWindow } from '../dashboard.folding';
 import { readBoolean, readNumber, readString, readStringArray, readWindow } from '../dashboard.config';
 import { ServiceFieldRef, serviceFieldsOf } from '../../device/services/service/service.fields';
@@ -111,11 +113,29 @@ export class WidgetEditorComponent {
   /** `refresh` 缺省按服务端那档（§5.2），`0` 表示不刷新 */
   readonly refresh = computed(() => this.draft().refresh ?? DEFAULT_REFRESH_SECONDS);
 
-  readonly sizes: WidgetSize[] = Object.keys(WIDGET_SIZES) as WidgetSize[];
-
   // ===== 按类型分叉的配置 =====
 
   readonly type = computed(() => this.draft().type);
+
+  /**
+   * 这个类型**能选**的尺寸档位，连显示名一起给好。
+   *
+   * 按类型分叉，不是全表：统计卡只给两个矮档位（一行 92px）—— 它是唯一「没有卡头、按内容
+   * 自然高约 90px」的卡片，塞进 200px 的档位里下面会空 110px。别的卡片给四个正常档位。
+   *
+   * 显示名是「档位名 · 占几列 × 多少像素」，只有数字与乘号 —— **不引入任何要翻译的文案**，
+   * 但一眼看得出 `S1` 与 `S` 差在哪。像素高度走 `cardHeight`（与卡片实际高度同一份算式）。
+   *
+   * **存量统计卡（库里存着 `S` / `M` / `L` / `XL` 的）渲染侧一律不管**，按存的档位渲染 ——
+   * 不悄悄改用户的布局；只是打开这个对话框时下拉里没有当前值，用户一保存就落成合法档位。
+   * 静默改尺寸比留一个旧档位更坏：用户没动过的卡片自己变了大小，是查不出原因的。
+   */
+  readonly sizes = computed(() =>
+    (DASHBOARD_SIZE_CHOICES[this.type()] ?? DASHBOARD_SIZE_CHOICES.stat).map((size) => {
+      const box = WIDGET_SIZES[size];
+      return { size, label: `${size} · ${box.w}×${cardHeight(box.h)}` };
+    }),
+  );
 
   private readonly config = computed(() => this.draft().config ?? {});
 

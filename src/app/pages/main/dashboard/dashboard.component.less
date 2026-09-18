@@ -34,18 +34,19 @@
 }
 
 /*
- * 一屏卡片：24 列网格，**扁平的一层**。
+ * 一屏卡片：24 列 × 无限行的网格，**扁平的一层**，每一格显式定位。
  *
- * 这里**不写死任何尺寸**：列数（`grid-template-columns`）、间距（`gap`）全来自模板上的绑定，
- * 而那两个常量（`GRID_COLUMNS` / `GRID_GAP`）与卡片高度（`h × 38 + (h − 1) × 16`）都在
- * `DashboardLayout` / `dashboard.grid` 里 —— 抄进样式表就是第二处。
+ * 这里**不写死任何尺寸**：列数（`grid-template-columns`）、行高（`grid-auto-rows`）、
+ * 间距（`gap`）全来自模板上的绑定 —— 三个常量（`GRID_COLUMNS` / `GRID_ROW_HEIGHT` /
+ * `GRID_GAP`）都在 `DashboardLayout` 里，抄进样式表就是第二处。
  *
- * `align-items: start`：一行里矮的卡片**不拉伸**到最高那张的高度（统计卡撑成 400px 高只会
- * 中间一个孤零零的数字）。行高本身仍由最高的那张决定，这正是流式排布要的。
+ * **没有 `align-items: start`**。它原来的作用是「一行里矮的卡片不拉伸到最高那张的高度」，
+ * 那在流式排布里才有意义；现在每张卡的行跨度就是它的高度，需求没了。留着反而有害：
+ * `align-self: start` 会让 `.cell` 只取内容高、不占满它那 `h` 行，编辑态的虚线框会比卡片矮一截
+ * （默认的 `stretch` 才对）。
  */
 .board {
   display: grid;
-  align-items: start;
 }
 
 /* 一格。`min-width: 0`：卡片里一张宽图或一个长标题会把格子撑破（网格轨道是 `1fr` 定死的，
@@ -55,13 +56,31 @@
 }
 
 /*
+ * 落点框：拖动中这张卡要落到哪一格。
+ *
+ * 它本身就是网格里的一个成员（模板上给了与卡片同款的 `grid-column` / `grid-row`），所以跨几行
+ * 就自动多高 —— **一个像素都不用量**，也就不会与卡片的实际尺寸对不上。
+ *
+ * `pointer-events: none` 必须有：它浮在别人（以及被拖的那张的占位块）上面，吃掉事件的话
+ * 指针底下的卡片就收不到拖拽了。
+ */
+.drop-outline {
+  z-index: 1;
+  pointer-events: none;
+  background: rgba(22, 119, 255, 0.08);
+  border: 2px dashed #1677ff;
+  border-radius: 4px;
+}
+
+/*
  * 窄屏（小于 antd 的 `md`，即手机与竖屏平板）一列一张。
  *
- * 换成 flex 而不是改 `grid-template-columns`：flex 布局下 `grid-column`（模板上那个内联的
- * `span N`）**整个失效**，一行一张是自然结果。写成 `grid-template-columns: 1fr` 反而不行
- * —— 卡片仍带着 `span 6`，浏览器会为了容纳它补出隐含列，于是又变回多列。
+ * 换成 flex 而不是改 `grid-template-columns`：flex 布局下 `grid-column` / `grid-row`
+ * （模板上那两条内联的定位）**整个失效**，卡片按 DOM 顺序（= `(y, x)` 阅读顺序）竖排，
+ * 一行一张是自然结果。写成 `grid-template-columns: 1fr` 反而不行 —— 卡片仍带着 `span 6`，
+ * 浏览器会为了容纳它补出隐含列，于是又变回多列。
  *
- * **阈值看的是视口宽度，不是容器宽度**（与原来用栅格折行时同一口径）。所以 1400px 的屏幕上
+ * 阈值看的是**视口宽度**，不是容器宽度（与原来用栅格折行时同一口径）。所以 1400px 的屏幕上
  * 展开侧栏、容器只剩 600px 时，卡片仍按宽屏排。
  */
 @media (max-width: 767px) {
@@ -104,17 +123,21 @@
 }
 
 /*
- * 原地留下的那个占位块：CDK 深拷一份真卡片放在那儿（`deepCloneNode`），所以尺寸、圆角都对，
- * 只有 canvas 是空的。压暗一点、加一道虚线，读成「这里空着，等那张卡落下来」。
+ * 原地留下的那个占位块：CDK 拖动时把 `.cell` **整个换成**一份深拷（`replaceChild`），
+ * 那份拷贝带着当时的 `grid-column` / `grid-row`，所以它会一动不动地停在卡片原来那一格。
  *
- * 这三条 CDK 的样式这份工程**没有引**（`styles.less` 里没有 `@angular/cdk` 的 prebuilt css），
- * 所以自己写。`.cdk-drag-animating` 给落定后归位的那一下一个过渡，不然松手是「跳」回去的。
+ * **藏掉它**。让位已经由 `placeAt` 实时算出来、别的卡片当场就让开了，原地再杵着一张半透明的
+ * 旧位置卡片是过期信息（读起来像「复制了一份在这儿」）。真正说明落点的是 `.drop-outline`。
+ *
+ * 用 `opacity: 0` 而不是 `display: none`：后者会让这一格整个退出网格，隐含行的尺寸可能跟着变，
+ * 落定时画面会抖一下。
+ *
+ * `.cdk-drag-animating` 给落定后归位的那一下一个过渡，不然松手是「跳」回去的。
+ * 这两条 CDK 的样式这份工程**没有引**（`styles.less` 里没有 `@angular/cdk` 的 prebuilt css），
+ * 所以自己写。
  */
 .cdk-drag-placeholder {
-  opacity: 0.35;
-  outline: 1px dashed rgba(0, 0, 0, 0.35);
-  outline-offset: -1px;
-  border-radius: 4px;
+  opacity: 0;
 }
 
 .cdk-drag-animating {
