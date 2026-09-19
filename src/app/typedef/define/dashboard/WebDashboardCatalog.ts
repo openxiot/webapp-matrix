@@ -1,5 +1,5 @@
 /**
- * 看板编辑器要的候选清单（`GET /matrix/v1/dashboard/catalog/{spaceId}`）。
+ * 看板编辑器要的候选清单（`GET /matrix/v1/dashboard/web/catalog/{spaceId}`）。
  *
  * 存在这个接口的理由只有一个：**编辑器要的是实体本身的形状** ——
  * 服务卡的三级级联要 `functions[].response[]` 里的 `format` / `unit` / `valueList` / `bitList`，

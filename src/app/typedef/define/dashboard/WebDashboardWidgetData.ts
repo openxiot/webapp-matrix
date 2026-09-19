@@ -1,5 +1,5 @@
 /**
- * 看板取数的结果（`POST /matrix/v1/dashboard/render/{spaceId}`）。
+ * 看板取数的结果（`POST /matrix/v1/dashboard/web/render/{spaceId}`）。
  *
  * 与「布局」分开是有意的：布局是**用户配置**（存在库里、可编辑、有版本号），取数是**瞬时读数**
  * （算完就丢、下次刷新全换）。放一份类型里会让「哪些字段能保存」变得要靠记忆。

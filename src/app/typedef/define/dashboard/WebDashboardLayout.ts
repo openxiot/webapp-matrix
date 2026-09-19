@@ -1,5 +1,5 @@
 /**
- * 自定义数据看板的布局与卡片（`/matrix/v1/dashboard`，见 service-matrix 的
+ * 自定义数据看板的布局与卡片（Web 端，API `/matrix/v1/dashboard/web`，见 service-matrix 的
  * `自定义首页方案.md` 与 `API.md`）。
  *
  * 三条与后端对齐的口径：
