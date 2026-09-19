@@ -75,8 +75,8 @@ interface MenuState {
 @Component({
   selector: 'project-3d-view',
   standalone: true,
-  templateUrl: './project.3d.component.html',
-  styleUrl: './project.3d.component.less',
+  templateUrl: './project.3d.view.component.html',
+  styleUrl: './project.3d.view.component.less',
   changeDetection: ChangeDetectionStrategy.Eager,
   // Project3dData 不加 providedIn:'root' —— 空间图跟着页面走，离开路由就该被回收。
   // NzModalService 与 project.component 同样列在这里，让弹窗跟随本页生命周期。

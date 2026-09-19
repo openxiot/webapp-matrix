@@ -113,7 +113,7 @@ function deviceKey(did: string): string {
 @Component({
   selector: 'project-table-view',
   standalone: true,
-  templateUrl: './project.table.component.html',
+  templateUrl: './project.table.view.component.html',
   imports: [
     NzSpinModule,
     NzButtonModule,

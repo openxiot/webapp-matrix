@@ -170,8 +170,8 @@ function buildTree(spaces: SpaceEntity[]): SpaceEntity | null {
 
 @Component({
   selector: 'project-tree-view',
-  templateUrl: './project.tree.component.html',
-  styleUrl: './project.tree.component.less',
+  templateUrl: './project.tree.view.component.html',
+  styleUrl: './project.tree.view.component.less',
   imports: [
     DragDropModule,
     TranslatePipe,

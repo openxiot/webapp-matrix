@@ -19,7 +19,7 @@ import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
 import { GenericService } from '../../../../typedef/define/service/GenericService';
 import { GraphNode } from './graph/project.tree.graph';
 import { CANVAS_PAD, NODE_H, NODE_W, Offsets, PANEL_GAP, PANEL_W, TreeLayout } from './layout/project.tree.layout';
-import { ProjectTreeViewComponent } from './project.tree.component';
+import { ProjectTreeViewComponent } from './project.tree.view.component';
 
 /*
  * 这一份是**挂载用例**（`TestBed.createComponent`），与 `project.tree.graph.spec.ts`（树拼得对不对）、

@@ -7,9 +7,9 @@ import { Location } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { AccountService } from '../../../service/account.service';
-import { ProjectTableViewComponent } from './table/project.table.component';
-import { ProjectTreeViewComponent } from './tree/project.tree.component';
-import { Project3dViewComponent } from './3d/project.3d.component';
+import { ProjectTableViewComponent } from './table/project.table.view.component';
+import { ProjectTreeViewComponent } from './tree/project.tree.view.component';
+import { Project3dViewComponent } from './3d/project.3d.view.component';
 
 /** 项目页的三种视图。 */
 type ProjectView = 'table' | 'tree' | '3d';
