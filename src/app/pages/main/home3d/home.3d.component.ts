@@ -11,7 +11,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { DatePipe, Location, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -56,6 +56,9 @@ import {
   type SpaceDevicesData,
   type SpaceDevicesResult,
 } from './dialog/space.devices.component';
+import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
+import { NzBreadCrumbComponent } from 'ng-zorro-antd/breadcrumb';
+import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
 
 /** 压缩后的模型产物，路径相对于 index.html（见 3d/README.md 的生成管线） */
 const MODEL_URL = '3d/001/scene.glb';
@@ -93,9 +96,17 @@ interface MenuState {
     NzIconModule,
     NzSpinModule,
     TranslatePipe,
+    NzPageHeaderModule,
+    NzBreadCrumbComponent,
+    BreadcrumbTranslateDirective,
   ],
 })
 export class Home3dComponent implements AfterViewInit, OnDestroy {
+
+  protected readonly location = inject(Location);
+
+  rootSpace = signal<SpaceEntity | null>(null);
+
   protected readonly loading = signal(true);
   /** 0~100，只用于加载遮罩上的百分比 */
   protected readonly progress = signal(0);
@@ -363,7 +374,9 @@ export class Home3dComponent implements AfterViewInit, OnDestroy {
   private infoPanelFor(hovered: { kind: 'space' | 'device'; id: string }): InfoPanel | null {
     if (hovered.kind === 'space') {
       const space = this.data.spaceById().get(hovered.id);
-      return space ? spaceInfo(space, this.data.spaceById(), this.data.devices(), this.infoText()) : null;
+      return space
+        ? spaceInfo(space, this.data.spaceById(), this.data.devices(), this.infoText())
+        : null;
     }
     const device = this.data.deviceById().get(hovered.id);
     return device ? deviceInfo(device, this.data.spaceById(), this.infoText()) : null;

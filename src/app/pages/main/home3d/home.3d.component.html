@@ -1,3 +1,11 @@
+<nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
+  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+</nz-page-header>
+
+<ng-template #pageTitle>
+  {{ rootSpace()?.name || ('项目详情' | translate) }}
+</ng-template>
+
 <div #sceneWrap class="scene-wrap" [class.scene-wrap--dark]="background() === 'black'">
   <div #sceneHost class="scene-host"></div>
 

@@ -19,18 +19,6 @@
         }
       }
     </nz-page-header-extra>
-
-    <nz-page-header-content>
-      @if (rootSpace(); as root) {
-        <nz-descriptions nzSize="small" [nzColumn]="3">
-          <nz-descriptions-item nzTitle="{{ '空间代码' | translate }}" [nzSpan]="1">{{ root.id }}</nz-descriptions-item>
-          <nz-descriptions-item nzTitle="{{ '空间名称' | translate }}" [nzSpan]="1">{{ root.name }}</nz-descriptions-item>
-          <nz-descriptions-item nzTitle="{{ '空间类型' | translate }}" [nzSpan]="1">{{ typeLabel(root) | translate }}</nz-descriptions-item>
-          <nz-descriptions-item nzTitle="{{ '设备数量' | translate }}" [nzSpan]="1">{{ devices().length }}</nz-descriptions-item>
-          <nz-descriptions-item nzTitle="{{ '服务数量' | translate }}" [nzSpan]="1">{{ services().length }}</nz-descriptions-item>
-        </nz-descriptions>
-      }
-    </nz-page-header-content>
   </nz-page-header>
 
   <ng-template #pageTitle>
