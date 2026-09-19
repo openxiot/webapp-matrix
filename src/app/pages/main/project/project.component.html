@@ -1,149 +1,28 @@
-<nz-spin [nzSpinning]="loading()">
-  <nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="pageTitle" [nzGhost]="false">
-    <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
+<nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="titleTpl" [nzGhost]="false">
+  <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
 
-    <!-- 根空间已不出现在列表里（见 rows），它的「添加子空间 / 添加设备」入口挪到页头，仅管理员可见 -->
-    <nz-page-header-extra>
-      @if (rootSpace(); as root) {
-        @if (isAdmin()) {
-          <nz-space>
-            <button *nzSpaceItem nz-button (click)="addChildSpace(root)">
-              <span nz-icon nzType="plus"></span>
-              {{ '添加子空间' | translate }}
-            </button>
-            <button *nzSpaceItem nz-button nzType="primary" (click)="addDevice(root)">
-              <span nz-icon nzType="plus"></span>
-              {{ '添加设备' | translate }}
-            </button>
-          </nz-space>
-        }
-      }
-    </nz-page-header-extra>
-  </nz-page-header>
+  <!-- 三视图切换：同居宿，切哪个渲染哪个。文案走 TS 里的 translate（见 viewOptions）。 -->
+  <nz-page-header-extra>
+    <nz-segmented
+      [nzOptions]="viewOptions()"
+      [ngModel]="viewMode()"
+      (ngModelChange)="onViewChange($event)"
+    ></nz-segmented>
+  </nz-page-header-extra>
+</nz-page-header>
 
-  <ng-template #pageTitle>
-    {{ rootSpace()?.name || ('项目详情' | translate) }}
-  </ng-template>
+<!-- 三种视图是平级子组件。@switch 只建当前匹配分支 —— 3D 是重 WebGL 场景，切到才建实例，
+     免得默认加载（甚至根本没切过去）就抢一个 0 尺寸的 context。 -->
+@switch (viewMode()) {
+  @case ('table') {
+    <project-table-view />
+  }
+  @case ('tree') {
+    <project-tree-view />
+  }
+  @case ('3d') {
+    <project-3d-view />
+  }
+}
 
-  <div style="padding: 20px 20px">
-    <nz-table [nzData]="rows()" [nzFrontPagination]="false" [nzShowPagination]="false">
-      <thead>
-        <tr>
-          <th>{{ '名称' | translate }}</th>
-          <th>{{ '类型' | translate }}</th>
-          <th>{{ '说明' | translate }}</th>
-          <th>{{ '更新时间' | translate }}</th>
-          <th>{{ '操作' | translate }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (row of rows(); track row.key) {
-          <tr>
-            <td
-              [nzIndentSize]="row.level * 20"
-              [nzShowExpand]="row.hasChildren"
-              [nzExpand]="isExpanded(row)"
-              (nzExpandChange)="onExpandChange(row, $event)"
-            >
-              @switch (row.kind) {
-                @case ('space') {
-                  <span nz-icon [nzType]="iconOf(row.space!)"></span>&nbsp;{{ row.space!.name }}
-                }
-                @case ('service') {
-                  <span nz-icon nzType="api"></span>&nbsp;{{ row.service!.name }}
-                }
-                @default {
-                  @if (deviceIcon(row.device!); as icon) {
-                    <nz-avatar [nzSrc]="icon" [nzSize]="32"></nz-avatar>
-                  } @else {
-                    <nz-avatar [nzSize]="32" nzIcon="hdd"></nz-avatar>
-                  }
-                  {{ deviceName(row.device!) }}
-                }
-              }
-            </td>
-            <td>
-              @switch (row.kind) {
-                @case ('space') {
-                  <nz-tag nzColor="cyan">{{ typeLabel(row.space!) | translate }}</nz-tag>
-                }
-                @case ('service') {
-                  <nz-tag nzColor="blue">{{ '服务' | translate }}</nz-tag>
-                }
-                @default {
-                  <nz-tag nzColor="green">{{ '设备' | translate }}</nz-tag>
-                }
-              }
-            </td>
-            <td>
-              @switch (row.kind) {
-                @case ('space') {
-                  {{ deviceCount(row.space!.id) }} {{ '设备' | translate }}
-                  @if (serviceCount(row.space!.id) > 0) {
-                    · {{ serviceCount(row.space!.id) }} {{ '服务' | translate }}
-                  }
-                }
-                @case ('device') {
-                  <nz-tag [nzColor]="row.device!.online ? 'success' : 'default'">
-                    {{ row.device!.online ? ('在线' | translate) : ('离线' | translate) }}
-                  </nz-tag>
-                }
-              }
-            </td>
-            <td>
-              @switch (row.kind) {
-                @case ('space') {
-                  {{ row.space!.updateTime ? (row.space!.updateTime | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
-                }
-                @case ('device') {
-                  {{ (row.device!.lastOnline || row.device!.lastOffline) ? ((row.device!.lastOnline || row.device!.lastOffline) | date:'yyyy-MM-dd HH:mm:ss') : '-' }}
-                }
-              }
-            </td>
-            <td>
-              @switch (row.kind) {
-                @case ('space') {
-                  <!-- 空间行的三个操作都要空间管理员：非管理员这一格是空的 -->
-                  @if (isAdmin()) {
-                    <a (click)="addDevice(row.space!)">{{ '添加设备' | translate }}</a>
-                    <nz-divider nzType="vertical"></nz-divider>
-                    <a (click)="addChildSpace(row.space!)">{{ '添加子空间' | translate }}</a>
-                    <nz-divider nzType="vertical"></nz-divider>
-                    <a (click)="removeSpace(row.space!)">{{ '删除' | translate }}</a>
-                  }
-                }
-                @case ('service') {
-                  <a [routerLink]="serviceDetailLink(row.service!)">{{ '详情' | translate }}</a>
-
-                  <nz-divider nzType="vertical"></nz-divider>
-                  <a [routerLink]="serviceHistoryLink(row.service!)">{{ '历史' | translate }}</a>
-
-                  @if (isAdmin()) {
-                    <nz-divider nzType="vertical"></nz-divider>
-                    <a (click)="removeService(row.service!)">{{ '删除' | translate }}</a>
-                  }
-                }
-                @default {
-                  <a [routerLink]="['/main/device/detail', row.device!.did]">{{ '详情' | translate }}</a>
-
-                  @if (showMapping(row.device!)) {
-                    <nz-divider nzType="vertical"></nz-divider>
-                    <a [routerLink]="['/main/device/services', row.device!.did]">{{ '服务' | translate }}</a>
-                  }
-
-                  <!-- 调试 / 删除都要空间管理员；详情、服务对空间成员开放 -->
-                  @if (isAdmin()) {
-                    <nz-divider nzType="vertical"></nz-divider>
-                    <a [routerLink]="['/main/device/debugger', row.device!.did]">{{ '调试' | translate }}</a>
-                    <nz-divider nzType="vertical"></nz-divider>
-                    <a (click)="removeDevice(row.device!)">{{ '删除' | translate }}</a>
-                  }
-                }
-              }
-            </td>
-          </tr>
-        }
-      </tbody>
-    </nz-table>
-  </div>
-</nz-spin>
+<ng-template #titleTpl>{{ '项目' | translate }}</ng-template>

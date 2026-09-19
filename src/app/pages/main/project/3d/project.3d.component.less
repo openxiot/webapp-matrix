@@ -1,0 +1,847 @@
+/*
+ * 可用高度 = 视口 − 页头 64px − 页脚 70px（`nz-content` 才是滚动区，页脚也在里面）。
+ * 这笔账跟 dashboard 那边是同一个，页头/页脚高度变了要一起改。
+ */
+@header-height: 64px;
+@footer-height: 70px;
+
+/*
+ * 面板底色：信息面板、告警框、以及纯黑背景下的控件列**共用这一个值**。
+ *
+ * 写成变量而不是各写一遍：这几处压在模型上是「一家人」这件事，只有同一个数才靠得住 ——
+ * 分开写的话调了一处忘了另一处，屏幕上就是两块深浅不一的半透明块，而这正是肉眼最
+ * 容易看出来、却最难说出哪里不对的那种毛病。
+ *
+ * 0.6 是几轮调整后的结果（0.82 → 0.72 → 0.6）。这些面板都压在模型上，透一点才看得见
+ * 后面是什么。⚠️ 浅色模型上白字会因此变淡，觉得压不住字就改这一个数。
+ */
+@panel-bg: rgba(24, 34, 48, 0.6);
+
+:host {
+  display: block;
+}
+
+.scene-wrap {
+  position: relative;
+  height: calc(100vh - @header-height - @footer-height);
+  min-height: 420px;
+  overflow: hidden;
+
+  /*
+   * 场景上那两条说明文字 —— 全屏时顶部的项目名、底部的提示条 —— **共用这一套**，
+   * 配色跟着背景翻：深色药丸在纯黑背景上没有轮廓，浅色药丸压在浅色模型上同样没有，
+   * 所以不能钉死一个色。
+   *
+   * 两处**合成一份**而不是各写一份：它们在两种背景下已经是同一套了（浅色都是 45% 黑底
+   * 白字、无描边，深色都是 `@panel-bg` + 白描边 + 白字）。而各写一份一模一样的三元组
+   * 就是等着哪天改了一处、忘了另一处 —— 这两条会同时出现在全屏画面上（一上一下），
+   * 深浅差一点点是肉眼最容易看出来、又最难说出哪里不对的那种毛病。
+   *
+   * 描边**浅色下也占位**（`transparent`），两条文字因此都比不带描边时矮 2px、窄 2px：
+   * 各自的 `padding` 已经各减 1px 抵平（见 `.scene-title` / `.scene-hint`），
+   * 浅色下的盒子一个像素都没动。
+   *
+   * 用自定义属性而不是两组后代选择器，是为了绕开一个优先级坑 ——
+   * `.scene-wrap--dark .scene-hint` 会连 `.scene-hint--action` 的蓝底一起盖掉。
+   */
+  --caption-bg: rgba(0, 0, 0, 0.45);
+  --caption-border: transparent;
+  --caption-fg: #fff;
+  --mask-bg: rgba(255, 255, 255, 0.72);
+  --mask-fg: rgba(0, 0, 0, 0.65);
+
+  /*
+   * 右侧控件列（四颗开关 + 三颗按钮）的配色。理由与上面那几个属性完全一样：
+   * 这两个值**跟着背景翻**，用属性而不是两组后代选择器，免得掉进
+   * `.scene-wrap--dark .x` 会把 `.x:hover` 一起盖掉的坑里（优先级只算被选中的元素，
+   * 而 `:hover` 那条比不上多一层祖先的）。
+   *
+   * 浅色下就是 nz-button / nz-checkbox 自己的默认态（白底 / #d9d9d9 边 / 85% 黑字），
+   * 照抄过来：`--ctl-fg` 必须与 `.ant-checkbox-wrapper` 上那条写死的 `color: #000000d9`
+   * 一模一样，否则浅色模式的开关文字会与旁边那颗 nz-button 差一点点。
+   */
+  --ctl-bg: #fff;
+  --ctl-border: #d9d9d9;
+  --ctl-fg: rgba(0, 0, 0, 0.85);
+
+  background: #eef1f5;
+}
+
+/*
+ * 纯黑背景。灰是默认，不另写一条。
+ *
+ * 这里必须是 #000，跟引擎里 `SCENE_BACKGROUND.black` 是同一个值：canvas 在首次
+ * 布局、缩放瞬间、进出全屏的过渡帧里都可能没铺满，露出来的就是这一层。
+ */
+.scene-wrap--dark {
+  /*
+   * 场景上那两条说明文字翻成**和这一屏上其余覆盖层同一套**：同一个 `@panel-bg` +
+   * 白描边 + 白字 —— 与标记药丸、信息面板、告警框、右侧控件列一个样。
+   *
+   * 底部提示条以前在深色下是 **92% 的白底 + 深字**，理由写的是「它是「调整位置」进行中
+   * 唯一告诉用户「下一次点击会被吃掉」的东西，非亮不可」。**那个理由是错的**：
+   * 真正说这句话的是 `.scene-hint--action`（蓝底那条），它的 `background` / `color`
+   * 自己写死 `#1677ff` / `#fff`，选择器优先级与 `.scene-hint` 相同、源码又在它**后面**，
+   * 所以压根不读这两个变量（编译产物里量过）。92% 的白底因此从来只出现在**静止的那条**
+   * 「点击模型表面可标注空间」上 —— 一条贴在黑屏底部的白纸条，跟这一屏里别的覆盖层
+   * 都不是一路的。
+   *
+   * 换掉之后，纯黑背景上**唯一**还亮着的东西就剩那条蓝提示，而它本来就该亮
+   * （它说的是一次性的、马上就要发生的动作）。⚠️ 往后别再拿「提示条非亮不可」当理由
+   * 把白底加回来 —— 那句话说的是蓝的那条，跟这两个变量没有关系。
+   */
+  --caption-bg: @panel-bg;
+  --caption-border: rgba(255, 255, 255, 0.9);
+  --caption-fg: #fff;
+  --mask-bg: rgba(0, 0, 0, 0.72);
+  --mask-fg: rgba(255, 255, 255, 0.75);
+
+  /*
+   * 控件列翻成**深色半透明**：白底按钮与白底开关在这一屏上是一块亮斑，而其它覆盖层
+   * （标记药丸、信息面板、告警框）在这时候都是「深色半透明 + 白描边 + 白字」——
+   * 只有这一列还白着，看着像从别的页面掉进来的一排。底色用同一个 `@panel-bg`。
+   */
+  --ctl-bg: @panel-bg;
+  --ctl-border: rgba(255, 255, 255, 0.9);
+  --ctl-fg: #fff;
+
+  /*
+   * 下面六个只有**深色下才要覆盖的地方**用得上（按钮的悬停与禁用态、复选框那个小方块），
+   * 所以不往 `.scene-wrap` 里给浅色值：浅色下这三颗按钮整颗都还是 nz-button 的默认态，
+   * 那几处覆盖压根不生效（见下面 `.scene-wrap--dark .scene-actions > button` 那段）。
+   */
+  --ctl-hover-bg: rgba(24, 34, 48, 0.95);
+  --ctl-disabled-bg: rgba(24, 34, 48, 0.45);
+  --ctl-disabled-border: rgba(255, 255, 255, 0.25);
+  --ctl-disabled-fg: rgba(255, 255, 255, 0.35);
+  --ctl-box-bg: transparent;
+  --ctl-box-border: rgba(255, 255, 255, 0.45);
+
+  background: #000;
+}
+
+/*
+ * 绝对定位撑满外层：这样它的 clientWidth/Height 有确定值，
+ * ResizeObserver 量得到真实尺寸，canvas 也跟着外层一起变。
+ */
+.scene-host {
+  position: absolute;
+  inset: 0;
+}
+
+/*
+ * canvas 是 three 在运行时 append 进来的，不在模板里 —— Angular 的样式封装
+ * 不会给它加 _ngcontent 属性，普通选择器匹配不到，所以必须走 ::ng-deep。
+ * 尺寸交给 CSS，绘制缓冲由 renderer.setSize(w, h, false) 单独管。
+ */
+.scene-host ::ng-deep canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
+/*
+ * CSS2DRenderer 那层 div 没有设 z-index，故意留在 auto —— 这样下面这几个
+ * 显式写了 z-index 的元素能稳稳压住它。标签层要是被设了 z-index，
+ * 加载遮罩和重置按钮就会被标签穿透，点不着。
+ */
+@scene-overlay-z: 20;
+
+/* 加载与报错共用一层遮罩，盖在 canvas 上但不拦鼠标（加载完就没了） */
+.scene-mask {
+  position: absolute;
+  inset: 0;
+  z-index: @scene-overlay-z;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--mask-bg);
+}
+
+.scene-mask-text {
+  margin: 0;
+  color: var(--mask-fg);
+  font-size: 14px;
+}
+
+/*
+ * 全屏时顶部中间的项目名（非全屏不画，见模板）。
+ *
+ * 配色走 `--caption-bg` / `--caption-border` / `--caption-fg` 三个跟着背景翻的属性
+ * （值与理由都在上面 `.scene-wrap` 那一段，这里只读）。它和底部那条提示条**是同一个
+ * 东西** —— 一条压在场景上的说明文字，一上一下 —— 所以共用同一套配色，只差形制：
+ * 这里字号 15px、字重 600、圆角 6px，那边 13px、常规、4px。
+ *
+ * 描边**两种背景下都占位**（浅色下是 `transparent`），所以 `padding` 比不带描边时
+ * 少 1px：`4px 15px + 1px 描边` = 原先的 `5px 16px`，浅色下的盒子一个像素都没动。
+ *
+ * 想让它看起来和信息面板一模一样（而不是「同一套配色」），再把 `border-radius`
+ * 换成 10px、字号换成 12px —— 现在是标题的 6px / 15px 粗体。
+ *
+ * `top: 12px` 与左右两列齐平：顶端三条（左告警、中标题、右控件）从同一条线上起。
+ *
+ * `pointer-events: none` 不能省：在它上面按下去开始的拖拽要照常转模型（与提示条同理）。
+ * `user-select: none` 是为了拖拽经过它时不顺手把名字选蓝。
+ *
+ * `nowrap + ellipsis`：项目名是用户起的，长度没有上限。**宁可截断也不换行** ——
+ * 换行会让这条从「一行标题」变成「一块压在模型正中的东西」，而正中最显眼。
+ * 完整名字在 `title` 上（鼠标停一下就有；墙上没人悬停时，截断也好过糊住模型）。
+ *
+ * ⚠️ 已知边界：`max-width: 44%` 是给左右两列留的余量（左告警列 260px + 12px 边距，
+ * 右控件列约 152px）。**量过**：容器 1440px 时左右各净空 265px / 421px；1024px 时
+ * 左侧还剩 57px；窄到 900px 上下、项目名又长（约 366px 宽）时，这条会钻到左侧告警列
+ * 底下 5px 起 —— 那时它被**盖住**（DOM 顺序在告警列之前，而且告警框是半透明的，
+ * 会透出来一块花字），不是两块叠着分不清。
+ *
+ * ⚠️ **「显示告警」现在是默认开着的**（见组件里的 showAlarms），所以这个角不再是
+ * 「默认够不着」了：全屏 + 窗口窄到 900px 上下 + 项目名长 + **项目里真有未处理的告警**
+ * （没告警时左列是个空壳，什么也盖不住），四条同时成立才看得见。
+ * 要治就是给 `max-width` 加一个按两列净空算的上限，比如
+ * `min(44%, calc(100% - 580px))` —— 1440px 下与现在完全一样，1024px 下收窄 6px，
+ * 900px 下退到 320px 就正好让开。**没做**，因为它在常见宽度下不生效、只在窄窗口下
+ * 改变标题宽度，值不值得动由你定。
+ */
+.scene-title {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: @scene-overlay-z;
+  max-width: 44%;
+  padding: 4px 15px;
+  transform: translateX(-50%);
+  border: 1px solid var(--caption-border);
+  border-radius: 6px;
+  background: var(--caption-bg);
+  color: var(--caption-fg);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  user-select: none;
+}
+
+/*
+ * 右侧那一列控件：四颗开关（看什么）在上，三颗按钮（做什么）在下，竖着排。
+ *
+ * **竖排顺带就把「每个按键一样宽」拿到了**：`flex-direction: column` 之后交叉轴成了
+ * 水平方向，而 `align-items` 默认就是 `stretch`，于是每一项都撑到这一列最宽的那一项
+ * 那么宽 —— 不用给任何一项写死宽度，也就不会在别的语种下被 “Reset view”
+ * “Exit fullscreen” 这类长文案撑破（写死宽度就得按最长的那个来，中文下白白宽出一截）。
+ *
+ * ⚠️ 光有 `stretch` **还不够**：ng-zorro 给复选框之间留的那 8px 外边距会在竖排下
+ * 把第 2~4 颗压窄。两条要按掉的 ng-zorro 规则见下面 `.scene-toggle` 之后那一段。
+ *
+ * 与左边那一列告警**一左一右**都从 `top: 12px` 起：左边是「出什么事了」，右边是
+ * 「能看什么、能做什么」，两列对称，中间整个留给模型。
+ *
+ * 它在 DOM 里比信息面板晚出现（见模板），所以 z-index 相同时压得住偶然翻到右边来的面板。
+ */
+.scene-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: @scene-overlay-z;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+/*
+ * 「显示空间」等四颗开关。
+ *
+ * 尺寸照抄同一列里的 `nz-button`（32px 高 / 15px 内边距），浅色下的配色也照抄它的
+ * 默认态（白底 / #d9d9d9 边 / 85% 黑字），一列看起来才是一套东西。
+ *
+ * 那三个颜色走 `--ctl-*` 跟着背景翻的属性：**纯黑背景下白底药丸是一块亮斑**，
+ * 得翻成深色半透明（值见 `.scene-wrap--dark`；同一列的三颗按钮也跟着翻，
+ * 于是整列在两种背景下都自成一家的）。
+ *
+ * 浅色下白底 + 深字正好是 nz-checkbox 自己的默认配色，所以选中态的蓝底、方框本身
+ * 一个都不用覆盖；深色下那几处才要单独交代（见下面深色那一段）。
+ */
+.scene-toggle {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 15px;
+  border: 1px solid var(--ctl-border);
+  border-radius: 6px;
+  background: var(--ctl-bg);
+  /* 深浅两色下都要盖过 `.ant-checkbox-wrapper` 上那条写死的字色，所以这里必须显式写
+     —— 浅色下的值就取它那一个（#000000d9），一个字都不变 */
+  color: var(--ctl-fg);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* 悬停只描边、不换底：一整列里换底会比描边吵 */
+.scene-toggle:hover {
+  border-color: #4096ff;
+}
+
+/*
+ * 两条 ng-zorro 的排版规则要按掉。都跟「这一列是竖的」有关，所以放在一起说。
+ *
+ * ① `margin: 0` —— ng-zorro 有一条
+ *    `.ant-checkbox-wrapper + .ant-checkbox-wrapper { margin-left: 8px }`，
+ *    本意是给**横排**的复选框之间留空隙。竖排下它变了味：`align-items: stretch`
+ *    撑的是**含外边距的外框**，于是第 2~4 颗左边凭空多出 8px 外边距、边框盒
+ *    反而比第一颗**窄 8px**，还整体右移 8px —— 一列里左右两条边参差不齐，
+ *    中文下与那三颗按钮也对不上（实测 140.5px vs 132.5px，就是这 8px）。
+ *    **选择器写成 `.scene-actions .scene-toggle` 而不是光 `.scene-toggle`**：
+ *    后者与 ng-zorro 那条同为 (0,2,0)，谁赢只看样式表的先后，太脆。
+ *
+ * ② `top: 0` —— 那个小方框（`.ant-checkbox`）自带 `position: relative; top: .2em`
+ *    （14px 字号下约 2.8px）。它**是给 `align-items: baseline` 配的**：ng-zorro
+ *    靠基线对齐 + 这一点下移把方框摆到文字中线附近。而上面把对齐改成了 `center`，
+ *    这点下移就只剩偏移 —— 方框比文字中心低 2.8px。二者只能留一个：
+ *    要么 baseline + 留着 `top`，要么 center + 归零。这里是后者（要的就是
+ *    「方框和文字上下居中对齐」），改完实测差 0.00px，深浅两色下都一样。
+ *    `.ant-checkbox` 由 ng-zorro 渲染、不在本模板里，拿不到本组件的 `_ngcontent`，
+ *    所以只能 `::ng-deep`（与画布、方框那几处同理）。
+ */
+.scene-actions .scene-toggle {
+  margin: 0;
+}
+
+.scene-toggle ::ng-deep .ant-checkbox {
+  top: 0;
+}
+
+/*
+ * 深色模式下这一列里的三颗 `nz-button`。
+ *
+ * **只写深色这一份，不给浅色再写一遍**：浅色下它们就该是 nz-button 的默认样子（与其它
+ * 页面上的按钮一致），照抄一遍默认值只会把 `:hover` / `[disabled]` 那些状态一并接管过来，
+ * 白白多出一处要维护的东西。
+ *
+ * 这里的规则赢过 `.ant-btn` / `.ant-btn:hover` / `.ant-btn[disabled]`（多两层祖先选择器，
+ * 而它们只有一两个类）。**赢了就得全都交代清楚** —— `:hover` 与禁用态不在这里补上的话，
+ * 会掉回 ng-zorro 的浅色态：悬停整颗闪白、禁用是一坨浅灰，在纯黑背景上尤其刺眼。
+ */
+.scene-wrap--dark .scene-actions > button {
+  border-color: var(--ctl-border);
+  background: var(--ctl-bg);
+  color: var(--ctl-fg);
+  /* 与旁边的开关同一个圆角 —— nz-button 默认是 2px，一列里两种圆角看着像两套控件 */
+  border-radius: 6px;
+  /* nz-button 底下那条 2px 的投影，在半透明深色底上是一道脏边 */
+  box-shadow: none;
+}
+
+.scene-wrap--dark .scene-actions > button:focus,
+.scene-wrap--dark .scene-actions > button:hover {
+  border-color: #4096ff;
+  background: var(--ctl-hover-bg);
+  color: #fff;
+}
+
+/*
+ * 「黑色背景」那颗在非全屏时是禁用的，而且**常态可见**（不是藏起来，见模板里的说明）。
+ *
+ * 必须写在上面那条 `:hover` **后面**：两条选择器优先级相同（都是三个类 + 三个
+ * `_ngcontent`，`[disabled]` 与 `:hover` 都算在类那一档），靠后写的赢 ——
+ * 否则鼠标扫过这颗点不动的按钮时，它会跟能点的那几颗一样变蓝。
+ */
+.scene-wrap--dark .scene-actions > button[disabled] {
+  border-color: var(--ctl-disabled-border);
+  background: var(--ctl-disabled-bg);
+  color: var(--ctl-disabled-fg);
+}
+
+/*
+ * 复选框那个小方块。
+ *
+ * `.ant-checkbox-inner` 是 **ng-zorro 自己**渲染出来的（不在本模板里），拿不到本组件的
+ * `_ngcontent` 属性，普通选择器匹配不到 —— 只能 ::ng-deep，与画布、标记那几处同理。
+ *
+ * `:not(.ant-checkbox-checked)` 这个守卫**不能省**：选中态的蓝底来自
+ * `.ant-checkbox-checked .ant-checkbox-inner`，那条的优先级比这里低，不把选中态排除掉
+ * 就会连蓝底一起压成透明 —— 勾上之后看不出勾上了。
+ */
+.scene-wrap--dark .scene-toggle ::ng-deep .ant-checkbox:not(.ant-checkbox-checked) .ant-checkbox-inner {
+  border-color: var(--ctl-box-border);
+  background: var(--ctl-box-bg);
+}
+
+/* 方框的悬停/聚焦反馈（浅色下由 ng-zorro 自己给，那两条在这里压不过上面那条，得补上） */
+.scene-wrap--dark .scene-toggle:focus-within ::ng-deep .ant-checkbox:not(.ant-checkbox-checked) .ant-checkbox-inner,
+.scene-wrap--dark .scene-toggle:hover ::ng-deep .ant-checkbox:not(.ant-checkbox-checked) .ant-checkbox-inner {
+  border-color: #4096ff;
+}
+
+/*
+ * 全屏时的尺寸。
+ *
+ * `.scene-wrap` 常态高度是「视口 − 页头 − 页脚」，而 `:fullscreen` 的 UA 样式表
+ * 给的是 position:fixed + inset:0。作者写的 height 优先级高于 UA 样式表，
+ * 不覆盖的话全屏后仍然会空出 134px，底下漏出页面背景。
+ *
+ * 高度交给 ResizeObserver 去通知 three 重算，这里只负责让盒子铺满。
+ */
+.scene-wrap:fullscreen {
+  height: 100vh;
+}
+
+/*
+ * 标记是 three 在运行时 createElement 出来的，不在模板里 —— 拿不到 Angular 的
+ * _ngcontent 属性，普通选择器匹配不到，只能走 ::ng-deep。
+ */
+.scene-host ::ng-deep .h3d-marker {
+  position: relative;
+  display: block;
+  padding: 3px 10px;
+  /*
+   * ⚠️ 不要在这里写 transform。CSS2DRenderer 每帧直接改 `element.style.transform`
+   * （内联样式盖过样式表），写了也不生效，还会让人以为居中是自己做出来的。
+   * 居中是 CSS2DObject.center 的默认值 (0.5, 0.5) 给的 —— 要改去引擎里设 center。
+   */
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  background: rgba(24, 34, 48, 0.82);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/*
+ * 设备标签。比空间标签小一号、淡一点 —— 「显示设备」打开后一个空间下面会挂一串，
+ * 不区分主次就成了一堵墙，看不出哪个是空间。
+ *
+ * ⚠️ 位置有讲究，这两条都不能挪：
+ *   1. 必须写在 `.h3d-marker--active` **前面**。两者优先级相同（都是
+ *      `.scene-host[_ngcontent]` + 一个类），选中的设备标签要靠后写的 --active 才盖得住。
+ *   2. 必须写在 `:hover` **前面**。同理，否则悬停的深色反馈会被这里的背景色压掉。
+ *
+ * 高度 22px（16px 行高 + 4px 内边距 + 2px 边框），对应 anchor.ts 里的
+ * `DEVICE_ROW_PX = 26`，一行挨着一行还留 4px 缝。
+ */
+.scene-host ::ng-deep .h3d-marker--device {
+  padding: 2px 8px;
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(24, 34, 48, 0.68);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.scene-host ::ng-deep .h3d-marker:hover {
+  background: rgba(24, 34, 48, 0.95);
+}
+
+/* 选中的标记。与拾取高亮同一个蓝，让人一眼看出「菜单说的是它」 */
+.scene-host ::ng-deep .h3d-marker--active {
+  border-color: #1677ff;
+  background: #1677ff;
+}
+
+/* 角标：这个空间拥有的设备数，画在标签右上角 */
+.scene-host ::ng-deep .h3d-marker--badged::after {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #ff4d4f;
+  color: #fff;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  content: attr(data-badge);
+}
+
+/*
+ * 信息面板与告警框**共用**这一套皮。只留这一份定义：两处必须在任何一次改动之后
+ * 仍然长得一样，各写一遍迟早走样（改了一处、另一处还是旧样子，而屏幕上两块面板
+ * 就并排摆着）。
+ *
+ * 配色**不复用 `--caption-*`**：那两个是「场景上的一行说明」，浅色下才 45% 的黑，
+ * 一两行字压在上面还行，多出一列字段名就对不上比度了 —— 面板上的字比提示条多得多。
+ * （深色下 `--caption-bg` 恰好就是这里的 `@panel-bg`，但那只是一种背景下的巧合，
+ * 不是为了共用；面板**永远**是这一套深色皮，与页面背景无关。）
+ * 也不照 `.h3d-marker` 药丸那套（0.82）：药丸上只有**一个词**，面板是**一块信息**，
+ * 后者更该透出后面的模型（底色见 `@panel-bg`）。
+ *
+ * 带 `()` 的 mixin 只被引用、自己不会被输出。LESS 其实不在乎它写在哪儿，但写在两个
+ * 使用者**前面**读起来才顺。
+ */
+.h3d-panel-skin() {
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  background: @panel-bg;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+/*
+ * 信息面板：某个标签说的是什么。跟着那个标签走。
+ *
+ * 两条来路共用这一块：「显示信息」铺开的一片，以及鼠标悬停的那一块
+ * （见模板里的 `#infoPanel`）。两者必须是同一个样子 —— 靠的是同一个模板 + 同一套皮
+ * （`.h3d-panel-skin()`，与告警框共用）。
+ *
+ * **没有 top / left / right / bottom** —— 位置全部由模板上的样式绑定给
+ * （见 project.3d.info.ts 的 placePanel），写死在这里会和它打架。
+ *
+ * **不吃指针事件**：它贴在标签旁边，吃了就会抢走从它上面开始的拖拽旋转。
+ */
+.h3d-info {
+  position: absolute;
+  z-index: @scene-overlay-z;
+
+  .h3d-panel-skin();
+
+  /*
+   * ⚠️ 定宽，不是 min/max-width。placePanel 要提前算出「标签右边放不放得下这个
+   * 面板」才能决定往哪边摆，而量的代价是「先渲染再回流」—— 一个定值换掉一次回流。
+   * 改这里必须同时改 project.3d.info.ts 里的 INFO_PANEL_WIDTH。
+   */
+  width: 200px;
+  pointer-events: none;
+}
+
+.h3d-info-title {
+  font-size: 13px;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+/* 副标题（空间路径）压暗一档：它是标题的补充，不该跟标题抢注意力 */
+.h3d-info-subtitle {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.65);
+  word-break: break-all;
+}
+
+.h3d-info-row {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+/* 第一行与上面的标题/副标题之间多留一点，把「抬头」和「字段」分开 */
+.h3d-info-title + .h3d-info-row,
+.h3d-info-subtitle + .h3d-info-row {
+  margin-top: 8px;
+}
+
+.h3d-info-label {
+  color: rgba(255, 255, 255, 0.65);
+  white-space: nowrap;
+}
+
+.h3d-info-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  text-align: right;
+  word-break: break-all;
+}
+
+/* 在线状态的小圆点。颜色只是加强，状态本身写在旁边的字里（见 project.3d.info.ts） */
+.h3d-info-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.h3d-info-dot--online {
+  background: #52c41a;
+}
+
+.h3d-info-dot--offline {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+/*
+ * 告警列：挂在墙上看的那一列 —— 一条告警一个框，竖着排，压在模型左边。
+ *
+ * **列本身没有底色、也没有边框**，它只是个定位容器：画面上有色的是里面那些框。
+ * 于是「一条告警都没有」时这一列是个空壳，画面上什么都不会多出来 —— 不该凭空
+ * 出现一块空面板或者一个「告警」标题。
+ *
+ * **列不吃指针事件、框吃**（照抄标签层那一套，见引擎里把 CSS2D 层设成 none、
+ * 里面的标记照样点得到）：框**下面**那段空白于是不会吃掉从那儿开始的拖拽旋转 ——
+ * 这一列很窄但很高，整条都吃的话左边就是一片转不动的死区。框自己得吃，
+ * 否则「处理」按钮点不着。
+ *
+ * top 与 bottom **同时**给死：高度确定，overflow-y 才滚得起来（这是「告警几十条
+ * 怎么办」的答案）。bottom 留 56px 是给底部那条提示条让位（它在 bottom:16px）。
+ *
+ * 滚得动，但**没有滚动条**：`scrollbar-width: none` + `::-webkit-scrollbar`（两个都得写，
+ * 一个管 Firefox 一个管 WebKit）。那条竖条压在模型上只有几个像素宽，挂墙上看是纯噪音 ——
+ * 滚轮照常滚（鼠标落在**框**上时滚的是这一列，落在框之间的空隙上时滚轮归画布缩放模型，
+ * 这与「空隙不吃指针事件」是同一件事）。
+ *
+ * ⚠️ **别给这一列加纵向内边距**：`overflow-y: auto` 容器上的 `padding-top` 不跟着内容滚，
+ * 往下滚之后框就不再停在它下面、而是直接贴着容器的上边缘。要留白就留在容器**外**（已留：
+ * top 12 / left 12），别写进这个滚动容器里。
+ *
+ * 也不用 backdrop-filter：那玩意压在 WebGL 画布上，每帧对整块区域做一次模糊，
+ * 是拿帧率换观感 —— 而这个页面在「按需渲染」上一直是精打细算的。
+ */
+.h3d-alarms {
+  position: absolute;
+  top: 12px;
+  bottom: 56px;
+  left: 12px;
+  z-index: @scene-overlay-z;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 260px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  /* 滚到头之后别把剩下的滚动量交给后面（页面/画布）—— 到底了就到底了 */
+  overscroll-behavior: contain;
+  pointer-events: none;
+}
+
+.h3d-alarms::-webkit-scrollbar {
+  display: none;
+}
+
+/*
+ * 一个告警框。皮在 `.h3d-panel-skin()` 里（与信息面板共用那一份定义，见上），
+ * 这里只加「在这一列里怎么摆」。
+ *
+ * 级别**只靠一个小圆点**表达（见下），不铺底色也不画竖条：一列几十个框，每个都带一条
+ * 彩边会变成霓虹灯，而这列框的底色、边框、圆角**与信息面板完全一致**才是「风格协调」
+ * 这件事的落点 —— 那个框是「这块地方是什么」，这个框是「这块地方出什么事了」，
+ * 除了那颗点，其余长得一样。
+ */
+.h3d-alarm {
+  .h3d-panel-skin();
+
+  flex: none;
+  pointer-events: auto;
+}
+
+/*
+ * 级别 → 色调。用一个自定义属性过渡（而不是给每个用到颜色的地方各写一套选择器）：
+ * 级别那颗圆点读 `--alarm-tone`，加一个级别只需要多一条一行的规则。
+ *
+ * 红与蓝沿用样式表里已有的那两个（角标红 `#ff4d4f`、选中蓝 `#1677ff`）；橙是
+ * ng-zorro 的 warning 色（`#fa8c16`），与告警页那个 `nz-tag nzColor="warning"` 同一个色。
+ * unknown 是中性灰：后端加了新级别、或者碰上没有 level 的老数据时用它，
+ * **不冒充「提示」那一档的蓝**。
+ */
+.h3d-alarm--critical {
+  --alarm-tone: #ff4d4f;
+}
+
+.h3d-alarm--warn {
+  --alarm-tone: #fa8c16;
+}
+
+.h3d-alarm--info {
+  --alarm-tone: #1677ff;
+}
+
+.h3d-alarm--unknown {
+  --alarm-tone: rgba(255, 255, 255, 0.45);
+}
+
+/* 抬头那一行：级别 + 告警文本 + 按钮。间距照 `.h3d-info-row` 的 10px —— 这一行就是
+   信息面板里「标签 + 值」那种行的形状，只是右边多一颗按钮 */
+.h3d-alarm-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 级别文案前那颗小圆点。颜色只是加强，级别本身写在旁边的字里 —— 色盲用户也读得出来 */
+.h3d-alarm-level {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  /* 与信息面板里的字段名同一个灰（`.h3d-info-label`）：它在这一行里就是个标签，
+     醒目的是旁边那句告警文本 */
+  color: rgba(255, 255, 255, 0.65);
+  white-space: nowrap;
+}
+
+/* 与 `.h3d-info-dot` 同一个尺寸/形状 —— 两个面板上的小圆点看起来是同一颗 */
+.h3d-alarm-level::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--alarm-tone);
+  content: '';
+}
+
+/* 告警文本：**用户数据，永不翻译**（见 project.3d.alarm.ts）。字号字重照 `.h3d-info-title` ——
+   它是这个框的标题，也是框上最该被读到的一句 */
+.h3d-alarm-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+/*
+ * 「处理」。
+ *
+ * 底色是**透明白**而不是 ng-zorro 那颗默认的白底蓝字实心按钮：那个白块在这一列半透明的
+ * 深色框里是一块补丁，而白字蓝底又会跟 `--info` 那一档的蓝撞色（看着像级别色）。
+ * 这里只留一圈白边 + 一点点白底，颜色全部让给级别那颗点 —— 按钮和框**同一套语言**：
+ * 白描边、白字，跟框自己的 1px 白边是一回事。
+ *
+ * 尺寸自己定（比 `nzSize="small"` 的 24px 再矮一点），因为它是这一列里唯一的控件，
+ * 跟 13px 的标题排在一行上，24px 会把行高撑起来。`line-height` 必须跟着高度一起写死：
+ * `.ant-btn` 的 1.5715 是按 32px 高配的，只改高度文字会顶到上边框。
+ *
+ * **不需要 `::ng-deep`**：这些规则落在按钮**自己**身上（不是它里面由 ng-zorro 渲染的
+ * 那几个 span），而组件样式在 `<link>` 之后注入，`.h3d-alarm-handle` 2 个类也压得过
+ * `.ant-btn-sm` 那 2 个类。
+ */
+.h3d-alarm-handle {
+  /* 挤到换行的话这一行会变两行，一列框就参差不齐了 */
+  flex: none;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+/* hover / focus 都会来（键盘 Tab 过来时也得看得见）—— 两个一起给，别只写 hover */
+.h3d-alarm-handle:focus,
+.h3d-alarm-handle:hover {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.24);
+  color: #fff;
+}
+
+/* 按下时那点位移（`.ant-btn` 的 active 阴影）在白描边上看着像抖，去掉 */
+.h3d-alarm-handle:active {
+  box-shadow: none;
+}
+
+/*
+ * 转圈时 ng-zorro 会盖一层 **35% 的白**（`.ant-btn.ant-btn-loading:before`）——
+ * 那是给白底按钮配的，盖在这个深色框上是一下子刷白，比按钮本身还显眼。
+ * 换成同色的暗罩子，只留那颗转圈的图标在动。
+ */
+.h3d-alarm-handle.ant-btn-loading::before {
+  background: rgba(24, 34, 48, 0.45);
+  opacity: 1;
+}
+
+/* 在哪儿（空间 · 字段）。与 `.h3d-info-subtitle` 同一档（灰 0.65、离抬头 2px）——
+   它在框里的位置就是信息面板副标题的那个位置 */
+.h3d-alarm-where {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.65);
+  word-break: break-all;
+}
+
+/* 触发条件 + 时刻，一头一个。间距照 `.h3d-info-title + .h3d-info-row` 的 8px：
+   它是「抬头」与「字段」之间那道分界，两处用同一个数 */
+.h3d-alarm-meta {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/*
+ * 取不到告警时的那一行。
+ *
+ * 长成一个框（而不是弹一个 message）：这一列是挂在墙上的，弹一串提示出来既没人点
+ * 也挡模型。但**不能不显示** —— 那样用户会以为「没有告警」，那是错的。
+ *
+ * 皮与告警框一致，只把边框换成红的：这一列里**唯一**该看起来不对的框就是它，
+ * 别的框都不该红。
+ */
+.h3d-alarm-error {
+  .h3d-panel-skin();
+
+  flex: none;
+  border-color: #ff4d4f;
+  word-break: break-all;
+}
+
+/* 还有更早的没取回来。一样得说一句，否则用户以为「就这么多」 */
+.h3d-alarm-truncated {
+  .h3d-panel-skin();
+
+  flex: none;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/*
+ * 提示条不吃指针事件，免得挡住在它上面开始的拖拽旋转。
+ *
+ * 得压过信息面板（@scene-overlay-z）—— 「显示信息」铺开一片之后，面板正好盖在
+ * 底部正中这一条上。蓝色那颗尤其不能埋：它是「调整位置」进行中**唯一**告诉用户
+ * 「下一次点击会被吃掉」的东西，埋了就成了「点了没反应」。菜单（30）仍然压过它。
+ */
+@scene-hint-z: @scene-overlay-z + 1;
+
+/*
+ * 场景上那两条说明文字之一：**底部**这条（另一条是全屏时顶部的项目名，见 `.scene-title`）。
+ *
+ * 配色与上面那条**完全一样**，都走 `--caption-*`（值与理由写在 `.scene-wrap` 那一段）；
+ * 这里只交代它自己的形制与位置。深色下它不再是那张白纸条了，来龙去脉写在
+ * `.scene-wrap--dark` 里。
+ *
+ * 描边**两种背景下都占位**（浅色下是 `transparent`），所以 `padding` 比不带描边时少 1px：
+ * `5px 13px + 1px 描边` = 原先的 `6px 14px`，浅色下的药丸一个像素都没动。
+ */
+.scene-hint {
+  position: absolute;
+  z-index: @scene-hint-z;
+  bottom: 16px;
+  left: 50%;
+  padding: 5px 13px;
+  transform: translateX(-50%);
+  border: 1px solid var(--caption-border);
+  border-radius: 4px;
+  background: var(--caption-bg);
+  color: var(--caption-fg);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+/*
+ * 「调整位置」进行中：换个色，让人注意到下一次点击会被吃掉。
+ *
+ * **这一条故意不跟 `--caption-*` 走**，两种背景下都是同一颗蓝药丸。它现在是纯黑背景上
+ * **唯一**还亮着的东西 —— 而那正是它该有的样子：它说的是一次性的、马上就要发生的动作。
+ *
+ * `background` / `color` 自己钉死（选择器优先级与 `.scene-hint` 相同、源码又在它后面，
+ * 写在这里就赢）。`border-color` 也**必须显式按掉**：`.scene-hint` 上那道 1px 描边在
+ * 深色下是白的，套在这颗实心蓝药丸上就是凭空多出一圈白边。
+ */
+.scene-hint--action {
+  background: #1677ff;
+  color: #fff;
+  border-color: transparent;
+}

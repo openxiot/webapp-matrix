@@ -5,7 +5,7 @@
  * - `DeviceEntity.anchor` —— 这台设备在模型上的位置
  *
  * 设备没有自己的锚点时，落到它所属空间的锚点上（回退链见
- * `pages/main/home3d/home3d.anchor.ts` 的 `resolveAnchor`）。所以一台设备
+ * `pages/main/project/3d/anchor/project.3d.anchor.ts` 的 `resolveAnchor`）。所以一台设备
  * 不标也能在模型上出现，标了则精确到点 —— 不用给一个区域里的 50 台传感器挨个点 50 次。
  *
  * 坐标为**模型根节点的局部坐标**，不是世界坐标。今天 `gltf.scene` 没有变换，两者相同；

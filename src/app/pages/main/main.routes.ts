@@ -21,12 +21,6 @@ export const routes: Routes = [
       import('./organization/organization.routes').then((m) => m.ORGANIZATION_ROUTES),
   },
   {
-    path: 'home3d',
-    canActivate: [authGuard],
-    data: { breadcrumb: '3D' },
-    loadChildren: () => import('./home3d/home.3d.routes').then((m) => m.HOME_3D_ROUTES),
-  },
-  {
     path: 'projects',
     canActivate: [authGuard],
     data: { breadcrumb: '所有项目' },
@@ -37,12 +31,6 @@ export const routes: Routes = [
     canActivate: [authGuard],
     data: { breadcrumb: '项目' },
     loadChildren: () => import('./project/project.routes').then((m) => m.PROJECT_ROUTES),
-  },
-  {
-    path: 'project1',
-    canActivate: [authGuard],
-    data: { breadcrumb: '项目1' },
-    loadChildren: () => import('./project1/project1.routes').then((m) => m.PROJECT1_ROUTES),
   },
   {
     path: 'device',

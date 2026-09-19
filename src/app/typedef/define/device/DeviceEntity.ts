@@ -16,7 +16,7 @@ export class DeviceEntity {
   space: SpaceRef = new SpaceRef();
   /**
    * 这台设备在 3D 模型里的位置。为空时落到 `space` 那个空间的锚点上
-   * （回退链见 pages/main/home3d/home3d.anchor.ts）。
+   * （回退链见 pages/main/project/3d/anchor/project.3d.anchor.ts）。
    */
   anchor: ModelAnchor | null = null;
 }

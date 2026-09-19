@@ -1,0 +1,256 @@
+<div #sceneWrap class="scene-wrap" [class.scene-wrap--dark]="background() === 'black'">
+  <div #sceneHost class="scene-host"></div>
+
+  @if (error(); as failure) {
+    <div class="scene-mask">
+      <nz-alert
+        nzType="error"
+        nzShowIcon
+        [nzMessage]="failure.message"
+        [nzDescription]="failure.detail"
+      />
+    </div>
+  } @else if (loading()) {
+    <div class="scene-mask">
+      <nz-spin [nzSpinning]="true" />
+      <p class="scene-mask-text">{{ '模型加载中' | translate }} {{ progress() }}%</p>
+    </div>
+  }
+
+  <!--
+    全屏时顶部中间的项目名。
+
+    **只在全屏里画**：这个名字本来就一直挂在页头菜单里（见 main.component.html），
+    而全屏的是 `.scene-wrap` 这一个元素、页头在它外面 —— 一进全屏，名字连同整个页头
+    一起被盖掉了。挂墙上给人看的时候，屏幕正上方是唯一「我在看哪个项目」的地方。
+    非全屏下页头就在眼前，再画一条是重复。
+
+    项目名是**用户数据，不翻译**（与空间名、设备名同理）。
+
+    排在这里（信息面板与告警列**之前**）是为了万一撞上时让它们压住它：三者同为
+    @scene-overlay-z，同层时看 DOM 顺序，而告警和面板都比一块标题急。
+  -->
+  @if (isFullscreen() && projectName()) {
+    <div class="scene-title" [title]="projectName()">{{ projectName() }}</div>
+  }
+
+  <!--
+    一块信息面板长什么样。**两条来路共用这一份**，所以悬停看到的那块和铺开时看到的
+    那块必然是同一个样子，不会两处两样：
+
+      1. 「显示信息」铺开的一片 —— @for 把每个标记的那块都画出来（见 infoViews）
+      2. 悬停的那一块 —— 鼠标停在哪个标签上就说哪个是什么，移开立刻消失（见 hover）
+
+    两块**不会同时出现**：勾上「显示信息」时 hover 那边直接返回 null，否则悬停的
+    那个标记会被画两遍、两块面板叠在一起。
+
+    **跟着标签走** —— 位置由引擎每帧报上来的标签矩形算出来（见 placePanel）。
+
+    纯只读 —— 要改东西（调位置、取消标注）仍然走点击菜单。所以它不吃指针事件
+    （见样式表）：铺开一片的时候压在面板上的地方照样能拖动旋转、点模型标注，
+    也不会出现「鼠标从标签划到面板上」这种既没离开标签又没进入别的标签的中间态。
+
+    top / bottom 二选一，另一个是 null（Angular 会把那条样式摘掉，落回 CSS 的 auto）——
+    面板朝容器的内侧长，因此不必知道它自己多高。
+  -->
+  <ng-template #infoPanel let-view>
+    <div
+      class="h3d-info"
+      [style.left.px]="view.placement.left"
+      [style.top.px]="view.placement.top"
+      [style.bottom.px]="view.placement.bottom"
+    >
+      <div class="h3d-info-title">{{ view.panel.title }}</div>
+      @if (view.panel.subtitle) {
+        <div class="h3d-info-subtitle">{{ view.panel.subtitle }}</div>
+      }
+      @for (row of view.panel.rows; track row.label) {
+        <div class="h3d-info-row">
+          <span class="h3d-info-label">{{ row.label }}</span>
+          <span class="h3d-info-value">
+            @if (row.tone) {
+              <i class="h3d-info-dot h3d-info-dot--{{ row.tone }}"></i>
+            }
+            {{ row.value }}
+          </span>
+        </div>
+      }
+    </div>
+  </ng-template>
+
+  @for (view of infoViews(); track view.id) {
+    <ng-container [ngTemplateOutlet]="infoPanel" [ngTemplateOutletContext]="{ $implicit: view }" />
+  }
+
+  @if (hover(); as view) {
+    <ng-container [ngTemplateOutlet]="infoPanel" [ngTemplateOutletContext]="{ $implicit: view }" />
+  }
+
+  <!--
+    左侧那一列告警。**排在上面那两块信息面板之后**：两者都是 @scene-overlay-z，
+    同层级时由 DOM 顺序决定谁压谁 —— 而这一列是贴边的固定栏，让它压住偶然翻到左边
+    来的信息面板更合理（面板本来就会跟着标签挪）。
+
+    只有开关开着才画。**没有告警时这一列是个空壳**（没有框、没有标题，自己也透明），
+    画面上什么都不会多出来 —— 「一条告警都没有」就应该是干干净净的。
+
+    「处理」按钮：转圈 → 成功后那一张**自己消失**。消失靠的是数据层把那一条的 handled
+    换成了 true（不复用本地记一笔的方式），所以切语言、重算都不会把它放回来。
+
+    时间用短格式：不限时间之后日期是必须的，秒也要 —— 同一分钟里连报几条是常态。
+    完整时刻与级别枚举名放 title 上（排查时拿枚举名去搜后端日志）。
+  -->
+  @if (showAlarms()) {
+    <div class="h3d-alarms">
+      <!--
+        track 用 `card.id || $index` 而不是光 `card.id`：后端理论上每条都有 id，
+        但类型上它是可选的（见 ModbusAlarm）。真碰上两条都没 id 的，光用 id 就是两个
+        空串撞在一起 —— Angular 只 console.warn（NG0955）然后画错位，是静默的。
+        有 id 时按下标兜底的那一半永远用不上。
+      -->
+      @for (card of alarmCards(); track card.id || $index) {
+        <div
+          class="h3d-alarm h3d-alarm--{{ card.tone }}"
+          [title]="
+            (card.level ? card.level + ' · ' : '') +
+            (card.at | date: 'yyyy-MM-dd HH:mm:ss') +
+            (card.recovered ? ' · ' + ('已恢复' | translate) : '')
+          "
+        >
+          <div class="h3d-alarm-head">
+            <span class="h3d-alarm-level">{{ card.levelLabel }}</span>
+            <span class="h3d-alarm-text">{{ card.text }}</span>
+            @if (card.canHandle) {
+              <button
+                class="h3d-alarm-handle"
+                nz-button
+                nzSize="small"
+                [nzLoading]="handling() === card.id"
+                (click)="onHandleAlarm(card)"
+              >
+                {{ '处理' | translate }}
+              </button>
+            }
+          </div>
+          @if (card.where) {
+            <div class="h3d-alarm-where">{{ card.where }}</div>
+          }
+          <div class="h3d-alarm-meta">
+            <span>{{ card.condition }}</span>
+            <span>{{ card.at | date: 'MM-dd HH:mm:ss' }}</span>
+          </div>
+        </div>
+      }
+      @if (data.alarmsError(); as failure) {
+        <div class="h3d-alarm-error">{{ failure }}</div>
+      }
+      @if (alarmsTruncated()) {
+        <div class="h3d-alarm-truncated">
+          {{ '异常记录超过上限，只列出最近的部分' | translate }}
+        </div>
+      }
+    </div>
+  }
+
+  <div class="scene-actions">
+    <!--
+      四颗开关是「看什么」（图层），下面三颗是「做什么」（动作），所以开关排在上面。
+      开关里从粗到细排：空间 → 设备 → 信息 → 告警。
+
+      这一列竖着贴在**右边**（样式表里 .scene-actions），与左边那一列告警一左一右。
+
+      前两颗绑 data 上的信号而不是本组件的 —— 它们要喂给 markers() 那个 computed，
+      那个在 Project3dData 里。但走的是本组件的方法而不是直接 `.set()`：
+      翻图层之后菜单和「调整位置」可能就悬空了，得一并收尾，见 onLayerToggle。
+
+      后两颗（「显示信息」「显示告警」）是**本组件**的信号：它们一个标记都不增删，
+      只决定标记旁边、屏幕边上画不画东西，所以没必要进 data。也正因为不动标记，
+      走的是 toggleInfo / toggleAlarms 而不是 onLayerToggle —— 没有要收尾的东西。
+    -->
+    <label
+      class="scene-toggle"
+      nz-checkbox
+      [ngModel]="data.showSpaces()"
+      (ngModelChange)="toggleSpaces($event)"
+      [ngModelOptions]="{ standalone: true }"
+    >
+      {{ '显示空间' | translate }}
+    </label>
+    <label
+      class="scene-toggle"
+      nz-checkbox
+      [ngModel]="data.showDevices()"
+      (ngModelChange)="toggleDevices($event)"
+      [ngModelOptions]="{ standalone: true }"
+    >
+      {{ '显示设备' | translate }}
+    </label>
+    <label
+      class="scene-toggle"
+      nz-checkbox
+      [ngModel]="showInfo()"
+      (ngModelChange)="toggleInfo($event)"
+      [ngModelOptions]="{ standalone: true }"
+    >
+      {{ '显示信息' | translate }}
+    </label>
+    <!-- 与上面那颗同一个分工：不动标记，开关只决定左侧那一列画不画 -->
+    <label
+      class="scene-toggle"
+      nz-checkbox
+      [ngModel]="showAlarms()"
+      (ngModelChange)="toggleAlarms($event)"
+      [ngModelOptions]="{ standalone: true }"
+    >
+      {{ '显示告警' | translate }}
+    </label>
+    <button nz-button [disabled]="loading() || !!error()" (click)="resetView()">
+      <nz-icon nzType="reload" />
+      <span>{{ '重置视角' | translate }}</span>
+    </button>
+    <!--
+      只在全屏里**可用**，非全屏时可见但置灰（不是藏起来）：
+      它是「换个底看模型」的摆设性操作，平时不该能点；但藏着的话没人知道这个功能
+      存在，置灰才看得出「有这么个东西、得进全屏才能用」。
+
+      顺带一个好处：按钮位置固定，进出全屏时这一排不再因为多一颗少一颗而整体挪动。
+
+      退出全屏会把背景复位成灰（见 onFullscreenChange），否则退出来就卡在「页面是
+      黑的、而按钮已经点不动了」。
+
+      文案说的是「点了会变成什么」，跟全屏那颗一致。灰底时按钮写「黑色背景」，
+      黑底时写「灰色背景」—— 只写「切换背景」的话没人知道会切到哪儿去。
+    -->
+    <button nz-button [disabled]="!isFullscreen()" (click)="toggleBackground()">
+      <nz-icon nzType="bg-colors" />
+      <span>{{ (background() === 'gray' ? '黑色背景' : '灰色背景') | translate }}</span>
+    </button>
+    <!-- 加载中也能进全屏：模型加载本来就要等几秒，想放大看进度是合理的 -->
+    <button nz-button (click)="toggleFullscreen()">
+      <nz-icon [nzType]="isFullscreen() ? 'fullscreen-exit' : 'fullscreen'" />
+      <span>{{ (isFullscreen() ? '退出全屏' : '全屏') | translate }}</span>
+    </button>
+  </div>
+
+  <!--
+    宿主就是 .scene-wrap（position: relative），所以菜单的 left/top 与
+    PickResult.screen / 标记点击位置同一套坐标，不需要 portal。
+  -->
+  @if (menu(); as open) {
+    <project-3d-menu
+      [x]="open.x"
+      [y]="open.y"
+      [title]="open.title"
+      [subtitle]="open.subtitle"
+      [items]="open.items"
+      (picked)="onMenuPick($event)"
+      (dismissed)="closeMenu()"
+    />
+  }
+
+  @if (movingHint(); as hint) {
+    <div class="scene-hint scene-hint--action">{{ hint }}</div>
+  } @else if (!loading() && !error() && !menu()) {
+    <div class="scene-hint">{{ '点击模型表面可标注空间' | translate }}</div>
+  }
+</div>

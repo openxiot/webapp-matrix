@@ -1,0 +1,24 @@
+/* 表格视图自己的工具条：项目名在左、管理员写操作按钮在右。页头的返回 / 面包屑 / 三视图
+   切换在宿主 ProjectComponent，这里只放本视图内容区的头部。 */
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px 0;
+}
+
+.table-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--tree-title, inherit);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table-actions {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
