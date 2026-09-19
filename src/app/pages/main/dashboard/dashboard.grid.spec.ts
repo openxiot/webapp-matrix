@@ -1,5 +1,5 @@
 import {
-  DashboardWidget,
+  WebDashboardWidget,
   GRID_COLUMNS,
   GRID_GAP,
   GRID_ROW_HEIGHT,
@@ -8,7 +8,7 @@ import {
   sizeAllowed,
   sizeChoices,
   widthChoices,
-} from '../../../typedef/define/dashboard/DashboardLayout';
+} from '../../../typedef/define/dashboard/WebDashboardLayout';
 import {
   Placement,
   cardHeight,
@@ -485,8 +485,8 @@ describe('dashboard.grid', () => {
 });
 
 /** 造一张卡片。**带坐标**的卡片才代表「新格式」，不给 x/y 就是旧布局 */
-function widget(size: WidgetSize, id = 'w1', x?: number, y?: number): DashboardWidget {
-  const w = new DashboardWidget();
+function widget(size: WidgetSize, id = 'w1', x?: number, y?: number): WebDashboardWidget {
+  const w = new WebDashboardWidget();
   w.id = id;
   w.size = size;
   w.x = x;

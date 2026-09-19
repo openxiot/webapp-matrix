@@ -13,18 +13,18 @@ import { MainI18nService } from '../../../../service/i18n.service';
 import { DeviceDisplayService } from '../../../../service/device.display.service';
 import { DeviceSpecService, joinPid } from '../../../../service/device.spec.service';
 import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
-import { DashboardCatalog, catalogDevices } from '../../../../typedef/define/dashboard/DashboardCatalog';
+import { WebDashboardCatalog, catalogDevices } from '../../../../typedef/define/dashboard/WebDashboardCatalog';
 import {
   DASHBOARD_DIMENSIONS,
   DASHBOARD_METRICS,
-  DashboardWidget,
+  WebDashboardWidget,
   WIDGET_SIZES,
   WidgetSize,
   dashboardDimensionLabel,
   dashboardMetricLabel,
   sizeChoices,
   widthChoices,
-} from '../../../../typedef/define/dashboard/DashboardLayout';
+} from '../../../../typedef/define/dashboard/WebDashboardLayout';
 import { cardHeight } from '../dashboard.grid';
 import { absoluteWindow } from '../dashboard.folding';
 import { readBoolean, readNumber, readString, readStringArray, readWindow } from '../dashboard.config';
@@ -74,16 +74,16 @@ const DEFAULT_WINDOW_HOURS = 24;
 })
 export class WidgetEditorComponent {
   /** 要编辑的那张卡。看板页每次打开对话框都给一个**新对象**，`linkedSignal` 才会重新起底 */
-  readonly widget = input.required<DashboardWidget>();
+  readonly widget = input.required<WebDashboardWidget>();
 
   /** 候选设备与服务（看板页进编辑态时取的那一份）。**还没到 / 取失败**时是 null，级联就是空的 */
-  readonly catalog = input<DashboardCatalog | null>(null);
+  readonly catalog = input<WebDashboardCatalog | null>(null);
 
   /** 候选清单取失败的原因（服务端那句话）。**原样显示、不翻译**（与其他接口的 message 同口径） */
   readonly catalogError = input('');
 
   /** 点「确定」：改好的卡片 */
-  readonly committed = output<DashboardWidget>();
+  readonly committed = output<WebDashboardWidget>();
   /** 点「删除」：把这张卡从布局里拿掉。**只动草稿**，落库仍由看板页的「保存布局」决定 */
   readonly removed = output<void>();
   /** 点「取消」 */
@@ -96,7 +96,7 @@ export class WidgetEditorComponent {
   private readonly specs = inject(DeviceSpecService);
 
   /** 本地副本。跟着 {@link widget} 重置：对话框关掉再打开（换了一张卡）时要重新起底 */
-  private readonly draft = linkedSignal<DashboardWidget>(() => copy(this.widget()));
+  private readonly draft = linkedSignal<WebDashboardWidget>(() => copy(this.widget()));
 
   /** 翻译一个词条。这里都在 `computed` 里用，故读一次 `currentLang` 建立依赖（同 `widget.host.ts`） */
   private readonly t = (key: string): string => {
@@ -237,7 +237,7 @@ export class WidgetEditorComponent {
    * （产品名 → 实例描述 → DeviceType 的 type 段 → did）—— 与设备列表页是同一套名字，
    * 不另起一套。
    *
-   * 名字是**异步到达**的（清单里只有 did / type，见 `DashboardCatalog`）：所以名字在这里是
+   * 名字是**异步到达**的（清单里只有 did / type，见 `WebDashboardCatalog`）：所以名字在这里是
    * 同步读信号，到了之后这个 `computed` 自己会重算。请求由下面的 `effect` 触发。
    */
   readonly deviceOptions = computed(() =>
@@ -552,7 +552,7 @@ export class WidgetEditorComponent {
     this.cancelled.emit();
   }
 
-  private patch(changes: Partial<DashboardWidget>): void {
+  private patch(changes: Partial<WebDashboardWidget>): void {
     this.draft.update((widget) => ({ ...widget, ...changes }));
   }
 
@@ -624,6 +624,6 @@ interface EditorFieldOption extends ServiceFieldRef {
  * `config` **必须**拷：它与草稿里那张卡共用引用的话，改到一半点「取消」草稿已经被改了
  * —— 而它恰恰是这张表单要改的东西。
  */
-function copy(widget: DashboardWidget): DashboardWidget {
+function copy(widget: WebDashboardWidget): WebDashboardWidget {
   return { ...widget, config: { ...widget.config } };
 }

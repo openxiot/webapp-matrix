@@ -6,14 +6,14 @@ import {
   DASHBOARD_EDITABLE_TYPES,
   DASHBOARD_WIDGET_TITLES,
   WidgetType,
-} from '../../../../typedef/define/dashboard/DashboardLayout';
+} from '../../../../typedef/define/dashboard/WebDashboardLayout';
 
 /**
  * 卡片类型选择框（工具条那个「添加卡片」）。
  *
  * 三条：
  * - **只负责选类型**，落点与配置都不归它管：选完 `emit` 一个类型，看板页把新卡加在末尾并紧接着
- *   开配置框（见 `dashboard.component.ts` 的 `pickWidget`）。所以这里连 `DashboardWidget` 都不认识。
+ *   开配置框（见 `dashboard.component.ts` 的 `pickWidget`）。所以这里连 `WebDashboardWidget` 都不认识。
  * - **类型清单是 {@link DASHBOARD_EDITABLE_TYPES}**，不是把 `WidgetType` 五个都列出来 ——
  *   那一份是「这个版本能新建哪几种」的唯一定义；名字复用 {@link DASHBOARD_WIDGET_TITLES}
  *   （卡片外壳没标题时用的是同一份，加了新类型不会有一处忘记补）。

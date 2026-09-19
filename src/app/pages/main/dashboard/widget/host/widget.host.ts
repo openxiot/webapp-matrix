@@ -5,10 +5,10 @@ import { MainI18nService } from '../../../../../service/i18n.service';
 import { ModbusConfig } from '../../../../../typedef/define/modbus/Modbus';
 import {
   DASHBOARD_WIDGET_TITLES,
-  DashboardWidget,
+  WebDashboardWidget,
   titleOf,
-} from '../../../../../typedef/define/dashboard/DashboardLayout';
-import { WidgetDataItem } from '../../../../../typedef/define/dashboard/DashboardWidgetData';
+} from '../../../../../typedef/define/dashboard/WebDashboardLayout';
+import { WebDashboardWidgetDataItem } from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
 import { DistributionWidgetComponent } from '../distribution/distribution.widget';
 import { DeviceWidgetComponent } from '../device/device.widget';
 import { LineWidgetComponent } from '../line/line.widget';
@@ -56,9 +56,9 @@ import { StatWidgetComponent } from '../stat/stat.widget';
   ],
 })
 export class WidgetHostComponent {
-  readonly widget = input.required<DashboardWidget>();
+  readonly widget = input.required<WebDashboardWidget>();
   /** 这张卡的取数结果。**还没有**时是 `undefined`（不是一份空数据） */
-  readonly item = input<WidgetDataItem | undefined>(undefined);
+  readonly item = input<WebDashboardWidgetDataItem | undefined>(undefined);
   /** 可见点表：只有服务类型分布用得到（把 `configId` 解成「厂家 型号」） */
   readonly configs = input<ModbusConfig[]>([]);
   /** 这张卡的格子高度（像素，见 `dashboard.grid` 的 `cardHeight`）。四张撑满格子的类型用它 */

@@ -3,15 +3,15 @@ import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { OxResponse } from './response/OxResponse';
-import { DashboardLayout, DashboardWidget } from '../typedef/define/dashboard/DashboardLayout';
-import { DashboardCatalog } from '../typedef/define/dashboard/DashboardCatalog';
-import { DashboardCatalogCodec } from '../typedef/codec/dashboard/DashboardCatalogCodec';
-import { DashboardLayoutCodec } from '../typedef/codec/dashboard/DashboardLayoutCodec';
-import { DashboardWidgetData } from '../typedef/define/dashboard/DashboardWidgetData';
-import { DashboardWidgetDataCodec } from '../typedef/codec/dashboard/DashboardWidgetDataCodec';
+import { WebDashboardLayout, WebDashboardWidget } from '../typedef/define/dashboard/WebDashboardLayout';
+import { WebDashboardCatalog } from '../typedef/define/dashboard/WebDashboardCatalog';
+import { WebDashboardCatalogCodec } from '../typedef/codec/dashboard/WebDashboardCatalogCodec';
+import { WebDashboardLayoutCodec } from '../typedef/codec/dashboard/WebDashboardLayoutCodec';
+import { WebDashboardWidgetData } from '../typedef/define/dashboard/WebDashboardWidgetData';
+import { WebDashboardWidgetDataCodec } from '../typedef/codec/dashboard/WebDashboardWidgetDataCodec';
 
 /**
- * 自定义数据看板（后端 DashboardResource，端点 `/matrix/v1/dashboard`）。
+ * 自定义数据看板（后端 WebDashboardResource，端点 `/matrix/v1/dashboard/web`）。
  *
  * **读写权限不对称**，这是本功能唯一的权限口径：
  * - `layout`：**空间成员**可读（看板人人可见），**空间管理员**才能 `save`
@@ -25,7 +25,7 @@ import { DashboardWidgetDataCodec } from '../typedef/codec/dashboard/DashboardWi
  * 所以这里不检查 `success`；调用方 catch 到的 `error.message` 就是后端那句英文。
  */
 @Service()
-export class DashboardService {
+export class WebDashboardService {
   private server: string = environment.server;
   private http = inject(HttpClient);
 
@@ -35,26 +35,26 @@ export class DashboardService {
    * **从未配置过的空间不报错**：后端给一份内存生成的预置布局（版本号 `0`），
    * 用户第一次打开就有东西可看。所以「空看板」这个状态在正常路径上不会出现。
    */
-  layout(spaceId: string): Observable<DashboardLayout> {
+  layout(spaceId: string): Observable<WebDashboardLayout> {
     return this.http
-      .get<OxResponse>(`${this.server}/matrix/v1/dashboard/layout/${encodeURIComponent(spaceId)}`)
-      .pipe(map((r) => DashboardLayoutCodec.decode(r.data)));
+      .get<OxResponse>(`${this.server}/matrix/v1/dashboard/web/layout/${encodeURIComponent(spaceId)}`)
+      .pipe(map((r) => WebDashboardLayoutCodec.decode(r.data)));
   }
 
   /**
    * 保存布局（PUT /layout/{spaceId}，整体替换）。
    *
-   * **`version` 是乐观锁**，`DashboardLayoutCodec.encode` 会把读到的原值带上；对不上时后端
+   * **`version` 是乐观锁**，`WebDashboardLayoutCodec.encode` 会把读到的原值带上；对不上时后端
    * 报「已被他人修改，请重新加载」而不是覆盖。返回保存**之后**的布局（版本号已 +1），
    * 调用方应当用它替换手里那份 —— 只有这样，连存两次才不会第二次就撞版本冲突。
    */
-  save(spaceId: string, layout: DashboardLayout): Observable<DashboardLayout> {
+  save(spaceId: string, layout: WebDashboardLayout): Observable<WebDashboardLayout> {
     return this.http
       .put<OxResponse>(
-        `${this.server}/matrix/v1/dashboard/layout/${encodeURIComponent(spaceId)}`,
-        DashboardLayoutCodec.encode(layout),
+        `${this.server}/matrix/v1/dashboard/web/layout/${encodeURIComponent(spaceId)}`,
+        WebDashboardLayoutCodec.encode(layout),
       )
-      .pipe(map((r) => DashboardLayoutCodec.decode(r.data)));
+      .pipe(map((r) => WebDashboardLayoutCodec.decode(r.data)));
   }
 
   /**
@@ -67,12 +67,12 @@ export class DashboardService {
    * 返回的版本号是 `0`、卡片上也没有坐标（原因见方案 §6.5），调用方要照读布局那条路
    * 铺一遍位置。
    */
-  preset(spaceId: string): Observable<DashboardLayout> {
+  preset(spaceId: string): Observable<WebDashboardLayout> {
     return this.http
       .get<OxResponse>(
-        `${this.server}/matrix/v1/dashboard/layout/${encodeURIComponent(spaceId)}/preset`,
+        `${this.server}/matrix/v1/dashboard/web/layout/${encodeURIComponent(spaceId)}/preset`,
       )
-      .pipe(map((r) => DashboardLayoutCodec.decode(r.data)));
+      .pipe(map((r) => WebDashboardLayoutCodec.decode(r.data)));
   }
 
   /**
@@ -82,10 +82,10 @@ export class DashboardService {
    * 与 `layout` 同口径（空间成员可读），且候选范围与保存时的归属校验逐字一致
    * （后端按根空间的**子树**取），否则会出现「选得到、存不进」。
    */
-  catalog(spaceId: string): Observable<DashboardCatalog> {
+  catalog(spaceId: string): Observable<WebDashboardCatalog> {
     return this.http
-      .get<OxResponse>(`${this.server}/matrix/v1/dashboard/catalog/${encodeURIComponent(spaceId)}`)
-      .pipe(map((r) => DashboardCatalogCodec.decode(r.data)));
+      .get<OxResponse>(`${this.server}/matrix/v1/dashboard/web/catalog/${encodeURIComponent(spaceId)}`)
+      .pipe(map((r) => WebDashboardCatalogCodec.decode(r.data)));
   }
 
   /**
@@ -99,15 +99,15 @@ export class DashboardService {
    * 请求体**总是要发一个 JSON 对象**（发 `{}`），不能发裸 POST：后端这个方法消费
    * `application/json`，没有 body 会在进入方法体之前就被框架以 415 拒掉。
    */
-  render(spaceId: string, draft?: DashboardWidget[]): Observable<DashboardWidgetData> {
+  render(spaceId: string, draft?: WebDashboardWidget[]): Observable<WebDashboardWidgetData> {
     // 草稿也走 encodeWidget：`w`/`h` 不发（服务端按 size 覆盖）、空标题不发。
     // 让调用方自己 encode 就等于把这些规则复制到每个预览入口上
-    const body = draft ? { widgets: draft.map((w) => DashboardLayoutCodec.encodeWidget(w)) } : {};
+    const body = draft ? { widgets: draft.map((w) => WebDashboardLayoutCodec.encodeWidget(w)) } : {};
     return this.http
       .post<OxResponse>(
-        `${this.server}/matrix/v1/dashboard/render/${encodeURIComponent(spaceId)}`,
+        `${this.server}/matrix/v1/dashboard/web/render/${encodeURIComponent(spaceId)}`,
         body,
       )
-      .pipe(map((r) => DashboardWidgetDataCodec.decode(r.data)));
+      .pipe(map((r) => WebDashboardWidgetDataCodec.decode(r.data)));
   }
 }

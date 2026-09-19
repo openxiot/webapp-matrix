@@ -4,8 +4,8 @@ import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { NzStatisticModule } from 'ng-zorro-antd/statistic';
 import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
 import { MainI18nService } from '../../../../../service/i18n.service';
-import { dashboardMetricUnit, DashboardWidget } from '../../../../../typedef/define/dashboard/DashboardLayout';
-import { statData, StatData, WidgetDataItem } from '../../../../../typedef/define/dashboard/DashboardWidgetData';
+import { dashboardMetricUnit, WebDashboardWidget } from '../../../../../typedef/define/dashboard/WebDashboardLayout';
+import { statData, StatData, WebDashboardWidgetDataItem } from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
 import { readString } from '../../dashboard.config';
 import { metricValue } from '../../dashboard.folding';
 import { WidgetWindowComponent } from '../window/widget.window';
@@ -40,9 +40,9 @@ import { WidgetWindowComponent } from '../window/widget.window';
   imports: [NzCardModule, NzStatisticModule, WidgetWindowComponent, NzIconDirective, NzTooltipDirective],
 })
 export class StatWidgetComponent {
-  readonly widget = input.required<DashboardWidget>();
+  readonly widget = input.required<WebDashboardWidget>();
   /** 这张卡的取数结果。**还没有**时是 `undefined`（不是一份空数据） */
-  readonly item = input<WidgetDataItem | undefined>(undefined);
+  readonly item = input<WebDashboardWidgetDataItem | undefined>(undefined);
   /** 卡名。由宿主算好传下来（它同时是别的类型的卡头标题，各算一遍迟早会有一处忘记跟） */
   readonly title = input.required<string>();
   /** 悬停浮起（`nz-card` 的 `nzHoverable`）。**只有编辑态为真** —— 见 `host/widget.host.ts` */
@@ -86,7 +86,7 @@ export class StatWidgetComponent {
    * 只有失败时有话可说。**还没取到不算失败**（首屏那几百毫秒、两次自动刷新之间），
    * 成功时也没有可说的 —— 图标常驻的话，人会以为每张卡都有话要说。
    *
-   * 那句话是**服务端原文**（`WidgetDataItem.message`），按 AGENTS 原样显示、不翻译：
+   * 那句话是**服务端原文**（`WebDashboardWidgetDataItem.message`），按 AGENTS 原样显示、不翻译：
    * 它分得清「这个组合还没做」与「配置错了」（见后端 `WidgetDataService.unsupportedDetail`），
    * 翻译它反而会把这两句抹成一句没有信息量的话。服务端一定会给 `message`，
    * 真没有时退回词典里那句「取数失败」（与 `widget.note` 同一个词条），不能给一个空 tooltip。

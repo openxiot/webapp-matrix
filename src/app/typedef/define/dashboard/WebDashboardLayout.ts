@@ -6,9 +6,9 @@
  * - **布局是一个空间（项目）一份**，空间内共享。读写权限不对称：读是空间成员、写是空间管理员。
  *   所以这里**没有 `editable` 字段** —— 能不能编辑由前端按 `isAdmin` 现算（§6.2），
  *   服务端不重复下发一份可能过期的判断。
- * - **位置是坐标**：每张卡带 {@link DashboardWidget.x}（起始列，0..23）与
- *   {@link DashboardWidget.y}（起始行，0 起），二维自由摆放。
- *   {@link DashboardLayout.widgets} 的数组顺序是**阅读顺序**（窄屏一列时的顺序），
+ * - **位置是坐标**：每张卡带 {@link WebDashboardWidget.x}（起始列，0..23）与
+ *   {@link WebDashboardWidget.y}（起始行，0 起），二维自由摆放。
+ *   {@link WebDashboardLayout.widgets} 的数组顺序是**阅读顺序**（窄屏一列时的顺序），
  *   每次落定后按 `(y, x)` 重排一次让两者保持一致 —— 但它**不是位置的真值**。
  *   占几列几行（`w` / `h`）仍由 `size` 档位按 {@link WIDGET_SIZES} 在前端算，**不上行**：
  *   服务端只认档位名，存 `w`/`h` 就是第二份会过期的真值。
@@ -178,7 +178,7 @@ export interface ServiceConfig {
  * `getTime()`）。注意与 `typedef/define/user/UserOrganization` 里那个 `Person`（`timestamp: Date`）
  * 不是一份东西 —— 那个是组织成员接口的返回，这个是 `creator` / `updater` 的通用记号。
  */
-export interface DashboardPerson {
+export interface WebDashboardPerson {
   id?: string;
   name?: string;
   timestamp?: number;
@@ -195,7 +195,7 @@ export interface DashboardPerson {
  * （它知道用户在填哪种卡），而渲染/取数侧应当**防御性读取** —— 库里可能存着旧版本写的配置，
  * 一个断言换来的只是编译器闭嘴，运行时该崩还是崩。
  */
-export class DashboardWidget {
+export class WebDashboardWidget {
   /** 卡片 ID：前端生成的短串，同一布局内唯一。**渲染结果按它对应卡片**（下标会随拖拽变化，id 不会） */
   id: string = '';
   type: WidgetType = 'stat';
@@ -217,7 +217,7 @@ export class DashboardWidget {
    * 起始列（0 起，`0 .. GRID_COLUMNS − 1`）。
    *
    * **没有这个键 = 旧布局**（改造前存下来的是「顺序即位置」，卡片不带坐标）。
-   * 这种情况由 `DashboardLayoutCodec.decode` 按数组顺序 `flowPlace` 补一遍 ——
+   * 这种情况由 `WebDashboardLayoutCodec.decode` 按数组顺序 `flowPlace` 补一遍 ——
    * 那条路径复刻的正是改造前浏览器的流式排布，所以旧布局打开后长相不变。
    * 两者**要么都有、要么都没有**：只给一个的文档按「都没有」处理（见 codec）。
    */
@@ -228,7 +228,7 @@ export class DashboardWidget {
 }
 
 /** 一份布局（一个空间一份） */
-export class DashboardLayout {
+export class WebDashboardLayout {
   /** 所属空间（**根空间**，即项目）。路径上给子空间时，服务端也归到同一个项目 */
   spaceId: string = '';
   /**
@@ -238,17 +238,17 @@ export class DashboardLayout {
   version: number = 0;
   /**
    * 卡片列表。**数组顺序是阅读顺序**（窄屏一列时的上下次序），**不是位置** ——
-   * 位置是每张卡自己的 {@link DashboardWidget.x} / {@link DashboardWidget.y}。
+   * 位置是每张卡自己的 {@link WebDashboardWidget.x} / {@link WebDashboardWidget.y}。
    *
    * 两者保持一致的办法是：**每次落定后按 `(y, x)` 重排一次这个数组**（见 `dashboard.grid`
    * 的 `placeAt` / `compact`，它们的输出都是排好序的）。所以数组顺序是**派生物**，
    * 但服务端保存时仍**原样保留**它，只校验坐标 —— 服务端不做排序，重排是前端的活。
    */
-  widgets: DashboardWidget[] = [];
+  widgets: WebDashboardWidget[] = [];
   /** 创建者（展示用）。**预置布局没有作者**，这两个键整个不出现 */
-  creator?: DashboardPerson;
+  creator?: WebDashboardPerson;
   /** 最后更新者（展示用） */
-  updater?: DashboardPerson;
+  updater?: WebDashboardPerson;
 }
 
 /**
@@ -353,7 +353,7 @@ export function dashboardDimensionLabel(
  * `defaultKey` 是「按 type 的默认名」那个词条 key，由调用方给（它是页面文案，
  * 不同 type 各有一个词条），翻译同样由调用方做 —— 这个函数不认识 i18n。
  */
-export function titleOf(widget: DashboardWidget, defaultKey: string): { text?: string; key?: string } {
+export function titleOf(widget: WebDashboardWidget, defaultKey: string): { text?: string; key?: string } {
   if (widget.title) {
     return { text: widget.title };
   }

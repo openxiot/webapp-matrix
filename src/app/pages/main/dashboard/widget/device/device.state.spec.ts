@@ -1,9 +1,9 @@
 import { DeviceProperty } from '../../../../../service/device.spec.service';
 import {
   DeviceData,
-  WidgetDataItem,
+  WebDashboardWidgetDataItem,
   deviceData,
-} from '../../../../../typedef/define/dashboard/DashboardWidgetData';
+} from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
 import { DeviceLine, deviceLine, deviceState } from './device.state';
 
 /**
@@ -15,8 +15,8 @@ import { DeviceLine, deviceLine, deviceState } from './device.state';
 describe('device.state', () => {
   const PID = 'did-1.1.1';
 
-  function item(data: Record<string, unknown>, success = true): WidgetDataItem {
-    const x = new WidgetDataItem();
+  function item(data: Record<string, unknown>, success = true): WebDashboardWidgetDataItem {
+    const x = new WebDashboardWidgetDataItem();
     x.id = 'w1';
     x.success = success;
     x.data = data;

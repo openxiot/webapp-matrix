@@ -1,7 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { MainI18nService } from '../../../../../service/i18n.service';
-import { WidgetDataItem } from '../../../../../typedef/define/dashboard/DashboardWidgetData';
+import { WebDashboardWidgetDataItem } from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
 
 /**
  * 卡片身子里那一句「这张卡现在没有东西可读」。
@@ -26,7 +26,7 @@ import { WidgetDataItem } from '../../../../../typedef/define/dashboard/Dashboar
 })
 export class WidgetNoteComponent {
   /** 这张卡的取数结果。**还没取到**时是 `undefined`（不是一份空结果） */
-  readonly item = input<WidgetDataItem | undefined>(undefined);
+  readonly item = input<WebDashboardWidgetDataItem | undefined>(undefined);
 
   /** 明说的一句话。给了就不再看 {@link item} */
   readonly message = input('');

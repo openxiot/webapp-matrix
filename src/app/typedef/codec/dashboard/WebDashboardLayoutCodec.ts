@@ -1,11 +1,11 @@
 import {
-  DashboardLayout,
-  DashboardPerson,
-  DashboardWidget,
+  WebDashboardLayout,
+  WebDashboardPerson,
+  WebDashboardWidget,
   WidgetSize,
   WidgetType,
   WIDGET_SIZES,
-} from '../../define/dashboard/DashboardLayout';
+} from '../../define/dashboard/WebDashboardLayout';
 
 /**
  * 看板布局与 JSON 的互转。**要编也要解** —— 与其他只解的 codec 不同：布局是整个看板里
@@ -19,7 +19,7 @@ import {
  *   别人的改动会被无声覆盖。
  * - **线格式里有坐标，但只有两个数**：每张卡带 `x` / `y`（网格单位，左上角起点）。
  *   占几列几行（`w` / `h`）**不上行** —— 那是从 `size` 档位推出来的，服务端只认档位名
- *   （见 `DashboardLayout` 的 `WIDGET_SIZES`）。老文档里那两个都不存在，读出来是 `undefined`，
+ *   （见 `WebDashboardLayout` 的 `WIDGET_SIZES`）。老文档里那两个都不存在，读出来是 `undefined`，
  *   由**页面**去补（见下面「这个类不补坐标」）。
  *
  * **这个类不补坐标**：`x` / `y` 缺失时只是 `undefined`，不在这里按顺序铺位置 —— 本类第一条口径
@@ -31,26 +31,26 @@ import {
  * （Mongo 的 POJO codec 与 `@JsonIgnoreProperties` 都跳过未知键），第一次保存就把它洗掉了
  * —— 不需要迁移。注意别把它与现在的平铺 `x` / `y` 搞混：**那个是历史残留，不读也不写**。
  */
-export class DashboardLayoutCodec {
-  static decode(o: any): DashboardLayout {
-    const x = new DashboardLayout();
+export class WebDashboardLayoutCodec {
+  static decode(o: any): WebDashboardLayout {
+    const x = new WebDashboardLayout();
     x.spaceId = o?.spaceId ?? '';
     x.version = o?.version ?? 0;
-    x.widgets = DashboardLayoutCodec.decodeWidgets(o?.widgets);
-    x.creator = DashboardLayoutCodec.decodePerson(o?.creator);
-    x.updater = DashboardLayoutCodec.decodePerson(o?.updater);
+    x.widgets = WebDashboardLayoutCodec.decodeWidgets(o?.widgets);
+    x.creator = WebDashboardLayoutCodec.decodePerson(o?.creator);
+    x.updater = WebDashboardLayoutCodec.decodePerson(o?.updater);
     return x;
   }
 
-  static decodeWidgets(rows: any): DashboardWidget[] {
+  static decodeWidgets(rows: any): WebDashboardWidget[] {
     if (!Array.isArray(rows)) {
       return [];
     }
-    return rows.map((row) => DashboardLayoutCodec.decodeWidget(row));
+    return rows.map((row) => WebDashboardLayoutCodec.decodeWidget(row));
   }
 
-  static decodeWidget(o: any): DashboardWidget {
-    const x = new DashboardWidget();
+  static decodeWidget(o: any): WebDashboardWidget {
+    const x = new WebDashboardWidget();
     x.id = o?.id ?? '';
     x.type = TYPES.includes(o?.type) ? (o.type as WidgetType) : 'stat';
     // 缺 title / titleKey 就是 undefined：预置布局的卡片靠 titleKey 显示名字，
@@ -67,12 +67,12 @@ export class DashboardLayoutCodec {
       x.x = cx;
       x.y = cy;
     }
-    // config 原样收下：它异构，按 type 断言是渲染侧的事（见 DashboardWidget 的说明）
+    // config 原样收下：它异构，按 type 断言是渲染侧的事（见 WebDashboardWidget 的说明）
     x.config = o?.config && typeof o.config === 'object' ? { ...o.config } : {};
     return x;
   }
 
-  static decodePerson(o: any): DashboardPerson | undefined {
+  static decodePerson(o: any): WebDashboardPerson | undefined {
     // 整个键缺失（预置布局没有作者）时不要造一个空壳 —— 页面据此判断「显不显示作者」，
     // 一个 {id: undefined} 会让它显示出一行空白
     if (!o || typeof o !== 'object') {
@@ -87,15 +87,15 @@ export class DashboardLayoutCodec {
    * 坐标在 `widgets` 每一项上（{@link encodeWidget}），这里不再另发一份 ——
    * `widgets` 的数组顺序是**阅读顺序**，一并带上，两者保持一致是页面的责任。
    */
-  static encode(layout: DashboardLayout): any {
+  static encode(layout: WebDashboardLayout): any {
     return {
       // 乐观锁：读到的原值原样回传，服务端比对不上就拒（而不是覆盖别人的改动）
       version: layout.version,
-      widgets: layout.widgets.map((widget) => DashboardLayoutCodec.encodeWidget(widget)),
+      widgets: layout.widgets.map((widget) => WebDashboardLayoutCodec.encodeWidget(widget)),
     };
   }
 
-  static encodeWidget(widget: DashboardWidget): any {
+  static encodeWidget(widget: WebDashboardWidget): any {
     const body: any = {
       id: widget.id,
       type: widget.type,
@@ -130,7 +130,7 @@ const TYPES: WidgetType[] = ['stat', 'line', 'distribution', 'device', 'service'
  *
  * **这层映射必须有**：库里存着的布局写的是旧名，认不出来就会落到下面的兜底档位 ——
  * 那是一次**静默的改尺寸**（用户没动过的卡片自己变了大小，界面上查不出原因），
- * 正是 `DashboardLayout` 里那条「静默改尺寸比留一个旧档位更坏」要避免的事。
+ * 正是 `WebDashboardLayout` 里那条「静默改尺寸比留一个旧档位更坏」要避免的事。
  * 读的时候翻译成新名，用户下一次保存时库里就自动落成新名了，不需要迁移脚本。
  */
 const LEGACY_SIZES: Record<string, WidgetSize> = {

@@ -1,7 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
-import { DashboardWidget } from '../../../../../typedef/define/dashboard/DashboardLayout';
+import { WebDashboardWidget } from '../../../../../typedef/define/dashboard/WebDashboardLayout';
 import { readWindow } from '../../dashboard.config';
 import { windowLabel } from '../../dashboard.folding';
 
@@ -27,7 +27,7 @@ import { windowLabel } from '../../dashboard.folding';
   imports: [DatePipe, TranslatePipe],
 })
 export class WidgetWindowComponent {
-  readonly widget = input.required<DashboardWidget>();
+  readonly widget = input.required<WebDashboardWidget>();
 
   /**
    * 卡头右端的窗口。没配窗口时是 `undefined`，那一段整个不渲染。

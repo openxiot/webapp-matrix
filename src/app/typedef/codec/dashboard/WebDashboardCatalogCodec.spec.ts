@@ -1,4 +1,4 @@
-import { DashboardCatalogCodec } from './DashboardCatalogCodec';
+import { WebDashboardCatalogCodec } from './WebDashboardCatalogCodec';
 
 /**
  * 候选清单的解码。要钉住的是**「这一项能不能被选」与「选完能不能存」是同一件事**：
@@ -8,17 +8,17 @@ import { DashboardCatalogCodec } from './DashboardCatalogCodec';
  * 服务那一半整个委派给 `ModbusServiceCodec`（两边下发时用的是同一个后端 codec），
  * 所以这里只断言「确实解出来了、而且是完整的服务」—— 字段级的解码归那个 codec 自己的用例。
  */
-describe('DashboardCatalogCodec', () => {
+describe('WebDashboardCatalogCodec', () => {
   describe('decode 的兜底', () => {
     it('整个 data 缺失也能解出一份空清单（不抛）', () => {
-      const catalog = DashboardCatalogCodec.decode(undefined);
+      const catalog = WebDashboardCatalogCodec.decode(undefined);
 
       expect(catalog.devices).toEqual([]);
       expect(catalog.services).toEqual([]);
     });
 
     it('两份清单缺失 / 不是数组时各给空数组', () => {
-      const catalog = DashboardCatalogCodec.decode({ devices: null, services: 'svc' });
+      const catalog = WebDashboardCatalogCodec.decode({ devices: null, services: 'svc' });
 
       expect(catalog.devices).toEqual([]);
       expect(catalog.services).toEqual([]);
@@ -27,7 +27,7 @@ describe('DashboardCatalogCodec', () => {
 
   describe('设备', () => {
     it('did / type 原样带出，online 缺省按离线', () => {
-      const catalog = DashboardCatalogCodec.decode({
+      const catalog = WebDashboardCatalogCodec.decode({
         devices: [{ did: 'd1', type: 'tr_aaa', online: true }, { did: 'd2', type: 'tr_bbb' }],
       });
 
@@ -38,7 +38,7 @@ describe('DashboardCatalogCodec', () => {
     });
 
     it('没有 did 的一行整行丢掉（选中了也存不下去）', () => {
-      const catalog = DashboardCatalogCodec.decode({
+      const catalog = WebDashboardCatalogCodec.decode({
         devices: [{ type: 'tr_aaa' }, { did: '', type: 'tr_bbb' }, { did: 'd3' }, null, 'd4'],
       });
 
@@ -46,7 +46,7 @@ describe('DashboardCatalogCodec', () => {
     });
 
     it('type 不是字符串时给空串（不编一个型号出来）', () => {
-      const catalog = DashboardCatalogCodec.decode({ devices: [{ did: 'd1', type: 12 }] });
+      const catalog = WebDashboardCatalogCodec.decode({ devices: [{ did: 'd1', type: 12 }] });
 
       expect(catalog.devices[0].type).toBe('');
     });
@@ -54,7 +54,7 @@ describe('DashboardCatalogCodec', () => {
 
   describe('服务', () => {
     it('完整的服务定义解出来（含方法里的应答字段：编辑器级联要的就是它）', () => {
-      const catalog = DashboardCatalogCodec.decode({
+      const catalog = WebDashboardCatalogCodec.decode({
         services: [
           {
             id: 'svc-1',

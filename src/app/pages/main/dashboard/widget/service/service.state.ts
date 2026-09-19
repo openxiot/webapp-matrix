@@ -12,8 +12,8 @@ import { modbusValueText } from '../../../../../typedef/define/modbus/ModbusHist
 import {
   ServiceData,
   ServiceFieldRow,
-  WidgetDataItem,
-} from '../../../../../typedef/define/dashboard/DashboardWidgetData';
+  WebDashboardWidgetDataItem,
+} from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
 import { readBoolean } from '../../dashboard.config';
 
 /**
@@ -31,7 +31,7 @@ import { readBoolean } from '../../dashboard.config';
 export type ServiceCardState = 'loading' | 'failed' | 'notCollected' | 'ok';
 
 export function serviceState(
-  item: WidgetDataItem | undefined,
+  item: WebDashboardWidgetDataItem | undefined,
   data: ServiceData,
 ): ServiceCardState {
   if (!item) {

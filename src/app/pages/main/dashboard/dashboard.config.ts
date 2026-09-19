@@ -1,9 +1,9 @@
-import { WindowConfig } from '../../../typedef/define/dashboard/DashboardLayout';
+import { WindowConfig } from '../../../typedef/define/dashboard/WebDashboardLayout';
 
 /**
  * 卡片配置的**防御性读取**（纯函数，无注入）。
  *
- * `DashboardWidget.config` 的类型是 `Record<string, unknown>`（见 typedef 里的说明）：库里可能
+ * `WebDashboardWidget.config` 的类型是 `Record<string, unknown>`（见 typedef 里的说明）：库里可能
  * 存着旧版本写的、或者手改过的配置 —— 少字段、类型不对、`hours` 是负数都合法地存在。
  * 渲染层一律从这里取值，读不出合法值就当**没配**：
  * 「没配」在页面上是一个空卡片（看得见、说得清），而一个断言换来的只是编译器闭嘴。

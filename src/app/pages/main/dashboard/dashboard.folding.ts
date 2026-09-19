@@ -10,8 +10,8 @@ import {
   StatData,
   DistributionData,
   LineData,
-} from '../../../typedef/define/dashboard/DashboardWidgetData';
-import { WindowConfig } from '../../../typedef/define/dashboard/DashboardLayout';
+} from '../../../typedef/define/dashboard/WebDashboardWidgetData';
+import { WindowConfig } from '../../../typedef/define/dashboard/WebDashboardLayout';
 
 /**
  * 取数结果的折算（纯函数，无注入、无翻译器）。
@@ -114,7 +114,7 @@ export function windowLabel(window?: WindowConfig): WindowLabel | undefined {
  * 把一个窗口算成绝对区间。
  *
  * **看板渲染不经过这里**：相对窗口（`kind: 'last'`）由**服务端**在 render 时按它的「现在」
- * 解析，`from` / `to` 从响应里读（见 `DashboardWidgetData`）。本函数只有一个用途：
+ * 解析，`from` / `to` 从响应里读（见 `WebDashboardWidgetData`）。本函数只有一个用途：
  * 编辑器里用户从「最近 N 小时」切到「绝对区间」时，给一对合理的初值，
  * 免得他面对两个空输入框。
  */

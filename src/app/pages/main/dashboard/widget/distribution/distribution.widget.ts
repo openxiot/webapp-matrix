@@ -5,11 +5,11 @@ import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { EChartsDirective } from '../../../../../common/components/echarts/echarts.directive';
 import { MainI18nService } from '../../../../../service/i18n.service';
 import { ModbusConfig } from '../../../../../typedef/define/modbus/Modbus';
-import { DashboardWidget } from '../../../../../typedef/define/dashboard/DashboardLayout';
+import { WebDashboardWidget } from '../../../../../typedef/define/dashboard/WebDashboardLayout';
 import {
   distributionData,
-  WidgetDataItem,
-} from '../../../../../typedef/define/dashboard/DashboardWidgetData';
+  WebDashboardWidgetDataItem,
+} from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
 import { readNumber, readString } from '../../dashboard.config';
 import { distributionFor, truncatePoints } from '../../dashboard.folding';
 import { distributionOption } from '../../dashboard.charts';
@@ -37,9 +37,9 @@ import { WidgetWindowComponent } from '../window/widget.window';
   imports: [NzCardModule, EChartsDirective, NzEmptyModule, WidgetNoteComponent, WidgetWindowComponent],
 })
 export class DistributionWidgetComponent {
-  readonly widget = input.required<DashboardWidget>();
+  readonly widget = input.required<WebDashboardWidget>();
   /** 这张卡的取数结果。**还没有**时是 `undefined`（不是一份空结果） */
-  readonly item = input<WidgetDataItem | undefined>(undefined);
+  readonly item = input<WebDashboardWidgetDataItem | undefined>(undefined);
   /** 卡名。由宿主算好传下来（见 `host/widget.host.ts`） */
   readonly title = input.required<string>();
   /** 悬停浮起（`nz-card` 的 `nzHoverable`）。**只有编辑态为真** —— 见 `host/widget.host.ts` */

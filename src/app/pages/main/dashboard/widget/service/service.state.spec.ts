@@ -1,8 +1,8 @@
 import {
   ServiceData,
-  WidgetDataItem,
+  WebDashboardWidgetDataItem,
   serviceData,
-} from '../../../../../typedef/define/dashboard/DashboardWidgetData';
+} from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
 import { serviceLines, serviceState } from './service.state';
 
 /**
@@ -23,8 +23,8 @@ describe('service.state', () => {
     asked.length = 0;
   });
 
-  function item(data: Record<string, unknown>, success = true): WidgetDataItem {
-    const x = new WidgetDataItem();
+  function item(data: Record<string, unknown>, success = true): WebDashboardWidgetDataItem {
+    const x = new WebDashboardWidgetDataItem();
     x.id = 'w1';
     x.success = success;
     x.data = data;

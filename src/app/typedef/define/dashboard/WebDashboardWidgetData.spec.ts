@@ -1,4 +1,4 @@
-import { WidgetDataItem, deviceData, serviceData } from './DashboardWidgetData';
+import { WebDashboardWidgetDataItem, deviceData, serviceData } from './WebDashboardWidgetData';
 
 /**
  * 服务卡的读数读取。要钉住的是**「没有值」与「值是 0」分得开** —— 卡片上这两种都是要显示的东西，
@@ -6,9 +6,9 @@ import { WidgetDataItem, deviceData, serviceData } from './DashboardWidgetData';
  *
  * 只断言读出来的形状，不看界面。
  */
-describe('DashboardWidgetData', () => {
-  function item(data: Record<string, unknown>): WidgetDataItem {
-    const x = new WidgetDataItem();
+describe('WebDashboardWidgetData', () => {
+  function item(data: Record<string, unknown>): WebDashboardWidgetDataItem {
+    const x = new WebDashboardWidgetDataItem();
     x.id = 'w1';
     x.success = true;
     x.data = data;

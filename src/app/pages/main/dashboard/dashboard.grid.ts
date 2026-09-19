@@ -1,11 +1,11 @@
 import {
-  DashboardWidget,
+  WebDashboardWidget,
   GRID_COLUMNS,
   GRID_GAP,
   GRID_ROW_HEIGHT,
   WidgetSize,
   WIDGET_SIZES,
-} from '../../../typedef/define/dashboard/DashboardLayout';
+} from '../../../typedef/define/dashboard/WebDashboardLayout';
 
 /**
  * 网格排版：档位 → 占格 / 像素高，以及**二维摆放**的那套坐标运算（纯函数，无注入）。
@@ -43,7 +43,7 @@ import {
 
 /**
  * 一张卡在网格里的位置与占格。**这是这一层的通用货币** —— 各函数之间传的都是它，
- * 不是 `DashboardWidget`（那样每层都要重新查一次档位表）。
+ * 不是 `WebDashboardWidget`（那样每层都要重新查一次档位表）。
  */
 export interface Placement {
   id: string;
@@ -64,17 +64,17 @@ export interface Placement {
  * 给个小格子总比给个撑满屏幕的格子好（渲染不出来还能看见，占满一屏则整页都毁了）。
  *
  * **旧档位名（`S1` / `M1` / `S` / `M` / `L` / `XL`）在这里认不出来是对的** ——
- * 它们由 `DashboardLayoutCodec` 在读线格式时翻译成新名，能走到这里说明那个 widget
+ * 它们由 `WebDashboardLayoutCodec` 在读线格式时翻译成新名，能走到这里说明那个 widget
  * 不是从线格式来的（比如测试里直接造的）。真到了这儿也只是一个小格子，不会炸。
  */
-export function sizeOf(widget: DashboardWidget): { w: number; h: number } {
+export function sizeOf(widget: WebDashboardWidget): { w: number; h: number } {
   return WIDGET_SIZES[widget.size as WidgetSize] ?? WIDGET_SIZES.W6H200;
 }
 
 /**
  * 卡片在屏幕上多高（像素）：`h` 个行高，中间 `h − 1` 道缝。
  *
- * 这两个数**只有一处常量**（`DashboardLayout` 的 `GRID_ROW_HEIGHT` / `GRID_GAP`）。
+ * 这两个数**只有一处常量**（`WebDashboardLayout` 的 `GRID_ROW_HEIGHT` / `GRID_GAP`）。
  * 抄进样式表就是第二处 —— 改了档位表却漏改它，卡片与它占的格子就对不上了。
  *
  * 网格的 `grid-auto-rows` 也能把一格撑到该有的高度，但卡片**自己**仍要一个确切的高度：
@@ -85,7 +85,7 @@ export function cardHeight(h: number): number {
 }
 
 /** 卡片 + 档位 → Placement。坐标缺失按 `0` 算，故**先问 {@link hasPlacements}** 再用 */
-export function placementsOf(widgets: DashboardWidget[]): Placement[] {
+export function placementsOf(widgets: WebDashboardWidget[]): Placement[] {
   return widgets.map((widget) => {
     const size = sizeOf(widget);
     return { id: widget.id, x: widget.x ?? 0, y: widget.y ?? 0, w: size.w, h: size.h };
@@ -99,7 +99,7 @@ export function placementsOf(widgets: DashboardWidget[]): Placement[] {
  * 重叠也算不合法：改造前的文档没有坐标（走 {@link flowPlace}），
  * 而一份**有坐标却互相压着**的文档只可能是脏数据 —— 照它渲染就是两张卡叠在一起。
  */
-export function hasPlacements(widgets: DashboardWidget[]): boolean {
+export function hasPlacements(widgets: WebDashboardWidget[]): boolean {
   if (widgets.some((widget) => widget.x === undefined || widget.y === undefined)) {
     return false;
   }
@@ -126,7 +126,7 @@ export function hasPlacements(widgets: DashboardWidget[]): boolean {
  * 用 CSS Grid 流式排布做的那件事（不变量 3），所以拿它去铺一份旧文档，
  * 出来的就是用户上次看到的那个版式。
  */
-export function flowPlace(widgets: DashboardWidget[]): Placement[] {
+export function flowPlace(widgets: WebDashboardWidget[]): Placement[] {
   const placed: Placement[] = [];
   for (const widget of widgets) {
     const size = sizeOf(widget);
@@ -144,7 +144,7 @@ export function flowPlace(widgets: DashboardWidget[]): Placement[] {
  * 写到一半或被手工改过，这时**没有任何一张的位置是可信的**。让它们一起重来，
  * 至少结果自洽。
  */
-export function ensurePlacements(widgets: DashboardWidget[]): DashboardWidget[] {
+export function ensurePlacements(widgets: WebDashboardWidget[]): WebDashboardWidget[] {
   if (hasPlacements(widgets)) {
     return widgets;
   }
@@ -286,7 +286,7 @@ function compareYX(a: Placement, b: Placement): number {
  * （codec 解出来的、编辑器 `patch` 出来的），拿 `JSON.stringify` 直接比会把「没改」
  * 判成「改过」。嵌套值仍按 `JSON.stringify` 比 —— 它们都出自同一趟 decode，键序一致。
  */
-export function layoutSignature(widgets: DashboardWidget[]): string {
+export function layoutSignature(widgets: WebDashboardWidget[]): string {
   return widgets
     .map((widget) => {
       const config = Object.keys(widget.config ?? {})
@@ -308,7 +308,7 @@ export function layoutSignature(widgets: DashboardWidget[]): string {
 }
 
 /** 两份版式是不是同一个东西。卡片的**顺序**也算：它是窄屏折成一列时的阅读顺序 */
-export function sameLayout(a: DashboardWidget[], b: DashboardWidget[]): boolean {
+export function sameLayout(a: WebDashboardWidget[], b: WebDashboardWidget[]): boolean {
   if (a.length !== b.length) {
     return false;
   }

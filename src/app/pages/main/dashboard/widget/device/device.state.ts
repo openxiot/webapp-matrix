@@ -5,7 +5,7 @@
  * 写在模板里就得靠 `@if` 叠 `@if`，而这几种组合恰恰最需要被一个一个钉住。
  */
 import { modbusValueText } from '../../../../../typedef/define/modbus/ModbusHistory';
-import { DeviceData, WidgetDataItem } from '../../../../../typedef/define/dashboard/DashboardWidgetData';
+import { DeviceData, WebDashboardWidgetDataItem } from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
 import { DeviceProperty } from '../../../../../service/device.spec.service';
 import { readBoolean } from '../../dashboard.config';
 
@@ -23,7 +23,7 @@ import { readBoolean } from '../../dashboard.config';
  */
 export type DeviceCardState = 'loading' | 'failed' | 'ok';
 
-export function deviceState(item: WidgetDataItem | undefined): DeviceCardState {
+export function deviceState(item: WebDashboardWidgetDataItem | undefined): DeviceCardState {
   if (!item) {
     return 'loading';
   }

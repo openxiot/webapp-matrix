@@ -26,8 +26,8 @@ import { StatisticsBucket, StatisticsCount } from '../statistics/OverviewStatist
  * 是**这一步**该做的事 —— 用下面三个 `xxxData()` 函数，别在模板里直接取字段：
  * 库里可能存着旧版本写的配置，取数回来的是个空对象，防御性读取总比整页报错好。
  */
-export class WidgetDataItem {
-  /** 对应 {@link DashboardWidget.id}。**按下标对应是错的** —— 顺序会随保存/拖拽变化 */
+export class WebDashboardWidgetDataItem {
+  /** 对应 {@link WebDashboardWidget.id}。**按下标对应是错的** —— 顺序会随保存/拖拽变化 */
   id: string = '';
   /** 这张卡单独失败了。失败时 `data` 为空、`message` 是人话（英文，直接显示即可） */
   success: boolean = false;
@@ -37,14 +37,14 @@ export class WidgetDataItem {
 }
 
 /** 一次取数的全部结果 */
-export class DashboardWidgetData {
+export class WebDashboardWidgetData {
   spaceId: string = '';
   /** 实际生效的区间起点（毫秒） */
   from: number = 0;
   /** 实际生效的区间终点（毫秒） */
   to: number = 0;
   /** 与请求的卡片**同样顺序**，便于前端按 id 建索引后仍能原样遍历 */
-  widgets: WidgetDataItem[] = [];
+  widgets: WebDashboardWidgetDataItem[] = [];
 }
 
 /** 统计卡的数字（`type: 'stat'`） */
@@ -189,7 +189,7 @@ function bucketsOf(source: Record<string, unknown>, key: string): StatisticsBuck
 }
 
 /** 把一张卡的结果读成 {@link StatData} */
-export function statData(item: WidgetDataItem): StatData {
+export function statData(item: WebDashboardWidgetDataItem): StatData {
   const data = new StatData();
   data.value = numberOf(item.data, 'value');
   data.hourly = bucketsOf(item.data, 'hourly');
@@ -198,7 +198,7 @@ export function statData(item: WidgetDataItem): StatData {
 }
 
 /** 把一张卡的结果读成 {@link DistributionData} */
-export function distributionData(item: WidgetDataItem): DistributionData {
+export function distributionData(item: WebDashboardWidgetDataItem): DistributionData {
   const data = new DistributionData();
   const raw = item.data['groups'];
   if (!Array.isArray(raw)) {
@@ -220,7 +220,7 @@ export function distributionData(item: WidgetDataItem): DistributionData {
 }
 
 /** 把一张卡的结果读成 {@link LineData} */
-export function lineData(item: WidgetDataItem): LineData {
+export function lineData(item: WebDashboardWidgetDataItem): LineData {
   const data = new LineData();
   data.from = numberOf(item.data, 'from') ?? 0;
   data.to = numberOf(item.data, 'to') ?? 0;
@@ -234,7 +234,7 @@ export function lineData(item: WidgetDataItem): LineData {
  * `type` 只在**非空**时才留下：空串与「没有这个键」在用途上是同一件事
  * （都查不到产品规格），留一个空串只会让卡片多一条「要不要判空」的分支。
  */
-export function deviceData(item: WidgetDataItem): DeviceData {
+export function deviceData(item: WebDashboardWidgetDataItem): DeviceData {
   const data = new DeviceData();
   data.pid = stringOf(item.data, 'pid') ?? '';
   const type = stringOf(item.data, 'type');
@@ -250,7 +250,7 @@ export function deviceData(item: WidgetDataItem): DeviceData {
 }
 
 /** 把一张卡的结果读成 {@link ServiceData} */
-export function serviceData(item: WidgetDataItem): ServiceData {
+export function serviceData(item: WebDashboardWidgetDataItem): ServiceData {
   const data = new ServiceData();
   data.functionIndex = numberOf(item.data, 'functionIndex') ?? 0;
   data.recordedAt = numberOf(item.data, 'recordedAt');

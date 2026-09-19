@@ -1,7 +1,7 @@
 import {
-  DashboardWidgetData,
-  WidgetDataItem,
-} from '../../define/dashboard/DashboardWidgetData';
+  WebDashboardWidgetData,
+  WebDashboardWidgetDataItem,
+} from '../../define/dashboard/WebDashboardWidgetData';
 
 /**
  * 取数结果与 JSON 的互转。**只解不编**：这份数据是后端算出来的，前端没有回写它的请求体
@@ -15,25 +15,25 @@ import {
  * 一屏里有一张卡失败是常态（它的点位不属于本空间、或那个窗口取数炸了），
  * 把失败项过滤掉会让「卡片数对不上」变成一件要查的事。
  */
-export class DashboardWidgetDataCodec {
-  static decode(o: any): DashboardWidgetData {
-    const x = new DashboardWidgetData();
+export class WebDashboardWidgetDataCodec {
+  static decode(o: any): WebDashboardWidgetData {
+    const x = new WebDashboardWidgetData();
     x.spaceId = o?.spaceId ?? '';
     x.from = o?.from ?? 0;
     x.to = o?.to ?? 0;
-    x.widgets = DashboardWidgetDataCodec.decodeItems(o?.widgets);
+    x.widgets = WebDashboardWidgetDataCodec.decodeItems(o?.widgets);
     return x;
   }
 
-  static decodeItems(rows: any): WidgetDataItem[] {
+  static decodeItems(rows: any): WebDashboardWidgetDataItem[] {
     if (!Array.isArray(rows)) {
       return [];
     }
-    return rows.map((row) => DashboardWidgetDataCodec.decodeItem(row));
+    return rows.map((row) => WebDashboardWidgetDataCodec.decodeItem(row));
   }
 
-  static decodeItem(o: any): WidgetDataItem {
-    const x = new WidgetDataItem();
+  static decodeItem(o: any): WebDashboardWidgetDataItem {
+    const x = new WebDashboardWidgetDataItem();
     x.id = o?.id ?? '';
     x.success = o?.success === true;
     x.data = o?.data && typeof o.data === 'object' ? o.data : {};

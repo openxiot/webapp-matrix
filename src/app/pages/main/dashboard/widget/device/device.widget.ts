@@ -4,12 +4,12 @@ import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 import { DeviceSpecService } from '../../../../../service/device.spec.service';
-import { DashboardWidget } from '../../../../../typedef/define/dashboard/DashboardLayout';
+import { WebDashboardWidget } from '../../../../../typedef/define/dashboard/WebDashboardLayout';
 import {
   DeviceData,
-  WidgetDataItem,
+  WebDashboardWidgetDataItem,
   deviceData,
-} from '../../../../../typedef/define/dashboard/DashboardWidgetData';
+} from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
 import { readString } from '../../dashboard.config';
 import { WidgetNoteComponent } from '../note/widget.note';
 import { DeviceCardState, deviceLine, deviceState } from './device.state';
@@ -43,9 +43,9 @@ import { DeviceCardState, deviceLine, deviceState } from './device.state';
   ],
 })
 export class DeviceWidgetComponent {
-  readonly widget = input.required<DashboardWidget>();
+  readonly widget = input.required<WebDashboardWidget>();
   /** 这张卡的取数结果。**还没有**时是 `undefined`（不是一份空结果） */
-  readonly item = input<WidgetDataItem | undefined>(undefined);
+  readonly item = input<WebDashboardWidgetDataItem | undefined>(undefined);
   /** 卡名。由宿主算好传下来（见 `host/widget.host.ts`） */
   readonly title = input.required<string>();
   /** 悬停浮起（`nz-card` 的 `nzHoverable`）。**只有编辑态为真** —— 见 `host/widget.host.ts` */

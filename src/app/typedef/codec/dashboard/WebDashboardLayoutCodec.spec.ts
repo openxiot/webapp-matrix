@@ -1,5 +1,5 @@
-import { DashboardLayout, WIDGET_SIZES } from '../../define/dashboard/DashboardLayout';
-import { DashboardLayoutCodec } from './DashboardLayoutCodec';
+import { WebDashboardLayout, WIDGET_SIZES } from '../../define/dashboard/WebDashboardLayout';
+import { WebDashboardLayoutCodec } from './WebDashboardLayoutCodec';
 
 /**
  * 布局的编解码。断言的重点不是「字段抄全了」，而是三条**错了不会报错、只会悄悄不对**的口径：
@@ -15,11 +15,11 @@ import { DashboardLayoutCodec } from './DashboardLayoutCodec';
  * 还有一条容易忽略的：**编辑器不解读的 config 键必须原样带回去**。用户只改了卡片标题，
  * 不该因为过了一趟前端就把 `serviceId` / `fields` 这些取数侧才读的配置丢掉。
  */
-describe('DashboardLayoutCodec', () => {
+describe('WebDashboardLayoutCodec', () => {
   describe('decode 的兜底', () => {
     it('整个 data 缺失也能解出一份空布局', () => {
       // 后端异常返回时不该在页面里炸出一个 TypeError，空布局比崩溃好
-      const layout = DashboardLayoutCodec.decode(undefined);
+      const layout = WebDashboardLayoutCodec.decode(undefined);
 
       expect(layout.spaceId).toBe('');
       expect(layout.version).toBe(0);
@@ -27,13 +27,13 @@ describe('DashboardLayoutCodec', () => {
     });
 
     it('widgets 缺失 / 不是数组时当空数组', () => {
-      expect(DashboardLayoutCodec.decode({ widgets: null }).widgets).toEqual([]);
-      expect(DashboardLayoutCodec.decode({ widgets: {} }).widgets).toEqual([]);
+      expect(WebDashboardLayoutCodec.decode({ widgets: null }).widgets).toEqual([]);
+      expect(WebDashboardLayoutCodec.decode({ widgets: {} }).widgets).toEqual([]);
     });
 
     it('不认识的 type 与 size 各退回 stat / W6H200，而不是让它们流到渲染里', () => {
       // 库里存着将来某版本写的 type 时，宁可显示成一张统计卡，也不要一个渲染不出来的空壳
-      const widget = DashboardLayoutCodec.decodeWidget({ type: 'sankey', size: 'XXL' });
+      const widget = WebDashboardLayoutCodec.decodeWidget({ type: 'sankey', size: 'XXL' });
 
       expect(widget.type).toBe('stat');
       expect(widget.size).toBe('W6H200');
@@ -53,7 +53,7 @@ describe('DashboardLayoutCodec', () => {
       ];
 
       for (const [legacy, current] of cases) {
-        expect(DashboardLayoutCodec.decodeWidget({ size: legacy }).size).toBe(current);
+        expect(WebDashboardLayoutCodec.decodeWidget({ size: legacy }).size).toBe(current);
       }
     });
 
@@ -61,12 +61,12 @@ describe('DashboardLayoutCodec', () => {
       // 今天两套名字不相交（新名以 W 开头），这条钉的是**判断顺序** ——
       // 先查现名、再查旧名。反过来的话，将来哪天新起一个与旧名同名的档位就会读错
       for (const size of Object.keys(WIDGET_SIZES)) {
-        expect(DashboardLayoutCodec.decodeWidget({ size }).size).toBe(size);
+        expect(WebDashboardLayoutCodec.decodeWidget({ size }).size).toBe(size);
       }
     });
 
     it('title / titleKey 没下发时保持 undefined，不补空值', () => {
-      const widget = DashboardLayoutCodec.decodeWidget({ id: 'w1' });
+      const widget = WebDashboardLayoutCodec.decodeWidget({ id: 'w1' });
 
       expect(widget.title).toBeUndefined();
       expect(widget.titleKey).toBeUndefined();
@@ -76,22 +76,22 @@ describe('DashboardLayoutCodec', () => {
       // 改造前每张卡各带一个 `refresh`，现在整屏一个间隔、记在浏览器里（见方案 §5.2）。
       // 那个键与 `layout` 一样属于「不认识的键」，codec 当没看见 —— 读得进，
       // 而且这一趟前端过完再保存时就自然没了
-      const widget = DashboardLayoutCodec.decodeWidget({ id: 'w1', refresh: 0 });
+      const widget = WebDashboardLayoutCodec.decodeWidget({ id: 'w1', refresh: 0 });
 
       expect('refresh' in widget).toBe(false);
-      expect('refresh' in DashboardLayoutCodec.encodeWidget(widget)).toBe(false);
+      expect('refresh' in WebDashboardLayoutCodec.encodeWidget(widget)).toBe(false);
     });
 
     it('config 缺失时给空对象而不是 undefined', () => {
       // 渲染侧一律 `widget.config.xxx`，给 undefined 等于让每处调用都要先判空
-      expect(DashboardLayoutCodec.decodeWidget({}).config).toEqual({});
-      expect(DashboardLayoutCodec.decodeWidget({ config: 'oops' }).config).toEqual({});
+      expect(WebDashboardLayoutCodec.decodeWidget({}).config).toEqual({});
+      expect(WebDashboardLayoutCodec.decodeWidget({ config: 'oops' }).config).toEqual({});
     });
 
     it('config 是拷一份，不与入参共用', () => {
       // 编辑器改 config 时若写进了那份原始响应，重开对话框会看到改了一半的状态
       const raw = { config: { metric: 'devices.total' } };
-      const widget = DashboardLayoutCodec.decodeWidget(raw);
+      const widget = WebDashboardLayoutCodec.decodeWidget(raw);
 
       widget.config['metric'] = 'alarms.today';
 
@@ -102,7 +102,7 @@ describe('DashboardLayoutCodec', () => {
       // 改造前存的文档里每条 widget 都带一个 `layout: {x, y, w, h}`。那一版连同它的
       // `w`/`h` 一起废掉了，现在线上跑的是**平铺的** `x` / `y`。老键不读也不写：
       // 解出来照常是一张正常的卡，第一次保存就把它洗掉
-      const widget = DashboardLayoutCodec.decodeWidget({
+      const widget = WebDashboardLayoutCodec.decodeWidget({
         id: 'w1',
         layout: { x: 6, y: 4, w: 12, h: 8 },
       });
@@ -115,7 +115,7 @@ describe('DashboardLayoutCodec', () => {
     });
 
     it('坐标读成两个整数', () => {
-      const widget = DashboardLayoutCodec.decodeWidget({ id: 'w1', x: 6, y: 4 });
+      const widget = WebDashboardLayoutCodec.decodeWidget({ id: 'w1', x: 6, y: 4 });
 
       expect(widget.x).toBe(6);
       expect(widget.y).toBe(4);
@@ -124,8 +124,8 @@ describe('DashboardLayoutCodec', () => {
     it('坐标两个都要：只给一个的按「都没有」处理', () => {
       // 只给一个的文档只可能是写到一半或被手工改过。收下那半个等于把一个来路不明的
       // 位置当成用户摆的 —— 整份重铺虽然会动版式，但至少结果自洽
-      const onlyX = DashboardLayoutCodec.decodeWidget({ id: 'w1', x: 6 });
-      const onlyY = DashboardLayoutCodec.decodeWidget({ id: 'w1', y: 4 });
+      const onlyX = WebDashboardLayoutCodec.decodeWidget({ id: 'w1', x: 6 });
+      const onlyY = WebDashboardLayoutCodec.decodeWidget({ id: 'w1', y: 4 });
 
       expect(onlyX.x).toBeUndefined();
       expect(onlyX.y).toBeUndefined();
@@ -137,7 +137,7 @@ describe('DashboardLayoutCodec', () => {
       // `"6"` 收下来只会掩盖后端的一次序列化改动；小数与负数根本不是格子下标。
       // 三种都退回「没有坐标」，由页面整份重铺
       for (const x of ['6', 6.5, -1, null, true, NaN]) {
-        const widget = DashboardLayoutCodec.decodeWidget({ id: 'w1', x, y: 4 });
+        const widget = WebDashboardLayoutCodec.decodeWidget({ id: 'w1', x, y: 4 });
 
         expect(widget.x).toBeUndefined();
         expect(widget.y).toBeUndefined();
@@ -146,7 +146,7 @@ describe('DashboardLayoutCodec', () => {
 
     it('y 为 0 是合法坐标（第一行），不是「没设」', () => {
       // `if (y)` 会把 0 当缺省丢掉，于是一张摆在第一行的卡每次刷新都往上跳
-      const widget = DashboardLayoutCodec.decodeWidget({ id: 'w1', x: 0, y: 0 });
+      const widget = WebDashboardLayoutCodec.decodeWidget({ id: 'w1', x: 0, y: 0 });
 
       expect(widget.x).toBe(0);
       expect(widget.y).toBe(0);
@@ -154,13 +154,13 @@ describe('DashboardLayoutCodec', () => {
 
     it('creator / updater 缺失时不编一个空对象出来', () => {
       // 预置布局没有作者。补一个 {id: undefined} 会让页面显示出一行空白署名
-      expect(DashboardLayoutCodec.decode({}).creator).toBeUndefined();
-      expect(DashboardLayoutCodec.decode({}).updater).toBeUndefined();
-      expect(DashboardLayoutCodec.decode({ creator: null }).creator).toBeUndefined();
+      expect(WebDashboardLayoutCodec.decode({}).creator).toBeUndefined();
+      expect(WebDashboardLayoutCodec.decode({}).updater).toBeUndefined();
+      expect(WebDashboardLayoutCodec.decode({ creator: null }).creator).toBeUndefined();
     });
 
     it('creator 带着人话与时间戳', () => {
-      const layout = DashboardLayoutCodec.decode({
+      const layout = WebDashboardLayoutCodec.decode({
         creator: { id: 'acc-1', name: '张三', timestamp: 100 },
       });
 
@@ -170,15 +170,15 @@ describe('DashboardLayoutCodec', () => {
 
   describe('encode 只发该发的', () => {
     it('version 原样回传（乐观锁靠它，漏了就变成一次覆盖写）', () => {
-      const layout = DashboardLayoutCodec.decode({ version: 3, widgets: [] });
+      const layout = WebDashboardLayoutCodec.decode({ version: 3, widgets: [] });
 
-      expect(DashboardLayoutCodec.encode(layout).version).toBe(3);
+      expect(WebDashboardLayoutCodec.encode(layout).version).toBe(3);
     });
 
     it('坐标要发出去：不发就等于每次保存都退回贪婪铺，刷新一次整屏重排', () => {
-      const widget = DashboardLayoutCodec.decodeWidget({ id: 'w1', size: 'W12H416', x: 6, y: 4 });
+      const widget = WebDashboardLayoutCodec.decodeWidget({ id: 'w1', size: 'W12H416', x: 6, y: 4 });
 
-      const body = DashboardLayoutCodec.encodeWidget(widget);
+      const body = WebDashboardLayoutCodec.encodeWidget(widget);
 
       expect(body.x).toBe(6);
       expect(body.y).toBe(4);
@@ -187,15 +187,15 @@ describe('DashboardLayoutCodec', () => {
     it('没有坐标的卡片一个坐标键都不发（发半个更糟）', () => {
       // 旧布局的卡片没有坐标。这时**两个都不发**，服务端存的就是「还没摆过」，
       // 页面下次打开会整份重铺 —— 比发一个 `x` 配一个缺 `y` 强，那是脏数据
-      const body = DashboardLayoutCodec.encodeWidget(DashboardLayoutCodec.decodeWidget({ id: 'w1' }));
+      const body = WebDashboardLayoutCodec.encodeWidget(WebDashboardLayoutCodec.decodeWidget({ id: 'w1' }));
 
       expect('x' in body).toBe(false);
       expect('y' in body).toBe(false);
     });
 
     it('不发 spaceId / creator / updater：这些由服务端从路径与 JWT 取', () => {
-      const body = DashboardLayoutCodec.encode(
-        DashboardLayoutCodec.decode({
+      const body = WebDashboardLayoutCodec.encode(
+        WebDashboardLayoutCodec.decode({
           spaceId: 'space-1',
           version: 1,
           creator: { id: 'acc-1' },
@@ -207,35 +207,35 @@ describe('DashboardLayoutCodec', () => {
     });
 
     it('空标题不发键：用户的「清空标题」本意是改回默认名', () => {
-      const widget = DashboardLayoutCodec.decodeWidget({ id: 'w1', title: '' });
+      const widget = WebDashboardLayoutCodec.decodeWidget({ id: 'w1', title: '' });
 
-      expect('title' in DashboardLayoutCodec.encodeWidget(widget)).toBe(false);
+      expect('title' in WebDashboardLayoutCodec.encodeWidget(widget)).toBe(false);
     });
 
     it('没改标题的卡片把 titleKey 带回去（否则预置名会被洗掉）', () => {
-      const widget = DashboardLayoutCodec.decodeWidget({ id: 'w1', titleKey: '设备总数' });
+      const widget = WebDashboardLayoutCodec.decodeWidget({ id: 'w1', titleKey: '设备总数' });
 
-      expect(DashboardLayoutCodec.encodeWidget(widget).titleKey).toBe('设备总数');
+      expect(WebDashboardLayoutCodec.encodeWidget(widget).titleKey).toBe('设备总数');
     });
 
     it('用户起了名字的卡片不再带 titleKey', () => {
       // 这张卡已经是用户的了，不该再留一个会随服务端改预置文案而变的旧记号
-      const widget = DashboardLayoutCodec.decodeWidget({
+      const widget = WebDashboardLayoutCodec.decodeWidget({
         id: 'w1',
         titleKey: '设备总数',
         title: '东区设备',
       });
 
-      const body = DashboardLayoutCodec.encodeWidget(widget);
+      const body = WebDashboardLayoutCodec.encodeWidget(widget);
 
       expect(body.title).toBe('东区设备');
       expect('titleKey' in body).toBe(false);
     });
 
     it('config 总是要发（哪怕是空的）', () => {
-      const widget = DashboardLayoutCodec.decodeWidget({ id: 'w1' });
+      const widget = WebDashboardLayoutCodec.decodeWidget({ id: 'w1' });
 
-      expect(DashboardLayoutCodec.encodeWidget(widget).config).toEqual({});
+      expect(WebDashboardLayoutCodec.encodeWidget(widget).config).toEqual({});
     });
   });
 
@@ -251,9 +251,9 @@ describe('DashboardLayoutCodec', () => {
         config: { metric: 'devices.total', window: { kind: 'last', hours: 24 } },
       };
 
-      const decoded = DashboardLayoutCodec.decodeWidget(raw);
+      const decoded = WebDashboardLayoutCodec.decodeWidget(raw);
 
-      expect(DashboardLayoutCodec.encodeWidget(decoded)).toEqual({
+      expect(WebDashboardLayoutCodec.encodeWidget(decoded)).toEqual({
         id: 'w1',
         type: 'stat',
         title: '东区设备',
@@ -266,7 +266,7 @@ describe('DashboardLayoutCodec', () => {
 
     it('编辑器不认识的 config 键原样带回去', () => {
       // 只改了标题、没动配置：`display` 这类 codec 根本不解读的键不该因为过了一趟前端就没了
-      const widget = DashboardLayoutCodec.decodeWidget({
+      const widget = WebDashboardLayoutCodec.decodeWidget({
         id: 'w1',
         type: 'service',
         config: {
@@ -278,7 +278,7 @@ describe('DashboardLayoutCodec', () => {
         },
       });
 
-      expect(DashboardLayoutCodec.encodeWidget(widget).config).toEqual({
+      expect(WebDashboardLayoutCodec.encodeWidget(widget).config).toEqual({
         serviceId: 'svc-1',
         functionIndex: 2,
         fields: ['温度', '状态.bit0'],
@@ -289,7 +289,7 @@ describe('DashboardLayoutCodec', () => {
 
     it('嵌套的 config 解出来仍是对象与数组，不被展平', () => {
       // window 是文档、fields 是数组：读成字符串会让校验器与取数静默失灵
-      const widget = DashboardLayoutCodec.decodeWidget({
+      const widget = WebDashboardLayoutCodec.decodeWidget({
         config: { window: { kind: 'range', from: 1, to: 2 }, fields: ['温度'] },
       });
 
@@ -309,8 +309,8 @@ describe('DashboardLayoutCodec', () => {
         ],
       };
 
-      const saved = DashboardLayoutCodec.decode(raw);
-      const roundTripped = DashboardLayoutCodec.decode(DashboardLayoutCodec.encode(saved));
+      const saved = WebDashboardLayoutCodec.decode(raw);
+      const roundTripped = WebDashboardLayoutCodec.decode(WebDashboardLayoutCodec.encode(saved));
 
       expect(roundTripped.widgets.map((w) => w.id)).toEqual(['w1', 'w2']);
       expect(roundTripped.widgets.map((w) => w.size)).toEqual(['W6H92', 'W24H416']);
@@ -323,12 +323,12 @@ describe('DashboardLayoutCodec', () => {
 
     it('保存后返回的布局能直接替换手里那份（连存两次不该第二次就撞版本冲突）', () => {
       // 服务端返回的是**保存之后**的布局，版本号已 +1；用它替换手里那份才谈得上「连存两次」
-      const held = new DashboardLayout();
+      const held = new WebDashboardLayout();
       held.version = 0;
-      const returned = DashboardLayoutCodec.decode({ version: 1, widgets: [] });
+      const returned = WebDashboardLayoutCodec.decode({ version: 1, widgets: [] });
 
-      expect(DashboardLayoutCodec.encode(held).version).toBe(0);
-      expect(DashboardLayoutCodec.encode(returned).version).toBe(1);
+      expect(WebDashboardLayoutCodec.encode(held).version).toBe(0);
+      expect(WebDashboardLayoutCodec.encode(returned).version).toBe(1);
     });
   });
 });

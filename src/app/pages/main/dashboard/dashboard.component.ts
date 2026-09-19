@@ -20,28 +20,28 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AccountService } from '../../../service/account.service';
-import { DashboardService } from '../../../service/dashboard.service';
+import { WebDashboardService } from '../../../service/web-dashboard.service';
 import { MainI18nService } from '../../../service/i18n.service';
 import { MatrixService } from '../../../service/matrix.service';
 import { ModbusService } from '../../../service/modbus.service';
 import { ModbusConfig } from '../../../typedef/define/modbus/Modbus';
 import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
 import { OrganizationMember } from '../../../typedef/define/user/UserOrganization';
-import { DashboardCatalog } from '../../../typedef/define/dashboard/DashboardCatalog';
+import { WebDashboardCatalog } from '../../../typedef/define/dashboard/WebDashboardCatalog';
 import {
   DASHBOARD_DEFAULT_SIZE,
   DASHBOARD_WIDGET_TITLES,
   DEFAULT_REFRESH_SECONDS,
-  DashboardLayout,
+  WebDashboardLayout,
   REFRESH_INTERVALS,
-  DashboardWidget,
+  WebDashboardWidget,
   GRID_COLUMNS,
   GRID_GAP,
   GRID_ROW_HEIGHT,
   WidgetType,
   titleOf,
-} from '../../../typedef/define/dashboard/DashboardLayout';
-import { DashboardWidgetData } from '../../../typedef/define/dashboard/DashboardWidgetData';
+} from '../../../typedef/define/dashboard/WebDashboardLayout';
+import { WebDashboardWidgetData } from '../../../typedef/define/dashboard/WebDashboardWidgetData';
 import { WidgetEditorComponent } from './editor/widget.editor';
 import { WidgetPickerComponent } from './editor/widget.picker';
 import {
@@ -113,7 +113,7 @@ import { WidgetHostComponent } from './widget/host/widget.host';
 export class DashboardComponent implements OnDestroy {
   protected readonly account = inject(AccountService);
 
-  private readonly dashboard = inject(DashboardService);
+  private readonly dashboard = inject(WebDashboardService);
   private readonly modbus = inject(ModbusService);
   private readonly matrix = inject(MatrixService);
   private readonly msg = inject(NzMessageService);
@@ -124,10 +124,10 @@ export class DashboardComponent implements OnDestroy {
   readonly error = signal('');
 
   /** 服务端的布局。**未取到是 null，不是一份空布局** —— 那会让页面显示「暂无卡片」 */
-  readonly layout = signal<DashboardLayout | null>(null);
+  readonly layout = signal<WebDashboardLayout | null>(null);
 
   /** 各卡的读数，按 `id` 索引（**不能按下标**：顺序会随保存变化） */
-  private readonly data = signal<DashboardWidgetData | null>(null);
+  private readonly data = signal<WebDashboardWidgetData | null>(null);
 
   /** 可见点表：只有服务类型分布用得到（把 `configId` 解成「厂家 型号」） */
   readonly configs = signal<ModbusConfig[]>([]);
@@ -138,7 +138,7 @@ export class DashboardComponent implements OnDestroy {
    * **进编辑态时取一次**，退出编辑即丢：它只服务于表单的下拉，而看数据时一张表单都不开。
    * 未取到是 `null`（不是一份空清单）—— 编辑器据此区分「还在取」与「本空间一个服务都没有」。
    */
-  readonly catalog = signal<DashboardCatalog | null>(null);
+  readonly catalog = signal<WebDashboardCatalog | null>(null);
 
   /** 候选清单取失败的原因（服务端那句话）。原样显示、不翻译 */
   readonly catalogError = signal('');
@@ -149,10 +149,10 @@ export class DashboardComponent implements OnDestroy {
   readonly editing = signal(false);
 
   /** 编辑中的草稿。进编辑态时从 `layout` 拷一份；保存成功或退出编辑即丢弃 */
-  private readonly draft = signal<DashboardWidget[]>([]);
+  private readonly draft = signal<WebDashboardWidget[]>([]);
 
   /** 正在编辑的那张卡（对话框开着时非 null）。**可能是刚新建、还没填配置的那张** */
-  readonly editingWidget = signal<DashboardWidget | null>(null);
+  readonly editingWidget = signal<WebDashboardWidget | null>(null);
 
   /** 类型选择框开着（点「添加卡片」之后、选定类型之前） */
   readonly pickerOpen = signal(false);
@@ -262,14 +262,14 @@ export class DashboardComponent implements OnDestroy {
   });
 
   /** 卡片的显示名：取值顺序与服务端那份一致（`title` → `titleKey` → 按类型的默认名） */
-  private widgetTitle(widget: DashboardWidget): string {
+  private widgetTitle(widget: WebDashboardWidget): string {
     const fallback = DASHBOARD_WIDGET_TITLES[widget.type] ?? DASHBOARD_WIDGET_TITLES.stat;
     const label = titleOf(widget, fallback);
     return label.text ?? this.t(label.key ?? fallback);
   }
 
   /**
-   * 网格的三个尺寸（都在 `DashboardLayout` 里，**样式表不抄第二处** —— 全由模板绑上去）。
+   * 网格的三个尺寸（都在 `WebDashboardLayout` 里，**样式表不抄第二处** —— 全由模板绑上去）。
    *
    * `rowHeight` 是**行单位**：一行 92px，跨 `h` 行的格子正好 `h × 92 + (h − 1) × 16` 像素，
    * 与 `cardHeight(h)` 逐像素相同。两张一行高的卡竖着叠起来于是正好等于一张两行高的卡。
@@ -507,7 +507,7 @@ export class DashboardComponent implements OnDestroy {
    * 两处入口都要过这里：`load` / `save` 回包。漏一处的后果是那份布局的
    * `widgets` 全没有坐标 —— 而 {@link placements} 是按坐标摆的，于是整屏卡片全叠在左上角。
    */
-  private adopt(layout: DashboardLayout): DashboardLayout {
+  private adopt(layout: WebDashboardLayout): WebDashboardLayout {
     layout.widgets = ensurePlacements(layout.widgets ?? []);
     return layout;
   }
@@ -697,7 +697,7 @@ export class DashboardComponent implements OnDestroy {
    * **草稿里坐标一定是齐的**，这也是 {@link placements} 敢直接 `placementsOf` 的前提。
    */
   private addWidget(type: WidgetType): void {
-    const widget = new DashboardWidget();
+    const widget = new WebDashboardWidget();
     widget.id = newWidgetId(this.draft());
     widget.type = type;
     widget.size = DASHBOARD_DEFAULT_SIZE[type] ?? 'S';
@@ -711,7 +711,7 @@ export class DashboardComponent implements OnDestroy {
   }
 
   /** 点某张卡：打开它的配置框（整张卡都可点，见模板上的 `.cell`） */
-  editWidget(widget: DashboardWidget): void {
+  editWidget(widget: WebDashboardWidget): void {
     this.openEditor(widget, false);
   }
 
@@ -728,7 +728,7 @@ export class DashboardComponent implements OnDestroy {
    * 卡片身上没有坐标（理论上到不了：进 {@link adopt} 就补过）时整个拖拽不启动：安静地什么都不做
    * 比按 `0, 0` 算出一堆乱七八糟的位移强。
    */
-  dragStarted(event: CdkDragStart<DashboardWidget>): void {
+  dragStarted(event: CdkDragStart<WebDashboardWidget>): void {
     const widget = event.source.data;
     if (!widget || widget.x === undefined || widget.y === undefined) {
       this.dragOrigin = null;
@@ -752,7 +752,7 @@ export class DashboardComponent implements OnDestroy {
    * 「放不下」的判据（{@link canDrop}），夹回界内就永远看不出放不下，用户会以为松手能落在那儿。
    * 真的越界了，松手时 {@link dragEnded} 不收这一拖，卡片弹回原处。
    */
-  dragMoved(event: CdkDragMove<DashboardWidget>): void {
+  dragMoved(event: CdkDragMove<WebDashboardWidget>): void {
     const origin = this.dragOrigin;
     if (!origin) {
       return;
@@ -801,7 +801,7 @@ export class DashboardComponent implements OnDestroy {
    */
   private applyPlacements(items: Placement[]): void {
     const byId = new Map(this.draft().map((widget) => [widget.id, widget]));
-    const next: DashboardWidget[] = [];
+    const next: WebDashboardWidget[] = [];
     for (const item of items) {
       const widget = byId.get(item.id);
       if (widget) {
@@ -820,7 +820,7 @@ export class DashboardComponent implements OnDestroy {
    * 留着（不上吸，与拖拽同口径）—— 用户自己把卡改小，剩下的地方该由他决定放什么。
    * 所以改尺寸、改配置都走这一条路，不必分情况。
    */
-  commitEditor(widget: DashboardWidget): void {
+  commitEditor(widget: WebDashboardWidget): void {
     this.draft.set(this.draft().map((w) => (w.id === widget.id ? widget : w)));
     this.closeEditor();
     // 尺寸变小 / 没变时这一步是恒等的（`placeAt` 幂等），不必先判断有没有变
@@ -866,7 +866,7 @@ export class DashboardComponent implements OnDestroy {
     this.closeEditor();
   }
 
-  private openEditor(widget: DashboardWidget, isNew: boolean): void {
+  private openEditor(widget: WebDashboardWidget, isNew: boolean): void {
     this.editorIsNew = isNew;
     this.editingWidget.set(widget);
   }
@@ -900,7 +900,7 @@ export class DashboardComponent implements OnDestroy {
     if (!layout || !spaceId || !this.dirty() || this.saving()) {
       return;
     }
-    const next = new DashboardLayout();
+    const next = new WebDashboardLayout();
     next.spaceId = layout.spaceId || spaceId;
     next.version = layout.version;
     next.widgets = [...this.draft()];
@@ -1022,7 +1022,7 @@ function intervalLabel(seconds: number): string {
  * 而重复的 id 会让两张卡的读数互相覆盖（`render` 的结果按 id 对应卡片）—— 是那种要盯很久
  * 才看得出来的错。撞了就重摇，代价可以忽略。
  */
-function newWidgetId(existing: DashboardWidget[]): string {
+function newWidgetId(existing: WebDashboardWidget[]): string {
   const taken = new Set(existing.map((widget) => widget.id));
   let id = '';
   do {

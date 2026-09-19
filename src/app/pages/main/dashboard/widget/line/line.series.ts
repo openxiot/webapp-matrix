@@ -7,8 +7,8 @@
  * 两个页面上画得不一样 —— 而「哪一处才是对的」没有答案。所以这里只做**形状转换**：
  * data → `HistoryFieldSeries` / `HistoryChartContext`，画法一律交给那边。
  *
- * 放在 `widget/line/` 而不是 `typedef/define/dashboard/DashboardWidgetData.ts`：`define/`
- * 目录不许 import `codec/`（分层规则，见 `DashboardWidgetData.ts` 开头），而这里要用
+ * 放在 `widget/line/` 而不是 `typedef/define/dashboard/WebDashboardWidgetData.ts`：`define/`
+ * 目录不许 import `codec/`（分层规则，见 `WebDashboardWidgetData.ts` 开头），而这里要用
  * `ModbusHistoryCodec.decodeRange` 复用历史页同一份反序列化口径；同时它又要 import 历史页的
  * `historyFieldOption`，那是**页面**之间的横向依赖，`dashboard.charts.ts` 那种「看板自己画的两张图」
  * 不该被拉进来。
@@ -18,7 +18,7 @@ import {
   ModbusHistoryRange,
   ModbusHistorySample,
 } from '../../../../../typedef/define/modbus/ModbusHistory';
-import { WidgetDataItem } from '../../../../../typedef/define/dashboard/DashboardWidgetData';
+import { WebDashboardWidgetDataItem } from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
 import {
   HistoryChartContext,
   HistoryFieldSeries,
@@ -49,7 +49,7 @@ export class ServiceFieldData {
 }
 
 /** 把一张卡的 data 读成 {@link ServiceFieldData}（防御性，坏项丢掉而不是整份作废） */
-export function serviceFieldData(item: WidgetDataItem): ServiceFieldData {
+export function serviceFieldData(item: WebDashboardWidgetDataItem): ServiceFieldData {
   const data = new ServiceFieldData();
   data.range = ModbusHistoryCodec.decodeRange(item.data);
   data.unit = readString(item.data, 'unit') ?? '';

@@ -1,5 +1,5 @@
-import { distributionData, lineData, statData, WidgetDataItem } from '../../define/dashboard/DashboardWidgetData';
-import { DashboardWidgetDataCodec } from './DashboardWidgetDataCodec';
+import { distributionData, lineData, statData, WebDashboardWidgetDataItem } from '../../define/dashboard/WebDashboardWidgetData';
+import { WebDashboardWidgetDataCodec } from './WebDashboardWidgetDataCodec';
 
 /**
  * 取数结果的解码与三个按类型的读取器。
@@ -11,9 +11,9 @@ import { DashboardWidgetDataCodec } from './DashboardWidgetDataCodec';
  * - **一个坏点丢掉、整条曲线留下**：`points` 里混进一项畸形的，不该让整张图消失。
  * - **失败卡照样解出来**：一屏里有一张卡失败是常态，过滤掉会让「卡片数对不上」变成要查的事。
  */
-describe('DashboardWidgetDataCodec', () => {
+describe('WebDashboardWidgetDataCodec', () => {
   it('整个 data 缺失也能解出一个空结果', () => {
-    const data = DashboardWidgetDataCodec.decode(undefined);
+    const data = WebDashboardWidgetDataCodec.decode(undefined);
 
     expect(data.spaceId).toBe('');
     expect(data.from).toBe(0);
@@ -22,7 +22,7 @@ describe('DashboardWidgetDataCodec', () => {
 
   it('失败的卡片照样解出来，message 留着', () => {
     // 过滤掉失败项，前端就得解释「后端给了 8 张、这里只有 7 张」是怎么来的
-    const data = DashboardWidgetDataCodec.decode({
+    const data = WebDashboardWidgetDataCodec.decode({
       widgets: [
         { id: 'w1', success: true, data: { value: 3 } },
         { id: 'w2', success: false, message: 'device not found' },
@@ -36,12 +36,12 @@ describe('DashboardWidgetDataCodec', () => {
   });
 
   it('success 只认 true', () => {
-    expect(DashboardWidgetDataCodec.decodeItem({}).success).toBe(false);
-    expect(DashboardWidgetDataCodec.decodeItem({ success: 'yes' }).success).toBe(false);
+    expect(WebDashboardWidgetDataCodec.decodeItem({}).success).toBe(false);
+    expect(WebDashboardWidgetDataCodec.decodeItem({ success: 'yes' }).success).toBe(false);
   });
 
   it('message 缺失时保持 undefined', () => {
-    expect(DashboardWidgetDataCodec.decodeItem({ success: true }).message).toBeUndefined();
+    expect(WebDashboardWidgetDataCodec.decodeItem({ success: true }).message).toBeUndefined();
   });
 });
 
@@ -133,8 +133,8 @@ describe('lineData', () => {
 });
 
 /** 一张卡的取数结果（只需要 `data` 时用这个）。 */
-function item(data: Record<string, unknown>): WidgetDataItem {
-  const x = new WidgetDataItem();
+function item(data: Record<string, unknown>): WebDashboardWidgetDataItem {
+  const x = new WebDashboardWidgetDataItem();
   x.id = 'w1';
   x.success = true;
   x.data = data;

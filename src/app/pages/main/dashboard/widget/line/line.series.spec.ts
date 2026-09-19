@@ -1,4 +1,4 @@
-import { WidgetDataItem } from '../../../../../typedef/define/dashboard/DashboardWidgetData';
+import { WebDashboardWidgetDataItem } from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
 import {
   hasDrawablePoints,
   hasNoPoints,
@@ -15,8 +15,8 @@ import {
  * `failures` 错了是「这段时间没失败过」这句**说反了的话**。
  */
 describe('line.series', () => {
-  function item(data: Record<string, unknown>): WidgetDataItem {
-    const x = new WidgetDataItem();
+  function item(data: Record<string, unknown>): WebDashboardWidgetDataItem {
+    const x = new WebDashboardWidgetDataItem();
     x.id = 'w1';
     x.success = true;
     x.data = data;
