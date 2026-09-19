@@ -214,7 +214,7 @@ body.dark-theme {
   }
 
   /*
-   * 项目树（`/main/project1`）。这一页的颜色**全部**走自定义属性（见那个组件的样式表头部），
+   * 项目树（`/main/project.tree`）。这一页的颜色**全部**走自定义属性（见那个组件的样式表头部），
    * 所以这里只要把变量重定一遍就够了 —— 一条选择器覆盖、没有 `!important`、也不会跟
    * 组件样式表打权重官司。
    *
@@ -228,8 +228,11 @@ body.dark-theme {
    * 三个节点色条（cyan / green / blue）与几枚 `nz-tag` **不动** —— 它们本来就是亮色，
    * 压在深色上更清楚，换掉反而丢掉「这是哪种节点」这个信号。
    */
-  projects-tree {
+  project-tree-view {
     --tree-line: rgba(255, 255, 255, 0.18);
+
+    /* 全屏底板（`.tree-scroll:fullscreen` 用的 `--tree-page-bg`）在深色下是页面底色 */
+    --tree-page-bg: #141414;
 
     --tree-bg: #1f1f1f;
     --tree-bg-root: #262626;

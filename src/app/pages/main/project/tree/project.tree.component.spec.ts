@@ -106,7 +106,7 @@ type Internals = {
   panelDragEnded: () => void;
 };
 
-const STORAGE_KEY = 'project1.positions.sp1';
+const STORAGE_KEY = 'project.tree.positions.sp1';
 
 describe('ProjectTreeViewComponent（挂载）', () => {
   /** 用例之间会互相污染的东西只有一个：localStorage。每个用例从干净的一份开始 */

@@ -29,6 +29,8 @@ import { OrganizationMember } from '../../../../typedef/define/user/UserOrganiza
 import { UrnUtils } from '../../../../typedef/utils/UrnUtils';
 import { ProductBasic } from '@openxiot/xiot-core-spec-ts';
 import { NzAvatarComponent } from 'ng-zorro-antd/avatar';
+import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
+import { NzSpaceItemDirective, NzSpaceModule } from 'ng-zorro-antd/space';
 
 /** 空间类型 -> 中文名 */
 const SPACE_TYPE_LABELS: Record<string, string> = {
@@ -125,11 +127,14 @@ function deviceKey(did: string): string {
     DatePipe,
     NzAvatarComponent,
     RouterLink,
+    NzRowDirective,
+    NzColDirective,
+    NzSpaceItemDirective,
+    NzSpaceModule,
   ],
   providers: [NzModalService],
 })
 export class ProjectTableViewComponent implements OnInit {
-
   /** 根空间（项目）id */
   rootId = signal('');
 

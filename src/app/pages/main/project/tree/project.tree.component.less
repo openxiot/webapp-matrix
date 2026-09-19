@@ -3,7 +3,7 @@
  *
  * ── 画布 ─────────────────────────────────────────────────────────────────────
  *
- * 卡片是**绝对定位**的，坐标由 `project1.layout.ts` 算出来，绑在 `left` / `top` 上 ——
+ * 卡片是**绝对定位**的，坐标由 `project.tree.layout.ts` 算出来，绑在 `left` / `top` 上 ——
  * 这一份样式表里**没有一个位置是布局引擎决定的**。这是「能拖」的前提：只要位置还能由
  * flex / grid 推导，「用户摆的位置」就无处安放。
  *
@@ -13,7 +13,7 @@
  * 上一版这里是一整套「CSS3 family tree」的肘形折线：三层 flexbox（`.node` / `.node-children`
  * / `.node-branch`）加伪元素边框拼出正交折线，父卡片那根横线接得上母线还专门证过一道。
  * **那一整套现在全删了** —— 折线的前提是「位置由层级推导」，而这一版的位置是用户摆的。
- * 形状本身没丢：它变成了自动布局（`project1.layout.ts` 里的 `autoLayout`），
+ * 形状本身没丢：它变成了自动布局（`project.tree.layout.ts` 里的 `autoLayout`），
  * 一进页面看到的就是它，一行没改。
  *
  * ── 拖动 ─────────────────────────────────────────────────────────────────────
@@ -32,7 +32,7 @@
  *
  * ── 卡片 ─────────────────────────────────────────────────────────────────────
  *
- * 卡宽卡高都是常量（`--node-w` / `--node-h`），**与 `project1.layout.ts` 里的 `NODE_W` /
+ * 卡宽卡高都是常量（`--node-w` / `--node-h`），**与 `project.tree.layout.ts` 里的 `NODE_W` /
  * `NODE_H` 必须同值** —— 贝塞尔的端点按那两个数算。改一处要两处一起改。
  *
  * 高度**定死**而不是由内容撑开：曲线端点要落在卡片右缘**中点**上，高度不一，同一行卡片的
@@ -61,6 +61,12 @@
 :host {
   display: block;
 
+  /* 页面底板色：全屏时 `.tree-scroll` 落到浏览器 top layer，默认会露黑色兜底，铺这层才能
+     「全屏」而不「换黑」。平时 `.tree-scroll` 是透明的、漏的是 `body` 的底色，所以只在本
+     组件里用它、不与 `color` 混。深色模式由 `styles.less` 的 `body.dark-theme project-tree-view`
+     重定这一个变量。 */
+  --tree-page-bg: #fff;
+
   --tree-line: #d9d9d9;
 
   --tree-bg: #fff;
@@ -82,11 +88,11 @@
   --tree-panel-anchor: #d6e4ff;
   --tree-panel-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
 
-  /* 卡片尺寸。**与 `project1.layout.ts` 的 NODE_W / NODE_H 必须同值**（见文件头） */
+  /* 卡片尺寸。**与 `project.tree.layout.ts` 的 NODE_W / NODE_H 必须同值**（见文件头） */
   --node-w: 200px;
   --node-h: 92px;
 
-  /* 信息框宽度。**与 `project1.layout.ts` 的 PANEL_W 必须同值** —— 左右翻边按它算 */
+  /* 信息框宽度。**与 `project.tree.layout.ts` 的 PANEL_W 必须同值** —— 左右翻边按它算 */
   --panel-w: 320px;
 }
 
@@ -111,6 +117,22 @@
 .tree-scroll {
   overflow: auto;
   padding: 8px 0 24px;
+}
+
+/*
+ * 全屏下的内容区。全屏目标（`toggleFullscreen`）已是这个 `.tree-scroll` 本身而不是 document，
+ * 浏览器（UA sheet）会把它放进 top-layer、给一套 `position: fixed / inset: 0` 定位，从而盖住
+ * 页头和左侧菜单栏 —— 我们只需像 `project.3d` 的 `.scene-wrap:fullscreen` 那样把宽高显式铺满，
+ * 免得个别浏览器没给满（Safari 那套）。`overflow: auto` 保留：钻进全屏后画布仍在这里面滚动。
+ *
+ * `background` 用 `--tree-page-bg` 铺页面底板：top-layer 背后默认是黑的，不铺这层全屏就会「换黑」；
+ * 铺的是与非全屏时漏出来的页面底色同一个值，于是全屏只是变大、颜色不变。
+ */
+.tree-scroll:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  overflow: auto;
+  background: var(--tree-page-bg);
 }
 
 /*

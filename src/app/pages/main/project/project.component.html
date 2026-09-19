@@ -1,13 +1,13 @@
 <nz-page-header (nzBack)="location.back()" nzBackIcon [nzTitle]="titleTpl" [nzGhost]="false">
   <nz-breadcrumb [nzAutoGenerate]="true" nz-page-header-breadcrumb appBreadcrumbTranslate></nz-breadcrumb>
 
-  <!-- 三视图切换：同居宿，切哪个渲染哪个。文案走 TS 里的 translate（见 viewOptions）。 -->
+  <!-- 三视图切换：同居宿，切哪个渲染哪个。文案直接在模板里走 translate。 -->
   <nz-page-header-extra>
-    <nz-segmented
-      [nzOptions]="viewOptions()"
-      [ngModel]="viewMode()"
-      (ngModelChange)="onViewChange($event)"
-    ></nz-segmented>
+    <nz-radio-group [ngModel]="viewMode()" (ngModelChange)="onViewChange($event)" nzButtonStyle="solid">
+      <label nz-radio-button [nzValue]="'table'">{{ '表格' | translate }}</label>
+      <label nz-radio-button [nzValue]="'tree'">{{ '树' | translate }}</label>
+      <label nz-radio-button [nzValue]="'3d'">{{ '3D' | translate }}</label>
+    </nz-radio-group>
   </nz-page-header-extra>
 </nz-page-header>
 
@@ -25,4 +25,4 @@
   }
 }
 
-<ng-template #titleTpl>{{ '项目' | translate }}</ng-template>
+<ng-template #titleTpl>{{ projectName() || ('项目' | translate) }}</ng-template>

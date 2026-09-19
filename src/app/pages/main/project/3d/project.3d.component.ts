@@ -145,6 +145,38 @@ export class Project3dViewComponent implements AfterViewInit, OnDestroy {
   private destroyed = false;
 
   /**
+   * 场景容器底部要贴齐的页脚高度（px）。与样式表顶部的 `@footer-height: 70px` 同值。
+   */
+  private static readonly FOOTER_H = 70;
+
+  private readonly onViewportResize = (): void => this.fitSceneHeight();
+
+  /**
+   * 场景容器**不能**写死成「视口 − 页头 − 页脚」：`project-3d-view` 上方还压着一层
+   * 宿主的 `nz-page-header`（返回 + 面包屑 + segmented），它的高度随面包屑换行可长可短，
+   * 没有常量可取。写死的话内容会比可视区高出那一截，`nz-content`（overflow:auto）
+   * 就冒一条页面滚动条。
+   *
+   * 这里在布局稳定后量出容器自身顶部，算出「到页脚为止」还剩多少，就地写死到元素上。
+   * 全屏时则清空内联高度，交还样式表里 `.scene-wrap:fullscreen { height: 100vh }` 那条
+   * （它有 position:fixed + inset:0，比作者写的高度方案更该负责全屏时的铺满）。
+   */
+  private fitSceneHeight(): void {
+    const wrap = this.sceneWrap().nativeElement;
+    if (document.fullscreenElement === wrap) {
+      wrap.style.height = '';
+      return;
+    }
+    if (wrap.clientWidth === 0) {
+      return; // 布局未就绪（比如首次进入时还没排好）
+    }
+    const available = window.innerHeight - wrap.getBoundingClientRect().top - Project3dViewComponent.FOOTER_H;
+    if (available > 0) {
+      wrap.style.height = `${available}px`;
+    }
+  }
+
+  /**
    * 全屏状态只能从 `document.fullscreenElement` 读，不能自己维护一个布尔量。
    *
    * 用户按 Esc、或者浏览器因为别的原因退出全屏时，我们收不到任何回调 —— 只有
@@ -165,6 +197,9 @@ export class Project3dViewComponent implements AfterViewInit, OnDestroy {
     if (!fullscreen) {
       this.background.set('gray');
     }
+    // 进全屏：清掉内联高度交给 :fullscreen 规则；退全屏：重新按「页脚为止」量回来。
+    // 不然内联高度（非全屏那份）会盖过 :fullscreen，全屏反而铺不满。
+    this.fitSceneHeight();
   };
 
   /** 读一下 currentLang 让它在 zoneless 下跟着语言切换重算 */
@@ -440,10 +475,18 @@ export class Project3dViewComponent implements AfterViewInit, OnDestroy {
     });
     this.resizeObserver.observe(host);
     this.initScene();
+
+    // 量出真实可用高度写死到 wrap 上，避免页面滚动条；视口变化时重量。先把滚动容器
+    // 拉回顶部，否则在别的视图上滚过的话，getBoundingClientRect().top 会带着那段滚动
+    // 偏移量出来，算出来的高度就偏大了。
+    this.sceneWrap().nativeElement.closest('nz-content')?.scrollTo(0, 0);
+    this.fitSceneHeight();
+    window.addEventListener('resize', this.onViewportResize);
   }
 
   ngOnDestroy(): void {
     this.destroyed = true;
+    window.removeEventListener('resize', this.onViewportResize);
     document.removeEventListener('fullscreenchange', this.onFullscreenChange);
     this.resizeObserver?.disconnect();
     this.resizeObserver = undefined;

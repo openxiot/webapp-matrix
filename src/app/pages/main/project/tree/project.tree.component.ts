@@ -127,7 +127,7 @@ import {
  */
 
 /** 摆出来的位置存哪。按项目分键，与看板的 `dashboard.refreshSeconds.<spaceId>` 同一个套路 */
-const POSITION_STORAGE_PREFIX = 'project1.positions.';
+const POSITION_STORAGE_PREFIX = 'project.tree.positions.';
 
 /**
  * 「一张都不抬」。
@@ -549,16 +549,25 @@ export class ProjectTreeViewComponent implements OnInit, OnDestroy {
   readonly fullscreen = signal(false);
 
   private readonly onFullscreenChange = (): void => {
-    this.fullscreen.set(document.fullscreenElement !== null);
+    // 只认「进全屏的是我们自己的内容区」这一种情况，别的全屏（哪怕是同文档其它元素）不算。
+    // 没有 layout（loading / 错误 / 空态）时 #boardScroll 不在 DOM，退化为「document 已全屏」。
+    const el = this.boardScrollRef()?.nativeElement;
+    this.fullscreen.set(el ? document.fullscreenElement === el : document.fullscreenElement !== null);
   };
 
-  /** 全屏 / 退出全屏。进全屏的请求可能被拒（不是用户手势触发的、iframe 没给权限），吞掉即可 */
+  /**
+   * 全屏 / 退出全屏。目标历来是**整个 document**，会把页头 + 左侧菜单栏一起带进全屏；
+   * 改成跟 `project.3d` 的 `.scene-wrap` 一个做法 —— 全屏内容区（`.tree-scroll` / `#boardScroll`）
+   * 本身，页头和左侧菜单栏都不进全屏。没有 layout 时 #boardScroll 不存在，退化为全屏 document。
+   * 进全屏的请求可能被拒（不是用户手势触发的、iframe 没给权限），吞掉即可。
+   */
   toggleFullscreen(): void {
-    if (document.fullscreenElement) {
+    const target = this.boardScrollRef()?.nativeElement ?? document.documentElement;
+    if (document.fullscreenElement === target) {
       void document.exitFullscreen().catch(() => undefined);
       return;
     }
-    void document.documentElement.requestFullscreen().catch(() => undefined);
+    void target.requestFullscreen().catch(() => undefined);
   }
 
   /** 上一次装载的项目 id（与 `account.space()` 比对，变了才重载） */
