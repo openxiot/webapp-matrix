@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { Location } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { AccountService } from '../../../service/account.service';
+import { AccountService } from '@app/service/account.service';
 import { ProjectTableViewComponent } from './table/project.table.view.component';
 import { ProjectTreeViewComponent } from './tree/project.tree.view.component';
 import { Project3dViewComponent } from './3d/project.3d.view.component';

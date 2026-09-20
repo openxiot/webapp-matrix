@@ -16,8 +16,8 @@ import {NzMessageService} from 'ng-zorro-antd/message';
 import {Location} from '@angular/common';
 import {TranslatePipe} from '@ngx-translate/core';
 import { SpecCodeComponent } from '../../../../common/form/code/spec.code.component';
-import { AccountService } from '../../../../service/account.service';
-import { UserOrganizationService } from '../../../../service/user.organization.service';
+import { AccountService } from '@app/service/account.service';
+import { UserOrganizationService } from '@app/service/user.organization.service';
 import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
 
 @Component({

@@ -7,10 +7,10 @@ import { ModbusAlarmList, applyHandledAlarm } from '../../../../../typedef/defin
 import { ModelAnchor } from '../../../../../typedef/define/model/ModelAnchor';
 import { GenericService } from '../../../../../typedef/define/service/GenericService';
 import { SpaceEntity } from '../../../../../typedef/define/space/SpaceEntity';
-import { MatrixService } from '../../../../../service/matrix.service';
-import { ModbusService } from '../../../../../service/modbus.service';
-import { DeviceDisplayService } from '../../../../../service/device.display.service';
-import { MainI18nService } from '../../../../../service/i18n.service';
+import { MatrixService } from '@app/service/matrix.service';
+import { ModbusService } from '@app/service/modbus.service';
+import { DeviceDisplayService } from '@app/service/device.display.service';
+import { MainI18nService } from '@app/service/i18n.service';
 import { type AnchorMarker, buildMarkers } from '../anchor/project.3d.anchor';
 
 /**

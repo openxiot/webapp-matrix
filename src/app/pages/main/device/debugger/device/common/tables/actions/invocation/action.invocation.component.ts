@@ -18,9 +18,9 @@ import {ArgValue} from './arg/ArgValue';
 import {NzTableModule} from 'ng-zorro-antd/table';
 import {NzTooltipModule} from 'ng-zorro-antd/tooltip';
 import {NzMessageService} from 'ng-zorro-antd/message';
-import {MatrixService} from '../../../../../../../../../service/matrix.service';
-import {AccountService} from '../../../../../../../../../service/account.service';
-import {MainI18nService} from '../../../../../../../../../service/i18n.service';
+import {MatrixService} from '@app/service/matrix.service';
+import {AccountService} from '@app/service/account.service';
+import {MainI18nService} from '@app/service/i18n.service';
 import {TranslatePipe} from "@ngx-translate/core";
 
 @Component({

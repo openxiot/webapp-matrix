@@ -1,6 +1,6 @@
 import {Component, Input, inject, ChangeDetectionStrategy} from '@angular/core';
 import {Property, Service} from '@openxiot/xiot-core-spec-ts';
-import {MainI18nService} from '../../../../../../../../service/i18n.service';
+import {MainI18nService} from '@app/service/i18n.service';
 import {NzTableComponent, NzTableModule} from "ng-zorro-antd/table";
 import {NzTagModule} from 'ng-zorro-antd/tag';
 import {NzTooltipDirective} from 'ng-zorro-antd/tooltip';

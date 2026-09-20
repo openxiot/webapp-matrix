@@ -1,7 +1,7 @@
 import {Component, EventEmitter, forwardRef, Input, Output, inject, ChangeDetectionStrategy} from '@angular/core';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Property, Service} from '@openxiot/xiot-core-spec-ts';
-import {MainI18nService} from '../../../../../../../../../../../../service/i18n.service';
+import {MainI18nService} from '@app/service/i18n.service';
 import {NzSwitchModule} from 'ng-zorro-antd/switch';
 import {NzDescriptionsModule} from 'ng-zorro-antd/descriptions';
 import {PropertyWriteValueComponent} from '../../property.write.value.component';

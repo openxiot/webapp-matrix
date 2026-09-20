@@ -1,6 +1,6 @@
 import {Component, computed, inject, signal} from '@angular/core';
 import {NzModalRef} from 'ng-zorro-antd/modal';
-import {MainI18nService} from '../../../../service/i18n.service';
+import {MainI18nService} from '@app/service/i18n.service';
 import {NzColDirective, NzRowDirective} from 'ng-zorro-antd/grid';
 import {NzCardModule} from 'ng-zorro-antd/card';
 import {NzIconModule} from 'ng-zorro-antd/icon';

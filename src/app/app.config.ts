@@ -14,8 +14,8 @@ import { zh_CN, provideNzI18n } from 'ng-zorro-antd/i18n';
 import { registerLocaleData } from '@angular/common';
 import zh from '@angular/common/locales/zh';
 import { provideNzDateFnsAdapter } from 'ng-zorro-antd/core/time';
-import { OxHttpInterceptor } from './service/interceptors/OxHttpInterceptor';
-import { JwtInterceptor } from './service/interceptors/JwtInterceptor';
+import { OxHttpInterceptor } from '@app/service/interceptors/OxHttpInterceptor';
+import { JwtInterceptor } from '@app/service/interceptors/JwtInterceptor';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { provideTranslateService } from '@ngx-translate/core';
 

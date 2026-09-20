@@ -9,9 +9,9 @@ import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { TranslatePipe } from '@ngx-translate/core';
-import { AccountService } from '../../../service/account.service';
+import { AccountService } from '@app/service/account.service';
 import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { MainI18nService } from '../../../service/i18n.service';
+import { MainI18nService } from '@app/service/i18n.service';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { NzInputModule, NzInputSearchEvent } from 'ng-zorro-antd/input';
 import {

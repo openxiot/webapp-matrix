@@ -1,7 +1,7 @@
 import {Component, Input, inject, ChangeDetectionStrategy} from '@angular/core';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Property} from '@openxiot/xiot-core-spec-ts';
-import {MainI18nService} from '../../../../../../../../../../../../../service/i18n.service';
+import {MainI18nService} from '@app/service/i18n.service';
 import {NzSpaceModule} from 'ng-zorro-antd/space';
 
 @Component({

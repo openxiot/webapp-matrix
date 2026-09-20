@@ -30,10 +30,10 @@ import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { BreadcrumbTranslateDirective } from '../../../../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { EChartsDirective } from '../../../../../../common/components/echarts/echarts.directive';
-import { AccountService } from '../../../../../../service/account.service';
-import { MatrixService } from '../../../../../../service/matrix.service';
-import { ModbusService } from '../../../../../../service/modbus.service';
-import { MainI18nService } from '../../../../../../service/i18n.service';
+import { AccountService } from '@app/service/account.service';
+import { MatrixService } from '@app/service/matrix.service';
+import { ModbusService } from '@app/service/modbus.service';
+import { MainI18nService } from '@app/service/i18n.service';
 import { DeviceEntity } from '../../../../../../typedef/define/device/DeviceEntity';
 import {
   ModbusService as ModbusServiceDef,

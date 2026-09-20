@@ -33,12 +33,12 @@ import { GenericService } from '../../../../typedef/define/service/GenericServic
 import { OrganizationMember } from '../../../../typedef/define/user/UserOrganization';
 import { UrnUtils } from '../../../../typedef/utils/UrnUtils';
 import { ProductBasic } from '@openxiot/xiot-core-spec-ts';
-import { AccountService } from '../../../../service/account.service';
-import { ProductService } from '../../../../service/product.service';
-import { MatrixService } from '../../../../service/matrix.service';
-import { ModbusService } from '../../../../service/modbus.service';
-import { DtuService } from '../../../../service/dtu.service';
-import { MainI18nService } from '../../../../service/i18n.service';
+import { AccountService } from '@app/service/account.service';
+import { ProductService } from '@app/service/product.service';
+import { MatrixService } from '@app/service/matrix.service';
+import { ModbusService } from '@app/service/modbus.service';
+import { DtuService } from '@app/service/dtu.service';
+import { MainI18nService } from '@app/service/i18n.service';
 import { ConfirmComponent } from '../../../../common/dialog/confirm/confirm.component';
 import { SpaceAddComponent, SpaceAddResult } from '../../../../common/dialog/space/space.add.component';
 import { DeviceAddComponent } from '../../../../common/dialog/device/add/device.add.component';

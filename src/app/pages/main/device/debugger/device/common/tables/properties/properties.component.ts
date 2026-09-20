@@ -10,7 +10,7 @@ import {IPropertyData} from './IPropertyData';
 import {NzModalService} from 'ng-zorro-antd/modal';
 import {PropertyReaderComponent} from './read/property.reader.component';
 import {NzDividerComponent} from 'ng-zorro-antd/divider';
-import {MainI18nService} from '../../../../../../../../service/i18n.service';
+import {MainI18nService} from '@app/service/i18n.service';
 import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({

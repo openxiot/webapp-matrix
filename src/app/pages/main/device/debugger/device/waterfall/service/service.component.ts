@@ -1,6 +1,6 @@
 import {Component, Input, ChangeDetectionStrategy} from '@angular/core';
 import {Service} from '@openxiot/xiot-core-spec-ts';
-import {MainI18nService} from '../../../../../../../service/i18n.service';
+import {MainI18nService} from '@app/service/i18n.service';
 import {NzMessageService} from 'ng-zorro-antd/message';
 import {NzCardComponent} from "ng-zorro-antd/card";
 import {NzTagComponent} from "ng-zorro-antd/tag";

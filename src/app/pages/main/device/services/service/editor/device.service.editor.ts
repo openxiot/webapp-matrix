@@ -3,11 +3,11 @@ import { ActivatedRoute } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { Action, DeviceInstance, Service } from '@openxiot/xiot-core-spec-ts';
-import { AccountService } from '../../../../../../service/account.service';
-import { MainI18nService } from '../../../../../../service/i18n.service';
-import { MatrixService } from '../../../../../../service/matrix.service';
-import { ModbusService } from '../../../../../../service/modbus.service';
-import { ProductService } from '../../../../../../service/product.service';
+import { AccountService } from '@app/service/account.service';
+import { MainI18nService } from '@app/service/i18n.service';
+import { MatrixService } from '@app/service/matrix.service';
+import { ModbusService } from '@app/service/modbus.service';
+import { ProductService } from '@app/service/product.service';
 import { DeviceEntity } from '../../../../../../typedef/define/device/DeviceEntity';
 import { ModbusConfig, modbusSlaveLabel } from '../../../../../../typedef/define/modbus/Modbus';
 import {

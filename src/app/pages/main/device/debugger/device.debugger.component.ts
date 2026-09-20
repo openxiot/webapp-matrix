@@ -24,9 +24,9 @@ import {NzTabsModule} from 'ng-zorro-antd/tabs';
 import {NzSpaceModule} from 'ng-zorro-antd/space';
 import {NzTagModule} from 'ng-zorro-antd/tag';
 import {NzModalService} from 'ng-zorro-antd/modal';
-import {MatrixService} from '../../../../service/matrix.service';
-import {AccountService} from '../../../../service/account.service';
-import {ProductService} from '../../../../service/product.service';
+import {MatrixService} from '@app/service/matrix.service';
+import {AccountService} from '@app/service/account.service';
+import {ProductService} from '@app/service/product.service';
 import {DeviceInstance, DeviceInstanceCodec} from '@openxiot/xiot-core-spec-ts';
 import {DeviceInstanceViewJsonComponent} from './dialog/device.instance.view.json.component';
 import {DeviceEntity} from '../../../../typedef/define/device/DeviceEntity';
@@ -36,7 +36,7 @@ import {DebuggerSliderComponent} from './device/sider/debugger.slider.component'
 import {DebuggerWaterfallComponent} from './device/waterfall/debugger.waterfall.component';
 import {DebuggerTabsComponent} from './device/tabs/debugger.tabs.component';
 import {TranslateService} from '@ngx-translate/core';
-import {MainI18nService} from '../../../../service/i18n.service';
+import {MainI18nService} from '@app/service/i18n.service';
 import {BreadcrumbTranslateDirective} from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import {TranslatePipe} from '@ngx-translate/core';
 

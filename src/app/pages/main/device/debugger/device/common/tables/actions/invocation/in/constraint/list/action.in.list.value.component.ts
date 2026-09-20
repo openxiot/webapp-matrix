@@ -2,7 +2,7 @@ import {Component, EventEmitter, inject, Input, Output, ChangeDetectionStrategy}
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {NzSelectModule} from 'ng-zorro-antd/select';
 import {Property} from '@openxiot/xiot-core-spec-ts';
-import {MainI18nService} from '../../../../../../../../../../../../service/i18n.service';
+import {MainI18nService} from '@app/service/i18n.service';
 import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({

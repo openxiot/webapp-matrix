@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { MainI18nService } from '../../../../../service/i18n.service';
+import { MainI18nService } from '@app/service/i18n.service';
 import { WebDashboardWidgetDataItem } from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
 
 /**

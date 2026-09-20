@@ -3,7 +3,7 @@ import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
-import { DeviceSpecService } from '../../../../../service/device.spec.service';
+import { DeviceSpecService } from '@app/service/device.spec.service';
 import { WebDashboardWidget } from '../../../../../typedef/define/dashboard/WebDashboardLayout';
 import {
   DeviceData,

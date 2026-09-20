@@ -6,7 +6,7 @@
  */
 import { modbusValueText } from '../../../../../typedef/define/modbus/ModbusHistory';
 import { DeviceData, WebDashboardWidgetDataItem } from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
-import { DeviceProperty } from '../../../../../service/device.spec.service';
+import { DeviceProperty } from '@app/service/device.spec.service';
 import { readBoolean } from '../../dashboard.config';
 
 /**

@@ -3,7 +3,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { EChartsDirective } from '../../../../../common/components/echarts/echarts.directive';
-import { MainI18nService } from '../../../../../service/i18n.service';
+import { MainI18nService } from '@app/service/i18n.service';
 import { ModbusConfig } from '../../../../../typedef/define/modbus/Modbus';
 import { WebDashboardWidget } from '../../../../../typedef/define/dashboard/WebDashboardLayout';
 import {

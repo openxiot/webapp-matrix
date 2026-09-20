@@ -8,7 +8,7 @@ import {NzSpaceModule} from 'ng-zorro-antd/space';
 import {NzModalService} from 'ng-zorro-antd/modal';
 import {IActionData} from './IActionData';
 import {ActionInvocationComponent} from './invocation/action.invocation.component';
-import {MainI18nService} from '../../../../../../../../service/i18n.service';
+import {MainI18nService} from '@app/service/i18n.service';
 import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({

@@ -10,9 +10,9 @@ import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { ProductService } from '../../../service/product.service';
+import { ProductService } from '@app/service/product.service';
 import { ProductBasic } from '@openxiot/xiot-core-spec-ts';
-import { MainI18nService } from '../../../service/i18n.service';
+import { MainI18nService } from '@app/service/i18n.service';
 
 @Component({
   selector: 'main-product',

@@ -1,7 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { TranslatePipe } from '@ngx-translate/core';
-import { MainI18nService } from '../../../../../service/i18n.service';
+import { MainI18nService } from '@app/service/i18n.service';
 import { ModbusConfig } from '../../../../../typedef/define/modbus/Modbus';
 import {
   DASHBOARD_WIDGET_TITLES,

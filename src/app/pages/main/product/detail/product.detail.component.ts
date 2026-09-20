@@ -13,8 +13,8 @@ import { DatePipe, Location } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LocalizedName, LifeCycle, ProductBasic } from '@openxiot/xiot-core-spec-ts';
 import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { ProductService } from '../../../../service/product.service';
-import { MainI18nService } from '../../../../service/i18n.service';
+import { ProductService } from '@app/service/product.service';
+import { MainI18nService } from '@app/service/i18n.service';
 
 /** 产品生命周期 -> 状态文案 i18n 键 + 标签颜色 */
 const LIFECYCLE_STYLE: Record<string, { text: string; color: string }> = {

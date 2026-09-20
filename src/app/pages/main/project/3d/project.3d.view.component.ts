@@ -20,9 +20,9 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { TranslatePipe } from '@ngx-translate/core';
-import { MainI18nService } from '../../../../service/i18n.service';
-import { AccountService } from '../../../../service/account.service';
-import { DeviceDisplayService } from '../../../../service/device.display.service';
+import { MainI18nService } from '@app/service/i18n.service';
+import { AccountService } from '@app/service/account.service';
+import { DeviceDisplayService } from '@app/service/device.display.service';
 import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
 import {
   Project3dScene,

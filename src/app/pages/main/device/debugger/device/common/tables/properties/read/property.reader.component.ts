@@ -15,8 +15,8 @@ import {IPropertyData} from '../IPropertyData';
 import {firstValueFrom, map} from 'rxjs';
 import {PropertyReadValueComponent} from './value/property.read.value.component';
 import {NzMessageService} from 'ng-zorro-antd/message';
-import {MatrixService} from '../../../../../../../../../service/matrix.service';
-import {AccountService} from '../../../../../../../../../service/account.service';
+import {MatrixService} from '@app/service/matrix.service';
+import {AccountService} from '@app/service/account.service';
 import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({

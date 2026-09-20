@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard } from '../../../service/auth.guard';
+import { authGuard } from '@app/service/auth.guard';
 import { ModbusComponent } from './modbus.component';
 import { ModbusAddComponent } from './add/modbus.add.component';
 import { ModbusDetailComponent } from './detail/modbus.detail.component';

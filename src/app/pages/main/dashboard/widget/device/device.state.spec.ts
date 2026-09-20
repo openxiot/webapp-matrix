@@ -1,4 +1,4 @@
-import { DeviceProperty } from '../../../../../service/device.spec.service';
+import { DeviceProperty } from '@app/service/device.spec.service';
 import {
   DeviceData,
   WebDashboardWidgetDataItem,

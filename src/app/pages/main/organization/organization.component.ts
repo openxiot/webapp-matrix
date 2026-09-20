@@ -16,8 +16,8 @@ import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { UserOrganization } from '../../../typedef/define/user/UserOrganization';
-import { AccountService } from '../../../service/account.service';
-import { UserOrganizationService } from '../../../service/user.organization.service';
+import { AccountService } from '@app/service/account.service';
+import { UserOrganizationService } from '@app/service/user.organization.service';
 
 @Component({
   selector: 'main-organization',

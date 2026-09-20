@@ -9,9 +9,9 @@ import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
-import { MainI18nService } from '../../../../service/i18n.service';
-import { DeviceDisplayService } from '../../../../service/device.display.service';
-import { DeviceSpecService, joinPid } from '../../../../service/device.spec.service';
+import { MainI18nService } from '@app/service/i18n.service';
+import { DeviceDisplayService } from '@app/service/device.display.service';
+import { DeviceSpecService, joinPid } from '@app/service/device.spec.service';
 import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
 import { WebDashboardCatalog, catalogDevices } from '../../../../typedef/define/dashboard/WebDashboardCatalog';
 import {

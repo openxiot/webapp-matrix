@@ -20,10 +20,10 @@ import {
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { Location } from '@angular/common';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { AccountService } from '../../../../service/account.service';
+import { AccountService } from '@app/service/account.service';
 import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
 import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
-import { MatrixService } from '../../../../service/matrix.service';
+import { MatrixService } from '@app/service/matrix.service';
 
 @Component({
   selector: 'projects-create',

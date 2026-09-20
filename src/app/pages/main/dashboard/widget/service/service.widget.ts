@@ -4,7 +4,7 @@ import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
-import { MainI18nService } from '../../../../../service/i18n.service';
+import { MainI18nService } from '@app/service/i18n.service';
 import { WebDashboardWidget } from '../../../../../typedef/define/dashboard/WebDashboardLayout';
 import {
   ServiceData,

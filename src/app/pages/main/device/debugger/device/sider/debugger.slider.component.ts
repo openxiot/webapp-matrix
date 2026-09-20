@@ -6,7 +6,7 @@ import {NzTagComponent} from 'ng-zorro-antd/tag';
 import {TabsServiceComponent} from './tabs/tabs.service.component';
 import {WaterfallServiceComponent} from './waterfall/waterfall.service.component';
 import {DeviceInstance, Service, ServiceController} from '@openxiot/xiot-core-spec-ts';
-import {MainI18nService} from '../../../../../../service/i18n.service';
+import {MainI18nService} from '@app/service/i18n.service';
 import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({

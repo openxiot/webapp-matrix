@@ -10,8 +10,8 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { AccountService } from '../../service/account.service';
-import { UserOrganizationService } from '../../service/user.organization.service';
+import { AccountService } from '@app/service/account.service';
+import { UserOrganizationService } from '@app/service/user.organization.service';
 import { Oauth2Configuration } from '../../typedef/define/oauth/Oauth2Configuration';
 
 const PLATFORM_ICONS: Record<string, string> = {

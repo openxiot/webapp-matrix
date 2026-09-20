@@ -3,7 +3,7 @@ import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { NzStatisticModule } from 'ng-zorro-antd/statistic';
 import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
-import { MainI18nService } from '../../../../../service/i18n.service';
+import { MainI18nService } from '@app/service/i18n.service';
 import { dashboardMetricUnit, WebDashboardWidget } from '../../../../../typedef/define/dashboard/WebDashboardLayout';
 import { statData, StatData, WebDashboardWidgetDataItem } from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
 import { readString } from '../../dashboard.config';

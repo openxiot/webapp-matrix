@@ -1,6 +1,6 @@
 import {Component, Input, inject, ChangeDetectionStrategy} from '@angular/core';
 import {DeviceInstance, ServiceController} from "@openxiot/xiot-core-spec-ts";
-import {MainI18nService} from '../../../../../../service/i18n.service';
+import {MainI18nService} from '@app/service/i18n.service';
 import {NzMenuModule} from 'ng-zorro-antd/menu';
 import {NzLayoutModule} from 'ng-zorro-antd/layout';
 import {NzListModule} from 'ng-zorro-antd/list';

@@ -10,7 +10,7 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { TranslatePipe } from '@ngx-translate/core';
-import { MainI18nService } from '../../../../../../../service/i18n.service';
+import { MainI18nService } from '@app/service/i18n.service';
 import {
   ModbusServiceField,
   ModbusServiceFieldAlarm,
