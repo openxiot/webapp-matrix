@@ -7,7 +7,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzTableModule } from 'ng-zorro-antd/table';
-import { ModbusByteOrder } from '../../../../../typedef/define/modbus/Modbus';
+import { ModbusByteOrder } from '@app/typedef/define/modbus/Modbus';
 import { defaultRegRow, type RegRow } from '../command.rows';
 import {
   WRITE_REGISTER_DATA_TYPE_OPTIONS,

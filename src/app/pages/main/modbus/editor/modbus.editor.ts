@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from '@app/service/account.service';
 import { ModbusService } from '@app/service/modbus.service';
 import { UserOrganizationService } from '@app/service/user.organization.service';
-import { ModbusCommand, ModbusConfig, ModbusDeviceInfo } from '../../../../typedef/define/modbus/Modbus';
+import { ModbusCommand, ModbusConfig, ModbusDeviceInfo } from '@app/typedef/define/modbus/Modbus';
 import { LifeCycle } from '@openxiot/xiot-core-spec-ts';
 import { CommandEditComponent, type ModbusCommandDialogData } from '../command/command.edit.component';
 import { RequestFrameDialogComponent, type RequestFrameDialogData } from './request/request.frame.dialog.component';
@@ -23,7 +23,7 @@ import {
   logicalAddressOf,
 } from '../command/point.options';
 import { lifecycleModifiable, lifecycleStyle } from '../modbus.lifecycle';
-import { ConfirmComponent } from '../../../../common/dialog/confirm/confirm.component';
+import { ConfirmComponent } from '@app/common/dialog/confirm/confirm.component';
 
 /**
  * 新建设备点表 / 编辑设备点表 两个页面共用的编辑器逻辑与视图状态。

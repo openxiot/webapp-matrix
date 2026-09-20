@@ -1,4 +1,4 @@
-import { WindowConfig } from '../../../typedef/define/dashboard/WebDashboardLayout';
+import { WindowConfig } from '@app/typedef/define/dashboard/WebDashboardLayout';
 
 /**
  * 卡片配置的**防御性读取**（纯函数，无注入）。

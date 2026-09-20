@@ -2,7 +2,7 @@ import {
   ServiceData,
   WebDashboardWidgetDataItem,
   serviceData,
-} from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
+} from '@app/typedef/define/dashboard/WebDashboardWidgetData';
 import { serviceLines, serviceState } from './service.state';
 
 /**

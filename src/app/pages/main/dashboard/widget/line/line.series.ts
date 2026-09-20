@@ -13,12 +13,12 @@
  * `historyFieldOption`，那是**页面**之间的横向依赖，`dashboard.charts.ts` 那种「看板自己画的两张图」
  * 不该被拉进来。
  */
-import { ModbusHistoryCodec, isBucket } from '../../../../../typedef/codec/modbus/ModbusHistoryCodec';
+import { ModbusHistoryCodec, isBucket } from '@app/typedef/codec/modbus/ModbusHistoryCodec';
 import {
   ModbusHistoryRange,
   ModbusHistorySample,
-} from '../../../../../typedef/define/modbus/ModbusHistory';
-import { WebDashboardWidgetDataItem } from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
+} from '@app/typedef/define/modbus/ModbusHistory';
+import { WebDashboardWidgetDataItem } from '@app/typedef/define/dashboard/WebDashboardWidgetData';
 import {
   HistoryChartContext,
   HistoryFieldSeries,

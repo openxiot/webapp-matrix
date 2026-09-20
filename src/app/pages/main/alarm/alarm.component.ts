@@ -26,13 +26,13 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
-import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
 import { AccountService } from '@app/service/account.service';
 import { MatrixService } from '@app/service/matrix.service';
 import { ModbusService } from '@app/service/modbus.service';
 import { MainI18nService } from '@app/service/i18n.service';
-import { GenericService } from '../../../typedef/define/service/GenericService';
-import { valueText } from '../../../typedef/utils/ValueUtils';
+import { GenericService } from '@app/typedef/define/service/GenericService';
+import { valueText } from '@app/typedef/utils/ValueUtils';
 import {
   MODBUS_ALARM_LEVELS,
   MODBUS_ALARM_LEVEL_LABELS,
@@ -42,7 +42,7 @@ import {
   modbusAlarmCloseLabel,
   modbusAlarmCondition,
   modbusAlarmLevelLabel,
-} from '../../../typedef/define/modbus/ModbusAlarm';
+} from '@app/typedef/define/modbus/ModbusAlarm';
 
 /**
  * 告警级别在界面上的颜色：`INFO` 蓝（只提示）/ `WARN` 黄（要人看一眼）/ `CRITICAL` 红（要人管）。

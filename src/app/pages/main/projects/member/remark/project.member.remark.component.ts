@@ -4,7 +4,7 @@ import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { TranslatePipe } from '@ngx-translate/core';
-import { OrganizationMember } from '../../../../../typedef/define/user/UserOrganization';
+import { OrganizationMember } from '@app/typedef/define/user/UserOrganization';
 
 /** 编辑项目成员备注对话框：textarea 输入，返回新备注 */
 @Component({

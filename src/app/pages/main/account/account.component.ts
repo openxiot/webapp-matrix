@@ -10,7 +10,7 @@ import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AccountService } from '@app/service/account.service';
-import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
 import { MainI18nService } from '@app/service/i18n.service';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { NzInputModule, NzInputSearchEvent } from 'ng-zorro-antd/input';
@@ -23,7 +23,7 @@ import {
 } from '@angular/forms';
 import { NzFormControlComponent, NzFormDirective, NzFormItemComponent, NzFormLabelComponent } from 'ng-zorro-antd/form';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
-import { UserSettings } from '../../../typedef/define/user/UserSettings';
+import { UserSettings } from '@app/typedef/define/user/UserSettings';
 
 @Component({
   selector: 'main-account',

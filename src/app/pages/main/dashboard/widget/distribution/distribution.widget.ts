@@ -2,14 +2,14 @@ import { Component, computed, inject, input } from '@angular/core';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
-import { EChartsDirective } from '../../../../../common/components/echarts/echarts.directive';
+import { EChartsDirective } from '@app/common/components/echarts/echarts.directive';
 import { MainI18nService } from '@app/service/i18n.service';
-import { ModbusConfig } from '../../../../../typedef/define/modbus/Modbus';
-import { WebDashboardWidget } from '../../../../../typedef/define/dashboard/WebDashboardLayout';
+import { ModbusConfig } from '@app/typedef/define/modbus/Modbus';
+import { WebDashboardWidget } from '@app/typedef/define/dashboard/WebDashboardLayout';
 import {
   distributionData,
   WebDashboardWidgetDataItem,
-} from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
+} from '@app/typedef/define/dashboard/WebDashboardWidgetData';
 import { readNumber, readString } from '../../dashboard.config';
 import { distributionFor, truncatePoints } from '../../dashboard.folding';
 import { distributionOption } from '../../dashboard.charts';

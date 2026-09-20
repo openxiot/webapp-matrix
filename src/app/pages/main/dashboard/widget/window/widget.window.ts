@@ -1,7 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
-import { WebDashboardWidget } from '../../../../../typedef/define/dashboard/WebDashboardLayout';
+import { WebDashboardWidget } from '@app/typedef/define/dashboard/WebDashboardLayout';
 import { readWindow } from '../../dashboard.config';
 import { windowLabel } from '../../dashboard.folding';
 

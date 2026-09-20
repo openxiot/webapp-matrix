@@ -1,12 +1,12 @@
 import { Injectable, signal } from "@angular/core";
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { UserOrganization } from '../typedef/define/user/UserOrganization';
-import { User } from '../typedef/define/user/User';
-import { UserCodec } from '../typedef/codec/user/UserCodec';
-import { UserSettings } from '../typedef/define/user/UserSettings';
-import { UserSettingsCodec } from '../typedef/codec/user/UserSettingsCodec';
+import { UserOrganization } from '@app/typedef/define/user/UserOrganization';
+import { User } from '@app/typedef/define/user/User';
+import { UserCodec } from '@app/typedef/codec/user/UserCodec';
+import { UserSettings } from '@app/typedef/define/user/UserSettings';
+import { UserSettingsCodec } from '@app/typedef/codec/user/UserSettingsCodec';
 import { UserSettingsService } from './user.settings.service';
-import { SpaceEntity } from '../typedef/define/space/SpaceEntity';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
 import { MatrixService } from './matrix.service';
 import { UserOrganizationService } from './user.organization.service';
 

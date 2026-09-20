@@ -2,8 +2,8 @@ import type { EChartsCoreOption } from 'echarts/core';
 import {
   ModbusHistoryRange,
   ModbusHistorySample,
-} from '../../../../../../typedef/define/modbus/ModbusHistory';
-import { isBucket } from '../../../../../../typedef/codec/modbus/ModbusHistoryCodec';
+} from '@app/typedef/define/modbus/ModbusHistory';
+import { isBucket } from '@app/typedef/codec/modbus/ModbusHistoryCodec';
 
 /**
  * 采集历史曲线图的 option 构造（纯函数，供 history 页与将来别的页面复用）。

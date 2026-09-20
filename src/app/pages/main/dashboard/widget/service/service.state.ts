@@ -8,12 +8,12 @@
  * 翻译函数由调用方传进来：本文件不认识 i18n 服务，与 `service.functions.ts` /
  * `modbusFailureLabel` 同一条做法。
  */
-import { modbusValueText } from '../../../../../typedef/define/modbus/ModbusHistory';
+import { modbusValueText } from '@app/typedef/define/modbus/ModbusHistory';
 import {
   ServiceData,
   ServiceFieldRow,
   WebDashboardWidgetDataItem,
-} from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
+} from '@app/typedef/define/dashboard/WebDashboardWidgetData';
 import { readBoolean } from '../../dashboard.config';
 
 /**

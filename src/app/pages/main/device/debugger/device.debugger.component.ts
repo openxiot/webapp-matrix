@@ -29,7 +29,7 @@ import {AccountService} from '@app/service/account.service';
 import {ProductService} from '@app/service/product.service';
 import {DeviceInstance, DeviceInstanceCodec} from '@openxiot/xiot-core-spec-ts';
 import {DeviceInstanceViewJsonComponent} from './dialog/device.instance.view.json.component';
-import {DeviceEntity} from '../../../../typedef/define/device/DeviceEntity';
+import {DeviceEntity} from '@app/typedef/define/device/DeviceEntity';
 import {NzDescriptionsModule} from 'ng-zorro-antd/descriptions';
 import {NzSegmentedModule} from 'ng-zorro-antd/segmented';
 import {DebuggerSliderComponent} from './device/sider/debugger.slider.component';
@@ -37,7 +37,7 @@ import {DebuggerWaterfallComponent} from './device/waterfall/debugger.waterfall.
 import {DebuggerTabsComponent} from './device/tabs/debugger.tabs.component';
 import {TranslateService} from '@ngx-translate/core';
 import {MainI18nService} from '@app/service/i18n.service';
-import {BreadcrumbTranslateDirective} from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import {BreadcrumbTranslateDirective} from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
 import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({

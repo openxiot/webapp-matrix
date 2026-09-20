@@ -1,4 +1,4 @@
-import { ModbusServiceFunction } from '../../../../../typedef/define/modbus/ModbusService';
+import { ModbusServiceFunction } from '@app/typedef/define/modbus/ModbusService';
 import { serviceFieldKey, serviceFieldsOf } from './service.fields';
 
 /**

@@ -3,12 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { OxResponse } from './response/OxResponse';
-import { WebDashboardLayout, WebDashboardWidget } from '../typedef/define/dashboard/WebDashboardLayout';
-import { WebDashboardCatalog } from '../typedef/define/dashboard/WebDashboardCatalog';
-import { WebDashboardCatalogCodec } from '../typedef/codec/dashboard/WebDashboardCatalogCodec';
-import { WebDashboardLayoutCodec } from '../typedef/codec/dashboard/WebDashboardLayoutCodec';
-import { WebDashboardWidgetData } from '../typedef/define/dashboard/WebDashboardWidgetData';
-import { WebDashboardWidgetDataCodec } from '../typedef/codec/dashboard/WebDashboardWidgetDataCodec';
+import { WebDashboardLayout, WebDashboardWidget } from '@app/typedef/define/dashboard/WebDashboardLayout';
+import { WebDashboardCatalog } from '@app/typedef/define/dashboard/WebDashboardCatalog';
+import { WebDashboardCatalogCodec } from '@app/typedef/codec/dashboard/WebDashboardCatalogCodec';
+import { WebDashboardLayoutCodec } from '@app/typedef/codec/dashboard/WebDashboardLayoutCodec';
+import { WebDashboardWidgetData } from '@app/typedef/define/dashboard/WebDashboardWidgetData';
+import { WebDashboardWidgetDataCodec } from '@app/typedef/codec/dashboard/WebDashboardWidgetDataCodec';
 
 /**
  * 自定义数据看板（后端 WebDashboardResource，端点 `/matrix/v1/dashboard/web`）。

@@ -2,13 +2,13 @@ import { Component, computed, inject, input } from '@angular/core';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { TranslatePipe } from '@ngx-translate/core';
 import { MainI18nService } from '@app/service/i18n.service';
-import { ModbusConfig } from '../../../../../typedef/define/modbus/Modbus';
+import { ModbusConfig } from '@app/typedef/define/modbus/Modbus';
 import {
   DASHBOARD_WIDGET_TITLES,
   WebDashboardWidget,
   titleOf,
-} from '../../../../../typedef/define/dashboard/WebDashboardLayout';
-import { WebDashboardWidgetDataItem } from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
+} from '@app/typedef/define/dashboard/WebDashboardLayout';
+import { WebDashboardWidgetDataItem } from '@app/typedef/define/dashboard/WebDashboardWidgetData';
 import { DistributionWidgetComponent } from '../distribution/distribution.widget';
 import { DeviceWidgetComponent } from '../device/device.widget';
 import { LineWidgetComponent } from '../line/line.widget';

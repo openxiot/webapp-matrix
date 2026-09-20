@@ -16,7 +16,7 @@ import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { TranslatePipe } from '@ngx-translate/core';
-import { BreadcrumbTranslateDirective } from '../../../../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
 import { DeviceServiceEditor } from '../editor/device.service.editor';
 
 /**

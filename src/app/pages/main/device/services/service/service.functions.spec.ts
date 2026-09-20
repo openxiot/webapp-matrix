@@ -2,7 +2,7 @@ import {
   ModbusServiceField,
   ModbusServiceFieldAlarm,
   ModbusServiceFunction,
-} from '../../../../../typedef/define/modbus/ModbusService';
+} from '@app/typedef/define/modbus/ModbusService';
 import {
   MAX_ALARM_RULES,
   alarmCompareOptions,

@@ -1,6 +1,6 @@
-import { SpaceEntity } from '../../../../../typedef/define/space/SpaceEntity';
-import { DeviceEntity } from '../../../../../typedef/define/device/DeviceEntity';
-import { GenericService } from '../../../../../typedef/define/service/GenericService';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
+import { GenericService } from '@app/typedef/define/service/GenericService';
 
 /*
  * 项目树（`/main/project`）的**图模型**：把空间图那三份扁平列表拼成一棵可递归渲染的树。

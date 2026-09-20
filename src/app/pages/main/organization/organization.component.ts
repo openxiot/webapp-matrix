@@ -14,8 +14,8 @@ import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
-import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { UserOrganization } from '../../../typedef/define/user/UserOrganization';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
+import { UserOrganization } from '@app/typedef/define/user/UserOrganization';
 import { AccountService } from '@app/service/account.service';
 import { UserOrganizationService } from '@app/service/user.organization.service';
 

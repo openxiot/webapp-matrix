@@ -3,7 +3,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { ModbusCommand } from '../../../../../typedef/define/modbus/Modbus';
+import { ModbusCommand } from '@app/typedef/define/modbus/Modbus';
 import { fcLabelKey, isWriteFc } from '../../command/point.options';
 import {
   FramePart,

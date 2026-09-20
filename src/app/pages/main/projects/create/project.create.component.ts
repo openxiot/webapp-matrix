@@ -21,8 +21,8 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { Location } from '@angular/common';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountService } from '@app/service/account.service';
-import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
 import { MatrixService } from '@app/service/matrix.service';
 
 @Component({

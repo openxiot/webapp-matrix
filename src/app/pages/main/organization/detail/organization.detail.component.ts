@@ -16,17 +16,17 @@ import { DatePipe, Location } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AccountService } from '@app/service/account.service';
 import { UserOrganizationService } from '@app/service/user.organization.service';
-import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { UserOrganization, OrganizationMember } from '../../../../typedef/define/user/UserOrganization';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
+import { UserOrganization, OrganizationMember } from '@app/typedef/define/user/UserOrganization';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzTableModule } from 'ng-zorro-antd/table';
-import { ConfirmComponent } from '../../../../common/dialog/confirm/confirm.component';
+import { ConfirmComponent } from '@app/common/dialog/confirm/confirm.component';
 import { MainI18nService } from '@app/service/i18n.service';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { StringValueEditComponent } from '../../../../common/dialog/string/string.value.edit.component';
-import { StringValue } from '../../../../common/dialog/string/StringValue';
-import { MemberAddComponent } from '../../../../common/dialog/member/add/member.add.component';
-import { MemberEditComponent } from '../../../../common/dialog/member/edit/member.edit.component';
+import { StringValueEditComponent } from '@app/common/dialog/string/string.value.edit.component';
+import { StringValue } from '@app/common/dialog/string/StringValue';
+import { MemberAddComponent } from '@app/common/dialog/member/add/member.add.component';
+import { MemberEditComponent } from '@app/common/dialog/member/edit/member.edit.component';
 
 @Component({
   selector: 'organization-detail',

@@ -15,14 +15,14 @@ import { forkJoin } from 'rxjs';
 import { AccountService } from '@app/service/account.service';
 import { MatrixService } from '@app/service/matrix.service';
 import { MainI18nService } from '@app/service/i18n.service';
-import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { ConfirmComponent } from '../../../../common/dialog/confirm/confirm.component';
+import { ConfirmComponent } from '@app/common/dialog/confirm/confirm.component';
 import { ProjectMemberAddComponent, ProjectMemberAddResult } from './add/project.member.add.component';
 import { ProjectMemberRoleComponent } from './role/project.member.role.component';
 import { ProjectMemberRemarkComponent } from './remark/project.member.remark.component';
-import { OrganizationMember } from '../../../../typedef/define/user/UserOrganization';
-import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
+import { OrganizationMember } from '@app/typedef/define/user/UserOrganization';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
 
 /**
  * 项目成员管理：展示项目（根空间）的成员列表（访问条目 type = user）。

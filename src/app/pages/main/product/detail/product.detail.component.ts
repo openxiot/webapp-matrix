@@ -12,7 +12,7 @@ import { ActivatedRoute } from '@angular/router';
 import { DatePipe, Location } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LocalizedName, LifeCycle, ProductBasic } from '@openxiot/xiot-core-spec-ts';
-import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
 import { ProductService } from '@app/service/product.service';
 import { MainI18nService } from '@app/service/i18n.service';
 

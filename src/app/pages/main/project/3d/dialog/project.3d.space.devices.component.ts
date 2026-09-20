@@ -5,7 +5,7 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { TranslatePipe } from '@ngx-translate/core';
-import { DeviceEntity } from '../../../../../typedef/define/device/DeviceEntity';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
 import { DeviceDisplayService } from '@app/service/device.display.service';
 import { devicesInSpace } from '../anchor/project.3d.anchor';
 

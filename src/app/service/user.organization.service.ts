@@ -3,10 +3,10 @@ import {environment} from "../../environments/environment";
 import {HttpClient} from "@angular/common/http";
 import {lastValueFrom, map, Observable} from "rxjs";
 import {OxResponse} from "./response/OxResponse";
-import {UserOrganization, OrganizationMember} from '../typedef/define/user/UserOrganization';
-import {UserOrganizationCodec, OrganizationMemberCodec} from '../typedef/codec/user/UserOrganizationCodec';
-import { Oauth2Configuration } from '../typedef/define/oauth/Oauth2Configuration';
-import { Oauth2ConfigurationCodec } from '../typedef/codec/oauth/Oauth2ConfigurationCodec';
+import {UserOrganization, OrganizationMember} from '@app/typedef/define/user/UserOrganization';
+import {UserOrganizationCodec, OrganizationMemberCodec} from '@app/typedef/codec/user/UserOrganizationCodec';
+import { Oauth2Configuration } from '@app/typedef/define/oauth/Oauth2Configuration';
+import { Oauth2ConfigurationCodec } from '@app/typedef/codec/oauth/Oauth2ConfigurationCodec';
 
 @Injectable({providedIn: 'root'})
 export class UserOrganizationService {

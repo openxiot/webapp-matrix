@@ -4,7 +4,7 @@
  * 结构以功能码为中心：label 为中文短语 i18n key，模板经 translate 管道渲染；
  * dataType / 字节序 的 value 即显示文本，无需翻译。
  */
-import { ModbusBitName } from '../../../../typedef/define/modbus/Modbus';
+import { ModbusBitName } from '@app/typedef/define/modbus/Modbus';
 
 /** 词条形状：value 为存储值；label 为 i18n key（中文短语即 key），无翻译时可直接当显示文本。 */
 interface PointSelectOption {

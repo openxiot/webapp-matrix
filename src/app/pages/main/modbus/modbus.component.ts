@@ -15,10 +15,10 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountService } from '@app/service/account.service';
 import { ModbusService } from '@app/service/modbus.service';
 import { UserOrganizationService } from '@app/service/user.organization.service';
-import { ModbusConfig } from '../../../typedef/define/modbus/Modbus';
+import { ModbusConfig } from '@app/typedef/define/modbus/Modbus';
 import { lifecycleModifiable, lifecycleStyle } from './modbus.lifecycle';
-import { ConfirmComponent } from '../../../common/dialog/confirm/confirm.component';
-import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import { ConfirmComponent } from '@app/common/dialog/confirm/confirm.component';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
 import { NzBreadCrumbComponent } from 'ng-zorro-antd/breadcrumb';
 
 @Component({

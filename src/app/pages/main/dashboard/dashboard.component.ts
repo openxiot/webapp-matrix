@@ -24,10 +24,10 @@ import { WebDashboardService } from '@app/service/web-dashboard.service';
 import { MainI18nService } from '@app/service/i18n.service';
 import { MatrixService } from '@app/service/matrix.service';
 import { ModbusService } from '@app/service/modbus.service';
-import { ModbusConfig } from '../../../typedef/define/modbus/Modbus';
-import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
-import { OrganizationMember } from '../../../typedef/define/user/UserOrganization';
-import { WebDashboardCatalog } from '../../../typedef/define/dashboard/WebDashboardCatalog';
+import { ModbusConfig } from '@app/typedef/define/modbus/Modbus';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
+import { OrganizationMember } from '@app/typedef/define/user/UserOrganization';
+import { WebDashboardCatalog } from '@app/typedef/define/dashboard/WebDashboardCatalog';
 import {
   DASHBOARD_DEFAULT_SIZE,
   DASHBOARD_WIDGET_TITLES,
@@ -40,8 +40,8 @@ import {
   GRID_ROW_HEIGHT,
   WidgetType,
   titleOf,
-} from '../../../typedef/define/dashboard/WebDashboardLayout';
-import { WebDashboardWidgetData } from '../../../typedef/define/dashboard/WebDashboardWidgetData';
+} from '@app/typedef/define/dashboard/WebDashboardLayout';
+import { WebDashboardWidgetData } from '@app/typedef/define/dashboard/WebDashboardWidgetData';
 import { WidgetEditorComponent } from './editor/widget.editor';
 import { WidgetPickerComponent } from './editor/widget.picker';
 import {

@@ -4,7 +4,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountService } from '@app/service/account.service';
-import { User } from '../../../typedef/define/user/User';
+import { User } from '@app/typedef/define/user/User';
 
 @Component({
   selector: 'app-passport-callback',

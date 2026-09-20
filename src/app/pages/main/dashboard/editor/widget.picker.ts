@@ -6,7 +6,7 @@ import {
   DASHBOARD_EDITABLE_TYPES,
   DASHBOARD_WIDGET_TITLES,
   WidgetType,
-} from '../../../../typedef/define/dashboard/WebDashboardLayout';
+} from '@app/typedef/define/dashboard/WebDashboardLayout';
 
 /**
  * 卡片类型选择框（工具条那个「添加卡片」）。

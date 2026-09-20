@@ -5,10 +5,10 @@ import { UserSettingsService } from './user.settings.service';
 import { MatrixService } from './matrix.service';
 import { UserOrganizationService } from './user.organization.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { User } from '../typedef/define/user/User';
-import { UserSettings } from '../typedef/define/user/UserSettings';
-import { UserOrganization } from '../typedef/define/user/UserOrganization';
-import { SpaceEntity } from '../typedef/define/space/SpaceEntity';
+import { User } from '@app/typedef/define/user/User';
+import { UserSettings } from '@app/typedef/define/user/UserSettings';
+import { UserOrganization } from '@app/typedef/define/user/UserOrganization';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
 
 /**
  * 当前组织是「刷新之后还剩不剩」的那一环，而它错了不会报错，只是**项目列表悄悄换了内容**

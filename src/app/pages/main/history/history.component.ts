@@ -25,19 +25,19 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
 import { AccountService } from '@app/service/account.service';
 import { MatrixService } from '@app/service/matrix.service';
 import { ModbusService } from '@app/service/modbus.service';
 import { MainI18nService } from '@app/service/i18n.service';
-import { DeviceEntity } from '../../../typedef/define/device/DeviceEntity';
-import { GenericService } from '../../../typedef/define/service/GenericService';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
+import { GenericService } from '@app/typedef/define/service/GenericService';
 import {
   ModbusHistoryCurrent,
   ModbusHistoryFailure,
   ModbusHistoryFailures,
   modbusFailureLabel,
-} from '../../../typedef/define/modbus/ModbusHistory';
+} from '@app/typedef/define/modbus/ModbusHistory';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 

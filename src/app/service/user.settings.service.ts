@@ -3,8 +3,8 @@ import { environment } from '../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { OxResponse } from './response/OxResponse';
-import { UserSettings } from '../typedef/define/user/UserSettings';
-import { UserSettingsCodec } from '../typedef/codec/user/UserSettingsCodec';
+import { UserSettings } from '@app/typedef/define/user/UserSettings';
+import { UserSettingsCodec } from '@app/typedef/codec/user/UserSettingsCodec';
 
 @Injectable({ providedIn: 'root' })
 export class UserSettingsService {

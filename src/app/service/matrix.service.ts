@@ -3,18 +3,18 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { OxResponse } from './response/OxResponse';
-import { SpaceEntity } from '../typedef/define/space/SpaceEntity';
-import { SpaceEntityCodec } from '../typedef/codec/space/SpaceEntityCodec';
-import { DeviceEntity } from '../typedef/define/device/DeviceEntity';
-import { DeviceEntityCodec } from '../typedef/codec/device/DeviceEntityCodec';
-import { SpaceGraph } from '../typedef/define/device/SpaceGraph';
-import { SpaceGraphCodec } from '../typedef/codec/device/SpaceGraphCodec';
-import { DeviceRegistration } from '../typedef/define/device/DeviceRegistration';
-import { MoveDeviceRequest } from '../typedef/define/device/MoveDeviceRequest';
-import { ModelAnchor } from '../typedef/define/model/ModelAnchor';
-import { ModelAnchorCodec } from '../typedef/codec/model/ModelAnchorCodec';
-import { OrganizationMember } from '../typedef/define/user/UserOrganization';
-import { OrganizationMemberCodec } from '../typedef/codec/user/UserOrganizationCodec';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
+import { SpaceEntityCodec } from '@app/typedef/codec/space/SpaceEntityCodec';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
+import { DeviceEntityCodec } from '@app/typedef/codec/device/DeviceEntityCodec';
+import { SpaceGraph } from '@app/typedef/define/device/SpaceGraph';
+import { SpaceGraphCodec } from '@app/typedef/codec/device/SpaceGraphCodec';
+import { DeviceRegistration } from '@app/typedef/define/device/DeviceRegistration';
+import { MoveDeviceRequest } from '@app/typedef/define/device/MoveDeviceRequest';
+import { ModelAnchor } from '@app/typedef/define/model/ModelAnchor';
+import { ModelAnchorCodec } from '@app/typedef/codec/model/ModelAnchorCodec';
+import { OrganizationMember } from '@app/typedef/define/user/UserOrganization';
+import { OrganizationMemberCodec } from '@app/typedef/codec/user/UserOrganizationCodec';
 import {
   ActionOperation,
   ActionOperationCodec,

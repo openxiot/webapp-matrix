@@ -2,7 +2,7 @@ import { Component, computed, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { NzSelectModule } from 'ng-zorro-antd/select';
-import { ModbusByteOrder } from '../../../../../typedef/define/modbus/Modbus';
+import { ModbusByteOrder } from '@app/typedef/define/modbus/Modbus';
 import { byteOrderNoteKey } from '../point.options';
 
 /** 表单值组件：字节序（03/04 读寄存器；可选子集随数据格式由宿主传入，如 16 位只有 大端/小端）。 */

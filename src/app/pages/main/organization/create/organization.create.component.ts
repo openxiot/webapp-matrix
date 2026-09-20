@@ -15,10 +15,10 @@ import {FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Val
 import {NzMessageService} from 'ng-zorro-antd/message';
 import {Location} from '@angular/common';
 import {TranslatePipe} from '@ngx-translate/core';
-import { SpecCodeComponent } from '../../../../common/form/code/spec.code.component';
+import { SpecCodeComponent } from '@app/common/form/code/spec.code.component';
 import { AccountService } from '@app/service/account.service';
 import { UserOrganizationService } from '@app/service/user.organization.service';
-import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
 
 @Component({
   selector: 'organization-create',

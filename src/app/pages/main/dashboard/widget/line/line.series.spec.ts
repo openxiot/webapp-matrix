@@ -1,4 +1,4 @@
-import { WebDashboardWidgetDataItem } from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
+import { WebDashboardWidgetDataItem } from '@app/typedef/define/dashboard/WebDashboardWidgetData';
 import {
   hasDrawablePoints,
   hasNoPoints,

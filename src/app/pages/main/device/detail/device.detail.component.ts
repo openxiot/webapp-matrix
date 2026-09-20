@@ -20,17 +20,17 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { TranslatePipe } from '@ngx-translate/core';
-import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
 import { AccountService } from '@app/service/account.service';
 import { MatrixService } from '@app/service/matrix.service';
 import { ProductService } from '@app/service/product.service';
 import { MainI18nService } from '@app/service/i18n.service';
-import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
-import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
-import { OrganizationMember } from '../../../../typedef/define/user/UserOrganization';
-import { UrnUtils } from '../../../../typedef/utils/UrnUtils';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
+import { OrganizationMember } from '@app/typedef/define/user/UserOrganization';
+import { UrnUtils } from '@app/typedef/utils/UrnUtils';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
-import { SafePipe } from '../../../../common/pipe/safe/SafePipe';
+import { SafePipe } from '@app/common/pipe/safe/SafePipe';
 
 /**
  * 内嵌的第三方设备页面地址（自行开发、自行部署，宿主只负责嵌进来）。

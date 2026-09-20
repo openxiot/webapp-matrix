@@ -1,6 +1,6 @@
-import { ModbusAlarm } from '../../../../../typedef/define/modbus/ModbusAlarm';
-import { GenericService } from '../../../../../typedef/define/service/GenericService';
-import { SpaceEntity } from '../../../../../typedef/define/space/SpaceEntity';
+import { ModbusAlarm } from '@app/typedef/define/modbus/ModbusAlarm';
+import { GenericService } from '@app/typedef/define/service/GenericService';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
 import { type AlarmCard, alarmTone, buildAlarmCards } from './project.3d.alarm';
 
 /**

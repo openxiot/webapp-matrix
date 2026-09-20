@@ -5,7 +5,7 @@ import {
   GRID_ROW_HEIGHT,
   WidgetSize,
   WIDGET_SIZES,
-} from '../../../typedef/define/dashboard/WebDashboardLayout';
+} from '@app/typedef/define/dashboard/WebDashboardLayout';
 
 /**
  * 网格排版：档位 → 占格 / 像素高，以及**二维摆放**的那套坐标运算（纯函数，无注入）。

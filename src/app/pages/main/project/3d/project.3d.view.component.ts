@@ -23,7 +23,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { MainI18nService } from '@app/service/i18n.service';
 import { AccountService } from '@app/service/account.service';
 import { DeviceDisplayService } from '@app/service/device.display.service';
-import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
 import {
   Project3dScene,
   type MarkerRect,

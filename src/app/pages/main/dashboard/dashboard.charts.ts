@@ -1,5 +1,5 @@
 import type { EChartsCoreOption } from 'echarts/core';
-import type { StatisticsBucket } from '../../../typedef/define/statistics/OverviewStatistics';
+import type { StatisticsBucket } from '@app/typedef/define/statistics/OverviewStatistics';
 import { ChartPoint, hourLabels } from './dashboard.folding';
 
 /**

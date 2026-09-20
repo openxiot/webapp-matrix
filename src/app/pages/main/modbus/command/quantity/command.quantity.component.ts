@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
-import { ModbusBitName } from '../../../../../typedef/define/modbus/Modbus';
+import { ModbusBitName } from '@app/typedef/define/modbus/Modbus';
 import { bitNameAt, defaultFieldName, logicalAddressOf } from '../point.options';
 
 /**

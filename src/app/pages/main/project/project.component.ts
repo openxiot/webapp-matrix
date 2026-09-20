@@ -5,7 +5,7 @@ import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { FormsModule } from '@angular/forms';
 import { Location } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
-import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
 import { AccountService } from '@app/service/account.service';
 import { ProjectTableViewComponent } from './table/project.table.view.component';
 import { ProjectTreeViewComponent } from './tree/project.tree.view.component';

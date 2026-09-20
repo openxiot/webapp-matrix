@@ -14,7 +14,7 @@ import { MainI18nService } from '@app/service/i18n.service';
 import {
   ModbusServiceField,
   ModbusServiceFieldAlarm,
-} from '../../../../../../../typedef/define/modbus/ModbusService';
+} from '@app/typedef/define/modbus/ModbusService';
 import {
   MAX_ALARM_RULES,
   alarmCompareOptions,

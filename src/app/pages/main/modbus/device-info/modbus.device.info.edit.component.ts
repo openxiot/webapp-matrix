@@ -6,7 +6,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { TranslatePipe } from '@ngx-translate/core';
-import { ModbusDeviceInfo } from '../../../../typedef/define/modbus/Modbus';
+import { ModbusDeviceInfo } from '@app/typedef/define/modbus/Modbus';
 
 /** 设备信息编辑对话框的数据。 */
 export type ModbusDeviceInfoEditData = ModbusDeviceInfo;

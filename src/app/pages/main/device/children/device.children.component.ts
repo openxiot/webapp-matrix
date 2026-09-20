@@ -12,13 +12,13 @@ import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { TranslatePipe } from '@ngx-translate/core';
-import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
 import { AccountService } from '@app/service/account.service';
 import { MatrixService } from '@app/service/matrix.service';
 import { MainI18nService } from '@app/service/i18n.service';
-import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
-import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
-import { OrganizationMember } from '../../../../typedef/define/user/UserOrganization';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
+import { OrganizationMember } from '@app/typedef/define/user/UserOrganization';
 
 /**
  * 子设备页（/main/device/children/:id，路由参数 id = **父设备** did）。

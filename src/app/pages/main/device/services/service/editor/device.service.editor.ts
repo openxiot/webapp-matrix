@@ -8,15 +8,15 @@ import { MainI18nService } from '@app/service/i18n.service';
 import { MatrixService } from '@app/service/matrix.service';
 import { ModbusService } from '@app/service/modbus.service';
 import { ProductService } from '@app/service/product.service';
-import { DeviceEntity } from '../../../../../../typedef/define/device/DeviceEntity';
-import { ModbusConfig, modbusSlaveLabel } from '../../../../../../typedef/define/modbus/Modbus';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
+import { ModbusConfig, modbusSlaveLabel } from '@app/typedef/define/modbus/Modbus';
 import {
   ModbusService as ModbusServiceDef,
   ModbusServiceFieldAlarm,
   ModbusServiceFunction,
-} from '../../../../../../typedef/define/modbus/ModbusService';
-import { newAlarmId } from '../../../../../../typedef/define/modbus/ModbusAlarm';
-import { SpaceRef } from '../../../../../../typedef/define/space/SpaceRef';
+} from '@app/typedef/define/modbus/ModbusService';
+import { newAlarmId } from '@app/typedef/define/modbus/ModbusAlarm';
+import { SpaceRef } from '@app/typedef/define/space/SpaceRef';
 import {
   WRITE_METHOD_REPLY_KEY,
   alarmCount,

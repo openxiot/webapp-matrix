@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { ProductBasic } from '@openxiot/xiot-core-spec-ts';
-import { DeviceEntity } from '../typedef/define/device/DeviceEntity';
-import { UrnUtils } from '../typedef/utils/UrnUtils';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
+import { UrnUtils } from '@app/typedef/utils/UrnUtils';
 import { AccountService } from './account.service';
 import { MainI18nService } from './i18n.service';
 import { ProductService } from './product.service';

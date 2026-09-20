@@ -1,7 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { MainI18nService } from '@app/service/i18n.service';
-import { WebDashboardWidgetDataItem } from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
+import { WebDashboardWidgetDataItem } from '@app/typedef/define/dashboard/WebDashboardWidgetData';
 
 /**
  * 卡片身子里那一句「这张卡现在没有东西可读」。

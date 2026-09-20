@@ -12,8 +12,8 @@ import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { MainI18nService } from '@app/service/i18n.service';
 import { DeviceDisplayService } from '@app/service/device.display.service';
 import { DeviceSpecService, joinPid } from '@app/service/device.spec.service';
-import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
-import { WebDashboardCatalog, catalogDevices } from '../../../../typedef/define/dashboard/WebDashboardCatalog';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
+import { WebDashboardCatalog, catalogDevices } from '@app/typedef/define/dashboard/WebDashboardCatalog';
 import {
   DASHBOARD_DIMENSIONS,
   DASHBOARD_METRICS,
@@ -24,7 +24,7 @@ import {
   dashboardMetricLabel,
   sizeChoices,
   widthChoices,
-} from '../../../../typedef/define/dashboard/WebDashboardLayout';
+} from '@app/typedef/define/dashboard/WebDashboardLayout';
 import { cardHeight } from '../dashboard.grid';
 import { absoluteWindow } from '../dashboard.folding';
 import { readBoolean, readNumber, readString, readStringArray, readWindow } from '../dashboard.config';

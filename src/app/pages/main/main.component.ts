@@ -12,7 +12,7 @@ import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MainI18nService } from '@app/service/i18n.service';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { LanguageChangeComponent } from '../../common/dialog/language/change/language.change.component';
+import { LanguageChangeComponent } from '@app/common/dialog/language/change/language.change.component';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 
 @Component({

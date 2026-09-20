@@ -28,17 +28,17 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { BreadcrumbTranslateDirective } from '../../../../../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { EChartsDirective } from '../../../../../../common/components/echarts/echarts.directive';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
+import { EChartsDirective } from '@app/common/components/echarts/echarts.directive';
 import { AccountService } from '@app/service/account.service';
 import { MatrixService } from '@app/service/matrix.service';
 import { ModbusService } from '@app/service/modbus.service';
 import { MainI18nService } from '@app/service/i18n.service';
-import { DeviceEntity } from '../../../../../../typedef/define/device/DeviceEntity';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
 import {
   ModbusService as ModbusServiceDef,
   ModbusServiceFunction,
-} from '../../../../../../typedef/define/modbus/ModbusService';
+} from '@app/typedef/define/modbus/ModbusService';
 import {
   ModbusHistoryBucket,
   ModbusHistoryCurrent,
@@ -47,8 +47,8 @@ import {
   modbusFailureLabel,
   modbusNumberText,
   modbusValueText,
-} from '../../../../../../typedef/define/modbus/ModbusHistory';
-import { isBucket } from '../../../../../../typedef/codec/modbus/ModbusHistoryCodec';
+} from '@app/typedef/define/modbus/ModbusHistory';
+import { isBucket } from '@app/typedef/codec/modbus/ModbusHistoryCodec';
 import { ServiceFieldRef as FieldRef, serviceFieldsOf } from '../service.fields';
 import { isReadFunction } from '../service.functions';
 import { historyFieldOption } from './device.service.history.charts';

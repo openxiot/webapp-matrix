@@ -15,20 +15,20 @@
 import {
   ModbusCommand,
   ModbusConfig,
-} from '../../../../../typedef/define/modbus/Modbus';
+} from '@app/typedef/define/modbus/Modbus';
 import {
   ModbusServiceField,
   ModbusServiceFieldAlarm,
   ModbusServiceFieldBit,
   ModbusServiceFunction,
-} from '../../../../../typedef/define/modbus/ModbusService';
+} from '@app/typedef/define/modbus/ModbusService';
 import {
   MODBUS_ALARM_LEVELS,
   MODBUS_ALARM_OPERATORS,
   modbusAlarmLevelLabel,
   modbusAlarmOperatorLabel,
   newAlarmId,
-} from '../../../../../typedef/define/modbus/ModbusAlarm';
+} from '@app/typedef/define/modbus/ModbusAlarm';
 import { buildRequestFrame } from '../../../modbus/editor/request/request.frame';
 import {
   READ_BIT_FCS,

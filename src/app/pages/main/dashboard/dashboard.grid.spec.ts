@@ -8,7 +8,7 @@ import {
   sizeAllowed,
   sizeChoices,
   widthChoices,
-} from '../../../typedef/define/dashboard/WebDashboardLayout';
+} from '@app/typedef/define/dashboard/WebDashboardLayout';
 import {
   Placement,
   cardHeight,

@@ -12,7 +12,7 @@ import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountService } from '@app/service/account.service';
 import { UserOrganizationService } from '@app/service/user.organization.service';
-import { Oauth2Configuration } from '../../typedef/define/oauth/Oauth2Configuration';
+import { Oauth2Configuration } from '@app/typedef/define/oauth/Oauth2Configuration';
 
 const PLATFORM_ICONS: Record<string, string> = {
   dingtalk: 'dingding',

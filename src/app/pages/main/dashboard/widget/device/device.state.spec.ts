@@ -3,7 +3,7 @@ import {
   DeviceData,
   WebDashboardWidgetDataItem,
   deviceData,
-} from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
+} from '@app/typedef/define/dashboard/WebDashboardWidgetData';
 import { DeviceLine, deviceLine, deviceState } from './device.state';
 
 /**

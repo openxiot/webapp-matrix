@@ -4,12 +4,12 @@ import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 import { DeviceSpecService } from '@app/service/device.spec.service';
-import { WebDashboardWidget } from '../../../../../typedef/define/dashboard/WebDashboardLayout';
+import { WebDashboardWidget } from '@app/typedef/define/dashboard/WebDashboardLayout';
 import {
   DeviceData,
   WebDashboardWidgetDataItem,
   deviceData,
-} from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
+} from '@app/typedef/define/dashboard/WebDashboardWidgetData';
 import { readString } from '../../dashboard.config';
 import { WidgetNoteComponent } from '../note/widget.note';
 import { DeviceCardState, deviceLine, deviceState } from './device.state';

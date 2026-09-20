@@ -1,5 +1,5 @@
-import { DeviceEntity } from '../../../../../typedef/define/device/DeviceEntity';
-import { SpaceEntity } from '../../../../../typedef/define/space/SpaceEntity';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
 import { type AnchorMarker, devicesInSpace, spaceAnchor, spacePath } from '../anchor/project.3d.anchor';
 import type { MarkerRect } from '../scene/project.3d.scene';
 

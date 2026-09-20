@@ -25,21 +25,21 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { TranslatePipe } from '@ngx-translate/core';
-import { BreadcrumbTranslateDirective } from '../../../../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
 import { AccountService } from '@app/service/account.service';
 import { MatrixService } from '@app/service/matrix.service';
 import { ModbusService } from '@app/service/modbus.service';
 import { MainI18nService } from '@app/service/i18n.service';
-import { DeviceEntity } from '../../../../../../typedef/define/device/DeviceEntity';
-import { ModbusConfig, modbusConfigLabel } from '../../../../../../typedef/define/modbus/Modbus';
-import { SpaceEntity } from '../../../../../../typedef/define/space/SpaceEntity';
-import { OrganizationMember } from '../../../../../../typedef/define/user/UserOrganization';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
+import { ModbusConfig, modbusConfigLabel } from '@app/typedef/define/modbus/Modbus';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
+import { OrganizationMember } from '@app/typedef/define/user/UserOrganization';
 import {
   ModbusService as ModbusServiceDef,
   ModbusServiceFieldAlarm,
   ModbusServiceFunction,
-} from '../../../../../../typedef/define/modbus/ModbusService';
-import { newAlarmId } from '../../../../../../typedef/define/modbus/ModbusAlarm';
+} from '@app/typedef/define/modbus/ModbusService';
+import { newAlarmId } from '@app/typedef/define/modbus/ModbusAlarm';
 import {
   WRITE_METHOD_REPLY_KEY,
   alarmItems,

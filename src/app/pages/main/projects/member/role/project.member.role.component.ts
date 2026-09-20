@@ -4,7 +4,7 @@ import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { TranslatePipe } from '@ngx-translate/core';
-import { OrganizationMember } from '../../../../../typedef/define/user/UserOrganization';
+import { OrganizationMember } from '@app/typedef/define/user/UserOrganization';
 
 /** 调整项目成员角色对话框：选择 admin / member */
 @Component({

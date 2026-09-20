@@ -1,6 +1,6 @@
-import { DeviceEntity } from '../../../../../typedef/define/device/DeviceEntity';
-import { ModelAnchor } from '../../../../../typedef/define/model/ModelAnchor';
-import { SpaceEntity } from '../../../../../typedef/define/space/SpaceEntity';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
+import { ModelAnchor } from '@app/typedef/define/model/ModelAnchor';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
 import { type AnchorMarker, MODEL_ID, MODEL_REV, buildMarkers } from '../anchor/project.3d.anchor';
 import {
   type InfoPanel,

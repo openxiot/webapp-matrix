@@ -8,7 +8,7 @@ import {
   ModbusCoilItem,
   ModbusCommand,
   ModbusRegisterItem,
-} from '../../../../typedef/define/modbus/Modbus';
+} from '@app/typedef/define/modbus/Modbus';
 import {
   type CoilRow,
   type RegRow,

@@ -3,23 +3,23 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { OxResponse } from './response/OxResponse';
-import { ModbusConfig } from '../typedef/define/modbus/Modbus';
+import { ModbusConfig } from '@app/typedef/define/modbus/Modbus';
 // 实体类与下面的本服务类同名（后端都叫 ModbusService），此处按「实体加 Def 后缀」的约定别名引入
-import { ModbusService as ModbusServiceDef } from '../typedef/define/modbus/ModbusService';
-import { ModbusServiceCodec } from '../typedef/codec/modbus/ModbusServiceCodec';
+import { ModbusService as ModbusServiceDef } from '@app/typedef/define/modbus/ModbusService';
+import { ModbusServiceCodec } from '@app/typedef/codec/modbus/ModbusServiceCodec';
 import {
   ModbusHistoryCurrent,
   ModbusHistoryFailures,
   ModbusHistoryRange,
-} from '../typedef/define/modbus/ModbusHistory';
-import { ModbusHistoryCodec } from '../typedef/codec/modbus/ModbusHistoryCodec';
+} from '@app/typedef/define/modbus/ModbusHistory';
+import { ModbusHistoryCodec } from '@app/typedef/codec/modbus/ModbusHistoryCodec';
 import {
   ModbusAlarm,
   ModbusAlarmList,
   ModbusAlarmQuery,
-} from '../typedef/define/modbus/ModbusAlarm';
-import { ModbusAlarmCodec } from '../typedef/codec/modbus/ModbusAlarmCodec';
-import { DeviceEntity } from '../typedef/define/device/DeviceEntity';
+} from '@app/typedef/define/modbus/ModbusAlarm';
+import { ModbusAlarmCodec } from '@app/typedef/codec/modbus/ModbusAlarmCodec';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
 
 /**
  * Modbus 设备点表服务。

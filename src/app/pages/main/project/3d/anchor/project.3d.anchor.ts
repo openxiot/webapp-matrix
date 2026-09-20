@@ -1,6 +1,6 @@
-import { DeviceEntity } from '../../../../../typedef/define/device/DeviceEntity';
-import { ModelAnchor } from '../../../../../typedef/define/model/ModelAnchor';
-import { SpaceEntity } from '../../../../../typedef/define/space/SpaceEntity';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
+import { ModelAnchor } from '@app/typedef/define/model/ModelAnchor';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
 import type { MarkerSpec, Vec3 } from '../scene/project.3d.scene';
 
 /**

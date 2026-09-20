@@ -3,8 +3,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { OxResponse } from './response/OxResponse';
-import { OverviewStatistics } from '../typedef/define/statistics/OverviewStatistics';
-import { OverviewStatisticsCodec } from '../typedef/codec/statistics/OverviewStatisticsCodec';
+import { OverviewStatistics } from '@app/typedef/define/statistics/OverviewStatistics';
+import { OverviewStatisticsCodec } from '@app/typedef/codec/statistics/OverviewStatisticsCodec';
 
 /**
  * 统计服务（后端 StatisticsResource，端点 /matrix/v1/statistics）。

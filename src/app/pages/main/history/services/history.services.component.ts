@@ -27,26 +27,26 @@ import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { EChartsDirective } from '../../../../common/components/echarts/echarts.directive';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
+import { EChartsDirective } from '@app/common/components/echarts/echarts.directive';
 import { AccountService } from '@app/service/account.service';
 import { MatrixService } from '@app/service/matrix.service';
 import { ModbusService } from '@app/service/modbus.service';
 import { MainI18nService } from '@app/service/i18n.service';
-import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
-import { GenericService } from '../../../../typedef/define/service/GenericService';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
+import { GenericService } from '@app/typedef/define/service/GenericService';
 import {
   ModbusService as ModbusServiceDef,
   ModbusServiceField,
   ModbusServiceFunction,
-} from '../../../../typedef/define/modbus/ModbusService';
+} from '@app/typedef/define/modbus/ModbusService';
 import {
   ModbusHistoryBucket,
   ModbusHistoryFailures,
   ModbusHistoryRange,
-} from '../../../../typedef/define/modbus/ModbusHistory';
-import { isBucket } from '../../../../typedef/codec/modbus/ModbusHistoryCodec';
-import { numberText, valueText } from '../../../../typedef/utils/ValueUtils';
+} from '@app/typedef/define/modbus/ModbusHistory';
+import { isBucket } from '@app/typedef/codec/modbus/ModbusHistoryCodec';
+import { numberText, valueText } from '@app/typedef/utils/ValueUtils';
 import { isReadFunction } from '../../device/services/service/service.functions';
 import { historyFieldOption } from '../../device/services/service/history/device.service.history.charts';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';

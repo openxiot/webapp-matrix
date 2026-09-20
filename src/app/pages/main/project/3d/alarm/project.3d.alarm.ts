@@ -2,9 +2,9 @@ import {
   type ModbusAlarm,
   modbusAlarmCondition,
   modbusAlarmLevelLabel,
-} from '../../../../../typedef/define/modbus/ModbusAlarm';
-import { GenericService } from '../../../../../typedef/define/service/GenericService';
-import { SpaceEntity } from '../../../../../typedef/define/space/SpaceEntity';
+} from '@app/typedef/define/modbus/ModbusAlarm';
+import { GenericService } from '@app/typedef/define/service/GenericService';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
 
 /**
  * 3D 页左侧那一列告警框的内容。纯函数，不依赖 Angular，可单测。

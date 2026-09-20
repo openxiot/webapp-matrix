@@ -1,7 +1,7 @@
-import { SpaceEntity } from '../../../../../typedef/define/space/SpaceEntity';
-import { DeviceEntity } from '../../../../../typedef/define/device/DeviceEntity';
-import { SpaceRef } from '../../../../../typedef/define/space/SpaceRef';
-import { GenericService } from '../../../../../typedef/define/service/GenericService';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
+import { SpaceRef } from '@app/typedef/define/space/SpaceRef';
+import { GenericService } from '@app/typedef/define/service/GenericService';
 import { GraphNode, buildGraph, deviceNodeKey, findNode, serviceNodeKey, spaceNodeKey } from './project.tree.graph';
 
 /**

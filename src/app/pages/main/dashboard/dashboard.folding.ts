@@ -1,17 +1,17 @@
 import {
   ModbusConfig,
   modbusConfigLabel,
-} from '../../../typedef/define/modbus/Modbus';
+} from '@app/typedef/define/modbus/Modbus';
 import {
   StatisticsBucket,
   StatisticsCount,
-} from '../../../typedef/define/statistics/OverviewStatistics';
+} from '@app/typedef/define/statistics/OverviewStatistics';
 import {
   StatData,
   DistributionData,
   LineData,
-} from '../../../typedef/define/dashboard/WebDashboardWidgetData';
-import { WindowConfig } from '../../../typedef/define/dashboard/WebDashboardLayout';
+} from '@app/typedef/define/dashboard/WebDashboardWidgetData';
+import { WindowConfig } from '@app/typedef/define/dashboard/WebDashboardLayout';
 
 /**
  * 取数结果的折算（纯函数，无注入、无翻译器）。

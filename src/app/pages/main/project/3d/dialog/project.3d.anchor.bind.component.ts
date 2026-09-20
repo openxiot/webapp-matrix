@@ -7,7 +7,7 @@ import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { TranslatePipe } from '@ngx-translate/core';
-import { SpaceEntity } from '../../../../../typedef/define/space/SpaceEntity';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
 import { spacePath } from '../anchor/project.3d.anchor';
 
 /** 弹窗数据：项目里可选的全部空间（已按路径排好） */

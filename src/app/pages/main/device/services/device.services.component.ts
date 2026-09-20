@@ -23,17 +23,17 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { TranslatePipe } from '@ngx-translate/core';
-import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { ConfirmComponent } from '../../../../common/dialog/confirm/confirm.component';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
+import { ConfirmComponent } from '@app/common/dialog/confirm/confirm.component';
 import { AccountService } from '@app/service/account.service';
 import { MatrixService } from '@app/service/matrix.service';
 import { ModbusService } from '@app/service/modbus.service';
 import { MainI18nService } from '@app/service/i18n.service';
-import { ModbusService as ModbusServiceDef } from '../../../../typedef/define/modbus/ModbusService';
-import { DeviceEntity } from '../../../../typedef/define/device/DeviceEntity';
-import { ModbusConfig, modbusConfigLabel } from '../../../../typedef/define/modbus/Modbus';
-import { SpaceEntity } from '../../../../typedef/define/space/SpaceEntity';
-import { OrganizationMember } from '../../../../typedef/define/user/UserOrganization';
+import { ModbusService as ModbusServiceDef } from '@app/typedef/define/modbus/ModbusService';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
+import { ModbusConfig, modbusConfigLabel } from '@app/typedef/define/modbus/Modbus';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
+import { OrganizationMember } from '@app/typedef/define/user/UserOrganization';
 
 /**
  * 设备映射页：列出挂在这台设备（DTU）下的 Modbus 服务，并可新建 / 查看详情 / 删除。

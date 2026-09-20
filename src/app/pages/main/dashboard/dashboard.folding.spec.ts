@@ -1,6 +1,6 @@
-import { ModbusConfig } from '../../../typedef/define/modbus/Modbus';
-import { StatisticsBucket, StatisticsCount } from '../../../typedef/define/statistics/OverviewStatistics';
-import { DistributionData, LineData, StatData } from '../../../typedef/define/dashboard/WebDashboardWidgetData';
+import { ModbusConfig } from '@app/typedef/define/modbus/Modbus';
+import { StatisticsBucket, StatisticsCount } from '@app/typedef/define/statistics/OverviewStatistics';
+import { DistributionData, LineData, StatData } from '@app/typedef/define/dashboard/WebDashboardWidgetData';
 import {
   HOUR,
   absoluteWindow,

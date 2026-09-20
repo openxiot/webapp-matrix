@@ -5,12 +5,12 @@ import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 import { MainI18nService } from '@app/service/i18n.service';
-import { WebDashboardWidget } from '../../../../../typedef/define/dashboard/WebDashboardLayout';
+import { WebDashboardWidget } from '@app/typedef/define/dashboard/WebDashboardLayout';
 import {
   ServiceData,
   WebDashboardWidgetDataItem,
   serviceData,
-} from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
+} from '@app/typedef/define/dashboard/WebDashboardWidgetData';
 import { WidgetNoteComponent } from '../note/widget.note';
 import { WidgetWindowComponent } from '../window/widget.window';
 import { serviceLines, serviceState } from './service.state';

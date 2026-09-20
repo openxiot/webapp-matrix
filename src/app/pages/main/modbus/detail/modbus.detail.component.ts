@@ -10,7 +10,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { TranslatePipe } from '@ngx-translate/core';
-import { BreadcrumbTranslateDirective } from '../../../../common/components/breadcrumb/breadcrumb-translate.directive';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
 import { NzBreadCrumbComponent } from 'ng-zorro-antd/breadcrumb';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import { ModbusEditor } from '../editor/modbus.editor';

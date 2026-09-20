@@ -15,20 +15,20 @@ import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
-import { BreadcrumbTranslateDirective } from '../../../common/components/breadcrumb/breadcrumb-translate.directive';
-import { ConfirmComponent } from '../../../common/dialog/confirm/confirm.component';
+import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
+import { ConfirmComponent } from '@app/common/dialog/confirm/confirm.component';
 import { AccountService } from '@app/service/account.service';
 import { ProductService } from '@app/service/product.service';
 import { MatrixService } from '@app/service/matrix.service';
 import { ModbusService } from '@app/service/modbus.service';
 import { DtuService } from '@app/service/dtu.service';
 import { MainI18nService } from '@app/service/i18n.service';
-import { DeviceEntity } from '../../../typedef/define/device/DeviceEntity';
-import { SpaceEntity } from '../../../typedef/define/space/SpaceEntity';
-import { GenericService } from '../../../typedef/define/service/GenericService';
-import { OrganizationMember } from '../../../typedef/define/user/UserOrganization';
-import { DeviceAddComponent } from '../../../common/dialog/device/add/device.add.component';
-import { UrnUtils } from '../../../typedef/utils/UrnUtils';
+import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
+import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
+import { GenericService } from '@app/typedef/define/service/GenericService';
+import { OrganizationMember } from '@app/typedef/define/user/UserOrganization';
+import { DeviceAddComponent } from '@app/common/dialog/device/add/device.add.component';
+import { UrnUtils } from '@app/typedef/utils/UrnUtils';
 import { ProductBasic } from '@openxiot/xiot-core-spec-ts';
 
 /** 产品显示名：中文名 -> model -> id */

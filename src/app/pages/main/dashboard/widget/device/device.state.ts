@@ -4,8 +4,8 @@
  * 与 `../service/service.state.ts` 同一个理由抽出来：这里是判断（三态、名字与单位各来自哪里），
  * 写在模板里就得靠 `@if` 叠 `@if`，而这几种组合恰恰最需要被一个一个钉住。
  */
-import { modbusValueText } from '../../../../../typedef/define/modbus/ModbusHistory';
-import { DeviceData, WebDashboardWidgetDataItem } from '../../../../../typedef/define/dashboard/WebDashboardWidgetData';
+import { modbusValueText } from '@app/typedef/define/modbus/ModbusHistory';
+import { DeviceData, WebDashboardWidgetDataItem } from '@app/typedef/define/dashboard/WebDashboardWidgetData';
 import { DeviceProperty } from '@app/service/device.spec.service';
 import { readBoolean } from '../../dashboard.config';
 

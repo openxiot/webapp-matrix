@@ -17,7 +17,7 @@
 import {
   ModbusServiceField,
   ModbusServiceFunction,
-} from '../../../../../typedef/define/modbus/ModbusService';
+} from '@app/typedef/define/modbus/ModbusService';
 
 /** 一个能取数的字段（应答字段本身，或位区展开出来的某一位） */
 export interface ServiceFieldRef {

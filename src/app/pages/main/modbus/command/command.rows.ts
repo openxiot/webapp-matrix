@@ -1,4 +1,4 @@
-import { ModbusCoilItem, ModbusRegisterItem } from '../../../../typedef/define/modbus/Modbus';
+import { ModbusCoilItem, ModbusRegisterItem } from '@app/typedef/define/modbus/Modbus';
 
 /** 0F 写多线圈的表格行（UI 态：状态 on/off）。 */
 export interface CoilRow {
