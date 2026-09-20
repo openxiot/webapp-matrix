@@ -12,6 +12,8 @@
  * 取数必须自己算 from/to。
  */
 
+import { numberText, valueText } from '@app/typedef/utils/ValueUtils';
+
 /**
  * 采集到的一个值：数值（含缩放后的浮点）、取值表命中的描述字符串、或位区的 0/1。
  * 后端声明成 `Object`，故这里只能是 unknown，展示前要按类型分支。
@@ -175,22 +177,17 @@ export function modbusFailureLabel(
  *
  * 「`null` 说 `-`」与「`0` 说 `0`」必须分得开 —— 后者是真实读数，前者是这一轮没采到。
  *
- * 放在本文件（而不是某个页面里）：历史表格、服务卡片、将来的字段曲线都要说同一种话，
- * 各写一套迟早会走样 —— 与 {@link modbusFailureLabel} 同一个理由。
+ * 口径本身**只有一份**（{@link valueText}：告警页、两张历史表、看板卡片都用它），本文件这两个
+ * 只是按 `ModbusValue` 给它起个名字、省得调用方绕到 `typedef/utils` 去。收几位小数、浮点长什么样，
+ * 去那里看 —— 曾经这里抄过一份逐字相同的实现，两次要一起改才知道是一件事。
  */
 export function modbusValueText(value: ModbusValue): string {
-  if (value === null || value === undefined) {
-    return '-';
-  }
-  if (typeof value === 'number') {
-    return modbusNumberText(value);
-  }
-  return typeof value === 'object' ? JSON.stringify(value) : String(value);
+  return valueText(value);
 }
 
-/** 数值文案：整数不带小数点，浮点收到 4 位（`0.30000000000000004` → `0.3`） */
+/** 数值文案（{@link modbusValueText} 的数值分支）：与 {@link numberText} 同一口径，浮点最多 2 位 */
 export function modbusNumberText(value: number): string {
-  return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(4)));
+  return numberText(value);
 }
 
 /**

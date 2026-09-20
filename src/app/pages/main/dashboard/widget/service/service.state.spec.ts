@@ -88,6 +88,19 @@ describe('service.state', () => {
       expect(lines[0].text).toBe('0.3');
     });
 
+    /**
+     * 浮点字段**最多留 2 位**（一条产品口径，不是这一张卡的偏好）：
+     * 一张 float32 寄存器解出来是 `23.4567890167…`，卡上只该看到 `23.46` ——
+     * 小数位是可读性，多出来的位是二进制噪声。真要看全，去历史页/原始 JSON。
+     */
+    it('浮点只留 2 位小数；不够 2 位不补零', () => {
+      const wide = serviceLines(read({ fields: [{ field: '温度', value: 23.456789016723633 }] }), {}, t);
+      expect(wide[0].text).toBe('23.46');
+
+      const narrow = serviceLines(read({ fields: [{ field: '温度', value: 23.5 }] }), {}, t);
+      expect(narrow[0].text).toBe('23.5');
+    });
+
     it('取值表命中的描述串原样显示（那是点表数据，不翻译）', () => {
       const lines = serviceLines(read({ fields: [{ field: '状态', value: '停机' }] }), {}, t);
       expect(lines[0].text).toBe('停机');

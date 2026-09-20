@@ -29,6 +29,7 @@ import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/
 import { AccountService } from '@app/service/account.service';
 import { MatrixService } from '@app/service/matrix.service';
 import { ModbusService } from '@app/service/modbus.service';
+import { valueText } from '@app/typedef/utils/ValueUtils';
 import { MainI18nService } from '@app/service/i18n.service';
 import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
 import { ModbusConfig, modbusConfigLabel } from '@app/typedef/define/modbus/Modbus';
@@ -268,7 +269,7 @@ export class DeviceServiceDetailComponent implements OnInit {
     const fields = result.func.response ?? [];
     return Object.entries(result.data).map(([key, value]) => ({
       field: key,
-      value: formatValue(value),
+      value: valueText(value),
       unit: fields.find((f) => f.field === key)?.unit ?? '',
     }));
   }
@@ -452,10 +453,3 @@ export class DeviceServiceDetailComponent implements OnInit {
   }
 }
 
-/** 调用返回值的展示文案：对象/数组退化成 JSON，null 显示为 - */
-function formatValue(value: unknown): string {
-  if (value === null || value === undefined) {
-    return '-';
-  }
-  return typeof value === 'object' ? JSON.stringify(value) : String(value);
-}
