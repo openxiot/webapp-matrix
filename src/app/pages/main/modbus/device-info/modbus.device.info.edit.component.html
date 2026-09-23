@@ -18,6 +18,14 @@
   </nz-form-item>
 
   <nz-form-item>
+    <nz-form-label nzFor="deviceInfoType" [nzSpan]="4">{{ '设备类型' | translate }}</nz-form-label>
+    <nz-form-control>
+      <input nz-input id="deviceInfoType" [value]="type()" (input)="onTypeInput($event)"
+             placeholder="{{ '例如：离心式冷水机组' | translate }}" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
     <nz-form-label nzFor="deviceInfoSlaveId" [nzSpan]="4" [nzRequired]="true">{{ '从站地址' | translate }}</nz-form-label>
     <nz-form-control>
       <nz-input-number id="deviceInfoSlaveId" [ngModel]="slaveId()" (ngModelChange)="onSlaveIdChange($event)"

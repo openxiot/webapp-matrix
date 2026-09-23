@@ -31,10 +31,11 @@ export class ModbusDeviceInfoEditComponent {
   protected readonly manufacturer = signal(this.data.manufacturer ?? '');
   protected readonly model = signal(this.data.model ?? '');
   protected readonly slaveId = signal<number | undefined>(this.data.slaveId);
+  protected readonly type = signal(this.data.type ?? '');
   protected readonly visibility = signal<string>(this.data.visibility ?? 'private');
   protected readonly description = signal(this.data.description ?? '');
 
-  /** 厂家/型号/从站地址必填（服务端校验） */
+  /** 厂家/型号/从站地址必填（服务端校验）；设备类型可选 */
   readonly valid = computed(
     () =>
       this.manufacturer().trim().length > 0 &&
@@ -48,6 +49,7 @@ export class ModbusDeviceInfoEditComponent {
       this.manufacturer().trim() !== (this.data.manufacturer ?? '').trim() ||
       this.model().trim() !== (this.data.model ?? '').trim() ||
       (this.slaveId() ?? undefined) !== (this.data.slaveId ?? undefined) ||
+      this.type().trim() !== (this.data.type ?? '').trim() ||
       this.visibility() !== (this.data.visibility ?? 'private') ||
       this.description().trim() !== (this.data.description ?? '').trim(),
   );
@@ -64,6 +66,7 @@ export class ModbusDeviceInfoEditComponent {
       manufacturer: this.manufacturer().trim(),
       model: this.model().trim(),
       slaveId: this.slaveId(),
+      type: this.emptyToUndefined(this.type()),
       visibility: this.visibility() === 'public' ? 'public' : 'private',
       description: this.emptyToUndefined(this.description()),
     };
@@ -80,6 +83,10 @@ export class ModbusDeviceInfoEditComponent {
 
   protected onSlaveIdChange(value: number | null): void {
     this.slaveId.set(value ?? undefined);
+  }
+
+  protected onTypeInput($event: Event): void {
+    this.type.set(($event.target as HTMLInputElement).value);
   }
 
   protected onVisibilityChange(value: string): void {

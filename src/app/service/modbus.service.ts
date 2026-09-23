@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { AccountService } from './account.service';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { OxResponse } from './response/OxResponse';
@@ -25,7 +26,8 @@ import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
  * Modbus 设备点表服务。
  *
  * 目标 service-matrix 后端，端点统一为 /matrix/v1/modbus/config；
- * 点表本身按组织存，组织通过拦截器附加的 X-Org-Id 请求头携带，方法不再传 orgId。
+ * 点表本身按组织存，组织经显式 {@code ?orgId=} query 参数携带（后端已不再读 X-Org-Id 请求头），
+ * 取值与旧拦截器行为一致（当前账号所选组织），方法签名不变。
  *
  * 另一半是 Modbus 服务（点表映射成可调用的方法，ModbusServiceResource），
  * 端点 /matrix/v1/modbus/service，方法名统一带 Service 后缀以便与点表那批区分：
@@ -35,15 +37,24 @@ import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
 export class ModbusService {
   private server: string = environment.server;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private account: AccountService,
+  ) {}
 
   /**
    * 查询当前账号可见的全部设备点表：本组织私有 + 各组织公开（GET /visible）。
-   * 组织经拦截器附加的 X-Org-Id 携带。
+   * 组织经 {@code ?orgId=} query 参数携带（当前账号所选组织）；未选组织时不带参数，
+   * 后端回「公开 + 本人」——与旧拦截器附加 X-Org-Id 的行为等价。
    */
   listVisible(): Observable<ModbusConfig[]> {
+    const orgId = this.account.organization()?.id;
+    let params: HttpParams | undefined;
+    if (orgId && orgId.length > 0) {
+      params = new HttpParams().set('orgId', orgId);
+    }
     return this.http
-      .get<OxResponse>(`${this.server}/matrix/v1/modbus/config/visible`)
+      .get<OxResponse>(`${this.server}/matrix/v1/modbus/config/visible`, { params })
       .pipe(map((r) => r.data as ModbusConfig[]));
   }
 

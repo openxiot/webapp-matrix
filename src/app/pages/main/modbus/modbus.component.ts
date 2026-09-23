@@ -15,7 +15,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountService } from '@app/service/account.service';
 import { ModbusService } from '@app/service/modbus.service';
 import { UserOrganizationService } from '@app/service/user.organization.service';
-import { ModbusConfig } from '@app/typedef/define/modbus/Modbus';
+import { ModbusConfig, ModbusConfigOwner } from '@app/typedef/define/modbus/Modbus';
 import { lifecycleModifiable, lifecycleStyle } from './modbus.lifecycle';
 import { ConfirmComponent } from '@app/common/dialog/confirm/confirm.component';
 import { BreadcrumbTranslateDirective } from '@app/common/components/breadcrumb/breadcrumb-translate.directive';
@@ -176,17 +176,28 @@ export class ModbusComponent {
     });
   }
 
-  /** 「所属组织」列：能解析出名称则显示名称，否则退回组织编码 */
-  protected orgLabel(orgId?: string): string {
-    if (!orgId) {
+  /**
+   * 「所属」列：organization 归属查组织名录解析组织名；user 归属直接显名称快照（退 id）。
+   * 解析不出名称时回退名称快照或主体 id。
+   */
+  protected ownerLabel(owner?: ModbusConfigOwner): string {
+    if (!owner?.id) {
       return '-';
     }
-    return this.orgNames().get(orgId) ?? orgId;
+    if (owner.type === 'user') {
+      return owner.name?.trim() ? owner.name : owner.id;
+    }
+    return this.orgNames().get(owner.id) ?? owner.name ?? owner.id;
   }
 
-  /** 点表是否归属当前组织且组织可用（归属他组织 / 浏览模式的公开点表均不可操作） */
+  /** 点表是否归属当前主体且可用（组织归属须匹配当前已选组织；user 归属须是本人） */
   protected isOwn(config: ModbusConfig): boolean {
-    return this.orgActive() && !!config.orgId && config.orgId === this.currentOrgId;
+    if (!this.orgActive() || !config.owner?.id) {
+      return false;
+    }
+    return config.owner.type === 'user'
+      ? config.owner.id === this.account.user().id
+      : config.owner.type === 'organization' && config.owner.id === this.currentOrgId;
   }
 
   /** 是否显示删除：点表归属当前组织、当前账号是该组织管理员，且仍处于开发态（后端同口径拒绝 released/preview） */

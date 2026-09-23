@@ -92,6 +92,8 @@ export interface ModbusSlave {
   manufacturer: string;
   /** 设备型号，如 19XRV/CVHG */
   model: string;
+  /** 设备类型（可选，自由字符串，如 离心式冷水机组） */
+  type?: string;
   /** Modbus 从站地址 0-247 */
   slaveId?: number;
   description?: string;
@@ -110,9 +112,20 @@ export interface ModbusDeviceInfo extends ModbusSlave {
  * 设备点表配置（服务端 Java 公有字段，可选字段后端可能缺省）：
  * 从站信息收拢在 slave 子对象下，可见度与功能码动作与 slave 平级。
  */
+/** 点表归属主体：一条点表可属于一个组织，也可属于某个人（无组织个人点表）。 */
+export interface ModbusConfigOwner {
+  /** 主体 ID：组织编码 或 账号 ID */
+  id?: string;
+  /** organization 组织 / user 个人 */
+  type?: 'organization' | 'user';
+  /** 名称快照（展示用） */
+  name?: string;
+}
+
 export interface ModbusConfig {
   id?: string;
-  orgId?: string;
+  /** 归属主体（organization/user；后端以它为鉴权锚点，见 ModbusConfigRepository） */
+  owner?: ModbusConfigOwner;
   /** 从站设备信息（厂家/型号/从站地址/描述） */
   slave: ModbusSlave;
   /** 可见度：private 私有 / public 公开 */

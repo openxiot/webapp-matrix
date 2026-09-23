@@ -227,13 +227,14 @@ export abstract class ModbusEditor {
   }
 
   private applyConfig(config: ModbusConfig): void {
-    this.configOrgId.set(config.orgId ?? '');
+    this.configOrgId.set(config.owner?.id ?? '');
     this.lifecycle.set(config.lifecycle ?? 'development');
     const slave = config.slave ?? {};
     this.deviceInfo.set({
       manufacturer: slave.manufacturer ?? '',
       model: slave.model ?? '',
       slaveId: slave.slaveId,
+      type: slave.type,
       visibility: config.visibility ?? 'private',
       description: slave.description,
     });
@@ -547,11 +548,18 @@ export abstract class ModbusEditor {
         registers: c.registers ? c.registers.map((x) => ({ ...x })) : undefined,
       }));
     return {
-      orgId: this.currentOrgId,
+      // 新建/编辑仍以当前组织为归属（企业语义原有 orgId 就地成为 owner）：新建时后端据此校验
+      // 组织成员并落库 owner 子文档；更新忽略 owner（归属后端在 update 里保留原值）。
+      owner: {
+        id: this.currentOrgId,
+        type: 'organization',
+        name: this.account.organization().name,
+      },
       slave: {
         manufacturer: info.manufacturer.trim(),
         model: info.model.trim(),
         slaveId: info.slaveId,
+        type: this.blankToUndefined(info.type),
         description: this.blankToUndefined(info.description),
       },
       visibility: info.visibility ?? 'private',
@@ -664,6 +672,7 @@ function deviceInfoKey(info: ModbusDeviceInfo): string {
     normValue(info.manufacturer),
     normValue(info.model),
     normValue(info.slaveId),
+    normValue(info.type),
     normValue(info.visibility),
     normValue(info.description),
   ]);

@@ -77,8 +77,8 @@
                   -
                 }
               </td>
-              <td class="ellipsis-cell" [title]="orgLabel(config.orgId)">
-                {{ orgLabel(config.orgId) }}
+              <td class="ellipsis-cell" [title]="ownerLabel(config.owner)">
+                {{ ownerLabel(config.owner) }}
               </td>
               <td>
                 <a [routerLink]="['/main/modbus/detail', config.id]">{{ '详情' | translate }}</a>
