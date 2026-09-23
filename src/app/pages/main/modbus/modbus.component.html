@@ -26,19 +26,20 @@
         [nzData]="configs()"
         [nzShowSizeChanger]="true"
         [nzHideOnSinglePage]="true"
-        [nzScroll]="{ x: '1200px' }"
+        [nzScroll]="{ x: '1000px' }"
       >
         <thead>
         <tr>
           <th nzWidth="140px">{{ '厂家' | translate }}</th>
+          <th nzWidth="140px">{{ '设备类型' | translate }}</th>
           <th nzWidth="140px">{{ '型号' | translate }}</th>
           <th nzWidth="80px">{{ '从站地址' | translate }}</th>
           <th nzWidth="80px">{{ '可见度' | translate }}</th>
-          <th nzWidth="90px">{{ '状态' | translate }}</th>
-          <th nzWidth="140px">{{ '描述' | translate }}</th>
-          <th nzWidth="80px">{{ '创建者' | translate }}</th>
+          <th nzWidth="100px">{{ '状态' | translate }}</th>
+<!--          <th nzWidth="140px">{{ '描述' | translate }}</th>-->
+<!--          <th nzWidth="80px">{{ '创建者' | translate }}</th>-->
           <th nzWidth="100px">{{ '最后更新' | translate }}</th>
-          <th nzWidth="120px">{{ '所属组织' | translate }}</th>
+          <th nzWidth="120px">{{ '拥有者' | translate }}</th>
           <th nzWidth="100px">{{ '操作' | translate }}</th>
         </tr>
         </thead>
@@ -46,6 +47,7 @@
           @for (config of configs(); track config.id) {
             <tr>
               <td>{{ config.slave?.manufacturer || '-' }}</td>
+              <td>{{ config.slave?.type || '-' }}</td>
               <td>{{ config.slave?.model || '-' }}</td>
               <td>{{ config.slave?.slaveId ?? '-' }}</td>
               <td>
@@ -61,13 +63,13 @@
                 @let st = lifecycleStyle(config.lifecycle ?? 'development');
                 <nz-tag [nzColor]="st.color">{{ st.text | translate }}</nz-tag>
               </td>
-              <td class="ellipsis-cell" [title]="config.slave?.description || undefined">
-                {{ config.slave?.description || '-' }}
-              </td>
-              <td class="ellipsis-cell"
-                  [title]="config.creator?.timestamp ? (config.creator!.timestamp | date:'yyyy-MM-dd HH:mm:ss') : undefined">
-                {{ config.creator?.name || '-' }}
-              </td>
+<!--              <td class="ellipsis-cell" [title]="config.slave?.description || undefined">-->
+<!--                {{ config.slave?.description || '-' }}-->
+<!--              </td>-->
+<!--              <td class="ellipsis-cell"-->
+<!--                  [title]="config.creator?.timestamp ? (config.creator!.timestamp | date:'yyyy-MM-dd HH:mm:ss') : undefined">-->
+<!--                {{ config.creator?.name || '-' }}-->
+<!--              </td>-->
               <td>
                 @if (config.updater?.timestamp) {
                   <span [title]="config.updater?.name ? ('由 {{name}} 更新' | translate:{ name: config.updater!.name }) : ''">

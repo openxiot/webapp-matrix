@@ -50,6 +50,8 @@
           <nz-descriptions nzSize="small" [nzColumn]="3">
             <nz-descriptions-item nzTitle="{{ '厂家' | translate }}">{{ deviceInfo().manufacturer || '-' }}
             </nz-descriptions-item>
+            <nz-descriptions-item nzTitle="{{ '设备类型' | translate }}">{{ deviceInfo().type || '-' }}
+            </nz-descriptions-item>
             <nz-descriptions-item nzTitle="{{ '型号' | translate }}">{{ deviceInfo().model || '-' }}
             </nz-descriptions-item>
             <nz-descriptions-item nzTitle="{{ '从站地址' | translate }}">{{ deviceInfo().slaveId ?? '-' }}

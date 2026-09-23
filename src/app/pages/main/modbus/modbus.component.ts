@@ -177,17 +177,23 @@ export class ModbusComponent {
   }
 
   /**
-   * 「所属」列：organization 归属查组织名录解析组织名；user 归属直接显名称快照（退 id）。
-   * 解析不出名称时回退名称快照或主体 id。
+   * 「拥有者」列：优先显示归属主体的名称快照（创建/编辑时端侧写入，见 preAuthorizeCreate 与
+   * modbus.editor.buildBody —— org 填组织名、user 填创建人姓名，权威可靠），让拥有者真正显示
+   * 主体名称而不是裸 id；organization 无快照（早期数据）时再查当前账号成员组织名录解析组织名，
+   * 解析不到退 id。
    */
   protected ownerLabel(owner?: ModbusConfigOwner): string {
     if (!owner?.id) {
       return '-';
     }
-    if (owner.type === 'user') {
-      return owner.name?.trim() ? owner.name : owner.id;
+    if (owner.name?.trim()) {
+      return owner.name;
     }
-    return this.orgNames().get(owner.id) ?? owner.name ?? owner.id;
+    if (owner.type === 'user') {
+      return owner.id;
+    }
+    // 组织无名称快照：查成员组织名录解析组织名（仅当前账号所加入的组织），解析不到退 id
+    return this.orgNames().get(owner.id) ?? owner.id;
   }
 
   /** 点表是否归属当前主体且可用（组织归属须匹配当前已选组织；user 归属须是本人） */
