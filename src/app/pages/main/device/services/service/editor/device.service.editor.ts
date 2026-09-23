@@ -43,6 +43,7 @@ import {
   ServiceFrameDialogComponent,
   type ServiceFrameDialogData,
 } from '../frame/service.frame.dialog.component';
+import { previewFunctionRequestFrame } from '../../../../modbus/editor/request/request.frame';
 import { Location } from '@angular/common';
 
 /**
@@ -746,7 +747,22 @@ export abstract class DeviceServiceEditor implements OnInit {
     return describeFunctionResponse(func) ?? this.i18n.translate.instant(WRITE_METHOD_REPLY_KEY);
   }
 
-  /** 「请求帧」列的一行摘要（v2 的定义里没有能直接显示的一串 hex，帧交给「预览」按钮） */
+  /**
+   * 「请求帧」列要显示的实际帧：按结构化 request 在前端本地算出的完整 RTU 帧（十六进制、紧凑、含 CRC16），
+   * 点它开 {@link openFrameDialog} 看逐字段解析（与详情页同一套，见 service.functions / request.frame）。
+   *
+   * 读方法与写方法（每个字段都有缺省值）都能算出来；写方法若存在必填字段（无缺省值），
+   * 值要等 invoke 时人才给，这里算不出，返回 null（列上退回 {@link requestText} 的摘要）。
+   */
+  protected frameHex(func: ModbusFunction): string | null {
+    const preview = previewFunctionRequestFrame(func.request);
+    if (!preview.ok) {
+      return null;
+    }
+    return preview.frame.bytes.map((b) => b.toString(16).padStart(2, '0').toUpperCase()).join('');
+  }
+
+  /** 「请求帧」列的回退一行摘要（v2 的定义里没有能直接显示的一串 hex；帧算不出时才用它） */
   protected requestText(func: ModbusFunction): string {
     return describeFunctionRequest(func, this.t);
   }

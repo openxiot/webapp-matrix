@@ -14,7 +14,12 @@
 }
 
 .service-detail-frame {
+  // 帧可能很长（0F/10 写多个），长了要能折行
   word-break: break-all;
+  // 帧 hex 保持等宽字体，但颜色让它看起来是个可点击的链接：别让 .service-detail code 的灰色盖过按钮的蓝
+  code {
+    color: inherit;
+  }
 }
 
 // 占位符那种灰字（如写方法在「告警配置」列上的 —）：与编辑页的 .service-editor-hint 同一个样子

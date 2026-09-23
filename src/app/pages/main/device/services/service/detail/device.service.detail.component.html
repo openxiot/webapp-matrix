@@ -94,15 +94,23 @@
             <tr>
               <td>{{ func.index }}</td>
               <td>{{ func.name }}</td>
-              <!-- v2 的定义里不存帧：这一格给一行摘要，帧本身按「预览」弹窗看（本地现算） -->
+              <!--
+                v2 的定义里不存帧：这格显示按 request 本地现算出来的请求帧 hex（可点开看逐字段解析）；
+                算不出（写方法的必填字段没有缺省值 —— 值要等 invoke 时人才给）才退回一行摘要。
+              -->
               <td>
-                @if (requestText(func); as text) {
+                @if (frameHex(func); as hex) {
+                  <button
+                    nz-button
+                    nzType="link"
+                    nzSize="small"
+                    class="service-detail-frame"
+                    (click)="openFrameDialog(func)"
+                  >
+                    <code>{{ hex }}</code>
+                  </button>
+                } @else if (requestText(func); as text) {
                   {{ text }}
-                  @if (!outdated()) {
-                    <button nz-button nzType="link" nzSize="small" (click)="openFrameDialog(func)">
-                      {{ '预览' | translate }}
-                    </button>
-                  }
                 } @else {
                   <span class="service-detail-hint">—</span>
                 }
