@@ -522,5 +522,7 @@
   "项目1": "Project 1",
   "展开": "Expand",
   "收起": "Collapse",
-  "暂无数据": "No data"
+  "暂无数据": "No data",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "This service still uses the old v1 definition (the request frame is stored as a whole hexadecimal frame). Run the migration script to upgrade it to v2 before editing or invoking it.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "The frame is assembled by the backend at invoke time; this is a local preview (CRC16 included, computed the same way as the backend)."
 }

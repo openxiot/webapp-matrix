@@ -522,5 +522,7 @@
   "项目1": "Projekt 1",
   "展开": "Expandera",
   "收起": "Fäll ihop",
-  "暂无数据": "Inga data"
+  "暂无数据": "Inga data",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Den här tjänsten är fortfarande den gamla v1-definitionen (begäran sparas som en hel hexadecimal ram). Kör migreringsskriptet till v2 innan du redigerar eller anropar den.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "Ramen sätts samman av backend vid anropet; det som visas här är en lokal förhandsvisning (inklusive CRC16, beräknat som i backend)."
 }

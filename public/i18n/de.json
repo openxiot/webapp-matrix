@@ -522,5 +522,7 @@
   "项目1": "Projekt 1",
   "展开": "Erweitern",
   "收起": "Einklappen",
-  "暂无数据": "Keine Daten"
+  "暂无数据": "Keine Daten",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Dieser Dienst verwendet noch die alte v1-Definition (die Anfrage wird als vollständiger Hexadezimal-Frame gespeichert). Führen Sie vor dem Bearbeiten oder Aufrufen das Migrationsskript auf v2 aus.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "Der Frame wird beim Aufruf vom Backend zusammengesetzt; hier handelt es sich um eine lokale Vorschau (inkl. CRC16, Berechnung wie im Backend)."
 }

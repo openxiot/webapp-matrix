@@ -522,5 +522,7 @@
   "项目1": "Proxecto 1",
   "展开": "Expandir",
   "收起": "Contraer",
-  "暂无数据": "Sen datos"
+  "暂无数据": "Sen datos",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Este servizo aínda usa a definición antiga v1 (a trama de petición gárdase como unha cadea hexadecimal completa). Execute o script de migración a v2 antes de editalo ou invocalo.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "A trama compóna o backend no momento da invocación; isto é unha vista previa local (con CRC16, calculado igual que no backend)."
 }

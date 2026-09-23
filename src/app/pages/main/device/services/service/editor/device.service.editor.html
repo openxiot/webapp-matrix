@@ -8,6 +8,19 @@
 <div class="service-editor">
   <nz-spin [nzSpinning]="loadingDevice() || loadingInstance() || loadingConfigs() || loadingService()">
     <nz-card nzTitle="{{ '服务定义' | translate }}">
+      <!--
+        v1 旧定义只让看不让改：request 在 v1 里是整串 hex 帧、response 是裸数组，v2 的代码读它处处
+        对不上，改完保存等于把一份对不上的定义写回去。要先跑迁移脚本（见 MODBUS.md 的迁移一节）。
+      -->
+      @if (outdated()) {
+        <nz-alert
+          nzType="warning"
+          nzShowIcon
+          [nzMessage]="'该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。' | translate"
+          style="margin-bottom: 12px"
+        ></nz-alert>
+      }
+
       <!-- 依赖设备摘要：坐标落在哪台设备上 -->
       @if (device(); as d) {
         <div class="service-editor-device">
@@ -157,7 +170,19 @@
               <tr>
                 <td>{{ func.index }}</td>
                 <td>{{ func.name }}</td>
-                <td><code class="service-editor-frame">{{ func.request }}</code></td>
+                <!-- v2 的定义里不存帧：这一格给一行摘要，帧本身按「预览」弹窗看（本地现算） -->
+                <td>
+                  @if (requestText(func); as text) {
+                    {{ text }}
+                    @if (!outdated()) {
+                      <button nz-button nzType="link" nzSize="small" (click)="openFrameDialog(func)">
+                        {{ '预览' | translate }}
+                      </button>
+                    }
+                  } @else {
+                    <span class="service-editor-hint">—</span>
+                  }
+                </td>
                 <td>{{ responseText(func) }}</td>
                 <td>
                   <!-- 自动轮询开关：只有读方法能周期调用（写方法周期调用 = 周期性写寄存器，后端会拒） -->
@@ -165,6 +190,7 @@
                     <nz-switch
                       [ngModel]="func.polling === true"
                       (ngModelChange)="onPollingChange(func, $event)"
+                      [nzDisabled]="outdated()"
                     ></nz-switch>
                   } @else {
                     <span class="service-editor-hint">—</span>
@@ -179,6 +205,7 @@
                       [nzMin]="intervalMin"
                       [nzMax]="intervalMax"
                       [nzStep]="1"
+                      [nzDisabled]="outdated()"
                       nzAddonAfter="{{ '秒' | translate }}"
                       style="width: 100%"
                     ></nz-input-number>
@@ -193,7 +220,13 @@
                     那正是「一个新方法要怎么配」的入口。写方法没有应答字段，也就没有可配的出值。
                   -->
                   @if (isReadFunction(func)) {
-                    <button nz-button nzType="link" nzSize="small" (click)="openAlarmDialog(func)">
+                    <button
+                      nz-button
+                      nzType="link"
+                      nzSize="small"
+                      [disabled]="outdated()"
+                      (click)="openAlarmDialog(func)"
+                    >
                       {{ alarmCount(func) }}
                     </button>
                   } @else {

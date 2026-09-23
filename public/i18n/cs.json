@@ -522,5 +522,7 @@
   "项目1": "Projekt 1",
   "展开": "Rozbalit",
   "收起": "Sbalit",
-  "暂无数据": "Žádná data"
+  "暂无数据": "Žádná data",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Tato služba stále používá starou definici v1 (požadavek je uložen jako celý hexadecimální rámec). Před úpravou nebo voláním spusťte migrační skript na v2.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "Rámec sestavuje backend až při volání; zde jde o místní náhled (včetně CRC16, výpočet stejný jako na backendu)."
 }

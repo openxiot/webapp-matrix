@@ -36,15 +36,17 @@ import { ModbusConfig, modbusConfigLabel } from '@app/typedef/define/modbus/Modb
 import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
 import { OrganizationMember } from '@app/typedef/define/user/UserOrganization';
 import {
+  MODBUS_SERVICE_VERSION,
   ModbusService as ModbusServiceDef,
-  ModbusServiceFieldAlarm,
-  ModbusServiceFunction,
+  ModbusFunctionResponseFieldAlarm,
+  ModbusFunction,
 } from '@app/typedef/define/modbus/ModbusService';
 import { newAlarmId } from '@app/typedef/define/modbus/ModbusAlarm';
 import {
   WRITE_METHOD_REPLY_KEY,
   alarmItems,
   definedAlarmCount,
+  describeFunctionRequest,
   describeFunctionResponse,
   isReadFunction,
   withAlarmsOf,
@@ -53,10 +55,19 @@ import {
   DeviceServiceAlarmDialogComponent,
   type ServiceAlarmDialogData,
 } from '../editor/alarms/device.service.alarm.dialog.component';
+import {
+  ServiceFrameDialogComponent,
+  type ServiceFrameDialogData,
+} from '../frame/service.frame.dialog.component';
+import {
+  DeviceServiceInvokeDialogComponent,
+  type ServiceInvokeDialogData,
+  type ServiceInvokeValues,
+} from './invoke.function.dialog.component';
 
 /** 一次调用的结果：调的是哪个方法、返回了什么 */
 interface InvokeResult {
-  func: ModbusServiceFunction;
+  func: ModbusFunction;
   data: Record<string, unknown>;
 }
 
@@ -133,7 +144,18 @@ export class DeviceServiceDetailComponent implements OnInit {
   /** 正在落库告警配置：这期间「告警配置」列上的按钮先别按（免得拿旧定义再开一次对话框） */
   readonly saving = signal(false);
 
-  readonly functions = computed<ModbusServiceFunction[]>(() => this.service()?.functions ?? []);
+  readonly functions = computed<ModbusFunction[]>(() => this.service()?.functions ?? []);
+
+  /**
+   * 这份服务还是 v1 旧定义（`request` 存的是整串 hex 帧、`response` 是裸数组）。
+   *
+   * 前端只认 v2：v1 的定义读出来处处对不上（fc 取不到、应答字段为空），所以这一档下不调不存，
+   * 顶上给一条提示说清要先跑迁移脚本。缺 version 的历史文档同样按旧定义对待。
+   */
+  readonly outdated = computed<boolean>(() => {
+    const service = this.service();
+    return service != null && service.version !== MODBUS_SERVICE_VERSION;
+  });
 
   /* ----------------------------------------------------------------------------------------------
    * 权限：编辑入口只给空间管理员（与列表页、设备页同一口径）
@@ -235,7 +257,61 @@ export class DeviceServiceDetailComponent implements OnInit {
    * 调用
    * ----------------------------------------------------------------------------------------------*/
 
-  protected invoke(func: ModbusServiceFunction): void {
+  protected invoke(func: ModbusFunction): void {
+    // 读方法一键调用；写方法先去对话框填值（见 openInvokeDialog）
+    if (isReadFunction(func)) {
+      this.send(func);
+      return;
+    }
+    this.openInvokeDialog(func);
+  }
+
+  /**
+   * 打开写方法的调用对话框：逐字段填值 + 实时帧预览，「确定」后才发请求。
+   *
+   * v2 的写字段值由 invoke 的 `values` 决定（字段定义里的 `value` 只是缺省值），
+   * 所以写方法没有「一键调用」这一说 —— 值必须由人给。
+   */
+  private openInvokeDialog(func: ModbusFunction): void {
+    const modal = this.modal.create<
+      DeviceServiceInvokeDialogComponent,
+      ServiceInvokeDialogData,
+      ServiceInvokeValues
+    >({
+      nzTitle: this.i18n.translate.instant('调用方法'),
+      nzContent: DeviceServiceInvokeDialogComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: { func },
+      // 字段表 + 帧预览：窄了帧要折行，看不清
+      nzWidth: 720,
+      nzFooter: [
+        {
+          label: this.i18n.translate.instant('取消'),
+          onClick: (component) => component!.cancel(),
+        },
+        {
+          label: this.i18n.translate.instant('调用'),
+          type: 'primary',
+          // 字段没填全 = 帧组不出来：按钮禁着（对话框底部同时写着原因）
+          disabled: (component) => !component!.valid(),
+          onClick: (component) => component!.ok(),
+        },
+      ],
+    });
+
+    // 取消 / 关窗交回 undefined：不发请求
+    modal.afterClose.subscribe((values) => {
+      if (values) {
+        this.send(func, values);
+      }
+    });
+  }
+
+  /**
+   * 发一次 invoke。`values` **只有写方法才带**：读方法没有可写的东西（带了后端直接拒），
+   * 写方法里没改过的字段不带，由服务端回落其缺省值。
+   */
+  private send(func: ModbusFunction, values?: ServiceInvokeValues): void {
     const id = this.service()?.id;
     if (!id) {
       return;
@@ -247,7 +323,7 @@ export class DeviceServiceDetailComponent implements OnInit {
       return;
     }
     this.invoking.set(func.index);
-    this.modbus.invokeService(spaceId, id, func.index).subscribe({
+    this.modbus.invokeService(spaceId, id, func.index, values).subscribe({
       next: (data) => {
         this.invoking.set(null);
         this.result.set({ func, data });
@@ -260,13 +336,33 @@ export class DeviceServiceDetailComponent implements OnInit {
     });
   }
 
-  /** 调用结果按返回的键逐行展开，单位从该方法的应答字段定义里取 */
+  /**
+   * 打开「请求帧」预览对话框：v2 的定义里不存帧，这里按 request 在前端本地算一份给人看
+   * （真正的帧由后端在 invoke 时现组，见 ServiceFrameDialogComponent 的说明）。
+   */
+  protected openFrameDialog(func: ModbusFunction): void {
+    this.modal.create<ServiceFrameDialogComponent, ServiceFrameDialogData, void>({
+      nzTitle: this.i18n.translate.instant('请求帧'),
+      nzContent: ServiceFrameDialogComponent,
+      nzViewContainerRef: this.viewContainerRef,
+      nzData: { func },
+      nzWidth: 720,
+      nzFooter: [
+        {
+          label: this.i18n.translate.instant('关闭'),
+          onClick: (component) => component!.cancel(),
+        },
+      ],
+    });
+  }
+
+  /** 调用结果按返回的键逐行展开，单位从该方法的应答字段定义里取（写方法没有字段，单位恒为空） */
   protected resultRows(): ResultRow[] {
     const result = this.result();
     if (!result) {
       return [];
     }
-    const fields = result.func.response ?? [];
+    const fields = result.func.response?.fields ?? [];
     return Object.entries(result.data).map(([key, value]) => ({
       field: key,
       value: valueText(value),
@@ -302,10 +398,10 @@ export class DeviceServiceDetailComponent implements OnInit {
    * 副本按**出值名**作 key（对话框只认这一批出值，`点表ID#序号` 前缀对它没有意义），
    * 并顺手补 `id`：行是按 `id` 认的，而更早配下的规则可能没有身份（见 {@link newAlarmId}）。
    */
-  protected openAlarmDialog(func: ModbusServiceFunction): void {
+  protected openAlarmDialog(func: ModbusFunction): void {
     const items = alarmItems(func);
     const readOnly = !this.isAdmin();
-    const seeded = new Map<string, ModbusServiceFieldAlarm[]>();
+    const seeded = new Map<string, ModbusFunctionResponseFieldAlarm[]>();
     for (const item of items) {
       // 位行只看位自己那一组：父字段的告警是另一个出值的事，不能拿它冒充位上的配置
       const rules = (item.bit ? item.bit.alarms : item.field.alarms) ?? [];
@@ -317,13 +413,19 @@ export class DeviceServiceDetailComponent implements OnInit {
     const modal = this.modal.create<
       DeviceServiceAlarmDialogComponent,
       ServiceAlarmDialogData,
-      Map<string, ModbusServiceFieldAlarm[]>
+      Map<string, ModbusFunctionResponseFieldAlarm[]>
     >({
       // 标题不缀方法名：对话框第一行就写着是哪个方法（说了两遍是白说）
       nzTitle: this.i18n.translate.instant('告警配置'),
       nzContent: DeviceServiceAlarmDialogComponent,
       nzViewContainerRef: this.viewContainerRef,
-      nzData: { name: func.name, request: func.request, items, alarms: seeded, readOnly },
+      nzData: {
+        name: func.name,
+        request: this.requestText(func),
+        items,
+        alarms: seeded,
+        readOnly,
+      },
       nzWidth: 960,
       nzFooter: readOnly
         ? [
@@ -361,8 +463,8 @@ export class DeviceServiceDetailComponent implements OnInit {
    * 于是管理员在对话框里点「确认」即落库 —— 少一个「改完还得记得去别处按一下」的坑。
    */
   private saveAlarms(
-    func: ModbusServiceFunction,
-    alarms: Map<string, ModbusServiceFieldAlarm[]>,
+    func: ModbusFunction,
+    alarms: Map<string, ModbusFunctionResponseFieldAlarm[]>,
   ): void {
     const service = this.service();
     const spaceId = this.account.space().id;
@@ -417,15 +519,29 @@ export class DeviceServiceDetailComponent implements OnInit {
     return `#${dev.siid} · #${dev.aiid}（piid ${dev.argument}）`;
   }
 
-  protected responseText(func: ModbusServiceFunction): string {
+  protected responseText(func: ModbusFunction): string {
     return describeFunctionResponse(func) ?? this.i18n.translate.instant(WRITE_METHOD_REPLY_KEY);
   }
+
+  /** 「请求帧」列的一行摘要（v2 的定义里没有能直接显示的一串 hex，帧交给「预览」按钮） */
+  protected requestText(func: ModbusFunction): string {
+    return describeFunctionRequest(func, this.t);
+  }
+
+  /**
+   * 翻译 i18n 键。内部读取 currentLang 信号，使拼出来的摘要随语言切换重算
+   * （`instant` 不是响应式的，口径同编辑页与告警对话框里的那个 `t`）。
+   */
+  private readonly t = (key: string): string => {
+    this.i18n.currentLang();
+    return this.i18n.translate.instant(key);
+  };
 
   /**
    * 方法的自动调用周期：没配周期（含全部写方法）= 只手动调用，显示 -；
    * 配了就是周期值，停用（开关关着）时也照常显示 —— 那是留着待用的配置。
    */
-  protected intervalText(func: ModbusServiceFunction): string {
+  protected intervalText(func: ModbusFunction): string {
     if (func.interval == null) {
       return '-';
     }
@@ -436,7 +552,7 @@ export class DeviceServiceDetailComponent implements OnInit {
    * 自动轮询状态：启用 / 停用（周期保留）/ -（写方法或没配周期）。
    * 服务里没写 polling 的定义按「有周期即启用」算，与后端 validatePolling 的缺省判定一致。
    */
-  protected pollingText(func: ModbusServiceFunction): string {
+  protected pollingText(func: ModbusFunction): string {
     if (!isReadFunction(func) || func.interval == null) {
       return '-';
     }
@@ -444,7 +560,7 @@ export class DeviceServiceDetailComponent implements OnInit {
   }
 
   /** 自动轮询是否停着（模板给标签上色用：停用是灰的，启用是绿的） */
-  protected pollingOff(func: ModbusServiceFunction): boolean {
+  protected pollingOff(func: ModbusFunction): boolean {
     return isReadFunction(func) && func.interval != null && func.polling === false;
   }
 

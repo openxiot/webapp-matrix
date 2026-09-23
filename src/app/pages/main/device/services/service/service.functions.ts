@@ -2,11 +2,15 @@
  * 把一条设备点表展开成 Modbus 服务的方法列表（functions）：**一个功能码动作 → 一个方法**，
  * 序号沿用动作的 index（功能码以序号为关键字），名称沿用动作名。
  *
- * - `request`：完整的 Modbus RTU 帧（含 CRC16），复用点表编辑器那套生成器
- *   （request.frame 的 buildRequestFrame），此处只把展示用的空格去掉；
+ * - `request`：**结构化的请求帧定义**（从站/功能码/起始地址 + 读的数量或写的字段），
+ *   帧本身由后端在 invoke 时按它现组（含 CRC16）。这里不再把点表那条线的 hex 帧存进服务 ——
+ *   存量 v1 服务存的才是 hex（见 ModbusService.ts 的 MODBUS_SERVICE_VERSION）；
  * - `response`：读动作（01/02/03/04）按「值的个数」出应答字段（见 responseOf），
  *   字段名取自动作的 fieldNames（留空用默认名）；写动作（05/06/0F/10）的应答是请求回显、
- *   没有读值，给空数组。
+ *   没有读值，**整段没有 response**（undefined）。
+ *
+ * 两个方向都从同一条点表动作折出来，故服务的帧与点表「命令」预览算出来的帧逐字节相同
+ * （写死的转换规则见 requestOf；单测里有对照 oracle 钉住它）。
  *
  * 纯函数、无 Angular 依赖，供「添加/编辑服务」页在选中点表后即时展开成预览
  * （名称/请求帧/应答字段只读，只有「自动轮询」与「逐字段告警」由用户在预览表里改 ——
@@ -17,10 +21,13 @@ import {
   ModbusConfig,
 } from '@app/typedef/define/modbus/Modbus';
 import {
-  ModbusServiceField,
-  ModbusServiceFieldAlarm,
-  ModbusServiceFieldBit,
-  ModbusServiceFunction,
+  ModbusFunction,
+  ModbusFunctionRequest,
+  ModbusFunctionRequestField,
+  ModbusFunctionResponse,
+  ModbusFunctionResponseField,
+  ModbusFunctionResponseFieldAlarm,
+  ModbusFunctionResponseFieldBit,
 } from '@app/typedef/define/modbus/ModbusService';
 import {
   MODBUS_ALARM_LEVELS,
@@ -29,15 +36,18 @@ import {
   modbusAlarmOperatorLabel,
   newAlarmId,
 } from '@app/typedef/define/modbus/ModbusAlarm';
-import { buildRequestFrame } from '../../../modbus/editor/request/request.frame';
 import {
   READ_BIT_FCS,
   READ_FCS,
+  WRITE_REGISTER_DATA_TYPE_OPTIONS,
+  defaultFieldName,
   expectedBitCount,
   expectedFieldCount,
+  fcLabelKey,
   fieldBaseName,
   fitBitNames,
   fitFieldNames,
+  frameQuantityOf,
   registerSpan,
 } from '../../../modbus/command/point.options';
 
@@ -52,7 +62,7 @@ const DATA_TYPE_WIDTH: Record<string, number> = {
 
 /** 展开结果 */
 export interface ServiceFunctionBuild {
-  functions: ModbusServiceFunction[];
+  functions: ModbusFunction[];
   /** 数据不完整、生成不出请求帧或应答规则的动作（如 `#2 读进水温度`），前端提示用 */
   skipped: string[];
 }
@@ -61,7 +71,7 @@ export interface ServiceFunctionBuild {
  * 点表 → 方法列表。点表为空（未选择 / 取不到）时返回空结果。
  */
 export function buildServiceFunctions(config: ModbusConfig | undefined): ServiceFunctionBuild {
-  const functions: ModbusServiceFunction[] = [];
+  const functions: ModbusFunction[] = [];
   const skipped: string[] = [];
   if (!config) {
     return { functions, skipped };
@@ -70,29 +80,147 @@ export function buildServiceFunctions(config: ModbusConfig | undefined): Service
   const slaveId = config.slave?.slaveId;
   for (const command of config.commands ?? []) {
     const label = `#${command.index} ${command.name ?? ''}`.trim();
-    const built = buildRequestFrame(command, slaveId);
-    if (!built.ok) {
-      skipped.push(label);
-      continue;
-    }
+    const request = requestOf(command, slaveId);
     const response = responseOf(command);
-    if (!response) {
+    // 读方法的应答规则算不出来（数量算出 0 字节的数据区）就没法解值，按「跳过」处理
+    if (!request || (response == null && READ_FCS.has(command.fc))) {
       skipped.push(label);
       continue;
     }
     functions.push({
       index: command.index,
       name: command.name,
-      request: built.frame.hex.replace(/\s+/g, ''),
-      response,
+      request,
+      // 写方法没有应答定义：整个键不出现（不是空对象，后端据此判定写方法）
+      response: response ?? undefined,
     });
   }
 
   return { functions, skipped };
 }
 
+/* ----------------------------------------------------------------------------------------------
+ * 请求帧定义：点表动作 → 结构化 request
+ * ----------------------------------------------------------------------------------------------*/
+
+/** 10 写多寄存器允许的数据格式（写按原始值，不含 string）；用于把点表里不认识的值兜回 uint16 */
+const WRITE_REGISTER_FORMATS = new Set(WRITE_REGISTER_DATA_TYPE_OPTIONS.map((o) => o.value));
+
 /**
- * 一个动作的应答解析规则；数量非法（算出 0 字节的数据区）时返回 null，由调用方按「跳过」处理。
+ * 一个动作的请求帧定义；必要字段缺失（05 没选状态 / 06 没填值 / 0F、10 没有条目）时返回 null，
+ * 由调用方按「跳过」处理。
+ *
+ * 与点表那条线（request.frame 的 buildRequestFrame）逐字节对齐的换算规则：
+ * - 读（01/02/03/04）：只有 `quantity`，值是**帧里那个数量字段的字面值** —— 点表的 quantity 是
+ *   「值的个数」，03/04 要乘类型跨度（见 frameQuantityOf），服务里则直接写线上数字
+ *   （应答字段各带自己的 format，请求侧无从按一个 dataType 换算，后端的对账校验认这个口径）；
+ * - 05：单个 bit 字段，不填 offset（05 的帧里没有「第几个」）；
+ * - 06：单个 int16/uint16 字段，格式按缺省值定（点表的值域是 -32768..65535，负数只有 int16
+ *   过得了后端的范围校验，其余用 uint16）—— 两种格式写出来的 16 位位模式完全相同；
+ * - 0F：一个线圈一个 bit 字段，offset 即行序（点表的偏移由行序自动给出，帧是紧凑位区、不留空洞）；
+ * - 10：一个寄存器条目一个字段，offset 按类型跨度累加（寄存器位次，不是字节位次）。
+ */
+function requestOf(
+  command: ModbusCommand,
+  slaveId: number | undefined,
+): ModbusFunctionRequest | null {
+  if (slaveId == null || slaveId < 0 || slaveId > 255) {
+    return null;
+  }
+  const start = command.start ?? 0;
+  if (READ_FCS.has(command.fc)) {
+    return {
+      slaveId,
+      fc: command.fc,
+      start,
+      quantity: frameQuantityOf(command.fc, command.quantity, command.dataType),
+    };
+  }
+
+  const fields = writeFieldsOf(command);
+  return fields ? { slaveId, fc: command.fc, start, fields } : null;
+}
+
+/** 写动作（05/06/0F/10）的写入字段；数据不完整返回 null */
+function writeFieldsOf(command: ModbusCommand): ModbusFunctionRequestField[] | null {
+  const baseName = fieldBaseName(command.name);
+
+  if (command.fc === '05') {
+    if (command.coilState !== 'on' && command.coilState !== 'off') {
+      return null;
+    }
+    return [
+      {
+        index: 1,
+        field: defaultFieldName(baseName, 0, 1),
+        format: 'bit',
+        value: command.coilState === 'on',
+      },
+    ];
+  }
+
+  if (command.fc === '06') {
+    const field: ModbusFunctionRequestField = {
+      index: 1,
+      field: defaultFieldName(baseName, 0, 1),
+      // 负值只能走 int16（后端按格式校验取值范围），非负走 uint16；两者写出的位模式相同
+      format: (command.registerValue ?? 0) < 0 ? 'int16' : 'uint16',
+    };
+    if (command.registerValue != null) {
+      field.value = command.registerValue;
+    }
+    return [field];
+  }
+
+  if (command.fc === '0F') {
+    const coils = command.coils ?? [];
+    if (coils.length === 0) {
+      return null;
+    }
+    return coils.map((coil, i) => ({
+      index: i + 1,
+      field: defaultFieldName(baseName, i, coils.length),
+      offset: i,
+      format: 'bit',
+      value: coil.on === true,
+    }));
+  }
+
+  if (command.fc === '10') {
+    const registers = command.registers ?? [];
+    if (registers.length === 0) {
+      return null;
+    }
+    const fields: ModbusFunctionRequestField[] = [];
+    let offset = 0;
+    registers.forEach((item, i) => {
+      const declared = item.dataType ?? '';
+      const format = WRITE_REGISTER_FORMATS.has(declared) ? declared : 'uint16';
+      const field: ModbusFunctionRequestField = {
+        index: i + 1,
+        field: defaultFieldName(baseName, i, registers.length),
+        offset,
+        format,
+      };
+      if (registerSpan(format) === 2) {
+        // 4 字节格式跨两个寄存器，后端要求必须写明字节序
+        field.byteOrder = item.byteOrder ?? command.byteOrder ?? 'ABCD';
+      }
+      if (item.value != null) {
+        field.value = item.value;
+      }
+      fields.push(field);
+      offset += registerSpan(format) ?? 1;
+    });
+    return fields;
+  }
+
+  return null;
+}
+
+/**
+ * 一个动作的应答定义；写动作没有应答定义（返回 null），读动作的规则算不出来时也返回 null
+ * （数量非法、算出 0 字节的数据区），由调用方按「跳过」处理。
  *
  * 字段个数跟「值的个数」走：01/02 与 string 只有一个字段，03/04 非 string 一个值一个字段
  * （每个字段 bytes = 类型跨度 × 2），字段名逐个取 action 的 fieldNames（留空用默认名）。
@@ -101,10 +229,10 @@ export function buildServiceFunctions(config: ModbusConfig | undefined): Service
  * 01/02 的位区只能是一段连续字节（bytes 之和必须等于 byteCount），故逐位取值不是另开字段，
  * 而是在这个字段上挂 bit-list：后端解析时除给出整段位掩码外，再按位输出每个已命名位的 0/1。
  */
-function responseOf(command: ModbusCommand): ModbusServiceField[] | null {
+function responseOf(command: ModbusCommand): ModbusFunctionResponse | null {
   if (!READ_FCS.has(command.fc)) {
     // 写动作：应答是请求回显，没有读值
-    return [];
+    return null;
   }
 
   const quantity = Math.max(1, Math.floor(command.quantity ?? 1));
@@ -127,7 +255,7 @@ function responseOf(command: ModbusCommand): ModbusServiceField[] | null {
     if (bits.length > 0) {
       field.bitList = bits.map((bit) => ({ offset: bit.offset ?? 0, field: bit.name ?? '' }));
     }
-    return [field];
+    return { fields: [field] };
   }
 
   // 应答字段名称（个数即字段数，空位补默认名）
@@ -139,13 +267,13 @@ function responseOf(command: ModbusCommand): ModbusServiceField[] | null {
 
   if (command.dataType === 'string') {
     // string：整段字符串算一个值（数量即长度），bytes = 长度 × 2
-    return [buildField(1, names[0] ?? '', quantity * 2, 'string', command)];
+    return { fields: [buildField(1, names[0] ?? '', quantity * 2, 'string', command)] };
   }
 
   // 03/04 非 string：一个值一个字段，字节数 = 类型跨度 × 2（未知类型按 1 个寄存器兜底）
   const bytes = (registerSpan(command.dataType) ?? 1) * 2;
   const format = formatOf(command.dataType, bytes);
-  return names.map((name, i) => buildField(i + 1, name, bytes, format, command));
+  return { fields: names.map((name, i) => buildField(i + 1, name, bytes, format, command)) };
 }
 
 /** 组装一个应答字段：字节序/缩放/单位按动作声明填（bytes > 1 时后端要求 byteOrder 必填）。 */
@@ -155,8 +283,8 @@ function buildField(
   bytes: number,
   format: string,
   command: ModbusCommand,
-): ModbusServiceField {
-  const out: ModbusServiceField = { index, field, bytes, format };
+): ModbusFunctionResponseField {
+  const out: ModbusFunctionResponseField = { index, field, bytes, format };
   if (bytes > 1) {
     out.byteOrder = command.byteOrder ?? 'ABCD';
   }
@@ -196,7 +324,7 @@ function formatOf(dataType: string | undefined, bytes: number): string {
 }
 
 /** 应答字段的展示文案：字段名 类型/字节数 [字节序] [×缩放] [单位] [位: 名称@偏移 …] [→ 告警 …] */
-export function describeServiceField(field: ModbusServiceField): string {
+export function describeServiceField(field: ModbusFunctionResponseField): string {
   const parts = [describeFieldType(field)];
   // 已启用的告警缀在最后：这一行是「这个方法返回什么、越限会不会报」的摘要，
   // 漏掉告警就少说了一件事（字段自身与各位各一份，与展开行里的行序一致）。
@@ -213,16 +341,16 @@ export function describeServiceField(field: ModbusServiceField): string {
 
 /**
  * 一组规则里**真正会生效**的那条：已启用的规则中级别最高的，
- * 与后端 `ModbusAlarmPolicy` 的选举同一条口径（见 {@link ModbusServiceField.alarms}）。
+ * 与后端 `ModbusAlarmPolicy` 的选举同一条口径（见 {@link ModbusFunctionResponseField.alarms}）。
  *
  * 它只是**摘要的取法**，不是判定：值有没有越限要看采样，这里无从得知，
  * 所以取的是「启用规则里最重的那条」而不是「命中的那些里最重的那条」。级别缺省的按最低算。
  * 同级并列取**声明顺序靠后**的那条（`>=` 而不是 `>`），与后端一致。
  */
 export function primaryAlarm(
-  alarms: ModbusServiceFieldAlarm[] | undefined,
-): ModbusServiceFieldAlarm | undefined {
-  let winner: ModbusServiceFieldAlarm | undefined;
+  alarms: ModbusFunctionResponseFieldAlarm[] | undefined,
+): ModbusFunctionResponseFieldAlarm | undefined {
+  let winner: ModbusFunctionResponseFieldAlarm | undefined;
   for (const alarm of alarms ?? []) {
     if (alarm == null || alarm.enabled !== true) {
       continue;
@@ -244,7 +372,7 @@ export function alarmRank(level: string | undefined | null): number {
  * 展开行里那一组的组头用它 —— 出值名已经在组头左边（见 {@link ServiceAlarmItem.key}），
  * 让它再当描述的第一个词重复一遍是白说。
  */
-export function describeFieldShape(field: ModbusServiceField): string {
+export function describeFieldShape(field: ModbusFunctionResponseField): string {
   const parts = [`${field.format}/${field.bytes}B`];
   if (field.byteOrder) {
     parts.push(field.byteOrder);
@@ -266,7 +394,7 @@ export function describeFieldShape(field: ModbusServiceField): string {
  * 字段名 + 类型形态，**不带告警**：{@link describeServiceField} 的起始段用它 ——
  * 那一行后面紧挨着就是告警的摘要，再缀一遍「→ 温度过高(>80)」是同一句话说两遍。
  */
-export function describeFieldType(field: ModbusServiceField): string {
+export function describeFieldType(field: ModbusFunctionResponseField): string {
   return `${field.field} ${describeFieldShape(field)}`;
 }
 
@@ -276,7 +404,7 @@ export function describeFieldType(field: ModbusServiceField): string {
  * 用**符号**而不是「超过」那类词：这一行是跟着 `uint16/2B` 一起出现的技术摘要，
  * 符号与定义里存的值逐字对齐，也就不必进词典（见 `ModbusAlarm.ts` 的 `MODBUS_ALARM_OPERATORS`）。
  */
-function alarmBrief(alarm: ModbusServiceFieldAlarm): string {
+function alarmBrief(alarm: ModbusFunctionResponseFieldAlarm): string {
   const target = alarm.threshold != null ? String(alarm.threshold) : (alarm.state ?? '');
   return `${alarm.text ?? ''}(${alarm.compare ?? ''}${target})`;
 }
@@ -285,16 +413,13 @@ function alarmBrief(alarm: ModbusServiceFieldAlarm): string {
 export const WRITE_METHOD_REPLY_KEY = '写方法（应答为请求回显，无返回字段）';
 
 /**
- * 请求帧里的功能码（两位大写 16 进制）：帧结构 [slave][fc][...]，即第二个字节。
- * 帧缺失 / 太短 / 不是 16 进制时返回 undefined —— 判不出功能码就当「不是读方法」，
- * 与后端 ModbusFrameCodec 取 fc 的口径一致（后端从请求帧第二字节判定读写）。
+ * 方法的请求功能码（两位大写 16 进制）。
+ *
+ * 结构化之后 fc 是**请求定义里的一个字段**，不再从帧里猜（v1 存的是 hex 帧，只能取第二字节）；
+ * 缺失或不是合法的两位 16 进制时返回 undefined —— 判不出功能码就当「不是读方法」。
  */
-export function functionFcOf(request: string | undefined): string | undefined {
-  const hex = (request ?? '').replace(/\s+/g, '');
-  if (hex.length < 4) {
-    return undefined;
-  }
-  const fc = hex.slice(2, 4).toUpperCase();
+export function functionFcOf(request: ModbusFunctionRequest | undefined): string | undefined {
+  const fc = (request?.fc ?? '').trim().toUpperCase();
   return /^[0-9A-F]{2}$/.test(fc) ? fc : undefined;
 }
 
@@ -304,8 +429,35 @@ export function functionFcOf(request: string | undefined): string | undefined {
  * 只有读方法能挂自动调用周期：写方法的应答是请求回显，周期调用等于让服务端周期性地往寄存器里
  * 写值，后端 ModbusServiceValidator 会直接拒（`only read functions (fc 01/02/03/04) can be polled`）。
  */
-export function isReadFunction(func: ModbusServiceFunction): boolean {
+export function isReadFunction(func: ModbusFunction): boolean {
   return READ_FCS.has(functionFcOf(func.request) ?? '');
+}
+
+/**
+ * 请求定义的一行摘要（详情页与编辑页的「请求帧」列、告警对话框的表头都用它）。
+ *
+ * v2 的 request 不再是能直接显示的一串 hex，列里给这一行、帧本身由「预览」按钮弹窗展示。
+ * 标签要翻，故翻译函数由调用方传入（本文件是纯函数、不认识 i18n 服务，与
+ * {@link alarmCompareOptions} 同一条做法）；功能码中那两位 hex 不翻（与定义里存的值逐字对齐）。
+ * 写方法给「几个写入字段」而不是数量 —— 那是用户真正要填几项，比帧里的数量更该出现在这里。
+ */
+export function describeFunctionRequest(func: ModbusFunction, t: (key: string) => string): string {
+  const request = func.request;
+  const fc = functionFcOf(request);
+  if (request == null || fc == null) {
+    return '';
+  }
+  const fields = request.fields ?? [];
+  const amount =
+    fields.length > 0
+      ? `${t('写入')} ${fields.length}`
+      : `${t('数量')} ${request.quantity ?? 0}`;
+  return [
+    `${t('从站地址')} ${request.slaveId}`,
+    `fc ${fc} ${t(fcLabelKey(fc))}`,
+    `${t('起始地址')} ${request.start}`,
+    amount,
+  ].join(' · ');
 }
 
 /**
@@ -391,17 +543,17 @@ export interface ServiceAlarmItem {
   /** 出值名：invoke 返回值里的 key，也是告警行里的 `field`（**数据、不翻译**） */
   key: string;
   /** 载着这个出值的字段：单位 / 取值表这些属性都看它 */
-  field: ModbusServiceField;
+  field: ModbusFunctionResponseField;
   /** 位清单里的一位；字段自身那一行为 undefined */
-  bit?: ModbusServiceFieldBit;
+  bit?: ModbusFunctionResponseFieldBit;
   /** 这个出值能怎么比（见 {@link AlarmTargetKind}） */
   kind: AlarmTargetKind;
 }
 
 /** 一个方法的所有出值（应答字段 + 各自的位），展开行按这个顺序逐行列出 */
-export function alarmItems(func: ModbusServiceFunction): ServiceAlarmItem[] {
+export function alarmItems(func: ModbusFunction): ServiceAlarmItem[] {
   const items: ServiceAlarmItem[] = [];
-  for (const field of func.response ?? []) {
+  for (const field of func.response?.fields ?? []) {
     items.push({ key: field.field, field, kind: alarmTargetKind(field) });
     for (const bit of field.bitList ?? []) {
       items.push({ key: bit.field, field, bit, kind: alarmTargetKind(field, bit) });
@@ -415,8 +567,8 @@ export function alarmItems(func: ModbusServiceFunction): ServiceAlarmItem[] {
  * 其余看字段自身的形态：string 不能配，带取值表只能比状态，剩下的都是数值。
  */
 export function alarmTargetKind(
-  field: ModbusServiceField,
-  bit?: ModbusServiceFieldBit,
+  field: ModbusFunctionResponseField,
+  bit?: ModbusFunctionResponseFieldBit,
 ): AlarmTargetKind {
   if (bit) {
     return 'bit';
@@ -455,7 +607,7 @@ export const MAX_ALARM_RULES = 8;
  * 新加一条规则时补齐的起步配置 —— 与自动轮询的 `DEFAULT_INTERVAL_SECONDS` 同一个用意：
  * 后端要求「开了告警就得填齐」，总不能因为用户刚点「添加规则」、还没来得及填就被拒。
  *
- * `id` 在这里就生成：它是规则的身份（见 {@link ModbusServiceFieldAlarm.id}），
+ * `id` 在这里就生成：它是规则的身份（见 {@link ModbusFunctionResponseFieldAlarm.id}），
  * 后补的话在补之前那一段里这条规则就没有身份可用。
  *
  * `text` 取该出值的名字（用户随即能改）：后端也不接受空文本，而「进水温度」这种默认值
@@ -464,8 +616,8 @@ export const MAX_ALARM_RULES = 8;
  * 阈值的默认值只有位给得起（0 / 1 两个候选里取「置位就告警」那个）；数值阈值没有合理缺省，
  * 留给用户填 —— 后端会明确拒掉空值，比这里猜一个 0（那会立刻置起一条告警）诚实。
  */
-export function defaultAlarm(kind: AlarmTargetKind, text: string): ModbusServiceFieldAlarm {
-  const alarm: ModbusServiceFieldAlarm = {
+export function defaultAlarm(kind: AlarmTargetKind, text: string): ModbusFunctionResponseFieldAlarm {
+  const alarm: ModbusFunctionResponseFieldAlarm = {
     id: newAlarmId(),
     enabled: true,
     compare: kind === 'numeric' ? '>' : '=',
@@ -498,7 +650,7 @@ export function alarmKey(configId: string | null, functionIndex: number, field: 
  * （先改级别还是先改文本），同一个配置会序列化出两种字符串，保存按钮就白白亮一次。
  * `id` 也在快照里：它不变（改阈值不动它），但删掉一条再加一条是另一次改动，快照该不同。
  */
-export function alarmSignature(alarms: Map<string, ModbusServiceFieldAlarm[]>): string {
+export function alarmSignature(alarms: Map<string, ModbusFunctionResponseFieldAlarm[]>): string {
   return JSON.stringify(
     [...alarms.entries()]
       .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
@@ -527,11 +679,11 @@ export function alarmSignature(alarms: Map<string, ModbusServiceFieldAlarm[]>): 
  * `text` 是新规则的告警文本，调用方一律先填出值名（见 {@link defaultAlarm}）。
  */
 export function withAlarmAdded(
-  alarms: Map<string, ModbusServiceFieldAlarm[]>,
+  alarms: Map<string, ModbusFunctionResponseFieldAlarm[]>,
   key: string,
   kind: AlarmTargetKind,
   text: string,
-): Map<string, ModbusServiceFieldAlarm[]> {
+): Map<string, ModbusFunctionResponseFieldAlarm[]> {
   const next = new Map(alarms);
   const rules = next.get(key) ?? [];
   if (rules.length >= MAX_ALARM_RULES) {
@@ -545,14 +697,14 @@ export function withAlarmAdded(
  * 改一条规则后的新表：按**对象身份**定位这条规则，不拿下标。
  *
  * 下标不能当身份：删掉第 0 条之后，原本第 1 条的规则会被当成第 0 条改掉。让每条规则自己带 `id`
- * 是同一个理由的另一半（见 {@link ModbusServiceFieldAlarm.id}）。
+ * 是同一个理由的另一半（见 {@link ModbusFunctionResponseFieldAlarm.id}）。
  */
 export function withAlarmPatched(
-  alarms: Map<string, ModbusServiceFieldAlarm[]>,
+  alarms: Map<string, ModbusFunctionResponseFieldAlarm[]>,
   key: string,
-  rule: ModbusServiceFieldAlarm,
-  patch: Partial<ModbusServiceFieldAlarm>,
-): Map<string, ModbusServiceFieldAlarm[]> {
+  rule: ModbusFunctionResponseFieldAlarm,
+  patch: Partial<ModbusFunctionResponseFieldAlarm>,
+): Map<string, ModbusFunctionResponseFieldAlarm[]> {
   const next = new Map(alarms);
   const rules = next.get(key) ?? [];
   const at = rules.indexOf(rule);
@@ -570,10 +722,10 @@ export function withAlarmPatched(
  * 写进服务定义（`withAlarms`），而 codec 与后端都读作「没配」，白白在库里留个噪音。
  */
 export function withAlarmRemoved(
-  alarms: Map<string, ModbusServiceFieldAlarm[]>,
+  alarms: Map<string, ModbusFunctionResponseFieldAlarm[]>,
   key: string,
-  rule: ModbusServiceFieldAlarm,
-): Map<string, ModbusServiceFieldAlarm[]> {
+  rule: ModbusFunctionResponseFieldAlarm,
+): Map<string, ModbusFunctionResponseFieldAlarm[]> {
   const next = new Map(alarms);
   const rules = [...(next.get(key) ?? [])];
   const at = rules.indexOf(rule);
@@ -600,11 +752,11 @@ export function withAlarmRemoved(
  * 越界的 from / to 一律原样返回：cdk 不传这种值，但真传了也不该把整组规则弄丢。
  */
 export function withAlarmMoved(
-  alarms: Map<string, ModbusServiceFieldAlarm[]>,
+  alarms: Map<string, ModbusFunctionResponseFieldAlarm[]>,
   key: string,
   from: number,
   to: number,
-): Map<string, ModbusServiceFieldAlarm[]> {
+): Map<string, ModbusFunctionResponseFieldAlarm[]> {
   const next = new Map(alarms);
   const rules = next.get(key) ?? [];
   if (from === to || from < 0 || to < 0 || from >= rules.length || to >= rules.length) {
@@ -625,9 +777,9 @@ export function withAlarmMoved(
  * 不该出现在配置页上。写方法没有出值，恒为 0。
  */
 export function alarmCount(
-  func: ModbusServiceFunction,
+  func: ModbusFunction,
   configId: string | null,
-  alarms: Map<string, ModbusServiceFieldAlarm[]>,
+  alarms: Map<string, ModbusFunctionResponseFieldAlarm[]>,
 ): number {
   return alarmItems(func).reduce(
     (count, item) => count + (alarms.get(alarmKey(configId, func.index, item.key))?.length ?? 0),
@@ -644,7 +796,7 @@ export function alarmCount(
  * 还没保存，数字得跟着变），详情页读定义（它展示的就是服务端现在这一份）。
  * 口径本身是同一条：全部出值（应答字段 + 各自的位）加起来、**停用的也算**、写方法恒为 0。
  */
-export function definedAlarmCount(func: ModbusServiceFunction): number {
+export function definedAlarmCount(func: ModbusFunction): number {
   return alarmItems(func).reduce(
     (count, item) => count + ((item.bit ? item.bit.alarms : item.field.alarms)?.length ?? 0),
     0,
@@ -657,25 +809,30 @@ export function definedAlarmCount(func: ModbusServiceFunction): number {
  *
  * 没配的出值**不出 `alarms` 键** —— 定义里绝大多数字段都没配告警，过一趟不该在每个字段上
  * 多出一个空数组（codec 与后端都把空数组读作「没配」，但空键终究是白带出去的噪音）。
- * 写方法没有 response，这个循环自然什么也不做。
+ * 写方法没有 response，原样返回（不给它造一个空壳）。
  *
  * 编辑页的 `withAlarms` 是它的**取数**版：那边从侧表按 `点表ID#序号#出值名` 取，
  * 取出来交给这里合并 —— 合并规则（空组不出键、位各算一组）只有这一份实现。
  */
 export function withAlarmsOf(
-  func: ModbusServiceFunction,
-  groups: Map<string, ModbusServiceFieldAlarm[]>,
-): ModbusServiceFunction {
-  const groupOf = (name: string): ModbusServiceFieldAlarm[] | undefined => {
+  func: ModbusFunction,
+  groups: Map<string, ModbusFunctionResponseFieldAlarm[]>,
+): ModbusFunction {
+  // 写方法没有应答定义：这里要还它一个 undefined（不是 `{ fields: [] }`）——
+  // 空壳会被 codec 之外的地方读成「有 response」，也会在库里留个空对象
+  if (func.response == null) {
+    return func;
+  }
+  const groupOf = (name: string): ModbusFunctionResponseFieldAlarm[] | undefined => {
     const rules = groups.get(name);
     return rules != null && rules.length > 0 ? rules : undefined;
   };
-  const response = (func.response ?? []).map((field: ModbusServiceField) => ({
+  const fields = func.response.fields.map((field: ModbusFunctionResponseField) => ({
     ...field,
     alarms: groupOf(field.field),
     bitList: field.bitList?.map((bit) => ({ ...bit, alarms: groupOf(bit.field) })),
   }));
-  return { ...func, response };
+  return { ...func, response: { ...func.response, fields } };
 }
 
 /** 告警那几个下拉的一个选项：值（落库的就是它）+ 界面标签 */
@@ -713,14 +870,15 @@ export function alarmLevelOptions(t: (key: string) => string): AlarmOption[] {
  * `=` 的比较目标：该字段取值表里的描述，**原样显示、不翻译** —— 它是点表里的数据，
  * 与后端逐字比对的就是这个串，翻了保存就会被拒（见 AGENTS.md 的 i18n 一节）。
  */
-export function alarmStateOptions(field: ModbusServiceField): AlarmOption[] {
+export function alarmStateOptions(field: ModbusFunctionResponseField): AlarmOption[] {
   return (field.valueList ?? []).map((v) => ({ value: v.description, label: v.description }));
 }
 
 /** 一个方法的应答字段文案；写方法（无 response）没有返回字段，返回 null 交给调用方给提示文案 */
-export function describeFunctionResponse(func: ModbusServiceFunction): string | null {
-  if (!func.response || func.response.length === 0) {
+export function describeFunctionResponse(func: ModbusFunction): string | null {
+  const fields = func.response?.fields ?? [];
+  if (fields.length === 0) {
     return null;
   }
-  return func.response.map(describeServiceField).join('，');
+  return fields.map(describeServiceField).join('，');
 }

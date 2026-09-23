@@ -1,4 +1,7 @@
-import { ModbusServiceFunction } from '@app/typedef/define/modbus/ModbusService';
+import {
+  ModbusFunction,
+  ModbusFunctionRequest,
+} from '@app/typedef/define/modbus/ModbusService';
 import { serviceFieldKey, serviceFieldsOf } from './service.fields';
 
 /**
@@ -7,36 +10,43 @@ import { serviceFieldKey, serviceFieldsOf } from './service.fields';
  * （取值表命中的字段值是描述串，画不成，但表格照样列）。
  */
 describe('service.fields', () => {
+  /** 读方法的请求定义（v2 起 request 是结构化的；本文件只关心应答字段，请求给个形状即可） */
+  function readRequest(fc: string, start: number, quantity: number): ModbusFunctionRequest {
+    return { slaveId: 1, fc, start, quantity };
+  }
+
   /** 一个读方法：两个数值字段 + 一个带位区的字段 */
-  function readFunction(): ModbusServiceFunction {
+  function readFunction(): ModbusFunction {
     return {
       index: 1,
       name: '读进水',
-      request: '010300000002',
-      response: [
-        { index: 1, field: '温度', bytes: 2, format: 'uint16', unit: '℃' },
-        { index: 2, field: '状态', bytes: 2, format: 'uint16', valueList: [{ value: 0, description: '停机' }] },
-        {
-          index: 3,
-          field: '阀门',
-          bytes: 1,
-          format: 'uint8',
-          bitList: [
-            { offset: 0, field: '进水阀' },
-            { offset: 1, field: '出水阀' },
-          ],
-        },
-      ],
+      request: readRequest('03', 0, 2),
+      response: {
+        fields: [
+          { index: 1, field: '温度', bytes: 2, format: 'uint16', unit: '℃' },
+          { index: 2, field: '状态', bytes: 2, format: 'uint16', valueList: [{ value: 0, description: '停机' }] },
+          {
+            index: 3,
+            field: '阀门',
+            bytes: 1,
+            format: 'uint8',
+            bitList: [
+              { offset: 0, field: '进水阀' },
+              { offset: 1, field: '出水阀' },
+            ],
+          },
+        ],
+      },
     };
   }
 
   /** 同名但不同方法的一个字段（字段名在方法之间重名是常态） */
-  function otherFunction(): ModbusServiceFunction {
+  function otherFunction(): ModbusFunction {
     return {
       index: 2,
       name: '读出水',
-      request: '010300010002',
-      response: [{ index: 1, field: '温度', bytes: 2, format: 'uint16', unit: '℃' }],
+      request: readRequest('03', 1, 2),
+      response: { fields: [{ index: 1, field: '温度', bytes: 2, format: 'uint16', unit: '℃' }] },
     };
   }
 
@@ -74,7 +84,7 @@ describe('service.fields', () => {
 
     it('字段没填单位时给空串（不是 undefined，调用方少一处判空）', () => {
       const func = readFunction();
-      func.response = [{ index: 1, field: '计数', bytes: 2, format: 'uint16' }];
+      func.response = { fields: [{ index: 1, field: '计数', bytes: 2, format: 'uint16' }] };
       expect(serviceFieldsOf([func])[0].unit).toBe('');
     });
 
@@ -85,7 +95,7 @@ describe('service.fields', () => {
 
     it('string 字段也画不出曲线', () => {
       const func = readFunction();
-      func.response = [{ index: 1, field: '序列号', bytes: 8, format: 'string' }];
+      func.response = { fields: [{ index: 1, field: '序列号', bytes: 8, format: 'string' }] };
       expect(serviceFieldsOf([func])[0].numeric).toBe(false);
     });
 
@@ -108,7 +118,18 @@ describe('service.fields', () => {
     });
 
     it('写方法（没有 response）一个字段也没有', () => {
-      const write: ModbusServiceFunction = { index: 3, name: '写设定', request: '010600000001', response: [] };
+      // v2 起写方法**整段没有 response 键**（后端不下发该键），不是空数组
+      const write: ModbusFunction = {
+        index: 3,
+        name: '写设定',
+        request: {
+          slaveId: 1,
+          fc: '06',
+          start: 0,
+          fields: [{ index: 1, field: '设定值', format: 'uint16', value: 1 }],
+        },
+      };
+      expect(write.response).toBeUndefined();
       expect(serviceFieldsOf([write])).toEqual([]);
     });
 
@@ -118,14 +139,14 @@ describe('service.fields', () => {
     });
 
     it('定义里缺 response / bitList（老数据）不抛，按「没有字段」处理', () => {
-      const bare = { index: 1, name: '读', request: '0103000000' } as ModbusServiceFunction;
+      const bare: ModbusFunction = { index: 1, name: '读', request: readRequest('03', 0, 1) };
       expect(serviceFieldsOf([bare])).toEqual([]);
 
-      const withBareBit: ModbusServiceFunction = {
+      const withBareBit: ModbusFunction = {
         index: 1,
         name: '读',
-        request: '0103000000',
-        response: [{ index: 1, field: '阀门', bytes: 1, format: 'uint8', bitList: undefined }],
+        request: readRequest('03', 0, 1),
+        response: { fields: [{ index: 1, field: '阀门', bytes: 1, format: 'uint8', bitList: undefined }] },
       };
       expect(serviceFieldsOf([withBareBit]).map((ref) => ref.field)).toEqual(['阀门']);
     });

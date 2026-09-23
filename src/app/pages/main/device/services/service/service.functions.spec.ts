@@ -1,7 +1,9 @@
+import { ModbusCommand, ModbusConfig } from '@app/typedef/define/modbus/Modbus';
 import {
-  ModbusServiceField,
-  ModbusServiceFieldAlarm,
-  ModbusServiceFunction,
+  ModbusFunctionRequest,
+  ModbusFunctionResponseField,
+  ModbusFunctionResponseFieldAlarm,
+  ModbusFunction,
 } from '@app/typedef/define/modbus/ModbusService';
 import {
   MAX_ALARM_RULES,
@@ -15,11 +17,15 @@ import {
   alarmStateOptions,
   alarmTargetKind,
   alarmUsesState,
+  buildServiceFunctions,
   defaultAlarm,
   definedAlarmCount,
   describeFieldShape,
   describeFieldType,
+  describeFunctionRequest,
   describeServiceField,
+  functionFcOf,
+  isReadFunction,
   pollSignature,
   primaryAlarm,
   serviceChanged,
@@ -99,7 +105,7 @@ describe('service.functions', () => {
     });
 
     it('写方法（没有应答字段）一个出值都没有', () => {
-      expect(alarmItems({ index: 1, name: '写', request: '', response: [] })).toEqual([]);
+      expect(alarmItems(writeFunction())).toEqual([]);
     });
   });
 
@@ -138,7 +144,7 @@ describe('service.functions', () => {
 
   describe('primaryAlarm', () => {
     it('一组里取级别最高的那条（摘要口径）', () => {
-      const group: ModbusServiceFieldAlarm[] = [
+      const group: ModbusFunctionResponseFieldAlarm[] = [
         { enabled: true, level: 'WARN', text: '偏热' },
         { enabled: true, level: 'CRITICAL', text: '过热' },
         { enabled: true, level: 'INFO', text: '略高' },
@@ -160,7 +166,7 @@ describe('service.functions', () => {
     });
 
     it('同级并列取声明顺序靠后的那条（与后端一致）', () => {
-      const group: ModbusServiceFieldAlarm[] = [
+      const group: ModbusFunctionResponseFieldAlarm[] = [
         { enabled: true, level: 'WARN', text: '先声明的' },
         { enabled: true, level: 'WARN', text: '后声明的' },
       ];
@@ -169,7 +175,7 @@ describe('service.functions', () => {
     });
 
     it('级别不认识（含缺省）的按最低算', () => {
-      const group: ModbusServiceFieldAlarm[] = [
+      const group: ModbusFunctionResponseFieldAlarm[] = [
         { enabled: true, text: '没填级别' },
         { enabled: true, level: 'BOGUS', text: '级别不认识' },
         { enabled: true, level: 'INFO', text: '提示' },
@@ -180,7 +186,7 @@ describe('service.functions', () => {
   });
 
   describe('alarmSignature', () => {
-    const config: ModbusServiceFieldAlarm = {
+    const config: ModbusFunctionResponseFieldAlarm = {
       id: 'r1',
       enabled: true,
       compare: '>',
@@ -188,7 +194,7 @@ describe('service.functions', () => {
       level: 'WARN',
       text: '温度过高',
     };
-    const higher: ModbusServiceFieldAlarm = {
+    const higher: ModbusFunctionResponseFieldAlarm = {
       id: 'r2',
       enabled: true,
       compare: '>',
@@ -378,7 +384,7 @@ describe('service.functions', () => {
     const key = 'c#1#进水温度';
 
     it('加一条返回新表：原表一个字节没动（调用方是信号更新）', () => {
-      const base = new Map<string, ModbusServiceFieldAlarm[]>();
+      const base = new Map<string, ModbusFunctionResponseFieldAlarm[]>();
       const added = withAlarmAdded(base, key, 'numeric', '进水温度');
 
       expect(base.size).toBe(0);
@@ -389,7 +395,7 @@ describe('service.functions', () => {
     });
 
     it('到上限就原样返回 —— 按钮禁了是给人看的，数据自己也不该越界', () => {
-      let map = new Map<string, ModbusServiceFieldAlarm[]>();
+      let map = new Map<string, ModbusFunctionResponseFieldAlarm[]>();
       for (let i = 0; i < MAX_ALARM_RULES + 3; i++) {
         map = withAlarmAdded(map, key, 'bit', '运行');
       }
@@ -494,10 +500,9 @@ describe('service.functions', () => {
     });
 
     it('写方法没有出值，恒为 0', () => {
-      const write = { index: 1, name: '写', request: '', response: [] };
       const alarms = new Map([[alarmKey('c', 1, '写方法（应答为请求回显，无返回字段）'), [{}]]]);
 
-      expect(alarmCount(write, 'c', alarms)).toBe(0);
+      expect(alarmCount(writeFunction(), 'c', alarms)).toBe(0);
     });
   });
 
@@ -518,7 +523,7 @@ describe('service.functions', () => {
 
     it('没配过 / 写方法：一个都没有，恒为 0', () => {
       expect(definedAlarmCount(functionWith([field()]))).toBe(0);
-      expect(definedAlarmCount({ index: 1, name: '写', request: '', response: [] })).toBe(0);
+      expect(definedAlarmCount(writeFunction())).toBe(0);
     });
   });
 
@@ -535,26 +540,26 @@ describe('service.functions', () => {
         ]),
       );
 
-      expect(saved.response![0].alarms).toEqual([hot]);
-      expect(saved.response![0].bitList![0].alarms).toEqual([warm, hot]);
+      expect(saved.response!.fields[0].alarms).toEqual([hot]);
+      expect(saved.response!.fields[0].bitList![0].alarms).toEqual([warm, hot]);
       // 交出的是新对象：页面上的原定义一个字没动
-      expect(func.response![0].alarms).toBeUndefined();
-      expect(saved.response![0]).not.toBe(func.response![0]);
+      expect(func.response!.fields[0].alarms).toBeUndefined();
+      expect(saved.response!.fields[0]).not.toBe(func.response!.fields[0]);
     });
 
     it('没配的出值不出 alarms 键，别的属性一个不少', () => {
       const func = functionWith([field({ bitList: [{ offset: 0, field: '运行' }] })]);
       const saved = withAlarmsOf(func, new Map([['运行', []]]));
 
-      expect(saved.response![0].alarms).toBeUndefined();
-      expect(saved.response![0].bitList![0].alarms).toBeUndefined();
-      expect(saved.response![0].field).toBe('进水温度');
-      expect(saved.response![0].bitList![0].field).toBe('运行');
+      expect(saved.response!.fields[0].alarms).toBeUndefined();
+      expect(saved.response!.fields[0].bitList![0].alarms).toBeUndefined();
+      expect(saved.response!.fields[0].field).toBe('进水温度');
+      expect(saved.response!.fields[0].bitList![0].field).toBe('运行');
     });
 
-    it('写方法没有应答字段，照跑不误', () => {
-      const write = { index: 1, name: '写', request: '', response: [] };
-      expect(withAlarmsOf(write, new Map([['进水温度', [{}]]])).response).toEqual([]);
+    it('写方法没有应答定义：照跑不误，且**不凭空造出 response 键**', () => {
+      // 给写方法生出 response 会被后端当成「读方法」校验（写方法的应答是请求回显，没有读值）
+      expect(withAlarmsOf(writeFunction(), new Map([['进水温度', [{}]]])).response).toBeUndefined();
     });
   });
 
@@ -597,13 +602,216 @@ describe('service.functions', () => {
       expect(alarmStateOptions(f)[0].label).not.toContain('[[');
     });
   });
+
+  describe('buildServiceFunctions：点表动作 → 结构化 request', () => {
+    /** 一条点表（从站地址 4）：commands 由各用例给 */
+    function config(commands: ModbusCommand[]): ModbusConfig {
+      return { slave: { manufacturer: '特灵', model: '19XRV', slaveId: 4 }, commands };
+    }
+
+    it('读寄存器：quantity 是**帧里的字面值**（值的个数 × 类型跨度）', () => {
+      // 点表说「读 2 个 int32」= 帧里读 4 个寄存器；服务里直接写 4 —— 应答字段各带自己的 format，
+      // 请求侧无从按一个 dataType 换算，后端对账认的是这个口径
+      const { functions, skipped } = buildServiceFunctions(
+        config([{ name: '读温度', fc: '03', index: 1, start: 1, quantity: 2, dataType: 'int32' }]),
+      );
+
+      expect(skipped).toEqual([]);
+      expect(functions[0].request).toEqual({ slaveId: 4, fc: '03', start: 1, quantity: 4 });
+    });
+
+    it('读 string：点表的 quantity 本身就是长度，不再乘', () => {
+      const { functions } = buildServiceFunctions(
+        config([{ name: '读序列号', fc: '03', index: 1, start: 0, quantity: 8, dataType: 'string' }]),
+      );
+
+      expect(functions[0].request.quantity).toBe(8);
+    });
+
+    it('读方法只有 quantity，没有 fields（读请求里没有写入字段）', () => {
+      const { functions } = buildServiceFunctions(
+        config([{ name: '读温度', fc: '03', index: 1, start: 0, quantity: 1, dataType: 'int16' }]),
+      );
+
+      expect(functions[0].request).not.toHaveProperty('fields');
+    });
+
+    it('05：一个 bit 字段，不填 offset（帧里没有「第几个」）', () => {
+      const { functions } = buildServiceFunctions(
+        config([{ name: '写开关机', fc: '05', index: 1, start: 2, coilState: 'on' }]),
+      );
+
+      expect(functions[0].request.fields).toEqual([
+        { index: 1, field: '开关机', format: 'bit', value: true },
+      ]);
+    });
+
+    it('06：负值走 int16、非负走 uint16（写出的位模式相同，但只有 int16 过得了后端的范围校验）', () => {
+      const negative = buildServiceFunctions(
+        config([{ name: '写设定', fc: '06', index: 1, start: 0, registerValue: -10 }]),
+      );
+      const positive = buildServiceFunctions(
+        config([{ name: '写设定', fc: '06', index: 1, start: 0, registerValue: 10 }]),
+      );
+
+      expect(negative.functions[0].request.fields).toEqual([
+        { index: 1, field: '设定', format: 'int16', value: -10 },
+      ]);
+      expect(positive.functions[0].request.fields).toEqual([
+        { index: 1, field: '设定', format: 'uint16', value: 10 },
+      ]);
+    });
+
+    it('06 的缺省值缺失时字段照出，但**没有 value 键**（后端据此判「每次必给」）', () => {
+      const { functions } = buildServiceFunctions(
+        config([{ name: '写设定', fc: '06', index: 1, start: 0 }]),
+      );
+
+      expect(functions[0].request.fields).toEqual([{ index: 1, field: '设定', format: 'uint16' }]);
+    });
+
+    it('0F：一个线圈一个 bit 字段，offset 即行序（帧是紧凑位区、不留空洞）', () => {
+      const { functions } = buildServiceFunctions(
+        config([
+          {
+            name: '写阀组',
+            fc: '0F',
+            index: 1,
+            start: 0,
+            coils: [{ offset: 0, on: true }, { offset: 1, on: false }, { offset: 2, on: true }],
+          },
+        ]),
+      );
+
+      expect(functions[0].request.fields).toEqual([
+        { index: 1, field: '阀组 1', offset: 0, format: 'bit', value: true },
+        { index: 2, field: '阀组 2', offset: 1, format: 'bit', value: false },
+        { index: 3, field: '阀组 3', offset: 2, format: 'bit', value: true },
+      ]);
+    });
+
+    it('10：offset 按类型跨度累加（寄存器位次，不是字节位次）', () => {
+      const { functions } = buildServiceFunctions(
+        config([
+          {
+            name: '写设定',
+            fc: '10',
+            index: 1,
+            start: 0,
+            registers: [
+              { dataType: 'uint16', value: 7 },
+              { dataType: 'int32', value: -2 },
+              { dataType: 'uint16', value: 9 },
+            ],
+          },
+        ]),
+      );
+
+      const fields = functions[0].request.fields!;
+      expect(fields.map((f) => [f.index, f.offset, f.format])).toEqual([
+        [1, 0, 'uint16'],
+        [2, 1, 'int32'],
+        [3, 3, 'uint16'],
+      ]);
+      // 4 字节格式跨两个寄存器，字节序必须写明（后端要求，不给就拒）
+      expect(fields[1].byteOrder).toBe('ABCD');
+      expect(fields[0].byteOrder).toBeUndefined();
+    });
+
+    it('10：点表里不认识的数据格式兜回 uint16（后端只收那几种写格式）', () => {
+      const { functions } = buildServiceFunctions(
+        config([
+          {
+            name: '写设定',
+            fc: '10',
+            index: 1,
+            start: 0,
+            registers: [{ dataType: 'string', value: 0 }],
+          },
+        ]),
+      );
+
+      expect(functions[0].request.fields![0].format).toBe('uint16');
+    });
+
+    it('写方法没有 response 键（整个键不出现，不是空对象）', () => {
+      const { functions } = buildServiceFunctions(
+        config([{ name: '写开关机', fc: '05', index: 1, start: 0, coilState: 'off' }]),
+      );
+
+      expect(functions[0].response).toBeUndefined();
+    });
+
+    it('数据不完整的动作整条跳过，不进方法列表', () => {
+      const { functions, skipped } = buildServiceFunctions(
+        config([
+          { name: '读温度', fc: '03', index: 1, start: 0, quantity: 1, dataType: 'int16' },
+          { name: '写开关机', fc: '05', index: 2, start: 0 },
+          { name: '写设定', fc: '06', index: 3, start: 0, registerValue: 1 },
+        ]),
+      );
+
+      expect(functions.map((f) => f.index)).toEqual([1, 3]);
+      expect(skipped).toEqual(['#2 写开关机']);
+    });
+
+    it('没有从站地址时整条点表都生不出方法（帧首字节都没有）', () => {
+      const { functions, skipped } = buildServiceFunctions({
+        slave: { manufacturer: '特灵', model: '19XRV' },
+        commands: [{ name: '读温度', fc: '03', index: 1, start: 0, quantity: 1, dataType: 'int16' }],
+      });
+
+      expect(functions).toEqual([]);
+      expect(skipped).toEqual(['#1 读温度']);
+    });
+  });
+
+  describe('functionFcOf / isReadFunction：只看 request.fc', () => {
+    it('认得出读与写', () => {
+      expect(isReadFunction(functionWith([field()]))).toBe(true);
+      expect(isReadFunction(writeFunction())).toBe(false);
+    });
+
+    it('fc 缺失 / 不是两位 16 进制时按「不是读方法」处理', () => {
+      // v1 老数据（request 是 hex 串）走到这里：解不出 fc，当写方法 —— 页面另有迁移横幅拦着
+      expect(functionFcOf(undefined)).toBeUndefined();
+      expect(functionFcOf({ slaveId: 1, fc: '', start: 0 })).toBeUndefined();
+      expect(functionFcOf({ slaveId: 1, fc: '3', start: 0 })).toBeUndefined();
+      expect(isReadFunction({ index: 1, name: '读', request: { slaveId: 1, fc: '', start: 0 } })).toBe(
+        false,
+      );
+    });
+
+    it('小写 / 带空白的 fc 归一化后再判', () => {
+      expect(functionFcOf({ slaveId: 1, fc: ' 0f ', start: 0 })).toBe('0F');
+    });
+  });
+
+  describe('describeFunctionRequest', () => {
+    const t = (key: string) => `[[${key}]]`;
+
+    it('读方法给数量、写方法给「写入几个字段」（用户真正要填的是后者的项数）', () => {
+      expect(describeFunctionRequest(functionWith([field()]), t)).toBe(
+        '[[从站地址]] 1 · fc 03 [[读保持寄存器]] · [[起始地址]] 0 · [[数量]] 1',
+      );
+
+      const write = writeFunction();
+      expect(describeFunctionRequest(write, t)).toContain('[[写入]] 1');
+    });
+
+    it('定义不成立（没有 request / 认不出 fc）时给空串，列里显示占位符', () => {
+      const bare = Object.assign(new ModbusFunction(), { index: 1, name: '读' });
+
+      expect(describeFunctionRequest(bare, t)).toBe('');
+    });
+  });
 });
 
 /**
  * 一个最小可用的应答字段（默认是可配数值告警的那种） */
-function field(patch: Partial<ModbusServiceField> = {}): ModbusServiceField {
+function field(patch: Partial<ModbusFunctionResponseField> = {}): ModbusFunctionResponseField {
   return Object.assign(
-    new ModbusServiceField(),
+    new ModbusFunctionResponseField(),
     {
       index: 1,
       field: '进水温度',
@@ -616,12 +824,31 @@ function field(patch: Partial<ModbusServiceField> = {}): ModbusServiceField {
   );
 }
 
-function functionWith(response: ModbusServiceField[]): ModbusServiceFunction {
-  return Object.assign(new ModbusServiceFunction(), {
+/** 读方法的请求定义（v2 起 request 是结构化的；本文件只关心应答字段，请求给个形状即可） */
+function readRequest(): ModbusFunctionRequest {
+  return { slaveId: 1, fc: '03', start: 0, quantity: 1 };
+}
+
+function functionWith(response: ModbusFunctionResponseField[]): ModbusFunction {
+  return Object.assign(new ModbusFunction(), {
     index: 1,
     name: '读',
-    request: '',
-    response,
+    request: readRequest(),
+    response: { fields: response },
+  });
+}
+
+/** 写方法：**整段没有 response 键**（后端不下发该键，`undefined` 就是「写方法」） */
+function writeFunction(): ModbusFunction {
+  return Object.assign(new ModbusFunction(), {
+    index: 1,
+    name: '写',
+    request: {
+      slaveId: 1,
+      fc: '06',
+      start: 0,
+      fields: [{ index: 1, field: '设定值', format: 'uint16', value: 1 }],
+    },
   });
 }
 

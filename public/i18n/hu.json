@@ -522,5 +522,7 @@
   "项目1": "Projekt 1",
   "展开": "Kibontás",
   "收起": "Összecsukás",
-  "暂无数据": "Nincs adat"
+  "暂无数据": "Nincs adat",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Ez a szolgáltatás még a régi v1 definíció (a kérés teljes hexadecimális keretként tárolódik). A szerkesztés vagy hívás előtt futtassa a v2-re migráló szkriptet.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "A keretet a backend állítja össze híváskor; az itt látható helyi előnézet (CRC16-tal, a számítás a backenddel azonos)."
 }

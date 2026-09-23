@@ -1,7 +1,10 @@
 /**
  * 生成功能码动作对应的 Modbus RTU 请求帧与应答帧（完整帧：从站地址 + PDU + CRC16），
  * 并把帧按字段切开供展示。
- * 供设备点表编辑器行操作「命令」预览对话框使用；纯函数、无 Angular 依赖。
+ *
+ * 两处用场：设备点表编辑器行操作「命令」预览对话框（buildRequestFrame / buildResponseFrame），
+ * 以及**设备服务**里按结构化 request 预览请求帧（previewFunctionRequestFrame，见本文件下半段）。
+ * 纯函数、无 Angular 依赖。
  *
  * 编码约定（与设备点表模型一致）：
  * - 从站地址取自设备信息，帧首字节；
@@ -15,10 +18,16 @@
  *   （int16/uint16=2 字节；int32/uint32/float32=4 字节；float32 的 value 即其 32 位位模式）。
  */
 import {
+  ModbusByteOrder,
   ModbusCoilItem,
   ModbusCommand,
+  ModbusFc,
   ModbusRegisterItem,
 } from '@app/typedef/define/modbus/Modbus';
+import {
+  ModbusFunctionRequest,
+  ModbusFunctionRequestField,
+} from '@app/typedef/define/modbus/ModbusService';
 import {
   expectedBitCount,
   expectedFieldCount,
@@ -88,7 +97,8 @@ function valueBytes(u: number, span: number, byteOrder?: string): number[] {
   }
   const order = byteOrder ?? 'ABCD';
   if (span === 1) {
-    return order === 'DCBA' ? [be[1], be[0]] : be;
+    // 两字节时后三种排布（DCBA/BADC/CDAB）都是「交换两字节」——与后端 reorder 同口径
+    return order === 'ABCD' ? be : [be[1], be[0]];
   }
   switch (order) {
     case 'DCBA':
@@ -213,6 +223,137 @@ export function buildRequestFrame(
   const crc = crc16(body);
   const bytes = [...body, crc & 0xff, (crc >>> 8) & 0xff];
   return { ok: true, frame: { bytes, hex: toHex(bytes), count: bytes.length } };
+}
+
+/* ----------------------------------------------------------------------------------------------
+ * 服务请求帧（结构化 request → 帧）：v2 的服务不存 hex 帧，帧由后端在 invoke 时现组。
+ * 下面这一段是**前端本地预览**用的同一套算式（复用上面的 CRC16 与编码原语，不另抄一份），
+ * 只作展示：实际下发一律以后端 ModbusFrameCodec.encodeRequest 为准，两者逐字节对齐由单测钉住。
+ * ----------------------------------------------------------------------------------------------*/
+
+/** 写字段的取值表：字段名 → 原始值（invoke 时用户填的），缺省项回落字段自带的 value */
+export type FunctionWriteValues = Record<string, boolean | number | undefined>;
+
+/**
+ * 把结构化请求折回点表命令的形状，好复用 {@link buildRequestFrame} 与
+ * {@link describeRequestFrame} 这一套（两者都只吃 ModbusCommand）。
+ *
+ * 折法与生成器（service.functions 的 requestOf）恰好相反；取值优先取 values 里同名的那个、
+ * 否则回落字段缺省值，两者都没有就返回 null（= 帧组不出来，界面上提示「数据不完整」）。
+ */
+function commandOfRequest(
+  request: ModbusFunctionRequest,
+  values?: FunctionWriteValues,
+): ModbusCommand | null {
+  const fc = request.fc as ModbusFc;
+  const command: ModbusCommand = { name: '', fc, index: 0, start: request.start };
+  const fields = [...(request.fields ?? [])].sort((a, b) => a.index - b.index);
+
+  const valueOf = (field: ModbusFunctionRequestField): boolean | number | undefined => {
+    const given = values?.[field.field];
+    return given !== undefined ? given : field.value;
+  };
+
+  if (READ_FC_NUMBERS.has(parseInt(request.fc ?? '', 16))) {
+    if (request.quantity == null) {
+      return null;
+    }
+    command.quantity = request.quantity;
+    return command;
+  }
+
+  if (fc === '05') {
+    if (fields.length !== 1) {
+      return null;
+    }
+    const value = valueOf(fields[0]);
+    if (typeof value !== 'boolean' && typeof value !== 'number') {
+      return null;
+    }
+    command.coilState = value ? 'on' : 'off';
+    return command;
+  }
+
+  if (fc === '06') {
+    if (fields.length !== 1) {
+      return null;
+    }
+    const value = valueOf(fields[0]);
+    if (typeof value !== 'number') {
+      return null;
+    }
+    command.registerValue = value;
+    return command;
+  }
+
+  if (fc === '0F') {
+    const coils: ModbusCoilItem[] = [];
+    for (const field of fields) {
+      const value = valueOf(field);
+      if (typeof value !== 'boolean' && typeof value !== 'number') {
+        return null;
+      }
+      coils.push({ offset: field.offset ?? coils.length, on: value !== false && value !== 0 });
+    }
+    command.coils = coils;
+    return coils.length > 0 ? command : null;
+  }
+
+  if (fc === '10') {
+    const registers: ModbusRegisterItem[] = [];
+    for (const field of fields) {
+      const value = valueOf(field);
+      if (typeof value !== 'number') {
+        return null;
+      }
+      registers.push({
+        dataType: field.format,
+        byteOrder: (field.byteOrder ?? 'ABCD') as ModbusByteOrder,
+        value,
+      });
+    }
+    command.registers = registers;
+    return registers.length > 0 ? command : null;
+  }
+
+  return null;
+}
+
+/**
+ * 预览一个服务方法的请求帧（结构化 request → 完整 RTU 帧，含 CRC16）。
+ *
+ * `values` 是 invoke 时用户填的「字段名 → 原始值」，不给就用字段定义里的缺省值；缺值 /
+ * 格式不认识 / 定义不成立时返回 ok=false（messageKey 即「命令数据不完整」那条既有文案）。
+ * 读方法的 `quantity` 已是帧里的字面值，直接进帧，不再乘跨度（与后端同一口径）。
+ */
+export function previewFunctionRequestFrame(
+  request: ModbusFunctionRequest | undefined,
+  values?: FunctionWriteValues,
+): BuildRequestResult {
+  if (request == null) {
+    return { ok: false, messageKey: INCOMPLETE_KEY };
+  }
+  const command = commandOfRequest(request, values);
+  if (!command) {
+    return { ok: false, messageKey: INCOMPLETE_KEY };
+  }
+  return buildRequestFrame(command, request.slaveId);
+}
+
+/**
+ * 预览帧的结构解读（从站地址 / 功能码 / 起始地址 / 数量或数据区 / CRC16）：
+ * 折成点表命令后直接走 {@link describeRequestFrame}，与点表「命令」预览是同一套字段与文案。
+ */
+export function describeFunctionRequestFrame(
+  request: ModbusFunctionRequest | undefined,
+  frame: RequestFrame,
+  values?: FunctionWriteValues,
+): FramePart[] {
+  const command = request == null ? null : commandOfRequest(request, values);
+  if (!command) {
+    return [];
+  }
+  return describeRequestFrame(command, frame);
 }
 
 /* ----------------------------------------------------------------------------------------------

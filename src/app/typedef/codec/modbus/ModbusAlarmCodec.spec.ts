@@ -1,6 +1,6 @@
 import { ModbusAlarmCodec } from './ModbusAlarmCodec';
-import { ModbusServiceFieldAlarmCodec } from './ModbusServiceFieldAlarmCodec';
-import { ModbusServiceFieldCodec } from './ModbusServiceFieldCodec';
+import { ModbusFunctionResponseFieldAlarmCodec } from './ModbusFunctionResponseFieldAlarmCodec';
+import { ModbusFunctionResponseFieldCodec } from './ModbusFunctionResponseFieldCodec';
 
 /**
  * 告警两处编解码的往返与兜底。断言的重点不是「字段抄全了」，而是三条**错了不会报错、
@@ -119,7 +119,7 @@ describe('ModbusAlarmCodec', () => {
   });
 });
 
-describe('ModbusServiceFieldAlarmCodec', () => {
+describe('ModbusFunctionResponseFieldAlarmCodec', () => {
   it('往返稳定：解出来再编回去是同一份', () => {
     const raw = {
       id: 'r1',
@@ -130,22 +130,22 @@ describe('ModbusServiceFieldAlarmCodec', () => {
       text: '温度过高',
     };
 
-    const decoded = ModbusServiceFieldAlarmCodec.decode(raw);
+    const decoded = ModbusFunctionResponseFieldAlarmCodec.decode(raw);
 
-    expect(ModbusServiceFieldAlarmCodec.encode(decoded)).toEqual(raw);
+    expect(ModbusFunctionResponseFieldAlarmCodec.encode(decoded)).toEqual(raw);
   });
 
   it('没配就不出键，空对象读作没配', () => {
     // 编辑页取回定义后原样回存：过一趟前端不该把「没配」补成一个空对象写回库里
-    expect(ModbusServiceFieldAlarmCodec.decode({})).toBeUndefined();
-    expect(ModbusServiceFieldAlarmCodec.decode(null)).toBeUndefined();
-    expect(ModbusServiceFieldAlarmCodec.encode(undefined)).toBeUndefined();
+    expect(ModbusFunctionResponseFieldAlarmCodec.decode({})).toBeUndefined();
+    expect(ModbusFunctionResponseFieldAlarmCodec.decode(null)).toBeUndefined();
+    expect(ModbusFunctionResponseFieldAlarmCodec.encode(undefined)).toBeUndefined();
   });
 
   it('enabled: false 与 threshold: 0 都要留住', () => {
     // 二者都是**有值**：写成 `if (x.enabled)` / `if (x.threshold)` 会把它们悄悄丢掉，
     // 而「关掉告警」和「阈值就是 0」都是用户真实会配的东西
-    const decoded = ModbusServiceFieldAlarmCodec.decode({
+    const decoded = ModbusFunctionResponseFieldAlarmCodec.decode({
       enabled: false,
       compare: '=',
       threshold: 0,
@@ -153,7 +153,7 @@ describe('ModbusServiceFieldAlarmCodec', () => {
 
     expect(decoded?.enabled).toBe(false);
     expect(decoded?.threshold).toBe(0);
-    expect(ModbusServiceFieldAlarmCodec.encode(decoded)).toEqual({
+    expect(ModbusFunctionResponseFieldAlarmCodec.encode(decoded)).toEqual({
       enabled: false,
       compare: '=',
       threshold: 0,
@@ -161,7 +161,7 @@ describe('ModbusServiceFieldAlarmCodec', () => {
   });
 
   it('全空的配置编不出一个空对象', () => {
-    expect(ModbusServiceFieldAlarmCodec.encode({})).toBeUndefined();
+    expect(ModbusFunctionResponseFieldAlarmCodec.encode({})).toBeUndefined();
   });
 
   it('一组的往返：顺序原样保留、id 保真', () => {
@@ -172,25 +172,25 @@ describe('ModbusServiceFieldAlarmCodec', () => {
       { id: 'b', enabled: true, compare: '>', threshold: 30, level: 'CRITICAL', text: '温度过高' },
     ];
 
-    const decoded = ModbusServiceFieldAlarmCodec.decodeList(raw);
+    const decoded = ModbusFunctionResponseFieldAlarmCodec.decodeList(raw);
 
     expect(decoded?.map((rule) => rule.id)).toEqual(['a', 'b']);
-    expect(ModbusServiceFieldAlarmCodec.encodeList(decoded)).toEqual(raw);
+    expect(ModbusFunctionResponseFieldAlarmCodec.encodeList(decoded)).toEqual(raw);
   });
 
   it('空数组与「元素全是空壳」都读作没配', () => {
     // 空数组留在库里就是 `alarms: []` 这种噪音，而后端与这里都把它读作「没配」——
     // 两边同一口径，才不会因为过了一趟前端就把服务定义改了形
-    expect(ModbusServiceFieldAlarmCodec.decodeList([])).toBeUndefined();
-    expect(ModbusServiceFieldAlarmCodec.decodeList([{}, null])).toBeUndefined();
-    expect(ModbusServiceFieldAlarmCodec.decodeList(null)).toBeUndefined();
-    expect(ModbusServiceFieldAlarmCodec.encodeList([])).toBeUndefined();
-    expect(ModbusServiceFieldAlarmCodec.encodeList([{}])).toBeUndefined();
-    expect(ModbusServiceFieldAlarmCodec.encodeList(undefined)).toBeUndefined();
+    expect(ModbusFunctionResponseFieldAlarmCodec.decodeList([])).toBeUndefined();
+    expect(ModbusFunctionResponseFieldAlarmCodec.decodeList([{}, null])).toBeUndefined();
+    expect(ModbusFunctionResponseFieldAlarmCodec.decodeList(null)).toBeUndefined();
+    expect(ModbusFunctionResponseFieldAlarmCodec.encodeList([])).toBeUndefined();
+    expect(ModbusFunctionResponseFieldAlarmCodec.encodeList([{}])).toBeUndefined();
+    expect(ModbusFunctionResponseFieldAlarmCodec.encodeList(undefined)).toBeUndefined();
   });
 
   it('组里的空壳丢掉、真配置留下', () => {
-    const decoded = ModbusServiceFieldAlarmCodec.decodeList([
+    const decoded = ModbusFunctionResponseFieldAlarmCodec.decodeList([
       {},
       { id: 'a', enabled: true, level: 'WARN' },
       null,
@@ -204,7 +204,7 @@ describe('ModbusServiceFieldAlarmCodec', () => {
 describe('字段与位上的告警进出', () => {
   it('没配告警的字段不写出 alarms 键', () => {
     // 服务定义里绝大多数字段都没配告警：不该因为过了一趟前端就在每个字段上多一个空数组
-    const o = ModbusServiceFieldCodec.encode(ModbusServiceFieldCodec.decode(fieldJson()));
+    const o = ModbusFunctionResponseFieldCodec.encode(ModbusFunctionResponseFieldCodec.decode(fieldJson()));
 
     expect('alarms' in o).toBe(false);
   });
@@ -216,13 +216,13 @@ describe('字段与位上的告警进出', () => {
       { id: 'b', enabled: true, compare: '>', threshold: 30, level: 'CRITICAL', text: '温度过高' },
     ];
 
-    const o = ModbusServiceFieldCodec.encode(ModbusServiceFieldCodec.decode(fieldJson(group)));
+    const o = ModbusFunctionResponseFieldCodec.encode(ModbusFunctionResponseFieldCodec.decode(fieldJson(group)));
 
     expect(o.alarms).toEqual(group);
   });
 
   it('空数组不出 alarms 键', () => {
-    const o = ModbusServiceFieldCodec.encode(ModbusServiceFieldCodec.decode(fieldJson([])));
+    const o = ModbusFunctionResponseFieldCodec.encode(ModbusFunctionResponseFieldCodec.decode(fieldJson([])));
 
     expect('alarms' in o).toBe(false);
   });
@@ -233,8 +233,8 @@ describe('字段与位上的告警进出', () => {
       { id: 'b1', enabled: true, compare: '=', threshold: 1, level: 'INFO', text: '机组运行' },
     ];
 
-    const o = ModbusServiceFieldCodec.encode(
-      ModbusServiceFieldCodec.decode(fieldJson(undefined, [{ offset: 0, field: '运行', alarms: bitGroup }])),
+    const o = ModbusFunctionResponseFieldCodec.encode(
+      ModbusFunctionResponseFieldCodec.decode(fieldJson(undefined, [{ offset: 0, field: '运行', alarms: bitGroup }])),
     );
 
     expect('alarms' in o).toBe(false);

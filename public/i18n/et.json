@@ -522,5 +522,7 @@
   "项目1": "Projekt 1",
   "展开": "Laienda",
   "收起": "Ahenda",
-  "暂无数据": "Andmed puuduvad"
+  "暂无数据": "Andmed puuduvad",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "See teenus on endiselt vana v1 definitsioon (päring salvestatakse terve kuueteistkümnendkaadrina). Enne muutmist või kutsumist käivitage v2 migratsiooniskript.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "Kaadri paneb kokku backend kutse ajal; see on kohalik eelvaade (koos CRC16-ga, arvutus sama mis backendis)."
 }

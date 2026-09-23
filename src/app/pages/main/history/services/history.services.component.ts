@@ -37,8 +37,8 @@ import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
 import { GenericService } from '@app/typedef/define/service/GenericService';
 import {
   ModbusService as ModbusServiceDef,
-  ModbusServiceField,
-  ModbusServiceFunction,
+  ModbusFunctionResponseField,
+  ModbusFunction,
 } from '@app/typedef/define/modbus/ModbusService';
 import {
   ModbusHistoryBucket,
@@ -272,7 +272,8 @@ export class HistoryServicesComponent implements OnInit {
         if (!isReadFunction(func)) {
           continue;
         }
-        for (const field of func.response ?? []) {
+        // 写方法没有 response（整个键不在），读方法才谈得上字段
+        for (const field of func.response?.fields ?? []) {
           refs.push(fieldRef(service, func, field, false));
           for (const bit of field.bitList ?? []) {
             // 位区展开出来的位是同一次调用的另外几个取值，各自也有一条历史
@@ -757,8 +758,8 @@ function chartKey(serviceId: string, functionIndex: number): string {
 /** 应答字段 → 可取数的字段；数值判定见 {@link fieldRef} */
 function fieldRef(
   service: GenericService,
-  func: ModbusServiceFunction,
-  field: ModbusServiceField,
+  func: ModbusFunction,
+  field: ModbusFunctionResponseField,
   step: boolean,
 ): FieldRef {
   return {

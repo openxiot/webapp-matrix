@@ -522,5 +522,7 @@
   "项目1": "Projekt 1",
   "展开": "Udvid",
   "收起": "Skjul",
-  "暂无数据": "Ingen data"
+  "暂无数据": "Ingen data",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Denne tjeneste er stadig den gamle v1-definition (anmodningen gemmes som en hel hexadecimal ramme). Kør migreringsscriptet til v2, før du redigerer eller kalder den.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "Rammen sammensættes af backend ved kaldet; det viste er en lokal forhåndsvisning (med CRC16, beregnet som i backend)."
 }

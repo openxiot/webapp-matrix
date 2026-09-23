@@ -13,7 +13,8 @@
       <!-- 编辑入口只给空间管理员；调用（方法列表里的按钮）仍是空间成员即可 -->
       @if (isAdmin()) {
         <div *nzSpaceItem>
-          <button nz-button nzType="primary" [routerLink]="editLink()">
+          <!-- v1 旧定义不给进编辑：进去也只会把它改成对不上的东西（顶上那条提示说了要先迁移） -->
+          <button nz-button nzType="primary" [routerLink]="editLink()" [disabled]="outdated()">
             <span nz-icon nzType="edit"></span>
             {{ '编辑' | translate }}
           </button>
@@ -58,6 +59,19 @@
 </nz-page-header>
 
 <div class="service-detail">
+  <!--
+    v1 旧定义整页只读：request 在 v1 里是整串 hex 帧、response 是裸数组，v2 的代码读它处处对不上，
+    拿它去调用 / 保存都会写出对不上的定义。要先跑迁移脚本（见 MODBUS.md 的迁移一节）。
+  -->
+  @if (outdated()) {
+    <nz-alert
+      class="service-detail-outdated"
+      nzType="warning"
+      nzShowIcon
+      [nzMessage]="'该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。' | translate"
+    ></nz-alert>
+  }
+
   <nz-spin [nzSpinning]="loading()">
     @if (functions().length === 0 && !loading()) {
       <nz-empty [nzNotFoundContent]="'这份服务里还没有方法' | translate"></nz-empty>
@@ -80,7 +94,19 @@
             <tr>
               <td>{{ func.index }}</td>
               <td>{{ func.name }}</td>
-              <td><code class="service-detail-frame">{{ func.request }}</code></td>
+              <!-- v2 的定义里不存帧：这一格给一行摘要，帧本身按「预览」弹窗看（本地现算） -->
+              <td>
+                @if (requestText(func); as text) {
+                  {{ text }}
+                  @if (!outdated()) {
+                    <button nz-button nzType="link" nzSize="small" (click)="openFrameDialog(func)">
+                      {{ '预览' | translate }}
+                    </button>
+                  }
+                } @else {
+                  <span class="service-detail-hint">—</span>
+                }
+              </td>
               <td>{{ responseText(func) }}</td>
               <td>
                 <!-- 启用 / 停用（周期保留）/ -（写方法或没配周期） -->
@@ -103,7 +129,7 @@
                     nz-button
                     nzType="link"
                     nzSize="small"
-                    [disabled]="saving()"
+                    [disabled]="saving() || outdated()"
                     (click)="openAlarmDialog(func)"
                   >
                     {{ alarmCount(func) }}
@@ -118,7 +144,7 @@
                   nzType="link"
                   nzSize="small"
                   [nzLoading]="invoking() === func.index"
-                  [disabled]="invoking() !== null"
+                  [disabled]="invoking() !== null || outdated()"
                   (click)="invoke(func)"
                 >
                   {{ '调用' | translate }}

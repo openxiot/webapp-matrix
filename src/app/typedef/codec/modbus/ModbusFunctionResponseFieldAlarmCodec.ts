@@ -1,7 +1,7 @@
-import { ModbusServiceFieldAlarm } from '../../define/modbus/ModbusService';
+import { ModbusFunctionResponseFieldAlarm } from '../../define/modbus/ModbusService';
 
 /**
- * 出值的一组告警规则与 JSON 的互转（对应后端 `ModbusServiceFieldAlarmCodec`）。
+ * 出值的一组告警规则与 JSON 的互转（对应后端 `ModbusFunctionResponseFieldAlarmCodec`）。
  *
  * 守全仓的「null 不出键」：没配的项不写出去，免得往库里写一堆空值；空对象解码成 `undefined`
  * （而不是一个字段全空的实例），**空数组与「元素全是空对象」的数组也解码成 `undefined`**
@@ -12,12 +12,12 @@ import { ModbusServiceFieldAlarm } from '../../define/modbus/ModbusService';
  * 七个字段都是可选的（`compare` 与 `threshold`/`state` 按比较方式互斥），故一律用 `!= null` 判，
  * 不做 `||` 兜底：`enabled: false` 与 `threshold: 0` 都是**有值**。
  */
-export class ModbusServiceFieldAlarmCodec {
-  static decode(o: any): ModbusServiceFieldAlarm | undefined {
+export class ModbusFunctionResponseFieldAlarmCodec {
+  static decode(o: any): ModbusFunctionResponseFieldAlarm | undefined {
     if (o == null) {
       return undefined;
     }
-    const x = new ModbusServiceFieldAlarm();
+    const x = new ModbusFunctionResponseFieldAlarm();
     let seen = false;
 
     if (o.id != null) {
@@ -53,7 +53,7 @@ export class ModbusServiceFieldAlarmCodec {
     return seen ? x : undefined;
   }
 
-  static encode(x: ModbusServiceFieldAlarm | undefined): any {
+  static encode(x: ModbusFunctionResponseFieldAlarm | undefined): any {
     if (x == null) {
       return undefined;
     }
@@ -89,13 +89,13 @@ export class ModbusServiceFieldAlarmCodec {
    * 一组规则。**空数组与「元素全是空对象」都读作 `undefined`**（= 没配），与
    * {@link decode} 同一条口径，于是父 Codec 那一句「非空才出键」把 `[]` 也原样消掉。
    */
-  static decodeList(a: any): ModbusServiceFieldAlarm[] | undefined {
+  static decodeList(a: any): ModbusFunctionResponseFieldAlarm[] | undefined {
     if (!Array.isArray(a) || a.length === 0) {
       return undefined;
     }
-    const list: ModbusServiceFieldAlarm[] = [];
+    const list: ModbusFunctionResponseFieldAlarm[] = [];
     for (const item of a) {
-      const alarm = ModbusServiceFieldAlarmCodec.decode(item);
+      const alarm = ModbusFunctionResponseFieldAlarmCodec.decode(item);
       if (alarm != null) {
         list.push(alarm);
       }
@@ -107,13 +107,13 @@ export class ModbusServiceFieldAlarmCodec {
    * 一组规则。**顺序原样保留**：声明顺序参与同级并列的裁决（后端取靠后的那条），
    * 所以重排是一次真改动，不能在这里顺手排序。
    */
-  static encodeList(list: ModbusServiceFieldAlarm[] | undefined): any {
+  static encodeList(list: ModbusFunctionResponseFieldAlarm[] | undefined): any {
     if (list == null || list.length === 0) {
       return undefined;
     }
     const arr: any[] = [];
     for (const alarm of list) {
-      const o = ModbusServiceFieldAlarmCodec.encode(alarm);
+      const o = ModbusFunctionResponseFieldAlarmCodec.encode(alarm);
       if (o != null) {
         arr.push(o);
       }

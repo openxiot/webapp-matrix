@@ -522,5 +522,7 @@
   "项目1": "Proyek 1",
   "展开": "Perluas",
   "收起": "Ciutkan",
-  "暂无数据": "Tidak ada data"
+  "暂无数据": "Tidak ada data",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Layanan ini masih memakai definisi lama v1 (frame permintaan disimpan sebagai frame heksadesimal utuh). Jalankan skrip migrasi ke v2 sebelum menyunting atau memanggilnya.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "Frame ini dirakit oleh backend saat pemanggilan; yang di sini adalah pratinjau lokal (termasuk CRC16, perhitungannya sama dengan backend)."
 }

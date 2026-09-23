@@ -522,5 +522,7 @@
   "项目1": "Projecte 1",
   "展开": "Expandeix",
   "收起": "Replega",
-  "暂无数据": "Sense dades"
+  "暂无数据": "Sense dades",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Aquest servei encara és la definició antiga v1 (la trama de petició s'emmagatzema com una cadena hexadecimal sencera). Executeu l'script de migració a v2 abans d'editar-lo o invocar-lo.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "La trama la compon el backend en el moment de la invocació; això és una previsualització local (amb CRC16, calculat igual que al backend)."
 }

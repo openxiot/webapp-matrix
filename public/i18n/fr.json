@@ -522,5 +522,7 @@
   "项目1": "Projet 1",
   "展开": "Développer",
   "收起": "Réduire",
-  "暂无数据": "Aucune donnée"
+  "暂无数据": "Aucune donnée",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Ce service utilise encore l'ancienne définition v1 (la trame de requête est stockée sous forme de chaîne hexadécimale complète). Exécutez le script de migration vers la v2 avant de le modifier ou de l'appeler.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "La trame est assemblée par le backend au moment de l'appel ; il s'agit ici d'un aperçu local (CRC16 inclus, calcul identique à celui du backend)."
 }

@@ -522,5 +522,7 @@
   "项目1": "Projekts 1",
   "展开": "Izvērst",
   "收起": "Sakļaut",
-  "暂无数据": "Nav datu"
+  "暂无数据": "Nav datu",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Šis pakalpojums joprojām ir vecā v1 definīcija (pieprasījums tiek glabāts kā vesels heksadecimāls kadrs). Pirms rediģēšanas vai izsaukšanas palaidiet migrācijas skriptu uz v2.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "Kadru izsaukšanas brīdī saliek backend; šeit redzams lokāls priekšskatījums (ar CRC16, aprēķins tāds pats kā backend)."
 }

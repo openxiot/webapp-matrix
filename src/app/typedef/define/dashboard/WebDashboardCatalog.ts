@@ -2,7 +2,7 @@
  * 看板编辑器要的候选清单（`GET /matrix/v1/dashboard/web/catalog/{spaceId}`）。
  *
  * 存在这个接口的理由只有一个：**编辑器要的是实体本身的形状** ——
- * 服务卡的三级级联要 `functions[].response[]` 里的 `format` / `unit` / `valueList` / `bitList`，
+ * 服务卡的三级级联要 `functions[].response.fields[]` 里的 `format` / `unit` / `valueList` / `bitList`，
  * 设备卡要设备型号。这些前端在别处都拿不到（服务清单页那份是按设备查的，设备列表页那份
  * 只有自己那一层），没有它就只能让用户手抄 id。
  *

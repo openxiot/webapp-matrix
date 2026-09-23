@@ -522,5 +522,7 @@
   "项目1": "Projek 1",
   "展开": "Kembangkan",
   "收起": "Runtuhkan",
-  "暂无数据": "Tiada data"
+  "暂无数据": "Tiada data",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Perkhidmatan ini masih pada definisi lama v1 (bingkai permintaan disimpan sebagai rentetan hex penuh). Jalankan skrip migrasi ke v2 sebelum menyunting atau memanggilnya.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "Bingkai ini dipasang oleh backend semasa panggilan; yang di sini ialah pratonton setempat (termasuk CRC16, pengiraan sama seperti backend)."
 }

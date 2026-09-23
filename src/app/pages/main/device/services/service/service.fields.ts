@@ -15,8 +15,8 @@
  * 或者反过来：编辑器存进去了、卡片上永远显示 `-`。
  */
 import {
-  ModbusServiceField,
-  ModbusServiceFunction,
+  ModbusFunctionResponseField,
+  ModbusFunction,
 } from '@app/typedef/define/modbus/ModbusService';
 
 /** 一个能取数的字段（应答字段本身，或位区展开出来的某一位） */
@@ -53,13 +53,13 @@ export function serviceFieldKey(functionIndex: number, field: string): string {
  * 展开字段清单。
  *
  * `functionIndex` 为 `0`（或省略）= 全部方法；给具体序号 = 只要那个方法。
- * **序号从 1 起**，0 是空位 —— 与 `ModbusServiceFunction.index` 一致，
+ * **序号从 1 起**，0 是空位 —— 与 `ModbusFunction.index` 一致，
  * 调用方就不必为了「全部」再传一个 `null`。
  *
  * 方法列表为空（服务未选 / 取不到）时给空数组，不抛。
  */
 export function serviceFieldsOf(
-  functions: ModbusServiceFunction[] | undefined,
+  functions: ModbusFunction[] | undefined,
   functionIndex: number = 0,
 ): ServiceFieldRef[] {
   const refs: ServiceFieldRef[] = [];
@@ -67,7 +67,7 @@ export function serviceFieldsOf(
     if (func == null || (functionIndex > 0 && func.index !== functionIndex)) {
       continue;
     }
-    for (const field of func.response ?? []) {
+    for (const field of func.response?.fields ?? []) {
       if (field == null) {
         continue;
       }
@@ -92,7 +92,7 @@ export function serviceFieldsOf(
 }
 
 /** 应答字段本身那一行 */
-function serviceFieldRef(func: ModbusServiceFunction, field: ModbusServiceField): ServiceFieldRef {
+function serviceFieldRef(func: ModbusFunction, field: ModbusFunctionResponseField): ServiceFieldRef {
   return {
     key: serviceFieldKey(func.index, field.field),
     functionIndex: func.index,

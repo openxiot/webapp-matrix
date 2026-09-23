@@ -176,7 +176,7 @@ export class WidgetEditorComponent {
   // ===== 服务卡的配置（三级级联：服务 → 方法 → 字段） =====
 
   readonly serviceId = computed(() => readString(this.config(), 'serviceId') ?? '');
-  /** 方法序号。**从 1 起**，`0` 是「没选」的空位（与 `ModbusServiceFunction.index` 一致） */
+  /** 方法序号。**从 1 起**，`0` 是「没选」的空位（与 `ModbusFunction.index` 一致） */
   readonly functionIndex = computed(() => readNumber(this.config(), 'functionIndex') ?? 0);
   readonly fields = computed(() => readStringArray(this.config(), 'fields') ?? []);
   readonly showUnit = computed(() => readBoolean(this.config(), 'showUnit', true));

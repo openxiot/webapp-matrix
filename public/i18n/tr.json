@@ -522,5 +522,7 @@
   "项目1": "Proje 1",
   "展开": "Genişlet",
   "收起": "Daralt",
-  "暂无数据": "Veri yok"
+  "暂无数据": "Veri yok",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Bu hizmet hâlâ eski v1 tanımında (istek çerçevesi tümüyle onaltılık bir dize olarak saklanıyor). Düzenlemeden veya çağırmadan önce v2 geçiş betiğini çalıştırın.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "Çerçeve, çağrı sırasında backend tarafından oluşturulur; burada görülen yerel bir önizlemedir (CRC16 dahil, hesap backend ile aynı)."
 }

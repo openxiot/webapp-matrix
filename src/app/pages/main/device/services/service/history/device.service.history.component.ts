@@ -37,7 +37,7 @@ import { MainI18nService } from '@app/service/i18n.service';
 import { DeviceEntity } from '@app/typedef/define/device/DeviceEntity';
 import {
   ModbusService as ModbusServiceDef,
-  ModbusServiceFunction,
+  ModbusFunction,
 } from '@app/typedef/define/modbus/ModbusService';
 import {
   ModbusHistoryBucket,
@@ -215,10 +215,10 @@ export class DeviceServiceHistoryComponent implements OnInit {
    * 派生数据
    * ----------------------------------------------------------------------------------------------*/
 
-  readonly functions = computed<ModbusServiceFunction[]>(() => this.service()?.functions ?? []);
+  readonly functions = computed<ModbusFunction[]>(() => this.service()?.functions ?? []);
 
   /** 能配轮询的只有读方法，历史也只可能出在它们身上，故方法筛选只列这些 */
-  readonly readFunctions = computed<ModbusServiceFunction[]>(() =>
+  readonly readFunctions = computed<ModbusFunction[]>(() =>
     this.functions().filter((func) => isReadFunction(func)),
   );
 
@@ -567,7 +567,7 @@ export class DeviceServiceHistoryComponent implements OnInit {
    * 展示文案
    * ----------------------------------------------------------------------------------------------*/
 
-  protected functionLabel(func: ModbusServiceFunction): string {
+  protected functionLabel(func: ModbusFunction): string {
     return `#${func.index} ${func.name ?? ''}`.trim();
   }
 

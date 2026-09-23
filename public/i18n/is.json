@@ -522,5 +522,7 @@
   "项目1": "Verkefni 1",
   "展开": "Stækka",
   "收起": "Minnka",
-  "暂无数据": "Engin gögn"
+  "暂无数据": "Engin gögn",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Þessi þjónusta er enn gamla v1-skilgreiningin (beiðnin er geymd sem heill hex-strengur). Keyrðu flutningsskriftuna yfir í v2 áður en þú breytir eða kallar á hana.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "Rammann setur backend saman við kallið; hér er um staðbundið forskoðun að ræða (með CRC16, útreikningur eins og í backend)."
 }

@@ -522,5 +522,7 @@
   "项目1": "Tionscadal 1",
   "展开": "Leathnaigh",
   "收起": "Laghdaigh",
-  "暂无数据": "Gan sonraí"
+  "暂无数据": "Gan sonraí",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Úsáideann an tseirbhís seo an tseandíniú v1 fós (stóráiltear an fráma iarratais mar fhráma heicsidheachúlach iomlán). Rith an script imirce go v2 sula ndéanfaidh tú é a eagrú ná a ghlaoch.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "Is é an backend a chomhthionóil an fráma ag am an ghlao; réamhamharc áitiúil atá anseo (CRC16 san áireamh, an ríomh céanna leis an backend)."
 }

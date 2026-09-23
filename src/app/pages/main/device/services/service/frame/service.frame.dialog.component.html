@@ -1,0 +1,54 @@
+<div class="req-head">
+  <span class="req-name">#{{ data.func.index }} · {{ data.func.name || '-' }}</span>
+  <!-- 写功能码（05/06/0F/10）标红，与点表列表、服务方法列表保持一致 -->
+  <span class="fc-code" [class.fc-write]="isWriteFc(data.func.request.fc)">{{ data.func.request.fc }}</span>
+  {{ fcLabelKey(data.func.request.fc) | translate }}
+</div>
+
+<!-- 帧结构解析的行：与点表「命令」预览共用一套渲染 -->
+<ng-template #parseRows let-list="parts">
+  @for (part of list; track $index) {
+    <div class="req-parse-row">
+      <span class="req-parse-label">{{ part.labelKey | translate }}</span>
+      <code class="req-parse-hex">{{ part.hex }}</code>
+      <span class="req-parse-value">
+        @if (part.text != null) {
+          {{ part.text }}
+        } @else if (part.textKey) {
+          {{ part.textKey | translate: part.textParams }}
+        } @else if (part.lines && part.lines.length) {
+          <span class="req-parse-lines">
+            @for (line of part.lines; track $index) {
+              <span>{{ line }}</span>
+            }
+          </span>
+        } @else {
+          -
+        }
+      </span>
+    </div>
+  }
+</ng-template>
+
+@if (frame; as f) {
+  <div class="req-frame">{{ f.hex }}</div>
+
+  <div class="req-meta">
+    <span class="req-note">{{ '共 {{count}} 字节' | translate: { count: f.count } }}</span>
+    <button nz-button nzType="link" nzSize="small" (click)="copy(f.hex)">
+      {{ copied() ? ('已复制' | translate) : ('复制' | translate) }}
+    </button>
+  </div>
+
+  <div class="req-parse">
+    <div class="req-parse-title">{{ '帧结构解析' | translate }}</div>
+    <ng-container [ngTemplateOutlet]="parseRows" [ngTemplateOutletContext]="{ parts: parts }" />
+  </div>
+} @else {
+  <nz-alert nzType="warning" [nzMessage]="incompleteKey | translate"></nz-alert>
+}
+
+<!-- 这一行是本地预览与后端现组的分界：写清楚，免得有人拿它当「库里存的帧」 -->
+<div class="req-note req-footnote">
+  {{ '本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）' | translate }}
+</div>

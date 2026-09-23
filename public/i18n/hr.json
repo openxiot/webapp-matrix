@@ -522,5 +522,7 @@
   "项目1": "Projekt 1",
   "展开": "Proširi",
   "收起": "Sažmi",
-  "暂无数据": "Nema podataka"
+  "暂无数据": "Nema podataka",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Ova usluga još je na staroj definiciji v1 (zahtjev se pohranjuje kao cijeli heksadecimalni okvir). Pokrenite skriptu za migraciju na v2 prije uređivanja ili pozivanja.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "Okvir sastavlja backend u trenutku poziva; ovo je lokalni pregled (uključuje CRC16, izračun isti kao na backendu)."
 }

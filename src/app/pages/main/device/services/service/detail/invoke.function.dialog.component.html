@@ -1,0 +1,74 @@
+<div class="invoke-head">
+  <span class="invoke-name">#{{ data.func.index }} · {{ data.func.name || '-' }}</span>
+  <!-- 写功能码（05/06/0F/10）标红，与点表列表、服务方法列表保持一致 -->
+  <span class="fc-code fc-write">{{ data.func.request.fc }}</span>
+  {{ fcLabelKey(data.func.request.fc) | translate }}
+</div>
+
+<!-- 一个写入字段一行：字段名与数据格式都是点表数据 / 技术标识，原样显示（不翻译） -->
+<nz-table
+  [nzData]="rows"
+  [nzFrontPagination]="false"
+  [nzShowPagination]="false"
+  nzSize="small"
+  nzTableLayout="fixed"
+>
+  <thead>
+    <tr>
+      <th nzWidth="240px">{{ '字段' | translate }}</th>
+      <th nzWidth="160px">{{ '数据格式' | translate }}</th>
+      <th>{{ '写入' | translate }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of rows; track row.field.index) {
+      <tr>
+        <td>{{ row.field.field }}</td>
+        <td>
+          <code>{{ formatText(row) }}</code>
+        </td>
+        <td>
+          @if (row.bit) {
+            <!-- 位只有开 / 关两个候选，给下拉比给数字框更不容易填错 -->
+            <nz-select
+              [ngModel]="valueOf(row)"
+              (ngModelChange)="onValue(row, $event)"
+              [nzPlaceHolder]="'请选择' | translate"
+              style="width: 100%"
+            >
+              <nz-option [nzValue]="true" [nzLabel]="'开' | translate"></nz-option>
+              <nz-option [nzValue]="false" [nzLabel]="'关' | translate"></nz-option>
+            </nz-select>
+          } @else {
+            <!-- 取值范围按字段的数据格式给（后端就按它校验）：越界的输入当场被挡下来 -->
+            <nz-input-number
+              [ngModel]="valueOf(row)"
+              (ngModelChange)="onValue(row, $event)"
+              [nzMin]="row.min"
+              [nzMax]="row.max"
+              [nzPlaceHolder]="'缺省值' | translate"
+              style="width: 100%"
+            ></nz-input-number>
+          }
+        </td>
+      </tr>
+    }
+  </tbody>
+</nz-table>
+
+<div class="invoke-section">{{ '请求帧' | translate }}</div>
+
+<!-- 实时预览：改一个值就跟着变；字段没填全时下面那条提示会顶上来（「确定」也随之禁用） -->
+@if (frameHex()) {
+  <div class="req-frame">{{ frameHex() }}</div>
+  <div class="invoke-note">{{ '共 {{count}} 字节' | translate: { count: frameCount() } }}</div>
+} @else {
+  <nz-alert nzType="warning" [nzMessage]="incompleteKey() | translate"></nz-alert>
+}
+
+<div class="invoke-note">
+  {{ '写方法：应答为请求回显，没有返回字段（设备已收到该帧）' | translate }}
+</div>
+<div class="invoke-note">
+  {{ '本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）' | translate }}
+</div>

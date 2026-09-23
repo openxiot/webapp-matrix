@@ -174,16 +174,24 @@ export class ModbusService {
   }
 
   /**
-   * 调用服务的一个方法（POST /service/invoke/{spaceId}，body {service, function}）：
-   * 服务端把请求帧发给依赖设备，再把应答按 response 规则解成「字段 → 值」。
+   * 调用服务的一个方法（POST /service/invoke/{spaceId}，body {service, function, values?}）：
+   * 服务端按结构化 request **现组请求帧**发给依赖设备，再把应答按 response 规则解成「字段 → 值」。
    * 写方法（无 response）的应答是请求回显，返回空对象。
+   *
+   * `values`（字段名 → 原始值）是**写方法**的写入值：没给的字段由服务端回落其定义的缺省值，
+   * 故一个值都不用改时整个键都不发。**读方法没有可写的东西**，一个键都不该带（后端直接拒）。
    */
   invokeService(
     spaceId: string,
     serviceId: string,
     functionIndex: number,
+    values?: Record<string, boolean | number>,
   ): Observable<Record<string, unknown>> {
-    const body = { service: serviceId, function: functionIndex };
+    const body: Record<string, unknown> = { service: serviceId, function: functionIndex };
+    // 只在真有值时带上：读方法传了会被后端拒，写方法全用缺省值时传空表也没有意义
+    if (values != null && Object.keys(values).length > 0) {
+      body['values'] = values;
+    }
     return this.http
       .post<OxResponse>(
         `${this.server}/matrix/v1/modbus/service/invoke/${encodeURIComponent(spaceId)}`,

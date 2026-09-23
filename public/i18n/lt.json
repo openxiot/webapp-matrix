@@ -522,5 +522,7 @@
   "项目1": "Projektas 1",
   "展开": "Išskleisti",
   "收起": "Sutraukti",
-  "暂无数据": "Nėra duomenų"
+  "暂无数据": "Nėra duomenų",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Ši paslauga vis dar sena v1 apibrėžtis (užklausa saugoma kaip visas šešioliktainis kadras). Prieš redaguodami ar kviesdami paleiskite migravimo į v2 scenarijų.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "Kadrą iškvietimo metu surenka backend; čia rodoma vietinė peržiūra (su CRC16, skaičiuojama taip pat kaip backend)."
 }

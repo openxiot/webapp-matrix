@@ -522,5 +522,7 @@
   "项目1": "Proiect 1",
   "展开": "Extinde",
   "收起": "Restrânge",
-  "暂无数据": "Nu există date"
+  "暂无数据": "Nu există date",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Acest serviciu folosește încă vechea definiție v1 (cererea este stocată ca un cadru hexazecimal complet). Rulați scriptul de migrare la v2 înainte de a-l edita sau apela.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "Cadrul este asamblat de backend în momentul apelului; ceea ce se vede aici este o previzualizare locală (inclusiv CRC16, calculat la fel ca în backend)."
 }

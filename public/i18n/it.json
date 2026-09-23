@@ -522,5 +522,7 @@
   "项目1": "Progetto 1",
   "展开": "Espandi",
   "收起": "Comprimi",
-  "暂无数据": "Nessun dato"
+  "暂无数据": "Nessun dato",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Questo servizio usa ancora la vecchia definizione v1 (la trama di richiesta è salvata come stringa esadecimale completa). Esegui lo script di migrazione a v2 prima di modificarlo o invocarlo.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "La trama viene composta dal backend al momento della chiamata; questa è un'anteprima locale (CRC16 incluso, calcolo identico a quello del backend)."
 }

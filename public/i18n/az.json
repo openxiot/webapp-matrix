@@ -522,5 +522,7 @@
   "项目1": "Layihə 1",
   "展开": "Genişləndir",
   "收起": "Yığcamlaşdır",
-  "暂无数据": "Məlumat yoxdur"
+  "暂无数据": "Məlumat yoxdur",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Bu xidmət hələ də köhnə v1 tərifindədir (sorğu çərçivəsi tam hex sətri kimi saxlanılır). Redaktə və ya çağırışdan əvvəl v2-yə miqrasiya skriptini işə salın.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "Bu çərçivə çağırış zamanı backend tərəfindən yığılır; buradakı yerli önizləmədir (CRC16 daxil, hesablama backend ilə eynidir)."
 }

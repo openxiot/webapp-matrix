@@ -63,7 +63,8 @@ describe('WebDashboardCatalogCodec', () => {
               {
                 index: 1,
                 name: '读蒸发器进水温度',
-                response: [{ index: 1, field: '温度', bytes: 2, format: 'int16', unit: '℃' }],
+                request: { slaveId: 1, fc: '03', start: 0, quantity: 1 },
+                response: { fields: [{ index: 1, field: '温度', bytes: 2, format: 'int16', unit: '℃' }] },
               },
             ],
           },
@@ -74,8 +75,10 @@ describe('WebDashboardCatalogCodec', () => {
       expect(service.id).toBe('svc-1');
       // 服务名是**用户填的**，原样带出（不翻译、不做任何加工）
       expect(service.name).toBe('1 号冷水机组');
-      expect(service.functions[0].response[0].field).toBe('温度');
-      expect(service.functions[0].response[0].unit).toBe('℃');
+      // v2：请求是结构化的（编辑器要拿 fc 判方向），应答字段包在 response.fields 里
+      expect(service.functions[0].request.fc).toBe('03');
+      expect(service.functions[0].response?.fields[0].field).toBe('温度');
+      expect(service.functions[0].response?.fields[0].unit).toBe('℃');
     });
   });
 });

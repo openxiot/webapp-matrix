@@ -522,5 +522,7 @@
   "项目1": "Dự án 1",
   "展开": "Mở rộng",
   "收起": "Thu gọn",
-  "暂无数据": "Không có dữ liệu"
+  "暂无数据": "Không có dữ liệu",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Dịch vụ này vẫn theo định nghĩa v1 cũ (khung yêu cầu được lưu dưới dạng chuỗi hex nguyên vẹn). Hãy chạy script di trú lên v2 trước khi sửa hoặc gọi.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "Khung này do backend lắp ghép tại thời điểm gọi; phần hiển thị ở đây là bản xem trước cục bộ (gồm cả CRC16, cách tính giống backend)."
 }

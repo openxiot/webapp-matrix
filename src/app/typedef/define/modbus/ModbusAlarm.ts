@@ -154,7 +154,7 @@ export function modbusAlarmCondition(
 }
 
 /**
- * 生成一条告警规则的 `id`（见 `ModbusService.ts` 的 `ModbusServiceFieldAlarm.id`）。
+ * 生成一条告警规则的 `id`（见 `ModbusService.ts` 的 `ModbusFunctionResponseFieldAlarm.id`）。
  *
  * **刻意不用 `crypto.randomUUID()`**：那个 API 只在安全上下文（https / localhost）存在，
  * 局域网 http 部署下 `crypto.randomUUID` 是 `undefined`，一开告警开关就抛异常。

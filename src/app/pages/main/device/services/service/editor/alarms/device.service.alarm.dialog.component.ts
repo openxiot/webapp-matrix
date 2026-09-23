@@ -12,8 +12,8 @@ import { NzTableModule } from 'ng-zorro-antd/table';
 import { TranslatePipe } from '@ngx-translate/core';
 import { MainI18nService } from '@app/service/i18n.service';
 import {
-  ModbusServiceField,
-  ModbusServiceFieldAlarm,
+  ModbusFunctionResponseField,
+  ModbusFunctionResponseFieldAlarm,
 } from '@app/typedef/define/modbus/ModbusService';
 import {
   MAX_ALARM_RULES,
@@ -34,7 +34,12 @@ import {
 export interface ServiceAlarmDialogData {
   /** 方法名称（服务端数据，原样显示） */
   name: string;
-  /** 请求帧（服务端数据，原样显示） */
+  /**
+   * 该方法的请求摘要，一行（`从站地址 4 · fc 03 …`，见 `describeFunctionRequest`）。
+   *
+   * v2 的定义里不存帧，这里是**拼出来的一行展示文本**，不是服务端字段：
+   * 要翻的标签已在页面侧翻好，故当纯文本原样显示。
+   */
   request: string;
   /** 该方法的全部出值 —— 含配不了告警的 `string` 字段：它们也要露出来，用户才知道为什么配不了 */
   items: ServiceAlarmItem[];
@@ -42,7 +47,7 @@ export interface ServiceAlarmDialogData {
    * 打开时的规则组，key = 出值名（见 {@link ServiceAlarmItem.key}）。
    * 值是**副本**（页面上抄过来的），对话框怎么改都碰不到页面上的那份。
    */
-  alarms: Map<string, ModbusServiceFieldAlarm[]>;
+  alarms: Map<string, ModbusFunctionResponseFieldAlarm[]>;
   /**
    * 只读：能看不能改（服务详情页对**非空间管理员**就是这一档）。
    * 缺省 / `false` = 可编辑（编辑页，以及详情页的空间管理员）。
@@ -110,7 +115,7 @@ export class DeviceServiceAlarmDialogComponent {
   protected readonly alarmUsesState = alarmUsesState;
 
   /** 该出值当前的规则组（没配过 = 空数组） */
-  protected rulesOf(item: ServiceAlarmItem): ModbusServiceFieldAlarm[] {
+  protected rulesOf(item: ServiceAlarmItem): ModbusFunctionResponseFieldAlarm[] {
     return this.rules().get(item.key) ?? [];
   }
 
@@ -123,7 +128,7 @@ export class DeviceServiceAlarmDialogComponent {
    *
    * 开关自己不走这个判断：它恰恰是给停用规则用的（关着的规则得能再打开），只读时按 {@link readOnly} 禁。
    */
-  protected locked(rule: ModbusServiceFieldAlarm): boolean {
+  protected locked(rule: ModbusFunctionResponseFieldAlarm): boolean {
     return this.readOnly || rule.enabled !== true;
   }
 
@@ -139,7 +144,7 @@ export class DeviceServiceAlarmDialogComponent {
     this.rules.update((map) => withAlarmAdded(map, item.key, item.kind, item.key));
   }
 
-  protected onRemove(item: ServiceAlarmItem, rule: ModbusServiceFieldAlarm): void {
+  protected onRemove(item: ServiceAlarmItem, rule: ModbusFunctionResponseFieldAlarm): void {
     if (this.readOnly) {
       return;
     }
@@ -155,7 +160,7 @@ export class DeviceServiceAlarmDialogComponent {
    */
   protected onRuleDropped(
     item: ServiceAlarmItem,
-    event: CdkDragDrop<ModbusServiceFieldAlarm[]>,
+    event: CdkDragDrop<ModbusFunctionResponseFieldAlarm[]>,
   ): void {
     if (this.readOnly) {
       return;
@@ -173,7 +178,7 @@ export class DeviceServiceAlarmDialogComponent {
    */
   protected onEnabled(
     item: ServiceAlarmItem,
-    rule: ModbusServiceFieldAlarm,
+    rule: ModbusFunctionResponseFieldAlarm,
     enabled: boolean,
   ): void {
     this.patch(item, rule, { enabled });
@@ -186,10 +191,10 @@ export class DeviceServiceAlarmDialogComponent {
    */
   protected onCompare(
     item: ServiceAlarmItem,
-    rule: ModbusServiceFieldAlarm,
+    rule: ModbusFunctionResponseFieldAlarm,
     compare: string | null,
   ): void {
-    const patch: Partial<ModbusServiceFieldAlarm> = { compare: compare ?? undefined };
+    const patch: Partial<ModbusFunctionResponseFieldAlarm> = { compare: compare ?? undefined };
     if (alarmUsesState(item.kind, compare ?? undefined)) {
       patch.threshold = undefined;
     } else {
@@ -200,7 +205,7 @@ export class DeviceServiceAlarmDialogComponent {
 
   protected onThreshold(
     item: ServiceAlarmItem,
-    rule: ModbusServiceFieldAlarm,
+    rule: ModbusFunctionResponseFieldAlarm,
     value: number | null,
   ): void {
     // 清空 = 还没填（后端会拒），不是 0：0 是个正经阈值，不能拿「没填」冒充它
@@ -211,7 +216,7 @@ export class DeviceServiceAlarmDialogComponent {
 
   protected onState(
     item: ServiceAlarmItem,
-    rule: ModbusServiceFieldAlarm,
+    rule: ModbusFunctionResponseFieldAlarm,
     state: string | null,
   ): void {
     this.patch(item, rule, { state: state ?? undefined });
@@ -219,14 +224,14 @@ export class DeviceServiceAlarmDialogComponent {
 
   protected onLevel(
     item: ServiceAlarmItem,
-    rule: ModbusServiceFieldAlarm,
+    rule: ModbusFunctionResponseFieldAlarm,
     level: string | null,
   ): void {
     this.patch(item, rule, { level: level ?? undefined });
   }
 
   /** 告警文本是用户自己填的（如「温度过高」）：**数据，永不翻译**，原样落库 */
-  protected onText(item: ServiceAlarmItem, rule: ModbusServiceFieldAlarm, text: string): void {
+  protected onText(item: ServiceAlarmItem, rule: ModbusFunctionResponseFieldAlarm, text: string): void {
     this.patch(item, rule, { text });
   }
 
@@ -236,8 +241,8 @@ export class DeviceServiceAlarmDialogComponent {
    */
   private patch(
     item: ServiceAlarmItem,
-    rule: ModbusServiceFieldAlarm,
-    patch: Partial<ModbusServiceFieldAlarm>,
+    rule: ModbusFunctionResponseFieldAlarm,
+    patch: Partial<ModbusFunctionResponseFieldAlarm>,
   ): void {
     if (this.readOnly) {
       return;
@@ -256,7 +261,7 @@ export class DeviceServiceAlarmDialogComponent {
   }
 
   /** `=` 的比较目标：取值表里的描述原样给出（数据，不翻译） */
-  protected stateOptions(field: ModbusServiceField): AlarmOption[] {
+  protected stateOptions(field: ModbusFunctionResponseField): AlarmOption[] {
     return alarmStateOptions(field);
   }
 

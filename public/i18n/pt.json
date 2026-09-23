@@ -522,5 +522,7 @@
   "项目1": "Projeto 1",
   "展开": "Expandir",
   "收起": "Recolher",
-  "暂无数据": "Nenhum dado"
+  "暂无数据": "Nenhum dado",
+  "该服务仍是 v1 旧定义（请求帧存的是整串十六进制帧），请先运行迁移脚本升到 v2 后再编辑或调用。": "Este serviço ainda usa a definição antiga v1 (o quadro de pedido é guardado como uma cadeia hexadecimal completa). Execute o script de migração para v2 antes de editar ou invocar.",
+  "本帧由后端在调用时现场组装，此处是本地预览（含 CRC16，算式与后端一致）": "O quadro é montado pelo backend no momento da chamada; o que está aqui é uma pré-visualização local (com CRC16, cálculo igual ao do backend)."
 }

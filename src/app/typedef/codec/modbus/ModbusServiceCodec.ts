@@ -1,7 +1,7 @@
 import { ModbusService } from '../../define/modbus/ModbusService';
 import { ModbusPerson } from '../../define/modbus/Modbus';
 import { ModbusServiceDeviceCodec } from './ModbusServiceDeviceCodec';
-import { ModbusServiceFunctionCodec } from './ModbusServiceFunctionCodec';
+import { ModbusFunctionCodec } from './ModbusFunctionCodec';
 
 /**
  * Modbus 服务与 JSON 的互转（对应后端 ModbusServiceCodec）。
@@ -24,7 +24,7 @@ export class ModbusServiceCodec {
       x.configId = o.configId;
     }
     x.device = ModbusServiceDeviceCodec.decode(o.device);
-    x.functions = ModbusServiceFunctionCodec.decodeArray(o.functions);
+    x.functions = ModbusFunctionCodec.decodeArray(o.functions);
     if (o.creator != null) {
       x.creator = ModbusServiceCodec.decodePerson(o.creator);
     }
@@ -39,9 +39,9 @@ export class ModbusServiceCodec {
     const o: any = {
       name: x.name,
       device: ModbusServiceDeviceCodec.encode(x.device),
-      functions: ModbusServiceFunctionCodec.encodeArray(x.functions),
+      functions: ModbusFunctionCodec.encodeArray(x.functions),
     };
-    // version：新建固定 1、编辑沿用服务里原版本，两者都由前端填在请求体里
+    // version：新建固定 MODBUS_SERVICE_VERSION、编辑沿用服务里原版本，两者都由前端填在请求体里
     if (x.version != null) {
       o.version = x.version;
     }
