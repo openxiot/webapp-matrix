@@ -24,6 +24,7 @@
   <nz-spin [nzSpinning]="loading()">
       <nz-table
         [nzData]="configs()"
+        [nzPageSize]="50"
         [nzShowSizeChanger]="true"
         [nzHideOnSinglePage]="true"
         [nzScroll]="{ x: '1000px' }"

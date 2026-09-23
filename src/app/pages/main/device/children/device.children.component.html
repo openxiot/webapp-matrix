@@ -18,7 +18,7 @@
     @if (!hasSpace()) {
       <nz-empty [nzNotFoundContent]="'请先在项目列表中选择一个项目' | translate"></nz-empty>
     } @else if (children().length > 0) {
-      <nz-table #childTable [nzData]="children()" [nzShowPagination]="false">
+      <nz-table #childTable [nzData]="children()" [nzPageSize]="50" [nzShowPagination]="false">
         <thead>
         <tr>
           <th nzWidth="400px">{{ '设备ID' | translate }}</th>

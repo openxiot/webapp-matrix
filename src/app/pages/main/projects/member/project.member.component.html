@@ -22,7 +22,7 @@
   </ng-template>
 
   <div style="padding: 20px 20px">
-    <nz-table [nzData]="members()" [nzShowSizeChanger]="true" [nzHideOnSinglePage]="true">
+    <nz-table [nzData]="members()" [nzPageSize]="50" [nzShowSizeChanger]="true" [nzHideOnSinglePage]="true">
       <thead>
         <tr>
           <th>{{ '用户ID' | translate }}</th>

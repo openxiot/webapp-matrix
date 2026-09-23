@@ -162,9 +162,9 @@
                 [nzData]="rows()"
                 [nzPageIndex]="pageIndex()"
                 (nzPageIndexChange)="pageIndex.set($event)"
-                [nzPageSize]="20"
+                [nzPageSize]="50"
                 [nzShowSizeChanger]="false"
-                [nzShowPagination]="rows().length > 20"
+                [nzShowPagination]="rows().length > 50"
                 nzSize="small"
               >
                 <!-- 不写 nzWidth：表是 table-layout: auto，nzWidth 落成 col 的 width + **min-width**，

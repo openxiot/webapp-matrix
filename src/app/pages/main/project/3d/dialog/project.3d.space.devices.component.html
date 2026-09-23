@@ -2,7 +2,7 @@
   @if (current().length === 0) {
     <p class="space-devices-empty">{{ '该空间暂无设备' | translate }}</p>
   } @else {
-    <nz-table #currentTable nzSize="small" [nzData]="current()" [nzShowPagination]="false">
+    <nz-table #currentTable nzSize="small" [nzData]="current()" [nzPageSize]="50" [nzShowPagination]="false">
       <thead>
         <tr>
           <th>{{ '设备名称' | translate }}</th>

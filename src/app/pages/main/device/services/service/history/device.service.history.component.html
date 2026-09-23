@@ -227,9 +227,9 @@
                   [nzData]="f.items"
                   [nzPageIndex]="failurePageIndex()"
                   (nzPageIndexChange)="failurePageIndex.set($event)"
-                  [nzPageSize]="20"
+                  [nzPageSize]="50"
                   [nzShowSizeChanger]="false"
-                  [nzShowPagination]="f.items.length > 20"
+                  [nzShowPagination]="f.items.length > 50"
                   nzSize="small"
                 >
                   <thead>

@@ -7,7 +7,8 @@
                 #inTable
                 nzBordered
                 [nzTitle]="inTitle"
-                [nzShowPagination]="'false'"
+                [nzPageSize]="50"
+                [nzHideOnSinglePage]="true"
                 [nzSize]="'small'"
                 [nzData]="data.action.getArgumentsIn()"
                 [nzWidthConfig]="['100px', '400px']"
@@ -75,7 +76,8 @@
                             #outTable
                             nzBordered
                             [nzTitle]="outTitle"
-                            [nzShowPagination]="'false'"
+                            [nzPageSize]="50"
+                            [nzHideOnSinglePage]="true"
                             [nzSize]="'small'"
                             [nzData]="data.action.getArgumentsOut()"
                             [nzWidthConfig]="['100px', '400px']"

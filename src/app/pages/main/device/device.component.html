@@ -19,7 +19,7 @@
   <div style="padding: 20px 20px">
     @if (account.space().id) {
       @if (devices().length > 0) {
-        <nz-table #devTable class="device-table" [nzData]="rows()" [nzShowPagination]="false" nzSize="middle">
+        <nz-table #devTable class="device-table" [nzData]="rows()" [nzPageSize]="50" [nzShowPagination]="false" nzSize="middle">
           <thead>
             <tr>
               <th nzWidth="400px">{{ '设备ID' | translate }}</th>

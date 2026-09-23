@@ -75,9 +75,9 @@
           [nzData]="overviewRows()"
           [nzPageIndex]="pageIndex()"
           (nzPageIndexChange)="pageIndex.set($event)"
-          [nzPageSize]="20"
+          [nzPageSize]="50"
           [nzShowSizeChanger]="false"
-          [nzShowPagination]="overviewRows().length > 20"
+          [nzShowPagination]="overviewRows().length > 50"
         >
           <!-- 不写 nzWidth：表是 table-layout: auto，nzWidth 落成 col 的 width + **min-width**，
                加起来比窗口还宽时反而把列挤住。各列长短本就由服务端的名字/时刻决定 -->
@@ -156,9 +156,9 @@
                 [nzData]="failureRows()"
                 [nzPageIndex]="failurePageIndex()"
                 (nzPageIndexChange)="failurePageIndex.set($event)"
-                [nzPageSize]="20"
+                [nzPageSize]="50"
                 [nzShowSizeChanger]="false"
-                [nzShowPagination]="failureRows().length > 20"
+                [nzShowPagination]="failureRows().length > 50"
                 nzSize="small"
               >
                 <!-- 同上：列宽不写死，交给浏览器按内容分 -->
