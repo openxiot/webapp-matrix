@@ -12,6 +12,8 @@ import {
   NamespaceDefinitionCodec,
   DeviceDefinition,
   DeviceDefinitionCodec,
+  ProductController,
+  ProductControllerCodec,
 } from '@openxiot/xiot-core-spec-ts';
 
 @Injectable({ providedIn: 'root' })
@@ -64,5 +66,19 @@ export class ProductService {
     return this.http
       .get<OxResponse>(`${this.product}/v1/spec/device/many/${namespace}`)
       .pipe(map((r) => DeviceDefinitionCodec.decodeArray(r.data)));
+  }
+
+  /**
+   * 按设备类型（Device.type 的实例 urn）取该产品下的控制页列表。
+   * category 可选，不传时返回产品下全部控制页。
+   */
+  getControllersByDeviceType(deviceType: string, category?: string): Observable<ProductController[]> {
+    const params: { deviceType: string; category?: string } = { deviceType };
+    if (category) {
+      params.category = category;
+    }
+    return this.http
+      .get<OxResponse>(`${this.product}/v1/product/controller/many/by-device-type`, { params })
+      .pipe(map((r) => ProductControllerCodec.decodeArray(r.data)));
   }
 }

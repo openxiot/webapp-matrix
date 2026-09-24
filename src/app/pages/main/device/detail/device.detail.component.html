@@ -98,7 +98,7 @@
       <iframe
         #deviceFrame
         class="device-frame"
-        [src]="frameSrc | safe"
+        [src]="frameSrc() | safe"
         [style.height.px]="frameHeight()"
         width="100%">
       </iframe>

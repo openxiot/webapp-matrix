@@ -31,13 +31,14 @@ import { OrganizationMember } from '@app/typedef/define/user/UserOrganization';
 import { UrnUtils } from '@app/typedef/utils/UrnUtils';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { SafePipe } from '@app/common/pipe/safe/SafePipe';
+import { ProductController } from '@openxiot/xiot-core-spec-ts';
 
 /**
- * 内嵌的第三方设备页面地址（自行开发、自行部署，宿主只负责嵌进来）。
+ * 内嵌的第三方设备页面（自行开发、自行部署，宿主只负责嵌进来）：地址不再写死，
+ * 而是按本设备的 deviceType 从产品服务取控制页列表，挑【最新版本】的控制页 url 作为 iframe 源。
  * 与它约定两条 postMessage：`iframe-height` 上报内容高度、`toast` 请求宿主弹提示 ——
  * 完整契约与注意事项见工程根目录的《跨域加载设备页面.md》。
  */
-const DEVICE_FRAME_SRC = 'http://127.0.0.1:8000/air-conditioner-tablet.html';
 
 /**
  * 设备详情页（/main/device/detail/:id，路由参数 id = 设备 did）。
@@ -171,11 +172,14 @@ export class DeviceDetailComponent implements OnInit {
 
   // ---- 第三方设备页面（跨域 iframe）----
 
-  /** 第三方设备页面地址（模板里直接绑） */
-  readonly frameSrc = DEVICE_FRAME_SRC;
+  /** 第三方设备页面地址：按 deviceType 取最新控制页后回填（模板里直接绑） */
+  readonly frameSrc = signal('');
 
   /** 该页面的来源，校验 postMessage 用 */
-  private readonly frameOrigin = new URL(DEVICE_FRAME_SRC).origin;
+  private readonly frameOrigin = computed(() => {
+    const src = this.frameSrc();
+    return src ? new URL(src).origin : '';
+  });
 
   /** iframe 的高度：由第三方页面 postMessage 上报（跨域下宿主读不到它的文档，量不了） */
   readonly frameHeight = signal(600);
@@ -194,7 +198,8 @@ export class DeviceDetailComponent implements OnInit {
   @HostListener('window:message', ['$event'])
   onFrameMessage(e: MessageEvent) {
     const frame = this.frameRef()?.nativeElement;
-    if (!frame || e.source !== frame.contentWindow || e.origin !== this.frameOrigin) {
+    const origin = this.frameOrigin();
+    if (!frame || e.source !== frame.contentWindow || !origin || e.origin !== origin) {
       return;
     }
 
@@ -240,6 +245,7 @@ export class DeviceDetailComponent implements OnInit {
     this.device.set(null);
     this.productName.set('');
     this.deviceDescription.set('');
+    this.frameSrc.set('');
 
     this.matrix.getDevice(spaceId, did).subscribe({
       next: (device) => {
@@ -247,6 +253,7 @@ export class DeviceDetailComponent implements OnInit {
         this.loading.set(false);
         this.resolveProduct(device);
         this.resolveInstance(device);
+        this.resolveFrameSrc(device);
       },
       error: (e) => {
         this.loading.set(false);
@@ -317,5 +324,34 @@ export class DeviceDetailComponent implements OnInit {
       },
       error: () => {},
     });
+  }
+
+  /** 内嵌设备页面地址：按 deviceType 取产品控制页列表，挑最新版本带 url 的那个回填。 */
+  private resolveFrameSrc(device: DeviceEntity): void {
+    const type = device.type;
+    if (!type) {
+      this.frameSrc.set('');
+      return;
+    }
+    this.product.getControllersByDeviceType(type).subscribe({
+      next: (controllers) => {
+        this.frameSrc.set(this.pickLatestController(controllers)?.web?.url ?? '');
+      },
+      error: () => this.frameSrc.set(''),
+    });
+  }
+
+  /** 最新版本 = 版本号最大、且带 web.url 的控制页（跨 category 取最大版本）。 */
+  private pickLatestController(controllers: ProductController[]): ProductController | null {
+    let best: ProductController | null = null;
+    for (const c of controllers) {
+      if (!c.web?.url) {
+        continue;
+      }
+      if (!best || (c.version?.code ?? 0) > (best.version?.code ?? 0)) {
+        best = c;
+      }
+    }
+    return best;
   }
 }
