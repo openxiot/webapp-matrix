@@ -31,6 +31,7 @@ import { OrganizationMember } from '@app/typedef/define/user/UserOrganization';
 import { UrnUtils } from '@app/typedef/utils/UrnUtils';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { SafePipe } from '@app/common/pipe/safe/SafePipe';
+import { environment } from '../../../../../environments/environment';
 import { ProductController } from '@openxiot/xiot-core-spec-ts';
 
 /**
@@ -326,7 +327,8 @@ export class DeviceDetailComponent implements OnInit {
     });
   }
 
-  /** 内嵌设备页面地址：按 deviceType 取产品控制页列表，挑最新版本带 url 的那个回填。 */
+  /** 内嵌设备页面地址：按 deviceType 取产品控制页列表，挑最新版本带 url 的那个回填，
+   *  并追加宿主注入的认证/场景参数（见 {@link decorateFrameUrl}）。 */
   private resolveFrameSrc(device: DeviceEntity): void {
     const type = device.type;
     if (!type) {
@@ -335,10 +337,31 @@ export class DeviceDetailComponent implements OnInit {
     }
     this.product.getControllersByDeviceType(type).subscribe({
       next: (controllers) => {
-        this.frameSrc.set(this.pickLatestController(controllers)?.web?.url ?? '');
+        const url = this.pickLatestController(controllers)?.web?.url ?? '';
+        this.frameSrc.set(url ? this.decorateFrameUrl(url, device) : '');
       },
       error: () => this.frameSrc.set(''),
     });
+  }
+
+  /**
+   * 给控制页 url 追加宿主注入的参数（控制页自行开发、自行部署，靠这 4 个参数知道
+   * 自己在哪个 server / 项目 / 设备下、以及拿谁的 token 去调 matrix 的接口）：
+   * - `server`：后端服务地址（environment.server），控制页据此拼 API base；
+   * - `spaceId`：设备所在的**项目根空间**——取 account.space().id，同本页 getDevice 的入参
+   *   （DeviceResource 的 path spaceId 就是它；设备属于当前项目时其 space.rootId 与之相等）；
+   * - `did`：设备 did；
+   * - `token`：当前登录用户的 token。
+   * 注意：token 落入 URL 是既定的跨页/换 iframe 契约（第三方页面拿不到 httpOnly cookie 不行），
+   * 只能经 HTTPS 传输，勿在日志里打印。
+   */
+  private decorateFrameUrl(base: string, device: DeviceEntity): string {
+    const u = new URL(base);
+    u.searchParams.set('server', environment.server);
+    u.searchParams.set('spaceId', this.account.space().id);
+    u.searchParams.set('did', device.did);
+    u.searchParams.set('token', this.account.user()?.token ?? '');
+    return u.toString();
   }
 
   /** 最新版本 = 版本号最大、且带 web.url 的控制页（跨 category 取最大版本）。 */
