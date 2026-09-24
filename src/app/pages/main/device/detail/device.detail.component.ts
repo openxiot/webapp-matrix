@@ -335,7 +335,10 @@ export class DeviceDetailComponent implements OnInit {
       this.frameSrc.set('');
       return;
     }
-    this.product.getControllersByDeviceType(type).subscribe({
+    // category 限定 tablet —— 设备详情页内嵌的是触屏/平板版控制页（原写死的地址就是
+    // air-conditioner-tablet.html），别的 category（如手机页）不适用。
+    const TABLET_CATEGORY = 'tablet';
+    this.product.getControllersByDeviceType(type, TABLET_CATEGORY).subscribe({
       next: (controllers) => {
         const url = this.pickLatestController(controllers)?.web?.url ?? '';
         this.frameSrc.set(url ? this.decorateFrameUrl(url, device) : '');
@@ -364,7 +367,7 @@ export class DeviceDetailComponent implements OnInit {
     return u.toString();
   }
 
-  /** 最新版本 = 版本号最大、且带 web.url 的控制页（跨 category 取最大版本）。 */
+  /** 最新版本 = 版本号最大、且带 web.url 的控制页（入参已是 tablet 单 category）。 */
   private pickLatestController(controllers: ProductController[]): ProductController | null {
     let best: ProductController | null = null;
     for (const c of controllers) {
