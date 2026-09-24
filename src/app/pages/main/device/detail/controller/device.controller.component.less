@@ -1,0 +1,426 @@
+:host {
+  display: block;
+  --bg: #f2f3f7;
+  --card: #ffffff;
+  --text: #1c1c1e;
+  --text-2: #6d6d72;
+  --line: rgba(0, 0, 0, 0.07);
+  --accent: #ff9f0a;
+  --ok: #34c759;
+  --info: #0a84ff;
+  --track: #e9e9eb;
+  --radius: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.dc {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+/* ---------- 顶部工具栏：手动读取 ---------- */
+.dc-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 22px;
+}
+.dc-refresh {
+  border: 0;
+  background: var(--card);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 20px;
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  -webkit-tap-highlight-color: transparent;
+}
+.dc-refresh:active {
+  background: #f0f0f2;
+}
+.dc-refresh:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ---------- 加载 / 错误 ---------- */
+.dc-loading {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+.dc-error {
+  padding: 16px;
+  background: #fff8ef;
+  border: 1px solid rgba(255, 159, 10, 0.35);
+  border-radius: 14px;
+  font-size: 13px;
+  color: #8a5a17;
+  line-height: 1.7;
+  word-break: break-all;
+}
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  border-top-color: var(--text-2);
+  display: inline-block;
+  animation: dc-spin 0.7s linear infinite;
+  vertical-align: middle;
+}
+.dc-loading .spinner {
+  width: 22px;
+  height: 22px;
+}
+@keyframes dc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- 卡片网格（瀑布流） ---------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 22px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- 卡片 ---------- */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 10px 30px rgba(20, 30, 60, 0.06);
+  overflow: hidden;
+  margin-bottom: 0;
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px 2px;
+  font-weight: 700;
+  font-size: 16px;
+}
+.card-head .en {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--text-2);
+  flex: none;
+}
+
+/* ---------- 属性行 ---------- */
+.prop-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 24px;
+  font-size: 14.5px;
+}
+.prop-row + .prop-row {
+  border-top: 1px solid var(--line);
+}
+.prop-row .k {
+  flex: none;
+  width: 150px;
+  color: var(--text);
+  font-weight: 500;
+  word-break: break-all;
+}
+.prop-row .ctrl {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.prop-row .val {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 15.5px;
+  word-break: break-all;
+}
+.prop-row .val.muted {
+  color: var(--text-2);
+  font-weight: 400;
+}
+.prop-row .unit {
+  flex: none;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.read-btn {
+  border: 0;
+  background: var(--track);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 15px;
+  border-radius: 999px;
+  cursor: pointer;
+  line-height: 1;
+  flex: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.read-btn:active {
+  background: #e0e2e6;
+}
+
+/* ---------- 开关 ---------- */
+.toggle {
+  position: relative;
+  width: 60px;
+  height: 36px;
+  border-radius: 18px;
+  background: var(--track);
+  border: 0;
+  cursor: pointer;
+  transition: background 0.22s;
+  flex: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.toggle.on {
+  background: var(--ok);
+}
+.toggle.on::after {
+  transform: translateX(24px);
+}
+
+/* ---------- 分片选择 ---------- */
+.seg {
+  display: flex;
+  background: #eef0f4;
+  border-radius: 13px;
+  padding: 4px;
+  gap: 4px;
+}
+.seg button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #5c6470;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.seg button.on {
+  background: #fff;
+  color: #111;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
+}
+
+/* ---------- 下拉 ---------- */
+.sel {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  background-color: var(--track);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236e6e73' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  border-radius: 11px;
+  padding: 8px 34px 8px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  min-width: 150px;
+  max-width: 260px;
+}
+.sel:focus {
+  outline: none;
+}
+
+/* ---------- 步进器 ---------- */
+.step {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.step button {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--track);
+  color: var(--text);
+  font-size: 19px;
+  font-weight: 600;
+  cursor: pointer;
+  flex: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.step button:active {
+  background: #e6e6e9;
+}
+.step .val {
+  min-width: 68px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 15.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 数字 / 文本 / 十六进制输入 ---------- */
+.num,
+.txt {
+  width: 140px;
+  text-align: right;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  font-size: 14.5px;
+  color: var(--text);
+  background: #fafafa;
+  outline: none;
+}
+.num:focus,
+.txt:focus {
+  border-color: var(--info);
+  background: #fff;
+}
+.num {
+  font-variant-numeric: tabular-nums;
+}
+.txt:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+/* ---------- 方法行 ---------- */
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 24px;
+  font-size: 14.5px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+.action-row + .action-row,
+.prop-row + .action-row,
+.info-row + .action-row {
+  border-top: 1px solid var(--line);
+}
+.action-row .k {
+  flex: none;
+  width: 150px;
+  font-weight: 500;
+  word-break: break-all;
+  transition: color 0.15s;
+}
+.action-row:active .k {
+  color: var(--info);
+}
+.action-row .ctrl {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.action-row .arr {
+  color: var(--text-2);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+  transition: transform 0.15s, color 0.15s;
+  flex: none;
+}
+.action-row:active .arr {
+  transform: translateX(5px);
+  color: var(--info);
+  font-weight: 700;
+}
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(10, 132, 255, 0.12);
+  transform: scale(0);
+  animation: dc-ripple 0.55s ease-out;
+  pointer-events: none;
+}
+@keyframes dc-ripple {
+  to {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+/* ---------- 配件信息卡 ---------- */
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 24px;
+  font-size: 14.5px;
+}
+.info-row + .info-row {
+  border-top: 1px solid var(--line);
+}
+.info-row .k {
+  color: var(--text-2);
+  flex: none;
+  width: 118px;
+}
+.info-row .v {
+  flex: 1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+.info-row .read-btn {
+  margin-left: auto;
+}
+.btn-identify {
+  border: 0;
+  background: #e8f0fe;
+  color: #1a73e8;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  margin-left: auto;
+}
+.btn-identify:active {
+  background: #d8e6fd;
+}

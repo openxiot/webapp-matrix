@@ -1,12 +1,4 @@
-import {
-  Component,
-  ElementRef,
-  HostListener,
-  OnInit,
-  computed,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { DatePipe, Location } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -30,16 +22,10 @@ import { SpaceEntity } from '@app/typedef/define/space/SpaceEntity';
 import { OrganizationMember } from '@app/typedef/define/user/UserOrganization';
 import { UrnUtils } from '@app/typedef/utils/UrnUtils';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
-import { SafePipe } from '@app/common/pipe/safe/SafePipe';
-import { environment } from '../../../../../environments/environment';
 import { ProductController } from '@openxiot/xiot-core-spec-ts';
-
-/**
- * 内嵌的第三方设备页面（自行开发、自行部署，宿主只负责嵌进来）：地址不再写死，
- * 而是按本设备的 deviceType 从产品服务取控制页列表，挑【最新版本】的控制页 url 作为 iframe 源。
- * 与它约定两条 postMessage：`iframe-height` 上报内容高度、`toast` 请求宿主弹提示 ——
- * 完整契约与注意事项见工程根目录的《跨域加载设备页面.md》。
- */
+import { environment } from '../../../../../environments/environment';
+import { DeviceControllerComponent } from './controller/device.controller.component';
+import { DeviceCustomComponent } from './custom/device.custom.component';
 
 /**
  * 设备详情页（/main/device/detail/:id，路由参数 id = 设备 did）。
@@ -72,7 +58,8 @@ import { ProductController } from '@openxiot/xiot-core-spec-ts';
     BreadcrumbTranslateDirective,
     DatePipe,
     NzIconDirective,
-    SafePipe,
+    DeviceControllerComponent,
+    DeviceCustomComponent,
   ],
 })
 export class DeviceDetailComponent implements OnInit {
@@ -92,6 +79,15 @@ export class DeviceDetailComponent implements OnInit {
 
   /** 设备实例描述（多语言文案，产品名缺失时的兜底，见 deviceName） */
   deviceDescription = signal('');
+
+  /**
+   * 控制界面二选一，见 {@link resolveControl}：
+   * - `controlResolved`：是否已判定（getControllersByDeviceType 返回前保持 false，先不渲染）；
+   * - `customUrl`：第三方控制页 url（已装饰 server/spaceId/did/token）。非空 → 用 iframe 加载
+   *   （product 已配置设备控制页）；空 → 走通用代码实时渲染的 DeviceController。
+   */
+  controlResolved = signal(false);
+  customUrl = signal('');
 
   /** 空间 ID -> 空间 */
   readonly spaceById = computed(() => {
@@ -171,49 +167,6 @@ export class DeviceDetailComponent implements OnInit {
    */
   readonly showMapping = computed(() => this.isDtu() && this.isAdmin());
 
-  // ---- 第三方设备页面（跨域 iframe）----
-
-  /** 第三方设备页面地址：按 deviceType 取最新控制页后回填（模板里直接绑） */
-  readonly frameSrc = signal('');
-
-  /** 该页面的来源，校验 postMessage 用 */
-  private readonly frameOrigin = computed(() => {
-    const src = this.frameSrc();
-    return src ? new URL(src).origin : '';
-  });
-
-  /** iframe 的高度：由第三方页面 postMessage 上报（跨域下宿主读不到它的文档，量不了） */
-  readonly frameHeight = signal(600);
-
-  /** 模板里的 iframe 引用，用来确认消息确实是它发来的 */
-  private readonly frameRef = viewChild<ElementRef<HTMLIFrameElement>>('deviceFrame');
-
-  /**
-   * 第三方页面的 postMessage。两种消息：
-   * - `iframe-height`：上报内容高度。宿主把 iframe 撑到内容高度，页面内部就不会有自己的滚动条，
-   *   由宿主页面的滚动条统管——否则内外两条滚动条。
-   * - `toast`：它要弹提示。iframe 是"内容全高"的、固定定位会落到用户视口外，所以交给宿主用 message 弹。
-   *
-   * 消息必须是**这一个 iframe** 发来的：只比对 origin 的话，同源的其它窗口也能改我们的布局。
-   */
-  @HostListener('window:message', ['$event'])
-  onFrameMessage(e: MessageEvent) {
-    const frame = this.frameRef()?.nativeElement;
-    const origin = this.frameOrigin();
-    if (!frame || e.source !== frame.contentWindow || !origin || e.origin !== origin) {
-      return;
-    }
-
-    if (e.data?.type === 'iframe-height') {
-      const height = Number(e.data.height);
-      if (Number.isFinite(height) && height > 0) {
-        this.frameHeight.set(height);
-      }
-    } else if (e.data?.type === 'toast' && typeof e.data.message === 'string') {
-      this.msg.info(e.data.message);
-    }
-  }
-
   constructor(
     protected location: Location,
     protected i18n: MainI18nService,
@@ -246,7 +199,8 @@ export class DeviceDetailComponent implements OnInit {
     this.device.set(null);
     this.productName.set('');
     this.deviceDescription.set('');
-    this.frameSrc.set('');
+    this.controlResolved.set(false);
+    this.customUrl.set('');
 
     this.matrix.getDevice(spaceId, did).subscribe({
       next: (device) => {
@@ -254,7 +208,7 @@ export class DeviceDetailComponent implements OnInit {
         this.loading.set(false);
         this.resolveProduct(device);
         this.resolveInstance(device);
-        this.resolveFrameSrc(device);
+        this.resolveControl(device);
       },
       error: (e) => {
         this.loading.set(false);
@@ -327,23 +281,31 @@ export class DeviceDetailComponent implements OnInit {
     });
   }
 
-  /** 内嵌设备页面地址：按 deviceType 取产品控制页列表，挑最新版本带 url 的那个回填，
-   *  并追加宿主注入的认证/场景参数（见 {@link decorateFrameUrl}）。 */
-  private resolveFrameSrc(device: DeviceEntity): void {
+  /**
+   * 判定本设备用哪种控制界面：
+   * - 产品已配置设备控制页（最新版本带 web.url）→ 装饰 url 后用 iframe（DeviceCustomComponent）；
+   * - 没有配置 → 走代码实时渲染的通用控制（DeviceControllerComponent）。
+   * category 限定 tablet —— iframe 内嵌的是触屏/平板版控制页（原写死的地址就是
+   * air-conditioner-tablet.html），别的 category（如手机页）不适用。
+   */
+  private resolveControl(device: DeviceEntity): void {
     const type = device.type;
     if (!type) {
-      this.frameSrc.set('');
+      this.controlResolved.set(true);
+      this.customUrl.set('');
       return;
     }
-    // category 限定 tablet —— 设备详情页内嵌的是触屏/平板版控制页（原写死的地址就是
-    // air-conditioner-tablet.html），别的 category（如手机页）不适用。
     const TABLET_CATEGORY = 'tablet';
     this.product.getControllersByDeviceType(type, TABLET_CATEGORY).subscribe({
       next: (controllers) => {
-        const url = this.pickLatestController(controllers)?.web?.url ?? '';
-        this.frameSrc.set(url ? this.decorateFrameUrl(url, device) : '');
+        const picked = this.pickLatestController(controllers);
+        this.customUrl.set(picked ? this.decorateFrameUrl(picked, device) : '');
+        this.controlResolved.set(true);
       },
-      error: () => this.frameSrc.set(''),
+      error: () => {
+        this.customUrl.set('');
+        this.controlResolved.set(true);
+      },
     });
   }
 
@@ -358,8 +320,8 @@ export class DeviceDetailComponent implements OnInit {
    * 注意：token 落入 URL 是既定的跨页/换 iframe 契约（第三方页面拿不到 httpOnly cookie 不行），
    * 只能经 HTTPS 传输，勿在日志里打印。
    */
-  private decorateFrameUrl(base: string, device: DeviceEntity): string {
-    const u = new URL(base);
+  private decorateFrameUrl(c: ProductController, device: DeviceEntity): string {
+    const u = new URL(c.web?.url ?? '');
     u.searchParams.set('server', environment.server);
     u.searchParams.set('spaceId', this.account.space().id);
     u.searchParams.set('did', device.did);

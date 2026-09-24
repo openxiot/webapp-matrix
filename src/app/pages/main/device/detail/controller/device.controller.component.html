@@ -1,0 +1,145 @@
+@if (loading()) {
+  <div class="dc-loading" aria-live="polite"><span class="spinner"></span></div>
+} @else if (loadError()) {
+  <div class="dc-error" aria-live="polite">{{ loadError() }}</div>
+} @else if (instance(); as inst) {
+  <div class="dc">
+
+    <div class="dc-toolbar">
+      <button type="button" class="dc-refresh" (click)="refresh()" [disabled]="refreshing()">
+        @if (refreshing()) {
+          <span class="spinner"></span>
+        }
+        {{ '读取' | translate }}
+      </button>
+    </div>
+
+    <div class="cards">
+    @for (svc of services(); track svc.iid) {
+      <section class="card">
+        <div class="card-head">
+          <span>{{ svc.name }}</span>
+          @if (svc.isInfo) {
+            <span class="en">{{ svc.en }}</span>
+          }
+        </div>
+
+        @if (!svc.isInfo) {
+          @for (p of svc.props; track p.iid) {
+            <div class="prop-row">
+              <span class="k">{{ p.name }}</span>
+              <div class="ctrl">
+                @if (p.writable) {
+                  @switch (p.kind) {
+                    @case ('switch') {
+                      <button
+                        type="button"
+                        class="toggle"
+                        [class.on]="!!state()[p.key]"
+                        role="switch"
+                        [attr.aria-checked]="!!state()[p.key]"
+                        [attr.aria-label]="p.name"
+                        (click)="onSwitch(p, $event)"></button>
+                    }
+                    @case ('seg') {
+                      <div class="seg">
+                        @for (o of (p.list ?? []); track $index) {
+                          <button
+                            type="button"
+                            [class.on]="toStr(o.value) === toStr(state()[p.key])"
+                            (click)="onSeg(p, o.value)">
+                            {{ o.label }}
+                          </button>
+                        }
+                      </div>
+                    }
+                    @case ('sel') {
+                      <select class="sel" [value]="state()[p.key] ?? ''" (change)="onSel(p, $event)">
+                        @for (o of (p.list ?? []); track $index) {
+                          <option [value]="o.value">{{ o.label }}</option>
+                        }
+                      </select>
+                    }
+                    @case ('step') {
+                      <div class="step">
+                        <button type="button" (click)="onStep(p, -1)">−</button>
+                        <span class="val">{{ display(p) }}</span>
+                        <button type="button" (click)="onStep(p, 1)">+</button>
+                      </div>
+                    }
+                    @case ('number') {
+                      <input
+                        class="num"
+                        type="number"
+                        [value]="state()[p.key] ?? ''"
+                        [attr.aria-label]="p.name"
+                        (change)="onNumber(p, $event)" />
+                    }
+                    @default {
+                      <input
+                        class="txt"
+                        [class.mono]="p.kind === 'hex'"
+                        type="text"
+                        [attr.placeholder]="p.kind === 'hex' ? 'HEX' : p.name"
+                        [value]="state()[p.key] ?? ''"
+                        [attr.aria-label]="p.name"
+                        (change)="onText(p, $event)" />
+                    }
+                  }
+                } @else {
+                  <span class="val muted">{{ display(p) }}</span>
+                }
+              </div>
+              @if (p.writable) {
+                <span class="unit">{{ unitText(p) }}</span>
+              }
+              @if (p.readable) {
+                <button type="button" class="read-btn" (click)="read(p)">{{ '读取' | translate }}</button>
+              }
+            </div>
+          }
+
+          @for (a of svc.actions; track a.iid) {
+            <div
+              class="action-row"
+              role="button"
+              tabindex="0"
+              [attr.aria-label]="a.name"
+              #arow
+              (click)="fire($event, arow, svc, a)"
+              (keydown.enter)="fire($event, arow, svc, a)"
+              (keydown.space)="fire($event, arow, svc, a); $event.preventDefault()">
+              <span class="k">{{ a.name }}</span>
+              <span class="ctrl"><span class="arr">›</span></span>
+              @if (ripple(); as r) {
+                @if (r.key === a.key) {
+                  <span
+                    class="ripple"
+                    [style.width.px]="r.size"
+                    [style.height.px]="r.size"
+                    [style.left.px]="r.x"
+                    [style.top.px]="r.y"></span>
+                }
+              }
+            </div>
+          }
+        } @else {
+          @for (p of svc.props; track p.iid) {
+            <div class="info-row">
+              <span class="k">{{ p.name }}</span>
+              @if (p.identify) {
+                <button type="button" class="btn-identify" (click)="identify(p)">{{ '点亮设备' | translate }}</button>
+              } @else {
+                <span class="v mono">{{ display(p) }}</span>
+                @if (p.readable) {
+                  <button type="button" class="read-btn" (click)="read(p)">{{ '读取' | translate }}</button>
+                }
+              }
+            </div>
+          }
+        }
+      </section>
+    }
+    </div>
+  </div>
+}
